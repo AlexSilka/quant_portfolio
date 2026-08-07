@@ -8,7 +8,7 @@ choice, not a data limit; only crypto carry/breakout is stuck at 2020). At each 
 weights on the training window (anchored [start,t] or rolling [t−win,t]) and applies them to the next block
 out-of-sample; concatenating the blocks gives the accumulated walk-forward OOS track (~18y, 2006→2026, incl.
 the 2008 GFC). Caveat: pre-~2019 crisis/gmacro legs are reconstructed signals — a strategy-logic backtest,
-not a live track — and pre-2020 legs are annualised at calendar-365.
+not a live track. Sharpe is annualised by each track's actual obs/yr (honest for the mixed 252/365 calendar).
 
 Three allocations are walk-forwarded so the shipped a-priori equal weight is justified by evidence, not
 assertion:
@@ -113,8 +113,16 @@ def walk_forward(df: pd.DataFrame, kind="equal", mode="anchored", cadence=91, wi
     return pd.concat(out).dropna().rename("ret")
 
 
+def ppy_of(s):
+    """Actual obs/yr — honest Sharpe annualisation for the mixed 252/365 calendar (crypto 365 / equity
+    ~252), not a flat 365 which overstates any sub-365 track. Same convention as run_master_book."""
+    s = s.dropna()
+    yrs = (s.index.max() - s.index.min()).days / 365.25
+    return len(s) / yrs if yrs > 0 else float(PPY)
+
+
 def _sc(s):
-    ss = summarise(s, PPY)
+    ss = summarise(s, ppy_of(s))
     return {"sharpe": round(ss["sharpe_ann"], 2), "max_dd": round(ss["max_dd"], 4),
             "months_in_profit": round(ss["months_in_profit"], 4), "n_obs": int(len(s)),
             "start": str(s.index.min().date()), "end": str(s.index.max().date())}
@@ -150,7 +158,7 @@ def main():
         w = ew[a:b]
         if len(w) > 20:
             eq = (1.0 + w).cumprod()
-            stress[lab] = {"sharpe": round(float(np.sqrt(PPY) * w.mean() / w.std(ddof=1)), 2),
+            stress[lab] = {"sharpe": round(float(np.sqrt(ppy_of(w)) * w.mean() / w.std(ddof=1)), 2),
                            "max_dd": round(float((eq / eq.cummax() - 1.0).min()), 4), "n_legs": int(df.loc[a:b].notna().any().sum())}
 
     # window robustness (§10/§12): the SAME equal-weight + §8-overlay book over 10y / 15y / all-available
@@ -200,7 +208,7 @@ def main():
                 "non-crypto legs; crypto carry/breakout only from 2020). Equal-weight needs no fit, so its walk-forward "
                 "equals the full post-burn-in track — the a-priori book is OOS across the whole history, incl. the 2008 "
                 "GFC. The 2y final block (OOS_START) is the separate run-once §11 holdout. Caveat: pre-~2019 crisis/gmacro "
-                "are reconstructed signals (a strategy-logic backtest), and pre-2020 legs are annualised at calendar-365.",
+                "are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",
         "seed": SEED}, indent=2, default=float))
     print("\nartifacts -> reports/master_book_wf.parquet · master_book_wf_summary.json")
     print("WALK-FORWARD BOOK OK")

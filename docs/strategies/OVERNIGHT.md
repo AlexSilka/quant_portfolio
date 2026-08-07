@@ -1,6 +1,6 @@
 # Calendar / session — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.66** full / **2.64** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline; the canonical assembler is `scripts/run_master_book.py` (not the older `build_book.py`).
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.52** full / **2.64** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline; the canonical assembler is `scripts/run_master_book.py` (not the older `build_book.py`).
 
 **Scope.** Calendar and session effects are a standard feature family. This is the
 strategy sleeve that trades it, run through the same funnel as every other family (vol-target 15%,

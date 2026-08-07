@@ -1,6 +1,6 @@
 # Calendar seasonality (H4) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.66** full / **2.64** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.52** full / **2.64** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
 
 **Scope.** HYPOTHESES.md **H4**: two documented, calendar-deterministic effects — the **pre-FOMC
 announcement drift** (Lucca-Moench 2015) and the **turn-of-month** effect (Lakonishok-Smidt 1988) —

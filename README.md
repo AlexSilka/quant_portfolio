@@ -5,7 +5,7 @@ built for honest validation: leakage control, multiple-testing correction, and
 realistic execution costs. The deliverable is a portfolio **and** an honest map of
 where edge exists and where it does not.
 
-**Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.66** full-sample
+**Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.52** full-sample
 (2011 → 2026) at **−8.1%** max drawdown, positive in all 16 calendar years; on the run-once
 out-of-sample block (2024-07 →) **Sharpe 2.64**, meeting **4 of 5** brief targets. The surviving edge is
 crypto-heavy and volprem-anchored (short-vol, ~half of book P&L, on a real tail) — both stated and
@@ -35,7 +35,7 @@ edge map + dashboard.
   [crisis-alpha](scripts/run_crisis.py), [global-macro](scripts/run_gmacro.py), [BAB](docs/strategies/BAB.md).
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
   **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)**, with a disclosed
-  **§8 drawdown-ladder risk overlay** on top, the master book nets **Sharpe 3.66** at **−8.1% max drawdown**,
+  **§8 drawdown-ladder risk overlay** on top, the master book nets **Sharpe 3.52** at **−8.1% max drawdown**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
   out-of-sample block the brief actually scores (2024-07→), Sharpe is 2.64** — clearing the 2.5 floor on
   genuinely unseen data, not the full-sample figure. The surviving edge is crypto-heavy and the Sharpe is
@@ -73,7 +73,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.66 full / 2.64 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.52 full / 2.64 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

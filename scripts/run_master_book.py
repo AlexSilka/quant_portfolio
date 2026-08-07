@@ -122,19 +122,33 @@ def rescale(net, target=0.15):
     return net * _scale(net, target)
 
 
+def ppy_of(s):
+    """Actual observations per calendar year — the honest Sharpe annualisation for a mixed-calendar
+    series. Crypto legs trade 365 d/yr, equity/Cboe legs ~252, so the blended 2011-2026 book averages
+    ~339; a flat 365 would overstate the annualised Sharpe of any sub-365 series (e.g. volprem's 252-day
+    Cboe calendar). The fully-live 2020+ book and the OOS block are genuinely ~365-366 obs/yr, so their
+    Sharpe is unchanged. (Vol-targeting `_scale` and turnover keep the nominal 365 — a constant factor
+    there does not change any Sharpe, so the book *return series* is byte-identical; only its annualised
+    Sharpe is now honest.)"""
+    s = s.dropna()
+    yrs = (s.index.max() - s.index.min()).days / 365.25
+    return len(s) / yrs if yrs > 0 else float(PPY)
+
+
 def per_period(s, freq):
     out = {}
     for k, g in s.groupby(s.index.to_period(freq) if freq != "Y" else s.index.year):
         g = g.dropna()
-        out[str(k)] = round(float(np.sqrt(PPY) * g.mean() / g.std(ddof=1)), 2) if g.std(ddof=1) > 0 else 0.0
+        out[str(k)] = round(float(np.sqrt(ppy_of(g)) * g.mean() / g.std(ddof=1)), 2) if g.std(ddof=1) > 0 else 0.0
     return out
 
 
-def scorecard(s, ppy=PPY):
+def scorecard(s, ppy=None):
     """The six task targets on a return series: Sharpe, max-DD, months-in-profit, worst month,
-    longest losing streak (months). Reported for both the full window and the OOS block."""
+    longest losing streak (months). Reported for both the full window and the OOS block. Sharpe is
+    annualised by the series' ACTUAL obs/yr (honest for the mixed 252/365 calendar), not a flat 365."""
     s = s.dropna()
-    ss = summarise(s, ppy)
+    ss = summarise(s, ppy_of(s) if ppy is None else ppy)
     mo = (1.0 + s).resample("ME").prod() - 1.0
     neg = (mo <= 0).astype(int).to_numpy()
     streak = mx = 0
@@ -173,11 +187,12 @@ def book_turnover(scales):
 
 
 def describe(s, mc=True):
-    ss = summarise(s, PPY)
+    ppy = ppy_of(s)
+    ss = summarise(s, ppy)
     out = {"sharpe": ss["sharpe_ann"], "max_dd": ss["max_dd"], "months_in_profit": ss["months_in_profit"],
            "total_return": ss["total_return"]}
     if mc:
-        v = mc_all_variants(s, PPY, 2000, bo.SEED)
+        v = mc_all_variants(s, ppy, 2000, bo.SEED)
         bb = v["block_bootstrap"]
         out.update({"mc_p5": bb.get("sharpe_p5"), "mc_p50": bb.get("sharpe_p50"), "mc_p95": bb.get("sharpe_p95"),
                     "mc_maxdd_p5": bb.get("maxdd_p5"), "mc_maxdd_p50": bb.get("maxdd_p50"),
@@ -228,11 +243,11 @@ def main():
     wo = df[[c for c in df.columns if c != "breakout"]].mean(axis=1, skipna=True)
     mw = describe(wo, mc=True)
     print(f"\nWITHOUT breakout (raw): Sharpe {mw['sharpe']:+.2f}  MC-P5 {mw['mc_p5']:+.2f}")
-    print(f"WITH breakout    (raw): Sharpe {summarise(raw_ew,PPY)['sharpe_ann']:+.2f}")
+    print(f"WITH breakout    (raw): Sharpe {summarise(raw_ew, ppy_of(raw_ew))['sharpe_ann']:+.2f}")
 
     # correlation + marginal-contribution curve + top-removed — all on the raw equal-weight legs (consistent)
     corr = df.corr()
-    solo = {c: summarise(df[c], PPY)["sharpe_ann"] for c in df.columns}
+    solo = {c: summarise(df[c], ppy_of(df[c]))["sharpe_ann"] for c in df.columns}
     order = sorted(df.columns, key=lambda c: -solo[c])
     marg = []
     for k in range(1, len(order) + 1):
@@ -241,7 +256,8 @@ def main():
         marg.append({"n": k, "added": order[k - 1], "sharpe": sc["sharpe"],
                      "max_dd": sc["max_dd"], "months_in_profit": sc["months_in_profit"]})
     top = order[0]
-    notop = summarise(df[[c for c in df.columns if c != top]].mean(axis=1, skipna=True), PPY)["sharpe_ann"]
+    _notop = df[[c for c in df.columns if c != top]].mean(axis=1, skipna=True)
+    notop = summarise(_notop, ppy_of(_notop))["sharpe_ann"]
     mean_corr = float(corr.values[np.triu_indices_from(corr.values, 1)].mean())
     # §7.2 correlation STABILITY — the same matrix on two halves of the window. "Diversification that exists
     # only in-sample is not diversification": if the decorrelation is real it must persist out-of-sample.
@@ -296,7 +312,7 @@ def main():
         "without_breakout": mw, "per_year": per_year, "per_quarter": per_period(managed, "Q"),
         "standalone_sharpe": solo, "mean_correlation": mean_corr, "correlation_stability": corr_stab,
         "pnl_share": pnl_share, "marginal": marg, "top_removed": {"family": top, "sharpe": notop},
-        "breakout_delta_sharpe": summarise(raw_ew, PPY)["sharpe_ann"] - mw["sharpe"],
+        "breakout_delta_sharpe": summarise(raw_ew, ppy_of(raw_ew))["sharpe_ann"] - mw["sharpe"],
         "risk_limits": {"ladder": LADDER, "restore": LADDER_RESTORE, "daily_loss_limit": DAILY_LOSS_LIMIT,
                         "gross_cap": GROSS_CAP, "per_family_cap": round(PER_FAMILY_CAP, 3),
                         "breaker_days": n_breaker, "max_gross": round(float(gross.max()), 2)},

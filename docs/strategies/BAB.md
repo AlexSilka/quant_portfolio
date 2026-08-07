@@ -1,6 +1,6 @@
 # Betting-against-beta / low-volatility — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.66** full / **2.64** OOS). The **crypto beta-neutral top-25** book is the BAB family in it (§5); the equity and FX legs did not survive (§3b).
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.52** full / **2.64** OOS). The **crypto beta-neutral top-25** book is the BAB family in it (§5); the equity and FX legs did not survive (§3b).
 
 **Scope.** H1 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): the leverage-constraint
 premium (Frazzini-Pedersen 2014) — long low-beta, short high-beta — run through the same funnel as every
@@ -272,11 +272,11 @@ equal risk alongside the other seven:
 
 | family | standalone Sharpe (rescaled-in-book) | corr to book | share of book PnL |
 |---|---|---|---|
-| volprem (anchor) | 5.51 | — | 52% |
+| volprem (anchor) | 4.57 | — | 52% |
 | BAB top-25 | **1.29** (+1.51 standalone top-25 full-sample, §3b) | **+0.17** | **6%** |
 
 - **Decorrelated breadth, not a headline lift.** The book is **volprem-dominated** — volprem's standalone
-  5.51 anchors it (removing volprem drops the book from **3.66 to 1.81**), so the equal-risk *average*
+  4.57 anchors it (removing volprem drops the book from **3.52 to 1.75**), so the equal-risk *average*
   Sharpe is set by volprem and no single modest-Sharpe family moves the headline much. BAB's role in the
   book is a decorrelated, robust source — the same as carry, x-sect, crisis and gmacro (all standalone
   ≈ 0.5–1.3): they broaden the book, they do not inflate its Sharpe.

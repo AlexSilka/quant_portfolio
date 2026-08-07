@@ -287,7 +287,7 @@ count per regime).
 - **Marginal-contribution curve** — families added in order of contribution, plotting portfolio Sharpe,
   drawdown and months-in-profit, showing where the curve flattens.
 - **P&L share per family** and the portfolio with the top contributor removed (a test of single-source
-  dependence — volprem is ~half of P&L, and the book still stands at Sharpe 1.81 without it).
+  dependence — volprem is ~half of P&L, and the book still stands at Sharpe 1.75 without it).
 - **Competition for capital** — on simultaneous signals, allocation by risk budget; on opposing
   positions in the same asset, netting at the portfolio level (double costs forbidden), with the event
   logged. The book combines return series rather than positions, a stated limitation.

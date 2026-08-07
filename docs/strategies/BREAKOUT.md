@@ -246,16 +246,16 @@ trailing (PIT) vol and **equal-weighted (1/N, no performance-based selection)** 
 (breakout, a crypto-perp leg, lists from 2020). Breakout's honest series is the combined trend+ML / PIT
 cross-sectional squeeze above (`reports/breakout/bo_combined_portfolio.parquet`).
 
-- **Standalone (rescaled) Sharpe:** breakout **+1.38** — mid-pack among the eight (vol-premium **5.51**
+- **Standalone (rescaled) Sharpe:** breakout **+1.38** — mid-pack among the eight (vol-premium **4.57**
   anchors; trend 1.35, BAB 1.29, carry 1.27, gmacro 1.02, x-sect 0.89, crisis 0.49).
 - **Correlation to the book:** **+0.56** (mean *pairwise* cross-family correlation ≈ 0.06); breakout is a
   genuinely independent crypto source, not a trend-cluster duplicate.
-- **Master with vs without breakout:** Sharpe **3.66 → 3.64** — breakout's marginal (leave-one-out) add is
+- **Master with vs without breakout:** Sharpe **3.52 → 3.50** — breakout's marginal (leave-one-out) add is
   **≈ +0.02** (`breakout_delta_sharpe` in `reports/master_book_summary.json`); **vol-premium is the anchor** —
-  removing *it* drops the book to **1.81**. Breakout earns its slot by decorrelation and crypto-regime
+  removing *it* drops the book to **1.75**. Breakout earns its slot by decorrelation and crypto-regime
   coverage, not by lifting the headline Sharpe.
-- **Marginal-contribution curve** (added in standalone-descending order): vol-premium 5.51 → +breakout 4.96 →
-  +trend 4.36 → +BAB 4.25 → +carry 4.30 → +gmacro 4.28 → +x-sect 4.08 → +crisis 3.66 — the curve *drifts down* as
+- **Marginal-contribution curve** (added in standalone-descending order): vol-premium 4.57 → +breakout 4.49 →
+  +trend 4.20 → +BAB 4.09 → +carry 4.14 → +gmacro 4.12 → +x-sect 3.93 → +crisis 3.52 — the curve *drifts down* as
   diversifiers join (they trade a little average Sharpe for a much smaller tail).
 
 Honest read: on the honest survivorship-free book, breakout is a **fully-decorrelated crypto family**. Its

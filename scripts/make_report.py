@@ -55,8 +55,17 @@ def heatcolor(v, vmax, scheme):
 
 
 # ---------- metric helpers (Task A §11) ----------
-def _sh(r, ppy=PPY):
+def _ppy(r):
+    """Actual obs/yr — honest Sharpe annualisation for the mixed 252/365 calendar (crypto 365 / equity
+    ~252); a flat 365 overstates any sub-365 series. Matches run_master_book."""
     r = r.dropna()
+    yrs = (r.index.max() - r.index.min()).days / 365.25
+    return len(r) / yrs if yrs > 0 else float(PPY)
+
+
+def _sh(r, ppy=None):
+    r = r.dropna()
+    ppy = _ppy(r) if ppy is None else ppy
     return float(np.sqrt(ppy) * r.mean() / r.std(ddof=1)) if len(r) > 2 and r.std(ddof=1) > 0 else 0.0
 
 
@@ -653,7 +662,7 @@ def main():
             key = s.index.year if freq == "Y" else s.index.to_period("Q")
             for k, g in s.groupby(key):
                 if len(g) > 20 and g.std(ddof=1) > 0:
-                    vals.setdefault(str(k), {})[f] = float(np.sqrt(PPY) * g.mean() / g.std(ddof=1))
+                    vals.setdefault(str(k), {})[f] = float(np.sqrt(_ppy(g)) * g.mean() / g.std(ddof=1))
         cols = sorted(vals)
         return [sf(f) for f in fams], cols, [[vals.get(c, {}).get(f) for c in cols] for f in fams]
     fyr_r, fyr_c, fyr_m = _leg_grid("Y")

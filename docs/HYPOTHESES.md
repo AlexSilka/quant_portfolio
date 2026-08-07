@@ -2,7 +2,7 @@
 
 > **Canonical-book note.** This is the hypothesis ledger behind the edge map: the candidate families
 > considered as diversifiers, with the verdict on each. The shipped portfolio is the eight-family
-> equal-weight master book in [REPORT.md](../REPORT.md) (Sharpe **3.66** full / **2.64** OOS), assembled by
+> equal-weight master book in [REPORT.md](../REPORT.md) (Sharpe **3.52** full / **2.64** OOS), assembled by
 > `scripts/run_master_book.py`. Any master-book Sharpe quoted below is a snapshot at the time a
 > hypothesis was evaluated, not the current headline.
 

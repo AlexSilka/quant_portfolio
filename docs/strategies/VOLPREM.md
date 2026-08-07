@@ -163,8 +163,8 @@ VRP's crash. Correlation to the momentum and carry books is **~0** (+0.03 / −0
 not the standalone Sharpe, is what earns it a slot.
 
 In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over eight families), the
-honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.66 to
-**1.81**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
+honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.52 to
+**1.75**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
 with volprem vs ≈ −6% on the flattered close-to-close accounting** (§4b). So it is a genuine co-engine *and*
 the family that most needs its weight watched, exactly because its own tail is −78%.
 
