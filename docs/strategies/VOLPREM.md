@@ -21,12 +21,12 @@ scripts/volprem/run_vol_premium.py`. Artifacts: `reports/volprem/volprem_*.{csv,
   +2.20** carry the book; **crypto is negative** (BTC −0.41, ETH −0.86), FX (EVZ) is ruinous, and the
   big equity indices (VIX, VXD, OVX) bring −99% single-day tails. Equity/commodity/rates give
   2005–2011 histories vs crypto's 2021.
-- **It is deployed as a diversified BOOK, never one asset.** Across **17 Cboe underlyings** with clean
-  OHLC (VIX/VXN/RVX/VXD/VXEFA, VXAPL/AZN/GOG/GS/IBM, VXEEM/EWZ/FXI, OVX/GVZ/VXSLV, VXTLT), the equal-risk
-  book nets **Sharpe +3.64, maxDD −78%, skew −18, 84% profitable months**. Crypto and FX are excluded on
+- **It is deployed as a diversified BOOK, never one asset.** Across **18 Cboe underlyings** with clean
+  OHLC (VIX/VXN/RVX/VXD/VXEFA, VXAPL/AZN/GOG/GS/IBM, VXEEM/EWZ/FXI, OVX/GVZ/VXSLV/VXGDX, VXTLT), the equal-risk
+  book nets **Sharpe +3.72, maxDD −78%, skew −18, 84% profitable months**. Crypto and FX are excluded on
   frozen structural / data-quality rules (below), *not* on backtested Sharpe. Diversification is the whole
-  game: several single-name sleeves **hit −99/−100% ruin** standalone; at 1/17 risk each the book absorbs them.
-  (17 Cboe legs are deployed; EVZ/FX is the 18th considered but dropped for corrupt data, and crypto DVOL is excluded — below.)
+  game: several single-name sleeves **hit −99/−100% ruin** standalone; at 1/18 risk each the book absorbs them.
+  (18 Cboe legs are deployed, incl. VXGDX gold-miners; crypto DVOL and FX EVZ are considered but excluded for unhedgeable / corrupt data — below.)
 - **The realised leg is measured from OHLC (intraday path + gap), not close-to-close — the honest tail.**
   A delta-hedged short-gamma book pays the intraday path, which close-to-close nets away. Correcting it
   (Rogers-Satchell + overnight) barely moves Sharpe but nearly doubles the tail (maxDD
@@ -95,9 +95,9 @@ low-vol-launch artifact. Regime-dependent, exactly as short vol should be.
 
 ## 2c. Where and how it is run — the diversified book
 
-The universe is the underlyings with a free implied-vol index **and clean data** — **17 Cboe indices**:
+The universe is the underlyings with a free implied-vol index **and clean data** — **18 Cboe indices**:
 VIX/VXN/RVX/VXD/VXEFA (equity), VXAPL/VXAZN/VXGOG/VXGS/VXIBM (single names), VXEEM/VXEWZ/VXFXI
-(international), OVX/GVZ/VXSLV (commodities), VXTLT (rates); realised legs are the matching ETF/spot
+(international), OVX/GVZ/VXSLV/VXGDX (commodities), VXTLT (rates); realised legs are the matching ETF/spot
 (Twelve Data). **Crypto (DVOL) and FX (EVZ) are excluded on frozen ex-ante rules, not on backtested
 Sharpe:** crypto's 30%-intraday-range days are unhedgeable for a short-vol delta-hedge (so BTC −0.41,
 ETH −0.86 on the honest leg), and the free EURUSD OHLC carries corrupt prints (a −13% "daily" move at a
@@ -105,18 +105,18 @@ ETH −0.86 on the honest leg), and the free EURUSD OHLC carries corrupt prints 
 so they stay.
 
 **Run it as a book, not one asset.** Under the honest OHLC realised leg the per-sleeve picture is brutal
-(`reports/volprem/volprem_book_sleeves.csv`): the legs that carry the book are **EM +3.11, Russell +2.84, gold
+(`reports/volprem/volprem_book_sleeves.csv`): the legs that carry the book are **gold-miners +3.32, EM +3.11, Russell +2.84, gold
 +2.41, bonds +2.38, China +2.20**, while several equity-index legs (VIX→SPY, VXD→DIA, OVX→USO) carry
 **−99% single-day drawdowns** on flash-crash days. The deployable form is the equal-risk **book** across
-the 17, which stays positive only because these catastrophes fall on *different* dates:
+the 18, which stays positive only because these catastrophes fall on *different* dates:
 
 | | Sharpe | maxDD | skew | months+ | span |
 |---|---|---|---|---|---|
-| **diversified book (17 legs)** | **+3.64** | **−78%** | **−18** | 84% | 2005–2026 |
+| **diversified book (18 legs)** | **+3.72** | **−78%** | **−18** | 84% | 2005–2026 |
 | average single sleeve | ~+1.4 | ~−82% | — | — | — |
 | placebo book (fair strike, no premium) | **−1.73** | — | — | — | — |
 
-- **Diversification is the whole game.** Book Sharpe +3.64 vs a single-sleeve average ~+1.4, and the
+- **Diversification is the whole game.** Book Sharpe +3.72 vs a single-sleeve average ~+1.4, and the
   book's −78% tail still beats most single sleeves' −99% (mean pairwise sleeve corr +0.26). Placebo
   −1.73 — the premium, not the basket, is the source.
 - **Crypto short-vol does not survive honest accounting.** A reversal from the close-to-close view
@@ -155,7 +155,7 @@ VRP's crash. Correlation to the momentum and carry books is **~0** (+0.03 / −0
 not the standalone Sharpe, is what earns it a slot.
 
 In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over eight families), the
-honest 17-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.66 to
+honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.66 to
 **1.81**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
 with volprem vs ≈ −6% on the flattered close-to-close accounting** (§4b). So it is a genuine co-engine *and*
 the family that most needs its weight watched, exactly because its own tail is −78%.
@@ -180,7 +180,7 @@ trend rides) but not guaranteed in a whipsaw regime.
 ## 5. Honest limits & ceiling
 
 - **The systemic tail is the binding constraint, and diversification cannot remove it.** Even across
-  17 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC realised
+  18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC realised
   leg — the honest number; close-to-close showed only −50%). Cross-asset breadth over *uncorrelated*
   crashes softens it but does not defuse it — a real tail hedge needs the live option smile (paid).
 - **Sharpe overstates; skew and drawdown are the honest metrics.** Correcting the realised leg from
@@ -190,7 +190,7 @@ trend rides) but not guaranteed in a whipsaw regime.
   honest leg (BTC −0.41, ETH −0.86 — its intraday path is unhedgeable), and the free EURUSD OHLC is
   corrupt (EVZ discontinued 2025-03). The book is carried by EM / Russell / gold / bonds; equity-index
   legs bring mostly tail.
-- **Universe is gated by free implied-vol indices with clean data** (17 Cboe underlyings deployed). No free
+- **Universe is gated by free implied-vol indices with clean data** (18 Cboe underlyings deployed). No free
   per-name-beyond-Cboe or altcoin IV, and crypto/FX excluded per above.
 - **What did not work (kept, not hidden):** single-asset deployment (several sleeves ruin at −99/−100%);
   DVOL *timing* (gating underperforms always-short — the level is the premium); the free-cap
@@ -199,7 +199,7 @@ trend rides) but not guaranteed in a whipsaw regime.
 ## 6. Reproduce
 
 ```bash
-make volprem     # crypto deep-dive + cross-asset edge map + the diversified 17-sleeve book
+make volprem     # crypto deep-dive + cross-asset edge map + the diversified 18-sleeve book
 ```
 Or individually: `run_vol_premium.py` (crypto BTC/ETH deep-dive), `run_vol_premium_xasset.py`
 (per-class edge map), `run_vol_premium_book.py` (the diversified book — the deployable form).

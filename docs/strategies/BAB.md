@@ -2,7 +2,7 @@
 
 > **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.66** full / **2.64** OOS). The **crypto beta-neutral top-25** book is the BAB family in it (§5); the equity and FX legs did not survive (§3b).
 
-**Scope.** H1 of the research backlog ([NEXT_HYPOTHESES.md](../NEXT_HYPOTHESES.md)): the leverage-constraint
+**Scope.** H1 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): the leverage-constraint
 premium (Frazzini-Pedersen 2014) — long low-beta, short high-beta — run through the same funnel as every
 other family (vol-target 15%, t+2-style delay, liquidity-aware costs, block-bootstrap MC, shuffled-signal
 placebo, purged/embargoed walk-forward OOS, deflated Sharpe, cost sensitivity, correlation to the

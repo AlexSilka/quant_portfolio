@@ -6,6 +6,8 @@ __pycache__/
 .ipynb_checkpoints/
 data/raw/
 data/cache/
+# stray CWD-relative cache from before config.py centralised paths; unused by the pipeline (which reads data/raw)
+scripts/data/raw/
 *.log
 *.egg-info/
 

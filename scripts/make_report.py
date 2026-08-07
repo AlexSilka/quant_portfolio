@@ -575,7 +575,7 @@ def main():
          "pass" if _streak(moo.values) <= 2 else "miss"),
         ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} · target ≥−6%",
          "pass" if moo.min() >= -0.06 else "miss"),
-        ("Annual turnover", f"{ann_turn:.1f}×", "×capital/yr · drives cost (§11)", ""),
+        ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis; the turnover chart plots the one-way re-weighting series", ""),
     ]
     n_pass = sum(1 for *_, c in sc[:5] if c == "pass")
     wfp = REP / "master_book_wf_summary.json"

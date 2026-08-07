@@ -32,7 +32,10 @@ def backtest(prices: pd.Series, target_pos: pd.Series, *, capital: float,
     gross_ret = pos * r
 
     dpos = pos.diff().abs().fillna(pos.abs())           # turnover
-    sigma_bar = r.rolling(20).std().bfill().fillna(r.std())
+    # bar vol for the √-impact cost term — causal: expands over the first 20 bars then rolls,
+    # lagged one bar, zero on the warm-up. (No .bfill()/full-sample .std() — those would seed the
+    # early bars from future/whole-series vol; harmless to the return path but a real look-ahead.)
+    sigma_bar = r.rolling(20, min_periods=1).std().shift(1).fillna(0.0)
     notional = dpos * capital
     adv_ser = (adv.reindex(close.index).ffill() if adv is not None
                else pd.Series(np.inf, index=close.index))

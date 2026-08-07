@@ -13,7 +13,8 @@ quantified in [REPORT.md](REPORT.md).
 
 **▶ Live interactive dashboard:** https://claude.ai/code/artifact/231e7947-7022-44cd-ac2e-967f799ef48f
 — hosted and public: equity curves, drawdown, monthly heatmap, rolling 12-month Sharpe, exposure &
-turnover, sleeve correlation matrix and the edge map. (Same page rendered locally: [reports/dashboard.html](reports/dashboard.html).)
+turnover, sleeve correlation matrix and the edge map. **If that link needs a login, the identical page is
+committed and fully self-contained** — open [reports/dashboard.html](reports/dashboard.html) directly (no server, no network).
 
 - **Approach & rationale:** [docs/APPROACH.md](docs/APPROACH.md)
 - **Architecture & build sequence:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -75,7 +76,9 @@ per-family write-ups ([docs/](docs/)).
 #    there and re-assembles the risk-parity portfolio (Sharpe 3.66 full / 2.64 OOS).
 make master
 
-# 2. Full rebuild from raw data — discovery -> validation -> master book -> CSCV -> charts -> dashboard.
+# 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
+#    master-book assembly, CSCV, charts, dashboard. (The other six family deep-dives are heavy one-offs;
+#    rebuild any from its own target, e.g. `make trend carry volprem xs breakout bab`.)
 cp .env.example .env            # paste a Twelve Data key (equities/FX); crypto (Binance) + macro (FRED) need none
 python scripts/smoke_test.py    # optional: proves the data layer end to end (needs the key)
 make reproduce                  # crypto auto-downloads keyless (~10 GB, cached to data/); without a key the

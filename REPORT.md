@@ -119,6 +119,12 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
 | **x-sect momentum** | crypto + equity top-100 liquid ([docs/strategies/XSECT.md](docs/strategies/XSECT.md)) | 0.89 | +0.42 |
 | **crisis-alpha** | multi-asset managed-futures trend (`scripts/run_crisis.py`) | 0.49 | +0.56 |
 
+> *"Standalone Sharpe" here is each family's own series **rescaled to the book's 15% vol target and
+> annualised at calendar-365** (the book convention), so it can exceed a deep-dive's native-calendar
+> figure — e.g. vol-premium **5.51** here vs **+3.72** on its native 252-day Cboe calendar
+> ([VOLPREM.md](docs/strategies/VOLPREM.md)); carry **1.27** vs native **+1.21** ([CARRY.md](docs/strategies/CARRY.md)).
+> The corr-to-book column is naturally positive since each family is part of the book.*
+
 - **Master book (risk-managed deliverable):** full-sample Sharpe **3.66**, max DD **−8.1%**, months-in-profit
   **77%**, worst month **−5.9%**; block-bootstrap MC **[Sharpe P5 +3.13, P50 +3.67, P95 +4.20; max-DD P5
   −12%; monthly-hit P5 0.76]**; mean pairwise cross-family correlation **+0.06**. **On the final OOS block:
@@ -154,7 +160,7 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
   single-sleeve selection is largely overfit, which is exactly why the traded book selects nothing and stacks
   decorrelated premia instead. Deflated Sharpe + placebo-FDR + CSCV together are the mandatory multiple-testing
   triad.
-- **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+2.89** (full four-scheme table in §4).
+- **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+3.13** (full four-scheme table in §4).
 - **Leakage:** execution is delayed to t+2 (never the signal bar's own close); funding is charged at
   every 8h settlement; costs are liquidity-aware (√-impact scaled to bar $-volume, never flat); vol
   targeting uses lagged volatility; feature computability is proven by the shift audit; fixed seeds throughout.
@@ -200,9 +206,9 @@ The brief asks for **two distinct things**, and the book has both:
   applies them to the next block out-of-sample; concatenating the blocks gives an **accumulated out-of-sample
   track over ~18 years (2006→2026), Sharpe +3.54, max-DD −14.2%** — the book is out-of-sample across nearly the
   whole history, not just the final block. It is **invariant to the choice**: anchored vs rolling, quarterly vs
-  annual re-fit all land Sharpe in **[+3.37, +3.51]** (spread 0.14). **Crisis-window stress** on this long
+  annual re-fit all land Sharpe in **[+3.39, +3.54]** (spread 0.15). **Crisis-window stress** on this long
   track: through the **2008 GFC** the book draws down only **−4.5%** (the crisis / managed-futures leg hedges
-  the volprem short-vol tail), −7.6% through 2018 Volmageddon and −2.4% through COVID. *(Caveat: the pre-2020
+  the volprem short-vol tail), −7.6% through 2018 Volmageddon and −2.1% through COVID. *(Caveat: the pre-2020
   crisis/gmacro track runs on **real ETF/FX prices** (SPY/GLD/TLT/EM-FX — the instruments traded and were liquid), so it
   is a strategy-logic backtest, not a live *product* track — and pre-2020 legs are
   annualised at calendar-365; the 2008 result is evidence the diversification logic works, not a tradeable record.)*
@@ -210,8 +216,8 @@ The brief asks for **two distinct things**, and the book has both:
 **Why the full-sample number is itself an honest OOS estimate.** The portfolio weights are a-priori equal
 (1/N), so there is nothing to fit at the book level — its walk-forward *equals* its full post-burn-in track.
 That a-priori choice is justified with evidence, not assertion: **re-fitting the weights out-of-sample does
-not beat equal weight** — an inverse-vol walk-forward nets +2.80, and a trailing mean-variance (Sharpe-max)
-allocation nets +4.04 but on a **−21% drawdown (3× the equal-weight tail)** — the classic overfit signature.
+not beat equal weight** — an inverse-vol walk-forward nets +3.01, and a trailing mean-variance (Sharpe-max)
+allocation nets +3.94 but on a **−44% drawdown (3× the equal-weight tail)** — the classic overfit signature.
 
 **What is and isn't fitted (the obvious question).** The task invites modelling (§5), and we fit where
 fitting is *validated*: the LightGBM **meta-label** models (fit inside purged/embargoed folds, with a non-ML
@@ -267,8 +273,9 @@ IC), because removing the beta removes the return. Full per-family model grids a
   −6%, with the 5/5 weight-corners collapsing under ±25% perturbation. Months-in-profit ≥80% fights
   worst-month ≥−6% for a short-gamma book — the frontier is real, not a tuning miss.
 - **Binding constraints:** costs/turnover kill 5m (and most 15m) sleeves; the surviving edge is
-  **crypto-heavy** (only trend spans equities), so the book carries crypto-regime risk (visible in the
-  2022/2026 down years); individual-sleeve significance is low — the edge is in the decorrelation.
+  **crypto-heavy** (only trend spans equities), so the book carries crypto-regime risk (visible as the
+  book's thinnest crypto-era years — 2024 +2.3, 2026 +0.6 partial — positive but well below the
+  full-sample Sharpe); individual-sleeve significance is low — the edge is in the decorrelation.
 - **What would extend it (honest next steps):** cross-sectional momentum on a **broad small/mid-cap
   universe** (it was weak on 20 mega-caps but is a documented edge with breadth); the meta-label
   confidence gate applied across all sleeves to lift entry precision (already built and demonstrated, §2);
