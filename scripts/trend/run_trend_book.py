@@ -18,14 +18,16 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 import scripts.trend.trend_common as T  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
-from src.validation.monte_carlo import bootstrap_sharpe, mc_metrics  # noqa: E402
+from src.validation.monte_carlo import mc_metrics  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("trend")
 
 REGIMES = {
     "q4_2018": ("2018-10-01", "2018-12-31"),        # crypto bear (spot-spliced history)
@@ -67,7 +69,8 @@ def sleeve_returns(entry: str, direction: str, tfs: list[str], exit_style: str =
             try:
                 _, r = T.eval_spec(px, spec, tf, T.CRYPTO_TF[tf], cc,
                                    fund=T.bo.safe_funding(sym), adv=T.crypto_adv(px))
-            except Exception:
+            except Exception as e:
+                log.warning("trend: skipping crypto %s %s (%s)", sym, tf, e)
                 continue
             if r.std(ddof=1) > 0:
                 out[f"{sym}_{tf}"] = r
@@ -80,7 +83,8 @@ def sleeve_returns(entry: str, direction: str, tfs: list[str], exit_style: str =
         adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
         try:
             _, r = T.eval_spec(px, spec, "1d", T.EQUITY_TF["1d"], ec, fund=None, adv=adv, ppy_daily=252)
-        except Exception:
+        except Exception as e:
+            log.warning("trend: skipping equity %s (%s)", sym, e)
             continue
         if r.std(ddof=1) > 0:
             out[f"{sym}_1d_eq"] = r
@@ -130,7 +134,8 @@ def placebo_null(entry: str, direction: str, tfs: list[str], n_shuffle: int = 10
                 continue
             try:
                 pos = T.trend_position(px, spec, tf)
-            except Exception:
+            except Exception as e:
+                log.warning("trend: trend_position failed for tf=%s (%s)", tf, e)
                 continue
             sleeves.append((px["close"], pos, T.CC, T.bo.safe_funding(sym), T.crypto_adv(px), T.CRYPTO_TF[tf]))
     if "1d" in tfs:
@@ -241,7 +246,7 @@ def report_book(name: str, port: pd.Series, df: pd.DataFrame, full: bool = False
           f"maxDD[P5 {mc['maxdd_p5']:.1%} P50 {mc['maxdd_p50']:.1%}]  hit[P50 {mc['hit_p50']:.0%}]")
     print(f"    corr mean {row['corr_mean']:+.2f} max {row['corr_max']:+.2f}")
     print(f"    per-year: {per_year}")
-    print(f"    regimes: " + "  ".join(f"{k} {v['sharpe']:+.2f}" for k, v in regimes.items()))
+    print("    regimes: " + "  ".join(f"{k} {v['sharpe']:+.2f}" for k, v in regimes.items()))
     return row
 
 
@@ -353,7 +358,8 @@ def _sleeve_returns_costed(entry, direction, tfs, exit_style, cc, ec):
             try:
                 _, r = T.eval_spec(px, spec, tf, T.CRYPTO_TF[tf], cc,
                                    fund=T.bo.safe_funding(sym), adv=T.crypto_adv(px))
-            except Exception:
+            except Exception as e:
+                log.warning("trend: skipping crypto %s %s (%s)", sym, tf, e)
                 continue
             if r.std(ddof=1) > 0:
                 out[f"{sym}_{tf}"] = r
@@ -365,7 +371,8 @@ def _sleeve_returns_costed(entry, direction, tfs, exit_style, cc, ec):
             adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
             try:
                 _, r = T.eval_spec(px, spec, "1d", T.EQUITY_TF["1d"], ec, fund=None, adv=adv)
-            except Exception:
+            except Exception as e:
+                log.warning("trend: equity sleeve eval failed (%s)", e)
                 continue
             if r.std(ddof=1) > 0:
                 out[f"{sym}_1d_eq"] = r

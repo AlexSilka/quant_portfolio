@@ -2,7 +2,6 @@
 
     python scripts/smoke_twelvedata.py
 """
-from pathlib import Path
 
 
 from src.data.twelvedata import load_bars  # noqa: E402

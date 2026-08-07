@@ -6,12 +6,12 @@ stats use only past data (no look-ahead).
     python scripts/meanrev/run_mr_proper.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from statsmodels.tsa.stattools import adfuller  # noqa: E402
 

@@ -13,12 +13,12 @@ Demonstrated on trend (works) vs mean-reversion (dead across the whole surface).
     python scripts/run_wfo.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.config import CAPITAL_USD, VOL_TARGET_ANNUAL  # noqa: E402

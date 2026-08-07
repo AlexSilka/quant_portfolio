@@ -14,7 +14,6 @@ Same construction as run_bo_xs_tf: 52-week-high nearness, long top / short botto
 
     python scripts/breakout/run_bo_xs_big.py
 """
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

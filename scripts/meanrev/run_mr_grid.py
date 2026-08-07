@@ -15,12 +15,11 @@ daily-aggregated basket at 252/365. Revert-to-mean exit, walk-forward params, t+
 """
 import itertools
 import warnings
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402

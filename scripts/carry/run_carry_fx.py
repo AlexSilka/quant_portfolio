@@ -7,12 +7,12 @@ its correlation to crypto carry (the diversification question).
     python scripts/carry/run_carry_fx.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402

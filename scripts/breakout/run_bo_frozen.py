@@ -16,7 +16,6 @@ effect, and three sibling constructions to show it is not a lucky config.
     python scripts/breakout/run_bo_frozen.py
 """
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

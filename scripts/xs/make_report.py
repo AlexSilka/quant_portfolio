@@ -9,18 +9,17 @@ import base64
 import io
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from src.config import XS_DIR  # noqa: E402
-from src.metrics import max_drawdown, summarise  # noqa: E402
 
 XS = XS_DIR
 FIG = XS / "figures"
@@ -177,7 +176,7 @@ def main():
     cb = s["crypto_book"]
     kpis = "".join(KPI.format(l=l, v=v, d=d) for l, v, d in [
         ("Crypto book Sharpe", f"{cb['sharpe_ann']:+.2f}", "market-neutral, 1d→15m"),
-        ("Cross-asset Sharpe", f"{cab['sharpe_ann']:+.2f}", f"survivorship-free equity leg"),
+        ("Cross-asset Sharpe", f"{cab['sharpe_ann']:+.2f}", "survivorship-free equity leg"),
         ("Max drawdown", f"{cab['max_dd']:.1%}", "cross-asset book"),
         ("Monte-Carlo P5", f"{s['mc']['sharpe_p5']:+.2f}", "block-bootstrap 5th pct"),
         ("Deflated Sharpe", f"{s['deflated_sharpe']:.2f}", f"N={s['n_grid_trials']} grid trials"),

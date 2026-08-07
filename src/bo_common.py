@@ -7,13 +7,11 @@ funding at every settlement, vol-target to 15% annualised, daily-resampled retur
 from __future__ import annotations
 
 import socket
-import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
 # Any accidental network call (a cache gap) must fail fast, never hang an unattended sweep.
 socket.setdefaulttimeout(12)
 

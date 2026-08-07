@@ -22,12 +22,12 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CACHE_DIR, RAW_DIR, REPORTS_DIR, SEASONAL_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.fomc import announce_days, announce_timestamps_utc  # noqa: E402

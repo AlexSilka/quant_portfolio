@@ -13,7 +13,6 @@ omits dead coins. Reported as a diagnostic, not a clean tradeable Sharpe.
 
     python scripts/breakout/run_bo_xs.py
 """
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

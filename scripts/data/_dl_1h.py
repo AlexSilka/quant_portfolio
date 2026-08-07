@@ -1,8 +1,9 @@
 """Background: 1h klines for the established liquid subset (>=30 months funding history) of the
 expanded perp universe. Enables intraday sleeves (momentum/MR/breakout) and a 1h carry/basis check
 on the wider, survivorship-honest set. Same universe rule as the 4h pull, for consistency."""
-import sys, warnings
-warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import RAW_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines
 

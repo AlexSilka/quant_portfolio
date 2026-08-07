@@ -15,7 +15,6 @@ non-result is the edge map. Outputs mirror run_book so the two are directly comp
 """
 import json
 import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

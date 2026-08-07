@@ -8,7 +8,6 @@ into a held position via `src.sleeves.trend_lab`.
 """
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

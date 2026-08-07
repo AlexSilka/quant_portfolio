@@ -14,12 +14,12 @@ the series the report/figures consume.
 """
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, OOS_START, models, precompute, proba_cache  # noqa: E402
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402

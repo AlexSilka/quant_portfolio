@@ -6,15 +6,14 @@ fast timeframes (15m/1h) where there are enough segments to train on.
     python scripts/run_meta_overlay.py
 """
 import warnings
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
-from src.config import BOOK_DIR, CACHE_DIR, CAPITAL_USD, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import BOOK_DIR, CACHE_DIR, CAPITAL_USD, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.features.engine import compute_features, pit_normalize  # noqa: E402
 from src.metrics import summarise  # noqa: E402
@@ -97,7 +96,7 @@ def main():
     pg = pd.DataFrame(gate_rets).mean(axis=1)
     sb, sg = summarise(pb, 365), summarise(pg, 365)
     mcg = bootstrap_sharpe(pg, 365, 1000, SEED)
-    print(f"\n=== fast-TF sub-portfolio: ML incremental value ===")
+    print("\n=== fast-TF sub-portfolio: ML incremental value ===")
     print(f"baseline (non-ML rules): Sharpe {sb['sharpe_ann']:+.2f}  DD {sb['max_dd']:+.1%}  months+ {sb['months_in_profit']:.0%}")
     print(f"meta-gated (confidence): Sharpe {sg['sharpe_ann']:+.2f}  DD {sg['max_dd']:+.1%}  months+ {sg['months_in_profit']:.0%}  "
           f"MC-P5 {mcg.get('sharpe_p5', float('nan')):+.2f}")

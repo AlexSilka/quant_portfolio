@@ -7,11 +7,11 @@ formation-window pair selection (no look-ahead) and walk-forward parameter selec
     python scripts/meanrev/run_mr_etf.py
 """
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402

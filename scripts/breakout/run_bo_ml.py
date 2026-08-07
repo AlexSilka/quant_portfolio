@@ -17,14 +17,14 @@ Incremental value is reported on the frozen core-10 book, in-sample AND on the h
 """
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
 from src.config import CACHE_DIR, OOS_START  # noqa: E402

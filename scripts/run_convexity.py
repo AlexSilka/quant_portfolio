@@ -30,18 +30,18 @@ from __future__ import annotations
 import warnings
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.config import LAB_DIR, REPORTS_DIR  # noqa: E402
 from src.data.twelvedata import load_bars  # noqa: E402
 from src.data.cboe import load_cboe_vol  # noqa: E402
-from src.metrics import summarise, monthly_returns  # noqa: E402
+from src.metrics import summarise  # noqa: E402
 
 PPY = 365
 VETP = ROOT / "data/raw/vol_etp"

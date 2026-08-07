@@ -5,7 +5,6 @@ reports/figures/carry.png. Recomputes the needed series inline (fast).
     python scripts/carry/make_carry_figures.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,14 +12,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.config import CAPITAL_USD, FIGURES_DIR, REPORTS_DIR, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry, carry_xs  # noqa: E402
-from scripts.carry.run_carry import CRYPTO, START, END, load_panel  # noqa: E402
+from scripts.carry.run_carry import START, END, load_panel  # noqa: E402
 
 PPY, TVOL, CB = 365, VOL_TARGET_ANNUAL, 6.0
 plt.rcParams.update({"figure.dpi": 120, "font.size": 9, "axes.grid": True, "grid.alpha": 0.25})

@@ -8,14 +8,14 @@ Runs on whichever names have spot cached (a liquid-major subset is enough to cha
     python scripts/carry/run_carry_basis.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, RAW_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CARRY_DIR, RAW_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402

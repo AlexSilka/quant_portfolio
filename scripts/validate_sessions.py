@@ -9,12 +9,12 @@ sits outside a session (there should be none) and lists the half-days it saw.
     python scripts/validate_sessions.py
 """
 import warnings
-from pathlib import Path
 
 import pandas as pd
 import pandas_market_calendars as mcal
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.data.twelvedata import load_bars  # noqa: E402
 
 SYMBOLS = ["SPY", "QQQ", "IWM"]

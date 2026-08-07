@@ -29,14 +29,14 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, Ridge
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.seasonal.run_seasonal as rs  # noqa: E402  (reuse the headline study's loaders/config)
 from src.config import FIGURES_DIR, REPORTS_DIR, SEASONAL_DIR, SEED  # noqa: E402

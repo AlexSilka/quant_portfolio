@@ -10,7 +10,6 @@ shuffled-signal placebo.
 
     python scripts/breakout/run_bo_xs_signals.py
 """
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

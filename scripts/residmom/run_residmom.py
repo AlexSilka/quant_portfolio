@@ -24,12 +24,12 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CACHE_DIR, CAPITAL_USD, REPORTS_DIR, RESIDMOM_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402

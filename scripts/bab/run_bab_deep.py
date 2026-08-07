@@ -16,17 +16,17 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import BAB_DIR, CACHE_DIR, CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
-from src.sleeves.xsect import top_n_liquid, vol_target, xs_backtest  # noqa: E402
+from src.sleeves.xsect import top_n_liquid, vol_target  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 REP, CACHE = REPORTS_DIR, CACHE_DIR / "xs"

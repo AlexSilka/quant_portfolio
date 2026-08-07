@@ -1,10 +1,11 @@
 """Background: 4h klines for the established liquid subset (>=30 months funding history) of the
 expanded perp universe. 4h aligns better with the 8h funding grid than 1d -> enables the precise
 delta-neutral basis trade and an intraday carry-robustness check on the wider, survivorship-honest set."""
-import sys, warnings
-warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import RAW_DIR  # noqa: E402
-from src.data.binance_bulk import load_funding, load_klines
+from src.data.binance_bulk import load_klines
 
 fdir = RAW_DIR / "futures/um/fundingRate"
 syms = sorted(s.name for s in fdir.iterdir() if s.is_dir())

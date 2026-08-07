@@ -9,14 +9,13 @@ sample and OOS, for the three headline operating points.
 """
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 import scripts.trend.trend_common as T  # noqa: E402
 from src.backtest.engine import backtest, vol_target  # noqa: E402
-from src.metrics import max_drawdown, summarise  # noqa: E402
+from src.metrics import max_drawdown  # noqa: E402
 
 ENTRY, DIRECTION, TFS = "ema", "asym", ["1d", "4h", "1h"]
 WARMUP = pd.Timestamp("2024-04-01", tz="UTC")   # load from before OOS so positions are warmed up
@@ -86,7 +85,7 @@ def main():
     print(f"  wrote reports/trend/trend_oos_trade_log.csv ({len(log)} rows)")
 
     # ---- target verification on the three operating points ----
-    print(f"\n=== performance-target check (max DD ≤ 15%, worst month ≥ −6%) ===")
+    print("\n=== performance-target check (max DD ≤ 15%, worst month ≥ −6%) ===")
     books = {}
     for name, fn in [("EMA asym", "trend_book_asym.parquet"),
                      ("Blend long-only", "trend_book_blend_long_only.parquet")]:

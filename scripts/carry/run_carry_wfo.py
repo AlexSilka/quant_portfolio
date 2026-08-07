@@ -11,14 +11,14 @@ the edge a broad plateau?) and the peak-picking (overfit) Sharpe as the dishones
     python scripts/carry/run_carry_wfo.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CARRY_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402

@@ -9,16 +9,18 @@ the panel is exactly the tradable universe. Run once; the sweeps read the cache.
 """
 import sys
 import warnings
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CACHE_DIR, RAW_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("xs.panels")
 
 START, END = "2020-01", "2026-07"
 OUT = CACHE_DIR / "xs"
@@ -52,7 +54,8 @@ def build_crypto(interval: str) -> None:
     for s in crypto_symbols(interval):
         try:
             px = load_klines(s, interval, START, END, market="um")
-        except Exception:
+        except Exception as e:
+            log.warning("xs: skipping crypto %s (%s)", s, e)
             continue
         if len(px) < 300:
             continue
@@ -71,7 +74,8 @@ def build_equity() -> None:
         for s in syms:
             try:
                 px = load_equity_daily(s, start="2012-01-01")
-            except Exception:
+            except Exception as e:
+                log.warning("xs: skipping equity %s (%s)", s, e)
                 continue
             if len(px) < 300:
                 continue
@@ -106,7 +110,8 @@ def build_equity_intraday(intervals=("4h", "1h")) -> None:
             for s in syms:
                 try:
                     px = load_bars(_to_td_symbol(s), _TD_ITV[tf], "2020-01-01", "2026-08-05")
-                except Exception:
+                except Exception as e:
+                    log.warning("xs: skipping equity-intraday %s (%s)", s, e)
                     continue
                 if len(px) < 500:
                     continue
@@ -128,7 +133,6 @@ def _dump(tag: str, close: dict, advol: dict | None) -> None:
 
 
 def main() -> None:
-    import sys
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     if which in ("all", "crypto"):
         for itv in ["1d", "4h", "1h", "15m", "5m"]:

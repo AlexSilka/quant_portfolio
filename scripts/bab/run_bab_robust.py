@@ -16,13 +16,13 @@ decay). The rebalance grid reports net Sharpe + a gross→net cost decomposition
 from __future__ import annotations
 
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import BAB_DIR, CACHE_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import BAB_DIR, CACHE_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
 from src.sleeves.xsect import top_n_liquid, vol_target, xs_backtest  # noqa: E402

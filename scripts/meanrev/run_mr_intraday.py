@@ -7,12 +7,12 @@ reversal, net of costs. P&L is aggregated to daily and annualised at 252.
     python scripts/meanrev/run_mr_intraday.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.data.twelvedata import load_bars  # noqa: E402

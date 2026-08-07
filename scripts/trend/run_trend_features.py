@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_ml import models  # noqa: E402
 from scripts.trend.run_trend_ml import CORE10, TFS_ML, trend_sleeve_data  # noqa: E402

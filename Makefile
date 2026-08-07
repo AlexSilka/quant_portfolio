@@ -1,12 +1,12 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master discovery figures cscv wf features sessions ledger
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master discovery figures cscv wf features sessions ledger lint
 
 PY := .venv/bin/python
 
 setup:
 	python3.12 -m venv .venv
 	.venv/bin/pip install -U pip
-	.venv/bin/pip install -e .
-	@echo "macOS: if xgboost/lightgbm fail to load, run: brew install libomp"
+	.venv/bin/pip install -e ".[dev]"
+	@echo "macOS: if lightgbm fails to load, run: brew install libomp"
 
 # One-command headline: discovery -> ML overlay -> MASTER portfolio (risk-parity over the eight
 # families' committed honest series) -> dashboard. Rebuild a family's series with its target below.
@@ -146,6 +146,10 @@ smoke:
 # Known-answer invariants for the headline-integrity math (CSCV/PBO, 4x Monte-Carlo, DD-ladder, borrow).
 smoke-math:
 	$(PY) scripts/smoke_math.py
+
+# Lint gate: the curated ruff ruleset (pyflakes + syntax errors) from pyproject.toml [tool.ruff].
+lint:
+	.venv/bin/ruff check .
 
 clean:
 	find reports -type f \( -name '*.parquet' -o -name '*.png' \) -delete

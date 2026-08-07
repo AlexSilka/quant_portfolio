@@ -19,12 +19,12 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor  # noqa: E402
 from sklearn.linear_model import Lasso, Ridge  # noqa: E402

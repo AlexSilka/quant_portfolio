@@ -10,12 +10,12 @@ the master portfolio alongside momentum/carry.
 """
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from src.config import OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402

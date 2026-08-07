@@ -9,14 +9,14 @@ not depend on that choice (§10: "show results do not depend on that choice").
     python scripts/walk_forward.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import BOOK_DIR, REPORTS_DIR  # noqa: E402
+from src.config import BOOK_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 
 PPY = 365
@@ -62,7 +62,7 @@ def main():
     wf.rename("ret").to_frame().to_parquet(BOOK_DIR / "walk_forward.parquet")
     s = summarise(wf, PPY)
     shs = [v["sharpe_ann"] for v in results.values()]
-    print(f"\nPRIMARY walk-forward (anchored, annual), 2016-2026 OUT-OF-SAMPLE:")
+    print("\nPRIMARY walk-forward (anchored, annual), 2016-2026 OUT-OF-SAMPLE:")
     print(f"  Sharpe {s['sharpe_ann']:+.2f}  maxDD {s['max_dd']:+.1%}  months+ {s['months_in_profit']:.0%}  "
           f"total {s['total_return']:+.0%}")
     print(f"Sharpe across the 4 (window x cadence) configs: {min(shs):+.2f}..{max(shs):+.2f}  "

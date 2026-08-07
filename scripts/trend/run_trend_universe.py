@@ -9,7 +9,6 @@ If past winners do not beat the full book out-of-sample, cherry-picking is overf
 """
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

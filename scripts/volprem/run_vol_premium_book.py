@@ -24,7 +24,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CARRY_DIR, REPORTS_DIR, TREND_DIR, VOLPREM_DIR, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402

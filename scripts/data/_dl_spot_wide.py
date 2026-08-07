@@ -2,8 +2,9 @@
 spot leg for every liquid perp -> enables basis / cash-and-carry, spot-perp relative value, and
 spot-only strategies on the wide, survivorship-honest universe. Names without a spot listing (index
 perps, 1000-scaled memes) 404 and are skipped."""
-import sys, warnings
-warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import RAW_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines
 fdir = RAW_DIR / "futures/um/fundingRate"

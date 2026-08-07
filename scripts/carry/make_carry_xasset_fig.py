@@ -5,7 +5,6 @@ carry premium is real everywhere, but only in crypto does the price leg help ins
     python scripts/carry/make_carry_xasset_fig.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,8 +12,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
-from src.config import CARRY_DIR, FIGURES_DIR, REPORTS_DIR  # noqa: E402
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+from src.config import CARRY_DIR, FIGURES_DIR  # noqa: E402
 plt.rcParams.update({"figure.dpi": 120, "font.size": 9, "axes.grid": True, "grid.alpha": 0.25})
 
 # per asset: (carry_accrual %/yr, price-leg %/yr, price-leg Sharpe, net Sharpe, placebo pct).

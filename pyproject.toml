@@ -17,3 +17,19 @@ dependencies = { file = ["requirements.txt"] }
 # Editable-install (`pip install -e .`) so modules import cleanly without a `sys.path.insert` bootstrap.
 [tool.setuptools.packages.find]
 include = ["src*", "scripts*"]
+
+# Dev-only tooling (not needed to run the pipeline): `pip install -e ".[dev]"`.
+[project.optional-dependencies]
+dev = ["ruff==0.16.1"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# Curated, high-signal gate: pyflakes (unused imports/undefined names, redefinitions, bad f-strings)
+# plus syntax errors. Stylistic rulesets are deliberately off — this is research code where import
+# placement is intentional (matplotlib.use()/warnings config must precede the `src.*` imports, hence
+# the `# noqa: E402` breadcrumbs). `make lint` runs this.
+select = ["F", "E9"]
+ignore = ["F841"]  # unused locals: mostly intentional tuple-unpacking (a, _ = f()); left for readability

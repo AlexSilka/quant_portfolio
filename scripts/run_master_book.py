@@ -26,7 +26,6 @@ series, and each family's add/remove delta.
 """
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -34,7 +33,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from src.config import CAPITAL_USD, OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402

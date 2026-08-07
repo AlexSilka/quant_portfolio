@@ -28,11 +28,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 import scripts.run_master_book as mb  # noqa: E402  — reuse the EXACT canonical assembly functions
 from src.metrics import (summarise, monthly_returns, deflated_sharpe,  # noqa: E402
-                         expected_max_sharpe)
+                         )
 from src.config import LAB_DIR  # noqa: E402
 
 PPY = mb.PPY

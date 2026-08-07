@@ -17,7 +17,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise, monthly_returns  # noqa: E402
 
@@ -155,11 +156,11 @@ def main():
     fails = [k for k in ["S", "M", "W", "D", "K"] if not p_best[k]]
     print("\n=== VERDICT ===")
     print(f"  Best candidate book reaches {best_n}/5 (baseline 3/5). Still failing: {fails}.")
-    print(f"  A genuinely-new, honest, decorrelated sleeve at risk parity does NOT robustly move the")
-    print(f"  book to 5/5: the two failing targets (M, K) are driven by crypto-idiosyncratic losing")
-    print(f"  months with no positive-carry macro hedge, and any 15%-vol sleeve adds enough noise to")
-    print(f"  tip the book's marginal winning months. See docs/strategies/MFTREND.md for the full")
-    print(f"  multi-candidate evidence and the oracle feasibility bound.")
+    print("  A genuinely-new, honest, decorrelated sleeve at risk parity does NOT robustly move the")
+    print("  book to 5/5: the two failing targets (M, K) are driven by crypto-idiosyncratic losing")
+    print("  months with no positive-carry macro hedge, and any 15%-vol sleeve adds enough noise to")
+    print("  tip the book's marginal winning months. See docs/strategies/MFTREND.md for the full")
+    print("  multi-candidate evidence and the oracle feasibility bound.")
 
 
 if __name__ == "__main__":

@@ -7,12 +7,11 @@ sleeve, net of liquidity-aware costs and funding, on a held-out test split with 
     python scripts/run_sleeve.py
 """
 import warnings
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import lightgbm as lgb  # noqa: E402
 

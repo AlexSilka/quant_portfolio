@@ -10,7 +10,6 @@ only fetches what is genuinely missing. Progress is printed per symbol.
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 from src import bo_common as bo  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402

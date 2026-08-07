@@ -4,9 +4,9 @@ Trend edge lives in the fat tail of big moves; a fixed-horizon exit throws it aw
 position is simply the sign of the EMA cross, held until it flips, net of costs + funding.
 """
 import warnings
-from pathlib import Path
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest  # noqa: E402
 from src.config import CAPITAL_USD  # noqa: E402

@@ -4,9 +4,10 @@ The 15m panel (230k bars × 51 names) is too large for the full grid, so this te
 handful of monthly-cadence (low-turnover) constructions plus a random-signal placebo — enough to
 answer "alive or dead at 15m" and complete the timeframe coverage.
 """
-import sys, warnings
+import warnings
 import numpy as np, pandas as pd
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import CACHE_DIR, SEED  # noqa: E402
 from src.metrics import summarise
 from src.sleeves.xsect import mom, risk_adj_mom, blend_rank, xs_backtest, vol_target

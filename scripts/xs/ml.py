@@ -16,12 +16,12 @@ training, all prediction strictly walk-forward / purged out-of-sample):
 """
 import sys
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor  # noqa: E402
 from sklearn.linear_model import LogisticRegression, Ridge  # noqa: E402
@@ -29,7 +29,7 @@ import lightgbm as lgb  # noqa: E402
 
 from src.config import CACHE_DIR, SEED, XS_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
-from src.sleeves.xsect import mom, risk_adj_mom, blend_rank, xs_backtest, vol_target  # noqa: E402
+from src.sleeves.xsect import mom, risk_adj_mom, xs_backtest, vol_target  # noqa: E402
 from src.sleeves.xsect_ml import (expanding_predict, predictions_to_panel,  # noqa: E402
                                   rank_features, regime_features, stack_xy)
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402

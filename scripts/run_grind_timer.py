@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import scripts.run_master_book as mb  # noqa: E402  (read-only reuse of canonical mechanics)
 from src.metrics import summarise, monthly_returns  # noqa: E402
 from src.config import LAB_DIR  # noqa: E402

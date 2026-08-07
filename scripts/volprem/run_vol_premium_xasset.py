@@ -9,14 +9,14 @@ premium), vol-targeted 15%, net of vega costs, t+2. Answers "where is this best 
     python scripts/volprem/run_vol_premium_xasset.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import REPORTS_DIR, SEED, VOLPREM_DIR, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import SEED, VOLPREM_DIR, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.cboe import load_cboe_vol  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402

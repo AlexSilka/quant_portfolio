@@ -1,8 +1,9 @@
 """Background: spot 1d klines from 2017 for the book's crypto universe — the deep history (2017-08+)
 that perp funding (2020+) lacks. Used to test whether a spot-native cross-sectional reversal proxy for
 carry's price-leg works on the pre-2020 window. Loader skips months before each coin's listing."""
-import sys, warnings
-warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import REPORTS_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines
 crypto = open(REPORTS_DIR / "crypto_universe.txt").read().strip().split(",")

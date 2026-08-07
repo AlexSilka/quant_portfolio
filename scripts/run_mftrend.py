@@ -26,7 +26,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise  # noqa: E402
 
@@ -76,7 +77,7 @@ def main():
     mft.to_frame().to_parquet(ROOT / "reports/lab/mftrend_sleeve.parquet")
     s = summarise(mft, PPY)
     mo = (1 + mft).resample("ME").prod() - 1
-    print(f"mftrend sleeve (broad managed-futures, 32 markets / 4 classes, 63/126/252 TSMOM):")
+    print("mftrend sleeve (broad managed-futures, 32 markets / 4 classes, 63/126/252 TSMOM):")
     print(f"  Sharpe {s['sharpe_ann']:+.2f}  maxDD {s['max_dd']:+.1%}  months+ {s['months_in_profit']:.0%}  "
           f"daily-skew {mft.skew():+.2f}  monthly-skew {mo.skew():+.2f}  "
           f"{mft.index.min().date()}..{mft.index.max().date()}")

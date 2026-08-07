@@ -21,12 +21,12 @@ from __future__ import annotations
 import argparse
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import scripts.trend.trend_common as T  # noqa: E402
 from scripts.trend.run_trend_book import sh  # noqa: E402
 from src.config import SEED  # noqa: E402

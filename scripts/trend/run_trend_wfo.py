@@ -18,14 +18,12 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 import scripts.trend.trend_common as T  # noqa: E402
 from scripts.trend.run_trend_book import equal_risk, sh, sleeve_returns  # noqa: E402
-from src.metrics import summarise  # noqa: E402
 
 # a broad trend-config grid for the sensitivity surface (all held-to-reversal, LS)
 GRID = (

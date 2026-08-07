@@ -18,14 +18,14 @@ Each cell reports net Sharpe (vol-targeted 15%, t+2, liquidity-aware cost) and t
 from __future__ import annotations
 
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CACHE_DIR, REPORTS_DIR, RESIDMOM_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CACHE_DIR, RESIDMOM_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
 from src.sleeves.xsect import (idio_mom, risk_adj_mom, top_n_liquid,  # noqa: E402

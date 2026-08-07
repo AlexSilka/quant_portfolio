@@ -12,12 +12,12 @@ then confirm the sized portfolio stays under the mandate and save the integrated
 import warnings
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, REPORTS_DIR, TREND_DIR, VOLPREM_DIR  # noqa: E402
+from src.config import CARRY_DIR, TREND_DIR, VOLPREM_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from scripts.volprem.run_vol_premium_book import UNIVERSE, sleeve, book_from, vt, naive_dt, PPY_BOOK  # noqa: E402
 

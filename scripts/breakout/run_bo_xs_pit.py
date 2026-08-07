@@ -11,7 +11,6 @@ Reports STATIC vs PIT side by side so the selection bias is quantified, across t
 
     python scripts/breakout/run_bo_xs_pit.py
 """
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

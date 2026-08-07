@@ -1,6 +1,8 @@
 """Background: download spot 1d klines for the 50-name perp panel (for the delta-neutral
 cash-and-carry basis trade — needs spot leg to measure real basis risk, not assume a perfect hedge)."""
-import sys, warnings; warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.data.binance_bulk import load_klines
 CRYPTO = ["BTCUSDT","ETHUSDT","BNBUSDT","XRPUSDT","SOLUSDT","TRXUSDT","DOGEUSDT","ZECUSDT",
  "ADAUSDT","XMRUSDT","LINKUSDT","XLMUSDT","BCHUSDT","LTCUSDT","HBARUSDT","1000SHIBUSDT",

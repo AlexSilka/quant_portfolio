@@ -2,7 +2,6 @@
 
     python scripts/smoke_test.py
 """
-from pathlib import Path
 
 
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402

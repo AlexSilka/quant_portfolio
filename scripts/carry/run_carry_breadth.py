@@ -9,18 +9,21 @@ illiquid tail (smaller coins have wider spreads); (c) per-year, so we see where 
     python scripts/carry/run_carry_breadth.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, RAW_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CARRY_DIR, RAW_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("carry.breadth")
 
 PPY, TVOL, SEED, CB = 365, VOL_TARGET_ANNUAL, SEED, 6.0
 START, END = "2020-01", "2026-07"
@@ -49,7 +52,8 @@ def load_all():
         try:
             px = load_klines(s, "1d", START, END, market="um")
             f = load_funding(s, START, END)["last_funding_rate"]
-        except Exception:
+        except Exception as e:
+            log.warning("carry: skipping %s (%s)", s, e)
             continue
         if len(px) < 120 or not len(f):
             continue

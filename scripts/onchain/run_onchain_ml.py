@@ -22,12 +22,12 @@ from __future__ import annotations
 
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import ONCHAIN_DIR, REPORTS_DIR  # noqa: E402
 
 import lightgbm as lgb  # noqa: E402
@@ -44,7 +44,7 @@ from src.sleeves.xsect_ml import (expanding_predict, predictions_to_panel,  # no
                                   rank_features, regime_features, stack_xy)
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 from scripts.onchain.run_onchain import (_book, _load_onchain, _load_prices, _sh, _winsor,  # noqa: E402
-                                 build_signals, COST, PPY, SEED, TVOL)
+                                 build_signals, PPY, SEED)
 
 REP = REPORTS_DIR
 FIG = REP / "figures"

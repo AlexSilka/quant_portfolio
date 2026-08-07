@@ -6,7 +6,6 @@ If any feature peeked at the future, the truncated values would differ.
 
     python scripts/smoke_features.py
 """
-from pathlib import Path
 
 import numpy as np
 

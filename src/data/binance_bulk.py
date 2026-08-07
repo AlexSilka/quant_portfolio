@@ -24,6 +24,9 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import RAW_DIR  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("data.binance")
 
 BASE = "https://data.binance.vision/data"
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
@@ -123,7 +126,7 @@ def load_klines(symbol: str, interval: str, start: str, end: str | None = None,
         if raw is None:
             mpath.parent.mkdir(parents=True, exist_ok=True)
             if _recent(tag):
-                print(f"[warn] {market} klines {symbol} {interval} {tag}: not published yet (404)")
+                log.warning("%s klines %s %s %s: not published yet (404)", market, symbol, interval, tag)
             else:
                 mpath.touch()  # pre-listing / permanently absent — record and stop re-probing
             continue
@@ -166,7 +169,7 @@ def load_funding(symbol: str, start: str, end: str | None = None,
         if raw is None:
             mpath.parent.mkdir(parents=True, exist_ok=True)
             if _recent(tag):
-                print(f"[warn] funding {symbol} {tag}: not published yet (404)")
+                log.warning("funding %s %s: not published yet (404)", symbol, tag)
             else:
                 mpath.touch()  # pre-listing / permanently absent — record and stop re-probing
             continue

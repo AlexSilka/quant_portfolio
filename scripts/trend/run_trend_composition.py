@@ -12,9 +12,7 @@ each family's asset set follows its own edge map, not a shared one).
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 import scripts.trend.trend_common as T  # noqa: E402
@@ -89,7 +87,7 @@ def main():
     without_top = bsh([c for c in df.columns if c != top_col])
     crypto_only = bsh([c for c in df.columns if meta(c)[0] == "crypto"])
     equity_only = bsh([c for c in df.columns if meta(c)[0] == "equity"])
-    print(f"\nconcentration (task §7):")
+    print("\nconcentration (task §7):")
     print(f"  full book Sharpe {s['sharpe_ann']:+.2f}  |  minus top contributor ({top['symbol']} {top['tf']}) {without_top:+.2f}")
     print(f"  crypto-only {crypto_only:+.2f}  |  equity-only {equity_only:+.2f}  |  combined {s['sharpe_ann']:+.2f} "
           f"(cross-asset diversification)")

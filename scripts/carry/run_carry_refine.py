@@ -12,15 +12,14 @@ Levers (all buildable from Binance funding + perp close, no extra data):
     python scripts/carry/run_carry_refine.py
 """
 import warnings
-from collections import Counter
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, REPORTS_DIR, SEED  # noqa: E402
+from src.config import CARRY_DIR, SEED  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402

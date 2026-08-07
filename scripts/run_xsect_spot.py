@@ -10,12 +10,12 @@ correlation to the real perp x-sect. Honest checks: pre-2020 cross-section bread
     python scripts/run_xsect_spot.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402

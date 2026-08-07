@@ -9,12 +9,12 @@ Core-10 only, processed coin-by-coin so the 700k-bar 5m feature matrices never c
     python scripts/breakout/run_bo_fast_tf.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, OOS_START, models, oos_proba, sleeve_data, uniqueness_weights  # noqa: E402
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402

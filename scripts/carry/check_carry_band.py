@@ -6,11 +6,11 @@ parquets only) so the 829-symbol load never stalls on a network probe.
     python scripts/carry/check_carry_band.py
 """
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from scripts.carry.run_carry_breadth import PPY, SEED, run_carry, vt  # noqa: E402
 from src.config import RAW_DIR  # noqa: E402

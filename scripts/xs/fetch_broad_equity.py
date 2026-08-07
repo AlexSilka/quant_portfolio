@@ -13,11 +13,11 @@ import json
 import sys
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import CACHE_DIR  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 

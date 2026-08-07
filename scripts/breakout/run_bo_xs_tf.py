@@ -5,7 +5,6 @@ bars-per-day, returns resampled to daily so all timeframes are Sharpe-comparable
 
     python scripts/breakout/run_bo_xs_tf.py
 """
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

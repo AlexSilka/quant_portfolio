@@ -3,12 +3,12 @@
     python scripts/pairs/run_sector_pairs.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import REPORTS_DIR  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402

@@ -10,12 +10,12 @@ block-bootstrap MC-P5, deflated Sharpe at the trial count. Costs use the FUTURES
     python scripts/xs/spot.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src import config as cfg  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402

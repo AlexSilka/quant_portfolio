@@ -18,7 +18,6 @@ so the pipeline's own false-discovery rate on this construction is measurable.
 
     python scripts/breakout/run_bo_sweep.py
 """
-from pathlib import Path
 
 import pandas as pd
 

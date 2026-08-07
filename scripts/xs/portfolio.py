@@ -11,12 +11,12 @@ Finally it is stacked on the existing trend book to measure the diversification 
 """
 import json
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CACHE_DIR, SEED, TREND_DIR, XS_DIR  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
@@ -166,7 +166,7 @@ def main():
     both = pd.concat([trend.rename("trend"), xbook.rename("xsect")], axis=1).dropna()
     combo = both.mean(axis=1)
     st, sx, sc = (summarise(both["trend"], 365), summarise(both["xsect"], 365), summarise(combo, 365))
-    print(f"\n=== DIVERSIFICATION (trend book + x-sect book) ===")
+    print("\n=== DIVERSIFICATION (trend book + x-sect book) ===")
     print(f"  trend-only  Sharpe {st['sharpe_ann']:+.2f}  DD {st['max_dd']:+.1%}")
     print(f"  x-sect-only Sharpe {sx['sharpe_ann']:+.2f}  DD {sx['max_dd']:+.1%}")
     print(f"  50/50 combo Sharpe {sc['sharpe_ann']:+.2f}  DD {sc['max_dd']:+.1%}  "
@@ -188,7 +188,7 @@ def main():
                                axis=1)).dropna()
     su = summarise(uni_book, 365)
     mcu = bootstrap_sharpe(uni_book, 365, 1000, SEED)
-    print(f"\n=== ZERO-TUNING a-priori book (uniform textbook config) ===")
+    print("\n=== ZERO-TUNING a-priori book (uniform textbook config) ===")
     print(f"  Sharpe {su['sharpe_ann']:+.2f}  DD {su['max_dd']:+.1%}  months+ {su['months_in_profit']:.0%}  "
           f"MC-P5 {mcu.get('sharpe_p5', float('nan')):+.2f}")
 

@@ -16,7 +16,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.validation.cscv import pbo_cscv  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,7 +50,7 @@ def main():
     fig.tight_layout()
     (R / "figures").mkdir(exist_ok=True)
     fig.savefig(R / "figures" / "cscv.png", bbox_inches="tight", dpi=120)
-    print(f"artifacts -> reports/book/cscv_pbo.json · reports/figures/cscv.png")
+    print("artifacts -> reports/book/cscv_pbo.json · reports/figures/cscv.png")
 
 
 if __name__ == "__main__":

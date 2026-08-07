@@ -1,8 +1,9 @@
 """Background: expand the crypto universe. Download funding + 1d klines for a broad set of Binance
 USD-M perps (incl. delisted names in the archive) so cross-sectional carry can be tested point-in-time
 across a much wider, survivorship-honest cross-section. 1d + funding only (small); finer TFs later if needed."""
-import sys, warnings, urllib.request, urllib.parse, xml.etree.ElementTree as ET
-warnings.filterwarnings("ignore")
+import warnings, urllib.request, urllib.parse, xml.etree.ElementTree as ET
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.data.binance_bulk import load_funding, load_klines
 
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"

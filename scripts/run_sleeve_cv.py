@@ -8,12 +8,12 @@ stationary-bootstrap P5/P50/P95 bands.
     python scripts/run_sleeve_cv.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import lightgbm as lgb  # noqa: E402
 

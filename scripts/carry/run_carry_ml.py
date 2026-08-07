@@ -13,16 +13,16 @@ train, embargoed gap, predict the next block — no training on the future).
     python scripts/carry/run_carry_ml.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
 from sklearn.linear_model import Ridge, LogisticRegression
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CARRY_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402

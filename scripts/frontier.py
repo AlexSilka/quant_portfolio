@@ -25,7 +25,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise, monthly_returns  # noqa: E402
 from src.config import LAB_DIR  # noqa: E402
@@ -179,9 +180,9 @@ def main():
     }, indent=2, default=float))
     print("\n=== VERDICT ===")
     print(f"  Over {N} honest weightings (risk parity relaxed) + the risk-parity diversifier points,")
-    print(f"  ZERO reach 5/5 and ZERO land in the M>=80% & W>=-6% & K<=2 box. The 5/5 target set is")
-    print(f"  over-constrained on this book: M and W are a monotone trade-off, and K needs a")
-    print(f"  positive-skew source absent from the data. Honest ceiling = 3/5.")
+    print("  ZERO reach 5/5 and ZERO land in the M>=80% & W>=-6% & K<=2 box. The 5/5 target set is")
+    print("  over-constrained on this book: M and W are a monotone trade-off, and K needs a")
+    print("  positive-skew source absent from the data. Honest ceiling = 3/5.")
     print("  artifacts -> reports/lab/frontier_sweep.csv, reports/lab/frontier_summary.json, reports/figures/frontier.png")
     print("FRONTIER OK")
 

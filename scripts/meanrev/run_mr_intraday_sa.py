@@ -8,11 +8,11 @@ Reuses the cached 1h/15m bars from run_mr_intraday.py (no new API calls).
     python scripts/meanrev/run_mr_intraday_sa.py
 """
 import warnings
-from pathlib import Path
 
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.metrics import summarise  # noqa: E402

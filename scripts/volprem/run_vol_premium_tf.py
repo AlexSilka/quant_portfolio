@@ -9,14 +9,14 @@ Reports Sharpe, drawdown, annualised turnover and cost-fragility (base vs 3x veg
     python scripts/volprem/run_vol_premium_tf.py
 """
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import REPORTS_DIR, VOLPREM_DIR  # noqa: E402
+from src.config import VOLPREM_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
 from src.metrics import summarise  # noqa: E402

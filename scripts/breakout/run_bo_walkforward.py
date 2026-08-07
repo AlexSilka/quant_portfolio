@@ -13,7 +13,6 @@ Two independent walk-forwards:
     python scripts/breakout/run_bo_walkforward.py [config_id]
 """
 import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
