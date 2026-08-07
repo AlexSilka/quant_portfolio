@@ -287,6 +287,24 @@ long-gamma legs (already in the book) address that. The **carry** overlay's +1.2
 contrast, is construction-specific: it does not reproduce on the honest carry leg (+1.27→+1.01) and is flat on
 every target at book level.
 
+**Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
+the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence
+gate to all eight legs a-priori nets ±0.1 OOS Sharpe — noise — and hard-gating buys OOS Sharpe only by cutting
+months-in-profit to 62–69% (the wrong axis); the sign flips with the classifier (logistic +0.22 vs LightGBM
+−0.09), the signature of noise. The cherry-pick (gate only where it helps standalone) reads +0.12 full-sample but
+**does not survive out-of-sample** (+0.04) — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
+the meta-model optimises a binary win/loss log-loss → *precision*, not Sharpe/PnL (a +0.1% and a +50% win share
+the label `1`), so it is misaligned by construction — which is why it is flat on fat-tailed trend (OOS AUC 0.505).
+Replacing it with magnitude-aware sizing (regress the forward return, size by expected magnitude) is also within
+noise (+0.03–0.04 OOS). **(3) Direct-Sharpe allocation** is already tested (§5c) and overfits (trailing
+mean-variance buys Sharpe on a 3× drawdown tail). The implementation is textbook AFML meta-labelling over a
+**rule** primary — its correct niche (a meta-model adds no information to an ML primary; it earns its keep
+filtering a high-recall rule, not manufacturing alpha) — and the literature agrees with the measurement: on
+low-signal data ML's honest value is risk / regime / sizing / precision, not alpha, and the dominant failure mode
+is overfitting (deflated Sharpe, CSCV/PBO). The binding gap (months-in-profit) is **structural** — the
+short-gamma legs crash together — so no re-objectiving of the ML manufactures the missing consistency; the
+long-gamma crisis / global-macro legs already in the book are the honest fix.
+
 ## 6. Ceiling assessment & honest limits
 
 - **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.66** net (drawdown −8.1%,
