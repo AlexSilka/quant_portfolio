@@ -156,6 +156,31 @@ the 18, which stays positive only because these catastrophes fall on *different*
   *no bought tail hedge* — the book eats the full −78% tail — **not** that costs are unmodelled. The
   binding constraints are the systemic tail and single-name variance-swap **capacity**, not per-trade cost.
 
+## 3b. Capacity — the real binding constraint
+
+Cost is not the limit (above); **capacity is**. A short-variance book is sized in **vega notional** ($
+P&L per 1 vol-point), and the 18 legs sit in very different markets:
+
+| leg class | legs | vega depth per roll (order of magnitude) | source |
+|---|---|---|---|
+| equity **index** | VIX / VXN / VXD / RVX / VXEFA | **deep** — >$2 bn index-variance vega outstanding ($1.5 bn S&P); a desk quotes ~$1–5 M | [CFTC / Mixon](https://www.cftc.gov/sites/default/files/idc/groups/public/@economicanalysis/documents/file/oce_volderivatives.pdf) |
+| **single name** | VXAPL / VXAZN / VXGOG / VXGS / VXIBM | **thin** — "very few participants outside dispersion"; ~$50–200 k | [J.P. Morgan](https://derivativesacademy.com/storage/uploads/files/modules/resources/1702207867_allen_einchcomb_granger_jpm_2006_variance_swaps.pdf) |
+| **exotic ETF-vol** | VXEEM / VXEWZ / VXFXI, OVX, GVZ, VXSLV, **VXGDX**, VXTLT | **barely a variance market** — replicated with listed ETF options, ~$10–50 k, wider | — |
+
+Because the book is **equal-weight**, it needs ~equal vega in every leg, so capacity is set by the
+**thinnest** legs — and half the book (single-name + exotic ETF-vol) sits in that thin-to-nonexistent
+tail. Order of magnitude, at the modelled spreads and assuming the thin legs absorb ~$10–50 k vega/roll:
+the ~5 deep **index** legs alone would scale to **$100 M+**, but the **full 18-leg equal-weight
+construction is capped at roughly the low tens of $M** before the thin legs can no longer be filled —
+against a **$500 k** demonstration book (`CAPITAL_USD`), so there is real but *not* institutional-scale
+headroom. Past that you must **drop to the deep index legs**, which shrinks the very diversification that
+softens the −78% tail: a *bigger* tail at *bigger* size.
+
+The ×3-spread stress (§3) buys headroom for "the thin legs cost more than modelled"; it does **not** buy
+headroom for "the market isn't there at size." Honest bottom line: the standalone Sharpe is a
+**research-scale** number — the deployable form at institutional size is *fewer, deeper legs plus a real
+option-smile tail hedge*, i.e. materially lower Sharpe, stated not hidden.
+
 ## 4. Portfolio value-add
 
 VRP is cleanly orthogonal — short gamma pays when trend bleeds in calm, and trend's long gamma hedges

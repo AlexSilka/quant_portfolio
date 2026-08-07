@@ -41,6 +41,31 @@ edge map + dashboard.
   genuinely unseen data, not the full-sample figure. The surviving edge is crypto-heavy and the Sharpe is
   volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
 
+## Verify the headline (~15 min)
+
+Everything under `reports/` is committed, so each command reads the committed series and recomputes —
+no key, offline, seconds each:
+
+| command | what it recomputes | expected |
+|---|---|---|
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.52**, OOS **2.64**, −8.1% max-DD, 8 families |
+| `make cscv` | the overfit / multiple-testing control | **PBO 32%**, in-sample-best +0.09 → OOS +0.00 /bar |
+| `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
+| `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
+
+Re-running `make master` then `git diff reports/master_book_summary.json` shows **no change** —
+byte-for-byte reproducibility. The Sharpe is high because the book **selects no single sleeve** (the
+best sleeve's deflated Sharpe ≈ 0 at N = 1,279): it stacks eight decorrelated premia (mean ρ ≈ 0.06).
+Every Sharpe is annualised by actual obs/yr (not a flat 365), and the short-vol leg is net of
+per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
+
+**Where the edge is _not_** (kept, not hidden): cross-sectional reversal, stat-arb pairs, calendar/session,
+lottery/skew and free-data on-chain were tested and rejected (REPORT §7). **Where the risk is:**
+vol-premium is ~52% of P&L on a real −78% tail (strip it → Sharpe **1.75**); the surviving edge is
+crypto-heavy; the short-vol book's thin single-name / exotic legs cap deployable size
+([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); and daily-annualised 3.52 is ~2.68 on a
+calendar-robust monthly basis.
+
 ## Setup
 
 ```bash
