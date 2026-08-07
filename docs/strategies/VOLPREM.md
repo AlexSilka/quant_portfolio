@@ -147,6 +147,14 @@ the 18, which stays positive only because these catastrophes fall on *different*
   not the alpha, which is why it survives (and even prefers) delay.
 - **Cost:** base +0.64, 3× +0.57, **break-even ≈ 16 vol pts/roll (~22× base)**. The premium dwarfs a
   realistic vega spread — cost is not the binding constraint.
+- **Book cost robustness — the shipped number is NET of option cost, not gross** (18-leg book,
+  `reports/volprem/volprem_cost_robustness.csv`). Every leg is charged a per-underlying vega half-spread
+  (`COST_BY_CLASS`: index **1.0**, single-name **2.5**, EM/commodity **2.0** vol-pts/roll — at/above the
+  published ~0.5-vega index / 1–2.5-vega single-name range, J.P. Morgan / Risk.net). Those spreads already
+  cost **~0.4 Sharpe** (gross ×0 **4.08** → shipped ×1 **3.72** @252), and the edge **survives far wider
+  execution**: ×2 **3.33**, ×3 **2.94**, ×5 **2.16**. So `var_cap=1e9, wing_markup=0` (**"naked"**) means
+  *no bought tail hedge* — the book eats the full −78% tail — **not** that costs are unmodelled. The
+  binding constraints are the systemic tail and single-name variance-swap **capacity**, not per-trade cost.
 
 ## 4. Portfolio value-add
 

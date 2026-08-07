@@ -70,8 +70,10 @@ FAMILIES = [
     # single names, international, commodities incl. gold-miners VXGDX, rates; from 2005). Crypto, FX, and
     # discontinued energy VXXLE are excluded on frozen ex-ante rules (crypto's intraday path is unhedgeable
     # for short-vol; free EURUSD OHLC is corrupt; VXXLE ended 2022), not on Sharpe — and adding free vol
-    # indices lifts headline Sharpe but not the systemic -78% tail. Honest naked series (NOT the capped
-    # fake-Sharpe); realised leg is OHLC (path+gap),
+    # indices lifts headline Sharpe but not the systemic -78% tail. Honest series, NET of per-leg vega
+    # spreads (COST_BY_CLASS index 1.0 / single 2.5 vol-pts/roll, realistic-to-conservative; the x0->x1
+    # gap in reports/volprem/volprem_cost_robustness.csv IS that charged cost). "Naked" (var_cap=1e9) =
+    # no bought tail hedge (full -78% tail), NOT costless. Realised leg is OHLC (path+gap),
     # so its standalone Sharpe (~3.6) sits on a real -78% systemic-vol tail / -18 skew — it earns its slot
     # by decorrelation, and its own tail argues for sitting at or below risk parity, not above. docs/strategies/VOLPREM.md.
     ("volprem", "volprem/volprem_book.parquet", "ret"),
