@@ -11,6 +11,10 @@ out-of-sample block (2024-07 →) **Sharpe 2.64**, meeting **4 of 5** brief targ
 crypto-heavy and volprem-anchored (short-vol, ~half of book P&L, on a real tail) — both stated and
 quantified in [REPORT.md](REPORT.md).
 
+**▶ Live interactive dashboard:** https://claude.ai/code/artifact/231e7947-7022-44cd-ac2e-967f799ef48f
+— hosted and public: equity curves, drawdown, monthly heatmap, rolling 12-month Sharpe, exposure &
+turnover, sleeve correlation matrix and the edge map. (Same page rendered locally: [reports/dashboard.html](reports/dashboard.html).)
+
 - **Approach & rationale:** [docs/APPROACH.md](docs/APPROACH.md)
 - **Architecture & build sequence:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
