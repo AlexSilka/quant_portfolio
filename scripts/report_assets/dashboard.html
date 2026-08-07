@@ -1,0 +1,57 @@
+<title>Cross-Asset Systematic Book — Master Portfolio</title>
+<style>
+{css}
+</style>
+<div class="wrap">
+<div class="eyebrow">Quant research &middot; cross-asset systematic portfolio</div>
+<h1>The master book &mdash; risk-parity over {n_families} decorrelated families</h1>
+<p class="sub">{n_families} structurally distinct families &mdash; {fam} &middot; each
+family developed and validated in its own deep-dive, then combined at risk parity (vol-matched to a common target,
+equal-weight, <b>no performance-based selection</b>) &middot; net of costs on ${cap_k}k &middot; reported over
+{report_window}. Each family contributes where it is live; the crypto-perp legs (carry, breakout) join in 2020.
+Hover any chart.</p>
+<div class="kpis">
+  <div class="kpi accent"><div class="label">Annualised return</div><div class="val">{cagr}</div><div class="note">CAGR, net of costs &middot; {report_window}</div></div>
+  <div class="kpi accent"><div class="label">Total return</div><div class="val">{total_return}</div><div class="note">${cap_k}k &rarr; ${final_value_m}M</div></div>
+  <div class="kpi accent"><div class="label">Net P&amp;L on ${cap_k}k</div><div class="val">+${net_pnl_m}M</div><div class="note">net of all modelled costs</div></div>
+</div>
+{sc}
+{sc_note}
+<p class="valline gap">Validation &mdash; out-of-sample and structural, not in-sample fit:<br>
+Monte-Carlo (block-bootstrap, P5/50/95) &mdash; Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95} &middot; positive in {pos_years} of {n_years}&nbsp;years &middot;
+mean cross-family correlation {mean_corr} (~0 by construction) &middot; remove the strongest single leg ({top_family}) and the
+book still runs at Sharpe {top_removed}. No family is chosen on performance &mdash; each enters at equal risk, so the headline is
+diversification, not a fitted pick.</p>
+<div class="grid">
+  <figure class="card s6"><figcaption>Master book equity (${cap_k}k base, log &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
+  <figure class="card s6"><figcaption>Per-family equity + master book (log &middot; hover a line)</figcaption>{psleq}</figure>
+  <figure class="card s6"><figcaption>Monthly return heatmap</figcaption>{month}</figure>
+  <figure class="card"><figcaption>Drawdown</figcaption>{dd}</figure>
+  <figure class="card"><figcaption>Rolling 12-month Sharpe</figcaption>{roll}</figure>
+  <figure class="card"><figcaption>Per-year Sharpe</figcaption>{year}</figure>
+  <figure class="card"><figcaption>Stress windows (§10) — isolated performance</figcaption><table><tr><th>window</th><th>Sharpe</th><th>return</th><th>max DD</th></tr>{stress}</table></figure>
+  <figure class="card"><figcaption>Per-quarter Sharpe (§10)</figcaption>{quarter}</figure>
+  <figure class="card"><figcaption>Marginal contribution (§7) — Sharpe / max-DD / months-in-profit as families join (best Sharpe {marg_best})</figcaption>{marg}</figure>
+  <figure class="card s6"><figcaption>Per-family contribution — standalone vs the book (§7/§12)</figcaption><table><tr><th>family</th><th>standalone Sharpe</th><th>standalone max DD</th><th>% of P&amp;L</th><th>corr &rarr; book</th><th>book w/o</th><th>&Delta; Sharpe</th></tr>{famtbl}</table></figure>
+  {famperiods}
+  <figure class="card s6"><figcaption>Cross-family correlation &amp; its stability (§7) &mdash; rows = columns, same order &middot; hover for value</figcaption>{corr}</figure>
+  {edge_map}
+  {ops}
+  {timeframe}
+  {feature}
+  {param}
+  {honesty}
+</div>
+<div class="foot"><b>Construction (Task §2):</b> eight strategy families, each frozen and validated in its own deep-dive, are
+re-scaled to a common ~15% vol on a trailing (point-in-time, lagged) estimate and equal-weighted &mdash; risk parity with
+<b>no performance-based selection</b>. The reported window is {report_window}; families contribute where live, so 2011&ndash;2019
+runs on trend / vol-premium / cross-sectional and the crypto-perp legs (carry, breakout) join in 2020. On the fully
+cross-asset window (2020+) the book is <b>Sharpe {ca_sharpe}, CAGR {ca_cagr}</b>.<br><br>
+<b>Honest reading of the headline:</b> the {sharpe_ann} book Sharpe is dominated by the short-vol / variance-risk-premium
+leg, whose standalone Sharpe is high but sits on a real systemic-vol tail &mdash; remove it and the book runs at Sharpe
+{top_removed}. That is the point of the construction: at mean cross-family correlation {mean_corr} the families barely overlap,
+so the book earns its robustness from <b>diversification</b>, not from any single leg or any fitted selection. Each family
+runs uniformly across its whole universe (no per-asset mining); fixed seeds; no held-out block tuned against.</div>
+<div class="tip" id="tip"></div></div>
+<script>const LINES={lines_json};
+{js}</script>

@@ -1,0 +1,11 @@
+lever,sharpe,mc_p5,max_dd,months+,turnover
+baseline,1.21,0.58,-0.22,0.7,1230
+weight=inv_vol,1.25,0.66,-0.24,0.68,1361
+weight=signal,0.61,0.04,-0.23,0.56,1337
+signal=macd,-0.21,,-0.44,0.41,3408
+signal=voladj,1.59,1.01,-0.17,0.63,1314
+buffer=0.02,1.23,0.58,-0.22,0.7,1222
+buffer=0.05,1.23,0.59,-0.22,0.67,1207
+rebalance=3,1.21,0.6,-0.22,0.63,801
+beta_hedge,1.27,0.6,-0.2,0.65,1230
+REFINED (inv_vol+buffer+beta),1.47,0.83,-0.18,0.68,1246

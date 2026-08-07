@@ -1,0 +1,13 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+data/raw/
+data/cache/
+*.log
+*.egg-info/
+
+# Employer's confidential test brief — kept out of the public repo
+docs/TEST_TASK.docx

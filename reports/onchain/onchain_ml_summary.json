@@ -1,0 +1,67 @@
+{
+  "linear_baseline": {
+    "in_sample": 0.4,
+    "purged_wf_oos": -0.64
+  },
+  "ml_ranker_best_onchain": {
+    "config": "extratrees_onchain_21",
+    "oos_sharpe": 0.205
+  },
+  "ml_ranker_best_price": {
+    "config": "extratrees_price_21",
+    "oos_sharpe": 1.017
+  },
+  "onchain_beats_price": false,
+  "best_book_alpha_over_price": {
+    "alpha_ann": 0.036,
+    "t": 0.52
+  },
+  "feature_importance_onchain_share": 0.431,
+  "feature_importance_top8": {
+    "px_vol_60": 294,
+    "px_mom_120": 255,
+    "oc_nvm_z": 193,
+    "px_beta_60": 152,
+    "px_radj_120": 143,
+    "oc_tx_per_adr": 136,
+    "px_mom_180": 131,
+    "oc_nvm_log": 123
+  },
+  "best_book": {
+    "config": "extratrees_price_21",
+    "oos_sharpe": 1.017,
+    "mc_p5": -0.30373305811222034,
+    "deflated_sharpe": 0.059,
+    "n_trials": 21
+  },
+  "all_trials_oos_sharpe": {
+    "ridge_onchain_21": -0.035,
+    "ridge_price_21": 0.125,
+    "ridge_both_21": 0.524,
+    "rf_onchain_21": -0.567,
+    "rf_price_21": 0.674,
+    "rf_both_21": -0.233,
+    "extratrees_onchain_21": 0.205,
+    "extratrees_price_21": 1.017,
+    "extratrees_both_21": 0.142,
+    "histgbm_onchain_21": 0.191,
+    "histgbm_price_21": 0.448,
+    "histgbm_both_21": 0.166,
+    "lightgbm_onchain_21": -0.202,
+    "lightgbm_price_21": 0.891,
+    "lightgbm_both_21": -0.5,
+    "logit_clf_onchain_21": 0.493,
+    "rf_clf_onchain_21": -0.343,
+    "lgbm_clf_onchain_21": -0.128,
+    "lightgbm_onchain_5_20": 0.118,
+    "lightgbm_onchain_21_37": -0.356,
+    "lightgbm_onchain_63_20": -0.199
+  },
+  "meta_gate": {
+    "base_sharpe": 0.4,
+    "gated_sharpe": 0.08,
+    "base_maxdd": -0.23,
+    "gated_maxdd": -0.177,
+    "frac_in_market": 0.26
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "portfolio": {
+    "sharpe_ann": 1.9215063050434131,
+    "sortino_ann": 2.548059310396607,
+    "max_dd": -0.035491403767207164,
+    "months_in_profit": 0.6647727272727273,
+    "psr_gt0": 0.999999999990957,
+    "total_return": 1.2169500615059818,
+    "n_obs": 4492
+  },
+  "mc": {
+    "sharpe_p5": 1.4568905302963702,
+    "sharpe_p50": 1.9175407251693914,
+    "sharpe_p95": 2.386630419614451,
+    "block_len": 2.8986180645665196,
+    "n_reps": 1000
+  },
+  "per_year": {
+    "2012": 0.82,
+    "2013": 3.05,
+    "2014": 1.26,
+    "2015": 0.6,
+    "2016": 0.81,
+    "2017": 3.61,
+    "2018": 0.42,
+    "2019": 1.79,
+    "2020": 2.61,
+    "2021": 3.72,
+    "2022": 0.59,
+    "2023": 3.26,
+    "2024": 3.22,
+    "2025": 1.61,
+    "2026": 0.71
+  },
+  "best_sleeve_dsr": 0.01858973978645087,
+  "n_trials": 1279,
+  "n_survivors": 54,
+  "placebo_fdr": 0.012509773260359656,
+  "families": {
+    "trend": 35,
+    "breakout": 15,
+    "carry": 2,
+    "mean_reversion": 1,
+    "cross_sectional": 1
+  },
+  "survivors": [
+    "SOLUSDT_1h_trend",
+    "DOGEUSDT_1h_trend",
+    "ADAUSDT_1h_trend",
+    "1000PEPEUSDT_1h_trend",
+    "BTCUSDT_4h_trend",
+    "ETHUSDT_4h_breakout",
+    "BNBUSDT_4h_trend",
+    "DOGEUSDT_4h_trend",
+    "ADAUSDT_4h_trend",
+    "ADAUSDT_4h_breakout",
+    "HBARUSDT_4h_trend",
+    "SUIUSDT_4h_trend",
+    "NEARUSDT_4h_breakout",
+    "ALGOUSDT_4h_trend",
+    "VETUSDT_4h_trend",
+    "OPUSDT_4h_breakout",
+    "GRTUSDT_4h_trend",
+    "RUNEUSDT_4h_trend",
+    "BTCUSDT_1d_trend",
+    "BNBUSDT_1d_trend",
+    "XRPUSDT_1d_breakout",
+    "TRXUSDT_1d_trend",
+    "TRXUSDT_1d_carry",
+    "ADAUSDT_1d_breakout",
+    "AVAXUSDT_1d_breakout",
+    "NEARUSDT_1d_breakout",
+    "ETCUSDT_1d_breakout",
+    "QNTUSDT_1d_carry",
+    "INJUSDT_1d_breakout",
+    "TSLA_1h_trend",
+    "TSLA_1h_breakout",
+    "XOM_1h_breakout",
+    "CAT_1h_trend",
+    "QQQ_1h_breakout",
+    "AAPL_4h_breakout",
+    "NVDA_4h_trend",
+    "NVDA_4h_breakout",
+    "GOOGL_4h_trend",
+    "META_4h_trend",
+    "AVGO_4h_trend",
+    "MRK_4h_mean_reversion",
+    "NFLX_4h_trend",
+    "ORCL_4h_trend",
+    "QQQ_4h_trend",
+    "MSFT_1d_trend",
+    "NVDA_1d_trend",
+    "GOOGL_1d_trend",
+    "V_1d_trend",
+    "MA_1d_trend",
+    "AVGO_1d_trend",
+    "ADBE_1d_trend",
+    "SPY_1d_trend",
+    "QQQ_1d_trend",
+    "CRYPTO50_1d_cross_sectional"
+  ],
+  "funnel": [
+    [
+      "generated",
+      1279
+    ],
+    [
+      "Sharpe > 0.5",
+      93
+    ],
+    [
+      "+ Monte-Carlo P5 > 0",
+      54
+    ],
+    [
+      "entered portfolio",
+      54
+    ]
+  ],
+  "annual_turnover": 9.480233054959195,
+  "wf_oos_sharpe": 0.202
+}

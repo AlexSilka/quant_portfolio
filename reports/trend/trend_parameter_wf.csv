@@ -1,0 +1,12 @@
+symbol,wf_sharpe,insample_peak,mean_best_is,n_oos,asset_class
+BTCUSDT,0.34,0.81,1.08,2769,crypto
+ETHUSDT,0.39,0.84,1.07,2769,crypto
+SOLUSDT,0.51,0.88,1.44,1673,crypto
+BNBUSDT,0.83,0.97,0.95,2769,crypto
+XRPUSDT,0.48,0.77,1.22,2038,crypto
+LTCUSDT,0.0,0.46,0.89,2769,crypto
+SPY,0.83,0.83,1.05,4964,equity
+QQQ,0.72,0.88,1.07,4964,equity
+AAPL,-0.01,0.53,0.8,4964,equity
+MSFT,0.57,0.69,0.85,4964,equity
+NVDA,0.96,1.21,1.01,4964,equity

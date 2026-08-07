@@ -1,0 +1,53 @@
+{
+  "config": "kelt_atr3",
+  "portfolio": {
+    "sharpe_ann": 1.5556897805567942,
+    "sortino_ann": 2.284634002789918,
+    "max_dd": -0.08351578740209631,
+    "months_in_profit": 0.6086956521739131,
+    "psr_gt0": 0.9999955759827867,
+    "total_return": 1.0174082426210864,
+    "n_obs": 2767
+  },
+  "mc": {
+    "sharpe_p5": 0.9432231261192059,
+    "sharpe_p50": 1.5688222697077556,
+    "sharpe_p95": 2.1261780914327035,
+    "block_len": 1.4915035680142446,
+    "n_reps": 1000
+  },
+  "per_year": {
+    "2019": 0.58,
+    "2020": 1.26,
+    "2021": 3.11,
+    "2022": 1.29,
+    "2023": 3.21,
+    "2024": 1.64,
+    "2025": 0.85,
+    "2026": -0.04
+  },
+  "n_trials": 405,
+  "n_survivors": 16,
+  "best_sleeve": "SOLUSDT_4h_breakout",
+  "best_sleeve_dsr": 0.7826530584004894,
+  "placebo_fdr": 0.0024691358024691358,
+  "survivors": [
+    "SOLUSDT_4h_breakout",
+    "INJUSDT_1d_breakout",
+    "BNBUSDT_1d_breakout",
+    "NEARUSDT_4h_breakout",
+    "ETHUSDT_4h_breakout",
+    "DOGEUSDT_4h_breakout",
+    "ADAUSDT_4h_breakout",
+    "IMXUSDT_4h_breakout",
+    "AVAXUSDT_4h_breakout",
+    "ICPUSDT_4h_breakout",
+    "SOLUSDT_1h_breakout",
+    "VETUSDT_4h_breakout",
+    "RUNEUSDT_1d_breakout",
+    "BNBUSDT_4h_breakout",
+    "ALGOUSDT_1d_breakout",
+    "BA_1h_breakout"
+  ],
+  "mean_turnover": 15.325038911468978
+}

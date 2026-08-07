@@ -1,0 +1,89 @@
+{
+  "classical": {
+    "dollar_neutral": 0.183,
+    "beta_neutral_FP": 0.77,
+    "beta_rank_via_ml_path": 0.796
+  },
+  "ml": [
+    {
+      "model": "ridge",
+      "featset": "beta_only",
+      "oos_sharpe": 0.001,
+      "oos_sharpe_dollar": -0.256
+    },
+    {
+      "model": "ridge",
+      "featset": "risk",
+      "oos_sharpe": -0.042,
+      "oos_sharpe_dollar": -0.146
+    },
+    {
+      "model": "ridge",
+      "featset": "all",
+      "oos_sharpe": 0.429,
+      "oos_sharpe_dollar": 0.249
+    },
+    {
+      "model": "lasso",
+      "featset": "beta_only",
+      "oos_sharpe": 0.12,
+      "oos_sharpe_dollar": -0.137
+    },
+    {
+      "model": "lasso",
+      "featset": "risk",
+      "oos_sharpe": -0.136,
+      "oos_sharpe_dollar": -0.288
+    },
+    {
+      "model": "lasso",
+      "featset": "all",
+      "oos_sharpe": 0.306,
+      "oos_sharpe_dollar": 0.152
+    },
+    {
+      "model": "rf",
+      "featset": "beta_only",
+      "oos_sharpe": -0.125,
+      "oos_sharpe_dollar": -0.38
+    },
+    {
+      "model": "rf",
+      "featset": "risk",
+      "oos_sharpe": -0.326,
+      "oos_sharpe_dollar": -0.379
+    },
+    {
+      "model": "rf",
+      "featset": "all",
+      "oos_sharpe": -0.047,
+      "oos_sharpe_dollar": -0.244
+    },
+    {
+      "model": "hgb",
+      "featset": "beta_only",
+      "oos_sharpe": -0.41,
+      "oos_sharpe_dollar": -0.361
+    },
+    {
+      "model": "hgb",
+      "featset": "risk",
+      "oos_sharpe": -0.526,
+      "oos_sharpe_dollar": -0.568
+    },
+    {
+      "model": "hgb",
+      "featset": "all",
+      "oos_sharpe": -0.018,
+      "oos_sharpe_dollar": -0.057
+    }
+  ],
+  "best": {
+    "config": "ridge:all",
+    "oos_sharpe": 0.429,
+    "mc_p5": -0.19470816874324376,
+    "deflated_sharpe": 0.47,
+    "n_trials": 12
+  },
+  "verdict": "ML WORSE than classical (overfit)"
+}

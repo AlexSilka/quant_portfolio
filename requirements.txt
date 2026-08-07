@@ -1,0 +1,22 @@
+# Python 3.12. macOS: run `brew install libomp` before installing xgboost/lightgbm.
+# This file pins the DATA-LAYER milestone (installed and smoke-tested).
+# Modelling / validation / portfolio / reporting deps are listed as the target
+# stack in ARCHITECTURE.md and move here, pinned, as each module lands and is tested.
+
+numpy==1.26.4
+pandas==2.2.3
+pyarrow==17.0.0
+
+# data sources
+pandas-market-calendars==5.4.0
+
+# modelling / stats (sleeve machinery)
+scipy==1.14.1
+scikit-learn==1.5.2
+lightgbm==4.7.0
+
+# validation
+arch==8.0.0
+
+# reporting
+matplotlib==3.9.2

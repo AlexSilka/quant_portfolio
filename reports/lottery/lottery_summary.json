@@ -1,0 +1,161 @@
+{
+  "config": {
+    "universe_primary": "crypto_1d",
+    "signal_primary": "skew",
+    "lookback_skew": 30,
+    "lookback_max": 21,
+    "k_max": 5,
+    "top_frac": 0.3,
+    "rebal": 21,
+    "top_n_liquid": 100,
+    "vol_target": 0.15,
+    "cost_bps_per_side": 6.0,
+    "window": [
+      "2020-01-01",
+      "2026-07-31"
+    ]
+  },
+  "data_integrity": {
+    "finite_name_days": 392614,
+    "extreme_ge_50pct": 381,
+    "extreme_ge_100pct": 52,
+    "extreme_ge_300pct": 5,
+    "max_daily_ret": 5.13,
+    "min_daily_ret": -0.993,
+    "spike_revert_glitches": 0,
+    "ffill_flat_bars": 15191,
+    "ffill_flat_pct": 3.87,
+    "delisted_crashed_names": 116,
+    "skew_short_sharpe_raw": -0.38,
+    "skew_short_sharpe_winsor": -0.405
+  },
+  "crypto_apriori": {
+    "skew": {
+      "lottery_short_high": -0.38,
+      "opposite_long_high": 0.154
+    },
+    "MAX": {
+      "lottery_short_high": -0.672,
+      "opposite_long_high": 0.502
+    }
+  },
+  "timeframe_robustness": [
+    {
+      "tf": "1d",
+      "bars": 2404,
+      "skew_short": -0.38,
+      "skew_long": 0.154,
+      "max_short": -0.672
+    },
+    {
+      "tf": "4h",
+      "bars": 14424,
+      "skew_short": 0.196,
+      "skew_long": -0.463,
+      "max_short": -0.334
+    },
+    {
+      "tf": "1h",
+      "bars": 57696,
+      "skew_short": 0.042,
+      "skew_long": -0.293
+    }
+  ],
+  "funding_charged": {
+    "skew": {
+      "funding_pct_per_yr": -5.48,
+      "short_high_sharpe_with_funding": -0.568
+    },
+    "MAX": {
+      "funding_pct_per_yr": -7.52,
+      "short_high_sharpe_with_funding": -0.854
+    }
+  },
+  "chosen_skew_short": {
+    "sharpe": -0.38,
+    "mc": {
+      "sharpe_p5": -1.0560439378619813,
+      "sharpe_p50": -0.424454642948993,
+      "sharpe_p95": 0.21592246681233346
+    },
+    "max_dd": -0.489,
+    "per_year": {
+      "2020": -1.08,
+      "2021": -0.55,
+      "2022": 1.6,
+      "2023": -0.04,
+      "2024": -1.62,
+      "2025": -0.72,
+      "2026": -0.49
+    },
+    "delisting_trimmed_sharpe": -0.38
+  },
+  "placebo": {
+    "real_sharpe": -0.38,
+    "placebo_mean": -0.146,
+    "placebo_p95": 0.48,
+    "real_pctile_vs_placebo": 31.0,
+    "placebo_fdr_at_abs0.5": 0.03
+  },
+  "walk_forward_oos": {
+    "oos_sharpe": -0.429,
+    "insample_best": -0.005,
+    "insample_frac_positive": 0.0,
+    "insample_frac_over_0.5": 0.0,
+    "n_refits": 4,
+    "top_k": 5,
+    "embargo_bars": 60
+  },
+  "cost_sensitivity": {
+    "1x": -0.38,
+    "2x": -0.462,
+    "3x": -0.544
+  },
+  "deflated_sharpe_best": {
+    "best_book": "equity_broad_skew_short",
+    "best_sharpe": 0.25,
+    "n_trials": 31,
+    "deflated_sharpe": 0.103,
+    "crypto_surface_best": 0.25
+  },
+  "corr_to_book": {
+    "book": -0.174,
+    "crypto\u00b7trend\u00b71d": 0.007,
+    "crypto\u00b7x-sect\u00b71d": -0.454,
+    "crypto\u00b7carry\u00b71d": -0.001,
+    "crypto\u00b7carry\u00b74h": -0.013,
+    "equity\u00b7trend\u00b71d": 0.005,
+    "equity\u00b7x-sect\u00b71d": 0.029,
+    "sector\u00b7pairs\u00b71d": -0.045
+  },
+  "book_lift_by_weight": {
+    "0%": 1.615,
+    "15%": 1.572,
+    "30%": 1.428
+  },
+  "orthogonality_vs_lowvol": {
+    "lowvol_proxy": {
+      "corr": 0.423,
+      "beta": 0.424,
+      "alpha_ann": -0.034,
+      "resid_sharpe": 0.0
+    },
+    "bab_book": {
+      "column": "crypto_dollar_beta",
+      "corr": 0.137,
+      "beta": 0.135,
+      "alpha_ann": -0.065,
+      "resid_sharpe": 0.0
+    }
+  },
+  "equity_cross_check": {
+    "equity_broad": {
+      "skew_short": 0.25,
+      "MAX_short": -0.953
+    },
+    "equity_midsmall": {
+      "skew_short": 0.109,
+      "MAX_short": -0.524
+    }
+  }
+}

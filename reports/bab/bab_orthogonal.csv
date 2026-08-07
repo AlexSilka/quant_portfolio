@@ -1,0 +1,3 @@
+,corr_beta_vol,corr_beta_skew,corr_vol_skew,beta_on_skew_alpha_ann,beta_on_skew_alpha_t,vol_on_skew_alpha_ann,vol_on_skew_alpha_t,beta_on_vol_slope,beta_on_vol_alpha_t
+crypto,0.138,0.072,0.519,0.1325,2.0,0.0242,0.44,0.142,1.97
+equity,0.159,0.004,0.162,0.0606,1.69,-0.0574,-1.6,0.156,2.02

@@ -1,0 +1,39 @@
+{
+  "window": [
+    "2021-03-28",
+    "2026-07-31"
+  ],
+  "standalone_sharpe": {
+    "trend_momentum": 0.9731932230872101,
+    "carry": 0.9947155481673746,
+    "volprem": 0.7643018401393317,
+    "xs_momentum": 0.7078399843211749,
+    "breakout": 1.0210979806871323
+  },
+  "without_breakout": {
+    "sharpe_ann": 1.653365113905287,
+    "sortino_ann": 1.9237900573112627,
+    "max_dd": -0.12334696624808128,
+    "months_in_profit": 0.6923076923076923,
+    "psr_gt0": 0.9999732165121007,
+    "total_return": 1.3603048680495937,
+    "n_obs": 1952
+  },
+  "with_breakout": {
+    "sharpe_ann": 1.8580560865075373,
+    "sortino_ann": 2.3962824380134986,
+    "max_dd": -0.0872726932563812,
+    "months_in_profit": 0.676923076923077,
+    "psr_gt0": 0.9999969549119024,
+    "total_return": 1.3698168567027769,
+    "n_obs": 1952
+  },
+  "breakout_marginal_sharpe": 0.20469097260225033,
+  "breakout_pnl_share": 0.19865235726023103,
+  "corr_to_breakout": {
+    "trend_momentum": -0.0742234608417894,
+    "carry": 0.08498676475871986,
+    "volprem": -0.08322149765449693,
+    "xs_momentum": 0.2173886697973222
+  }
+}

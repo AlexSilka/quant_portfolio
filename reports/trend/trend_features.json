@@ -1,0 +1,48 @@
+{
+  "n_trades": 16843,
+  "n_features": 80,
+  "base_win_rate": 0.37873300480911953,
+  "auc_is": 0.8556835745026546,
+  "auc_oos": 0.5048778734163653,
+  "family_importance": {
+    "trend/MA": 0.18231447251232355,
+    "cross-asset": 0.14405609281663556,
+    "volatility": 0.12413791030183935,
+    "range/breakout": 0.10308151217887665,
+    "momentum/ROC": 0.09486445315774936,
+    "volume/flow": 0.08640783776099095,
+    "calendar": 0.07763035353412595,
+    "mean-reversion": 0.0726491553838608,
+    "higher-moment": 0.04891569229608049,
+    "oscillator": 0.037766430149567855,
+    "statistical": 0.028176089907949505
+  },
+  "top_features": {
+    "dayofweek": 0.036515598081884856,
+    "corr_60": 0.03188109196995696,
+    "sma_slope_100": 0.02610245937362882,
+    "hour": 0.025318939435913186,
+    "corr_stability": 0.022496633249034684,
+    "rs_bench_20": 0.02195187304681795,
+    "sma_slope_10": 0.021546803741695625,
+    "taker_imbalance_ma20": 0.020288304369296815,
+    "sma_slope_50": 0.019953104426983108,
+    "realvol_60": 0.019767413108974275,
+    "vwap_dist_20": 0.01909645703631851,
+    "beta_20": 0.01855859990263646,
+    "kurt_60": 0.01805981286229065,
+    "sma_slope_200": 0.018032857359885187,
+    "vol_of_vol_20": 0.017993343755549944
+  },
+  "survived": [
+    "trend/MA",
+    "cross-asset",
+    "volatility",
+    "range/breakout",
+    "momentum/ROC",
+    "volume/flow",
+    "calendar",
+    "mean-reversion"
+  ],
+  "contributed_nothing": []
+}

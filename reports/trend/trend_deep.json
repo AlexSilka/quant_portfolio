@@ -1,0 +1,45 @@
+{
+  "tf": "4h",
+  "L": 40,
+  "H": 6,
+  "epochs": 25,
+  "device": "mps",
+  "n_windows": 168885,
+  "oos_base_rate": 0.49739035964012146,
+  "models": {
+    "lstm": {
+      "oos_auc": 0.515,
+      "oos_acc": 0.512,
+      "gross_sharpe": 0.57,
+      "net_sharpe": -0.45,
+      "net_smooth_sharpe": -0.16,
+      "ann_turnover": 23.0
+    },
+    "gru": {
+      "oos_auc": 0.513,
+      "oos_acc": 0.51,
+      "gross_sharpe": 0.15,
+      "net_sharpe": -0.86,
+      "net_smooth_sharpe": -0.32,
+      "ann_turnover": 24.0
+    },
+    "tcn": {
+      "oos_auc": 0.517,
+      "oos_acc": 0.513,
+      "gross_sharpe": 0.11,
+      "net_sharpe": -0.9,
+      "net_smooth_sharpe": -0.21,
+      "ann_turnover": 19.0
+    },
+    "transformer": {
+      "oos_auc": 0.523,
+      "oos_acc": 0.518,
+      "gross_sharpe": 0.51,
+      "net_sharpe": -0.28,
+      "net_smooth_sharpe": 0.03,
+      "ann_turnover": 12.0
+    }
+  },
+  "ema_oos_sharpe": 0.15,
+  "tree_meta_auc_oos": 0.505
+}

@@ -1,0 +1,13 @@
+model,featset,oos_sharpe,oos_sharpe_dollar
+ridge,beta_only,0.001,-0.256
+ridge,risk,-0.042,-0.146
+ridge,all,0.429,0.249
+lasso,beta_only,0.12,-0.137
+lasso,risk,-0.136,-0.288
+lasso,all,0.306,0.152
+rf,beta_only,-0.125,-0.38
+rf,risk,-0.326,-0.379
+rf,all,-0.047,-0.244
+hgb,beta_only,-0.41,-0.361
+hgb,risk,-0.526,-0.568
+hgb,all,-0.018,-0.057

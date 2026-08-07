@@ -1,0 +1,1172 @@
+{
+  "entry": "blend",
+  "exit": "reversal",
+  "tfs": [
+    "1d",
+    "4h",
+    "1h"
+  ],
+  "headline_direction": "long_only",
+  "directions": {
+    "ls": {
+      "name": "ls",
+      "n_sleeves": 160,
+      "sharpe": 0.62,
+      "sortino": 0.718,
+      "max_dd": -0.0678,
+      "months_in_profit": 0.534,
+      "total_return": 0.483,
+      "n_obs": 5328
+    },
+    "long_only": {
+      "name": "long_only",
+      "n_sleeves": 160,
+      "sharpe": 0.996,
+      "sortino": 1.036,
+      "max_dd": -0.0462,
+      "months_in_profit": 0.54,
+      "total_return": 0.693,
+      "n_obs": 5328
+    },
+    "asym": {
+      "name": "asym",
+      "n_sleeves": 160,
+      "sharpe": 0.931,
+      "sortino": 0.989,
+      "max_dd": -0.0454,
+      "months_in_profit": 0.58,
+      "total_return": 0.63,
+      "n_obs": 5328
+    }
+  },
+  "headline": {
+    "name": "long_only",
+    "n_sleeves": 160,
+    "sharpe": 0.996,
+    "sortino": 1.036,
+    "max_dd": -0.0462,
+    "months_in_profit": 0.54,
+    "total_return": 0.693,
+    "n_obs": 5328,
+    "mc": {
+      "sharpe_p5": 0.5805,
+      "sharpe_p50": 0.9943,
+      "sharpe_p95": 1.4252,
+      "maxdd_p5": -0.1002,
+      "maxdd_p50": -0.0633,
+      "maxdd_p95": -0.043,
+      "hit_p5": 0.5593,
+      "hit_p50": 0.6215,
+      "hit_p95": 0.6782,
+      "block_len": 5.48,
+      "n_reps": 1000
+    },
+    "corr_mean": 0.191,
+    "corr_max": 0.861,
+    "per_year": {
+      "2012": -0.08,
+      "2013": 2.03,
+      "2014": -0.0,
+      "2015": 0.23,
+      "2016": 0.92,
+      "2017": 2.5,
+      "2018": -0.04,
+      "2019": 1.31,
+      "2020": 1.66,
+      "2021": 2.5,
+      "2022": -1.63,
+      "2023": 1.98,
+      "2024": 1.72,
+      "2025": 0.02,
+      "2026": -0.41
+    },
+    "per_quarter": {
+      "2012Q1": 0.0,
+      "2012Q2": 1.07,
+      "2012Q3": 1.76,
+      "2012Q4": -2.11,
+      "2013Q1": 2.75,
+      "2013Q2": 1.17,
+      "2013Q3": 1.29,
+      "2013Q4": 3.08,
+      "2014Q1": -0.53,
+      "2014Q2": 0.85,
+      "2014Q3": 0.67,
+      "2014Q4": -0.69,
+      "2015Q1": -0.46,
+      "2015Q2": 0.24,
+      "2015Q3": -1.05,
+      "2015Q4": 2.65,
+      "2016Q1": -2.73,
+      "2016Q2": -0.29,
+      "2016Q3": 3.02,
+      "2016Q4": 1.36,
+      "2017Q1": 3.68,
+      "2017Q2": 1.55,
+      "2017Q3": 1.8,
+      "2017Q4": 4.47,
+      "2018Q1": 0.23,
+      "2018Q2": 0.56,
+      "2018Q3": 1.67,
+      "2018Q4": -3.54,
+      "2019Q1": 0.77,
+      "2019Q2": 2.75,
+      "2019Q3": -2.39,
+      "2019Q4": 3.19,
+      "2020Q1": 0.39,
+      "2020Q2": 1.0,
+      "2020Q3": 2.87,
+      "2020Q4": 1.98,
+      "2021Q1": 5.79,
+      "2021Q2": 1.6,
+      "2021Q3": 1.12,
+      "2021Q4": 0.64,
+      "2022Q1": 0.57,
+      "2022Q2": -4.27,
+      "2022Q3": -1.94,
+      "2022Q4": -2.4,
+      "2023Q1": 2.27,
+      "2023Q2": -0.09,
+      "2023Q3": -1.63,
+      "2023Q4": 4.34,
+      "2024Q1": 3.73,
+      "2024Q2": -3.62,
+      "2024Q3": 0.51,
+      "2024Q4": 3.03,
+      "2025Q1": -3.09,
+      "2025Q2": 0.91,
+      "2025Q3": 1.63,
+      "2025Q4": -1.58,
+      "2026Q1": -1.16,
+      "2026Q2": -0.14,
+      "2026Q3": 0.82
+    },
+    "regimes": {
+      "q4_2018": {
+        "sharpe": -3.54,
+        "max_dd": -0.017,
+        "total": -0.016,
+        "n": 92
+      },
+      "covid_2020": {
+        "sharpe": -4.51,
+        "max_dd": -0.018,
+        "total": -0.02,
+        "n": 61
+      },
+      "bull_2021": {
+        "sharpe": 2.5,
+        "max_dd": -0.012,
+        "total": 0.074,
+        "n": 365
+      },
+      "bear_2022": {
+        "sharpe": -1.63,
+        "max_dd": -0.025,
+        "total": -0.02,
+        "n": 365
+      },
+      "chop_2023_25": {
+        "sharpe": 1.31,
+        "max_dd": -0.026,
+        "total": 0.1,
+        "n": 1096
+      },
+      "oos_2024h2+": {
+        "sharpe": 0.58,
+        "max_dd": -0.026,
+        "total": 0.026,
+        "n": 765
+      }
+    },
+    "marginal": [
+      {
+        "n": 1,
+        "sharpe": 1.285,
+        "max_dd": -0.0641,
+        "months_in_profit": 0.394
+      },
+      {
+        "n": 2,
+        "sharpe": 1.497,
+        "max_dd": -0.0609,
+        "months_in_profit": 0.366
+      },
+      {
+        "n": 3,
+        "sharpe": 1.452,
+        "max_dd": -0.0663,
+        "months_in_profit": 0.389
+      },
+      {
+        "n": 4,
+        "sharpe": 1.514,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.426
+      },
+      {
+        "n": 5,
+        "sharpe": 1.57,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.444
+      },
+      {
+        "n": 6,
+        "sharpe": 1.546,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.444
+      },
+      {
+        "n": 7,
+        "sharpe": 1.56,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.435
+      },
+      {
+        "n": 8,
+        "sharpe": 1.564,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.435
+      },
+      {
+        "n": 9,
+        "sharpe": 1.558,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.444
+      },
+      {
+        "n": 10,
+        "sharpe": 1.556,
+        "max_dd": -0.0583,
+        "months_in_profit": 0.426
+      },
+      {
+        "n": 11,
+        "sharpe": 1.842,
+        "max_dd": -0.0394,
+        "months_in_profit": 0.435
+      },
+      {
+        "n": 12,
+        "sharpe": 1.85,
+        "max_dd": -0.0382,
+        "months_in_profit": 0.463
+      },
+      {
+        "n": 13,
+        "sharpe": 1.819,
+        "max_dd": -0.0382,
+        "months_in_profit": 0.463
+      },
+      {
+        "n": 14,
+        "sharpe": 1.892,
+        "max_dd": -0.0495,
+        "months_in_profit": 0.463
+      },
+      {
+        "n": 15,
+        "sharpe": 1.901,
+        "max_dd": -0.0506,
+        "months_in_profit": 0.454
+      },
+      {
+        "n": 16,
+        "sharpe": 1.829,
+        "max_dd": -0.0442,
+        "months_in_profit": 0.463
+      },
+      {
+        "n": 17,
+        "sharpe": 1.86,
+        "max_dd": -0.0354,
+        "months_in_profit": 0.454
+      },
+      {
+        "n": 18,
+        "sharpe": 1.273,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 19,
+        "sharpe": 1.273,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 20,
+        "sharpe": 1.273,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 21,
+        "sharpe": 1.266,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 22,
+        "sharpe": 1.263,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 23,
+        "sharpe": 1.26,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 24,
+        "sharpe": 1.254,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.506
+      },
+      {
+        "n": 25,
+        "sharpe": 1.258,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 26,
+        "sharpe": 1.258,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 27,
+        "sharpe": 1.248,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 28,
+        "sharpe": 1.241,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 29,
+        "sharpe": 1.23,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 30,
+        "sharpe": 1.225,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 31,
+        "sharpe": 1.22,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 32,
+        "sharpe": 1.218,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 33,
+        "sharpe": 1.214,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 34,
+        "sharpe": 1.215,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.5
+      },
+      {
+        "n": 35,
+        "sharpe": 1.207,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.506
+      },
+      {
+        "n": 36,
+        "sharpe": 1.207,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 37,
+        "sharpe": 1.206,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 38,
+        "sharpe": 1.206,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 39,
+        "sharpe": 1.207,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 40,
+        "sharpe": 1.205,
+        "max_dd": -0.0958,
+        "months_in_profit": 0.494
+      },
+      {
+        "n": 41,
+        "sharpe": 1.344,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.528
+      },
+      {
+        "n": 42,
+        "sharpe": 1.338,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 43,
+        "sharpe": 1.334,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 44,
+        "sharpe": 1.333,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 45,
+        "sharpe": 1.318,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.528
+      },
+      {
+        "n": 46,
+        "sharpe": 1.31,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 47,
+        "sharpe": 1.299,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 48,
+        "sharpe": 1.297,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.528
+      },
+      {
+        "n": 49,
+        "sharpe": 1.293,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 50,
+        "sharpe": 1.292,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 51,
+        "sharpe": 1.286,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 52,
+        "sharpe": 1.285,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 53,
+        "sharpe": 1.277,
+        "max_dd": -0.0834,
+        "months_in_profit": 0.517
+      },
+      {
+        "n": 54,
+        "sharpe": 1.311,
+        "max_dd": -0.083,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 55,
+        "sharpe": 1.251,
+        "max_dd": -0.0829,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 56,
+        "sharpe": 1.248,
+        "max_dd": -0.0829,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 57,
+        "sharpe": 1.24,
+        "max_dd": -0.0829,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 58,
+        "sharpe": 1.234,
+        "max_dd": -0.0829,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 59,
+        "sharpe": 1.233,
+        "max_dd": -0.0829,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 60,
+        "sharpe": 1.293,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 61,
+        "sharpe": 1.292,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 62,
+        "sharpe": 1.289,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 63,
+        "sharpe": 1.287,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 64,
+        "sharpe": 1.282,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 65,
+        "sharpe": 1.28,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 66,
+        "sharpe": 1.279,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 67,
+        "sharpe": 1.274,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 68,
+        "sharpe": 1.273,
+        "max_dd": -0.0635,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 69,
+        "sharpe": 1.238,
+        "max_dd": -0.056,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 70,
+        "sharpe": 1.236,
+        "max_dd": -0.056,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 71,
+        "sharpe": 1.232,
+        "max_dd": -0.056,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 72,
+        "sharpe": 1.227,
+        "max_dd": -0.056,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 73,
+        "sharpe": 1.225,
+        "max_dd": -0.056,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 74,
+        "sharpe": 1.222,
+        "max_dd": -0.0532,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 75,
+        "sharpe": 1.217,
+        "max_dd": -0.0532,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 76,
+        "sharpe": 1.217,
+        "max_dd": -0.0532,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 77,
+        "sharpe": 1.237,
+        "max_dd": -0.0464,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 78,
+        "sharpe": 1.234,
+        "max_dd": -0.0464,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 79,
+        "sharpe": 1.233,
+        "max_dd": -0.0464,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 80,
+        "sharpe": 1.236,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 81,
+        "sharpe": 1.231,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 82,
+        "sharpe": 1.229,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 83,
+        "sharpe": 1.228,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 84,
+        "sharpe": 1.226,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 85,
+        "sharpe": 1.224,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 86,
+        "sharpe": 1.222,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 87,
+        "sharpe": 1.219,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 88,
+        "sharpe": 1.219,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 89,
+        "sharpe": 1.218,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 90,
+        "sharpe": 1.214,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 91,
+        "sharpe": 1.214,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 92,
+        "sharpe": 1.21,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 93,
+        "sharpe": 1.206,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 94,
+        "sharpe": 1.202,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 95,
+        "sharpe": 1.201,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 96,
+        "sharpe": 1.2,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 97,
+        "sharpe": 1.194,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 98,
+        "sharpe": 1.192,
+        "max_dd": -0.048,
+        "months_in_profit": 0.58
+      },
+      {
+        "n": 99,
+        "sharpe": 1.187,
+        "max_dd": -0.048,
+        "months_in_profit": 0.58
+      },
+      {
+        "n": 100,
+        "sharpe": 1.184,
+        "max_dd": -0.048,
+        "months_in_profit": 0.58
+      },
+      {
+        "n": 101,
+        "sharpe": 1.18,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 102,
+        "sharpe": 1.177,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 103,
+        "sharpe": 1.176,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 104,
+        "sharpe": 1.174,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 105,
+        "sharpe": 1.17,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 106,
+        "sharpe": 1.169,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 107,
+        "sharpe": 1.166,
+        "max_dd": -0.048,
+        "months_in_profit": 0.574
+      },
+      {
+        "n": 108,
+        "sharpe": 1.162,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 109,
+        "sharpe": 1.159,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 110,
+        "sharpe": 1.155,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 111,
+        "sharpe": 1.152,
+        "max_dd": -0.048,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 112,
+        "sharpe": 1.149,
+        "max_dd": -0.0475,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 113,
+        "sharpe": 1.147,
+        "max_dd": -0.0475,
+        "months_in_profit": 0.568
+      },
+      {
+        "n": 114,
+        "sharpe": 1.145,
+        "max_dd": -0.0475,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 115,
+        "sharpe": 1.144,
+        "max_dd": -0.0475,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 116,
+        "sharpe": 1.14,
+        "max_dd": -0.0475,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 117,
+        "sharpe": 1.134,
+        "max_dd": -0.0483,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 118,
+        "sharpe": 1.133,
+        "max_dd": -0.0483,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 119,
+        "sharpe": 1.129,
+        "max_dd": -0.0482,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 120,
+        "sharpe": 1.094,
+        "max_dd": -0.0502,
+        "months_in_profit": 0.562
+      },
+      {
+        "n": 121,
+        "sharpe": 1.09,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 122,
+        "sharpe": 1.089,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 123,
+        "sharpe": 1.087,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 124,
+        "sharpe": 1.084,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 125,
+        "sharpe": 1.083,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.557
+      },
+      {
+        "n": 126,
+        "sharpe": 1.08,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 127,
+        "sharpe": 1.076,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.545
+      },
+      {
+        "n": 128,
+        "sharpe": 1.074,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 129,
+        "sharpe": 1.072,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 130,
+        "sharpe": 1.067,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.551
+      },
+      {
+        "n": 131,
+        "sharpe": 1.063,
+        "max_dd": -0.0499,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 132,
+        "sharpe": 1.065,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 133,
+        "sharpe": 1.064,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 134,
+        "sharpe": 1.061,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 135,
+        "sharpe": 1.06,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 136,
+        "sharpe": 1.059,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 137,
+        "sharpe": 1.058,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 138,
+        "sharpe": 1.057,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 139,
+        "sharpe": 1.056,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 140,
+        "sharpe": 1.054,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 141,
+        "sharpe": 1.051,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 142,
+        "sharpe": 1.049,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 143,
+        "sharpe": 1.044,
+        "max_dd": -0.0473,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 144,
+        "sharpe": 1.043,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 145,
+        "sharpe": 1.038,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 146,
+        "sharpe": 1.037,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 147,
+        "sharpe": 1.036,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 148,
+        "sharpe": 1.035,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 149,
+        "sharpe": 1.033,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 150,
+        "sharpe": 1.03,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 151,
+        "sharpe": 1.026,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 152,
+        "sharpe": 1.022,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 153,
+        "sharpe": 1.019,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 154,
+        "sharpe": 1.017,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 155,
+        "sharpe": 1.013,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 156,
+        "sharpe": 1.011,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 157,
+        "sharpe": 1.008,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 158,
+        "sharpe": 1.004,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      },
+      {
+        "n": 159,
+        "sharpe": 1.002,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.534
+      },
+      {
+        "n": 160,
+        "sharpe": 0.996,
+        "max_dd": -0.0462,
+        "months_in_profit": 0.54
+      }
+    ],
+    "placebo": {
+      "real_sharpe": 1.0,
+      "null_p50": 0.98,
+      "null_p95": 1.101,
+      "null_p99": 1.169,
+      "exceedance_rate": 0.3667,
+      "n_shuffle": 60
+    }
+  },
+  "exec_lag_jitter": {
+    "lag1": 1.0,
+    "lag3": 1.0,
+    "lag2_default": 0.996
+  },
+  "cost_levels": {
+    "1x": 0.996,
+    "2x": 0.93,
+    "3x": 0.87
+  },
+  "oos_split": {
+    "is_sharpe": 1.05,
+    "oos_sharpe": 0.58,
+    "is_n": 4563,
+    "oos_n": 765
+  },
+  "best_sleeve": "SOLUSDT_4h",
+  "best_sleeve_dsr": 0.248,
+  "n_trials": 600
+}

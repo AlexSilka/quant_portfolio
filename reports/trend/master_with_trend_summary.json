@@ -1,0 +1,74 @@
+{
+  "trend_block_sharpe": 1.312,
+  "families": [
+    "trend",
+    "carry",
+    "volprem",
+    "xs_momentum",
+    "breakout"
+  ],
+  "window": [
+    "2021-03-28",
+    "2026-07-31"
+  ],
+  "master_new_trend": {
+    "sharpe": 2.258,
+    "max_dd": -0.0709,
+    "months_in_profit": 0.6,
+    "total_return": 1.683,
+    "mc_p5": 1.52412562386491,
+    "mc_p50": 2.26931150731919
+  },
+  "master_old_trend": {
+    "sharpe": 2.057,
+    "max_dd": -0.0997,
+    "months_in_profit": 0.723,
+    "total_return": 1.874,
+    "mc_p5": 1.323704242093917,
+    "mc_p50": 2.055790020310227
+  },
+  "delta_sharpe": 0.201,
+  "trend_corr_to_others": {
+    "carry": -0.08,
+    "volprem": 0.04,
+    "xs_momentum": -0.11,
+    "breakout": -0.07
+  },
+  "trend_mean_corr": -0.055,
+  "master_without_trend_sharpe": 1.98,
+  "marginal": [
+    {
+      "n": 1,
+      "added": "carry",
+      "sharpe": 1.853
+    },
+    {
+      "n": 2,
+      "added": "breakout",
+      "sharpe": 1.989
+    },
+    {
+      "n": 3,
+      "added": "trend",
+      "sharpe": 2.319
+    },
+    {
+      "n": 4,
+      "added": "volprem",
+      "sharpe": 2.3
+    },
+    {
+      "n": 5,
+      "added": "xs_momentum",
+      "sharpe": 2.258
+    }
+  ],
+  "per_year": {
+    "2021": 4.63,
+    "2022": 0.54,
+    "2023": 2.6,
+    "2024": 1.78,
+    "2025": 2.6,
+    "2026": 1.42
+  }
+}

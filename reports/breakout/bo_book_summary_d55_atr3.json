@@ -1,0 +1,51 @@
+{
+  "config": "d55_atr3",
+  "portfolio": {
+    "sharpe_ann": 1.5905758695720948,
+    "sortino_ann": 2.219685428452174,
+    "max_dd": -0.06961831916601569,
+    "months_in_profit": 0.620253164556962,
+    "psr_gt0": 0.9999838177142801,
+    "total_return": 0.9529354972299646,
+    "n_obs": 2404
+  },
+  "mc": {
+    "sharpe_p5": 0.9656325824427993,
+    "sharpe_p50": 1.5794394706769297,
+    "sharpe_p95": 2.16913788384848,
+    "block_len": 2.7401943198005574,
+    "n_reps": 1000
+  },
+  "per_year": {
+    "2020": 1.59,
+    "2021": 3.68,
+    "2022": 1.09,
+    "2023": 2.86,
+    "2024": 0.96,
+    "2025": 0.79,
+    "2026": 0.14
+  },
+  "n_trials": 405,
+  "n_survivors": 15,
+  "best_sleeve": "INJUSDT_1d_breakout",
+  "best_sleeve_dsr": 0.503534578061289,
+  "placebo_fdr": 0.0049382716049382715,
+  "survivors": [
+    "INJUSDT_1d_breakout",
+    "SOLUSDT_4h_breakout",
+    "AVAXUSDT_1d_breakout",
+    "BNBUSDT_1d_breakout",
+    "VETUSDT_1d_breakout",
+    "HBARUSDT_1d_breakout",
+    "SUIUSDT_1h_breakout",
+    "VETUSDT_4h_breakout",
+    "ADAUSDT_1d_breakout",
+    "ETHUSDT_1d_breakout",
+    "ADAUSDT_4h_breakout",
+    "DOTUSDT_1d_breakout",
+    "RUNEUSDT_1d_breakout",
+    "NEARUSDT_4h_breakout",
+    "AVAXUSDT_4h_breakout"
+  ],
+  "mean_turnover": 8.36588566544085
+}

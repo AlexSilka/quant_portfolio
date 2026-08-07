@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cross-asset-alpha"
+version = "0.1.0"
+description = "Cross-asset (US equities + crypto) alpha discovery & portfolio assembly (Task A)"
+requires-python = ">=3.12"
+# Dependencies are single-sourced from requirements.txt (no second copy to drift).
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+# `src` and `scripts` are both import packages (`import src.config`, `from scripts.trend...`).
+# Editable-install (`pip install -e .`) so modules import cleanly without a `sys.path.insert` bootstrap.
+[tool.setuptools.packages.find]
+include = ["src*", "scripts*"]

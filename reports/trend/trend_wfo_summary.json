@@ -1,0 +1,126 @@
+{
+  "sensitivity": {
+    "crypto": {
+      "min": 0.08,
+      "median": 0.41,
+      "max": 0.57,
+      "pct_positive": 1.0,
+      "n_cfgs": 23
+    },
+    "equity": {
+      "min": -0.38,
+      "median": 0.44,
+      "max": 0.83,
+      "pct_positive": 0.91,
+      "n_cfgs": 23
+    }
+  },
+  "parameter_wf": [
+    {
+      "symbol": "BTCUSDT",
+      "wf_sharpe": 0.34,
+      "insample_peak": 0.81,
+      "mean_best_is": 1.08,
+      "n_oos": 2769,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "wf_sharpe": 0.39,
+      "insample_peak": 0.84,
+      "mean_best_is": 1.07,
+      "n_oos": 2769,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "SOLUSDT",
+      "wf_sharpe": 0.51,
+      "insample_peak": 0.88,
+      "mean_best_is": 1.44,
+      "n_oos": 1673,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "wf_sharpe": 0.83,
+      "insample_peak": 0.97,
+      "mean_best_is": 0.95,
+      "n_oos": 2769,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "wf_sharpe": 0.48,
+      "insample_peak": 0.77,
+      "mean_best_is": 1.22,
+      "n_oos": 2038,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "LTCUSDT",
+      "wf_sharpe": 0.0,
+      "insample_peak": 0.46,
+      "mean_best_is": 0.89,
+      "n_oos": 2769,
+      "asset_class": "crypto"
+    },
+    {
+      "symbol": "SPY",
+      "wf_sharpe": 0.83,
+      "insample_peak": 0.83,
+      "mean_best_is": 1.05,
+      "n_oos": 4964,
+      "asset_class": "equity"
+    },
+    {
+      "symbol": "QQQ",
+      "wf_sharpe": 0.72,
+      "insample_peak": 0.88,
+      "mean_best_is": 1.07,
+      "n_oos": 4964,
+      "asset_class": "equity"
+    },
+    {
+      "symbol": "AAPL",
+      "wf_sharpe": -0.01,
+      "insample_peak": 0.53,
+      "mean_best_is": 0.8,
+      "n_oos": 4964,
+      "asset_class": "equity"
+    },
+    {
+      "symbol": "MSFT",
+      "wf_sharpe": 0.57,
+      "insample_peak": 0.69,
+      "mean_best_is": 0.85,
+      "n_oos": 4964,
+      "asset_class": "equity"
+    },
+    {
+      "symbol": "NVDA",
+      "wf_sharpe": 0.96,
+      "insample_peak": 1.21,
+      "mean_best_is": 1.01,
+      "n_oos": 4964,
+      "asset_class": "equity"
+    }
+  ],
+  "selection_wf": {
+    "anchored/annual": 1.14,
+    "anchored/semiannual": 1.12,
+    "anchored/quarterly": 1.15,
+    "rolling2y/annual": 1.18,
+    "rolling2y/semiannual": 1.16,
+    "rolling2y/quarterly": 1.17,
+    "rolling3y/annual": 1.13,
+    "rolling3y/semiannual": 1.11,
+    "rolling3y/quarterly": 1.14
+  },
+  "selection_wf_fullsample": 1.16,
+  "selection_wf_stats": {
+    "min": 1.11,
+    "median": 1.14,
+    "max": 1.18,
+    "std": 0.02
+  }
+}

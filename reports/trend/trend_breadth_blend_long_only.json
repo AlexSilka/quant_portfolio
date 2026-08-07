@@ -1,0 +1,57 @@
+{
+  "universe_size": 203,
+  "top10": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "XRPUSDT",
+    "BNBUSDT",
+    "DOGEUSDT",
+    "1000PEPEUSDT",
+    "MATICUSDT",
+    "ADAUSDT",
+    "LINKUSDT"
+  ],
+  "scaling": {
+    "20": {
+      "sleeves": 70,
+      "sharpe": 1.129,
+      "max_dd": -0.048,
+      "oos": 0.38,
+      "mc_p5": 0.7056,
+      "corr_mean": 0.198
+    },
+    "50": {
+      "sleeves": 160,
+      "sharpe": 1.029,
+      "max_dd": -0.0473,
+      "oos": 0.25,
+      "mc_p5": 0.6158,
+      "corr_mean": 0.193
+    },
+    "100": {
+      "sleeves": 310,
+      "sharpe": 0.946,
+      "max_dd": -0.0461,
+      "oos": 0.23,
+      "mc_p5": 0.5288,
+      "corr_mean": 0.184
+    },
+    "150": {
+      "sleeves": 460,
+      "sharpe": 0.884,
+      "max_dd": -0.0462,
+      "oos": 0.11,
+      "mc_p5": 0.4731,
+      "corr_mean": 0.185
+    },
+    "200": {
+      "sleeves": 609,
+      "sharpe": 0.861,
+      "max_dd": -0.0462,
+      "oos": -0.04,
+      "mc_p5": 0.4477,
+      "corr_mean": 0.179
+    }
+  }
+}

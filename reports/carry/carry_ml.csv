@@ -1,0 +1,13 @@
+model,featset,horizon,sharpe,mc_p5,max_dd,months_in_profit
+LINEAR funding-rank (baseline),-,-,1.21,0.58,-0.22,0.7
+ML-lgbm,fund_only,5,-0.7,,-0.69,0.32
+ML-lgbm,fund_price,5,0.19,,-0.36,0.43
+ML-ridge,full,5,0.61,-0.02,-0.27,0.52
+ML-lgbm,full,5,0.26,-0.36,-0.42,0.41
+ML-lgbm,fund_only,10,-0.91,,-0.73,0.29
+ML-lgbm,fund_price,10,0.13,,-0.42,0.41
+ML-ridge,full,10,0.39,-0.24,-0.31,0.43
+ML-lgbm,full,10,0.39,-0.25,-0.38,0.42
+TIMING gate>0.5,market,5,1.52,0.94,-0.16,0.46
+TIMING soft,market,5,1.22,0.57,-0.22,0.7
+TIMING raw(no overlay),market,5,1.21,0.58,-0.22,0.7

@@ -1,0 +1,30 @@
+{
+  "method": "equal-risk over sleeves + carry",
+  "book_sleeves": [
+    "crypto\u00b7trend",
+    "crypto\u00b7x-sect",
+    "equity\u00b7trend",
+    "equity\u00b7x-sect",
+    "sector\u00b7pairs"
+  ],
+  "corr_to_book": -0.00019926827175362002,
+  "book_only": {
+    "sharpe": 0.7366617906546999,
+    "max_dd": -0.13582944102424077,
+    "mc_p5": 0.3082985490779014
+  },
+  "book_plus_carry": {
+    "sharpe": 1.0710339415746466,
+    "max_dd": -0.10334602027403783,
+    "mc_p5": 0.7158407248522957
+  },
+  "per_year": {
+    "2020": 1.96,
+    "2021": 2.61,
+    "2022": 0.14,
+    "2023": 1.04,
+    "2024": 0.74,
+    "2025": 0.32,
+    "2026": 0.45
+  }
+}

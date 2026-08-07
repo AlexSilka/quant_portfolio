@@ -1,0 +1,105 @@
+{
+  "book_A": {
+    "base 6-fam": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 3.0542630547787266,
+      "months": 0.7355371900826446,
+      "worst_mo": -0.059697992905716646,
+      "max_dd": -0.06954881993260886,
+      "streak": 3,
+      "total_return": 42.67851487600515
+    },
+    "+mftrend": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 2.7368126676469164,
+      "months": 0.71900826446281,
+      "worst_mo": -0.05225055153602787,
+      "max_dd": -0.07212518771900234,
+      "streak": 3,
+      "total_return": 24.069731162961624
+    },
+    "+defensive": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 2.772875326977509,
+      "months": 0.71900826446281,
+      "worst_mo": -0.0558118984281849,
+      "max_dd": -0.07795016155624601,
+      "streak": 4,
+      "total_return": 25.89694429524028
+    },
+    "+both (8-fam)": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 2.5017052802798934,
+      "months": 0.71900826446281,
+      "worst_mo": -0.04543018776285912,
+      "max_dd": -0.06449762184721097,
+      "streak": 3,
+      "total_return": 17.483317730028766
+    },
+    "perturb_survivors_of_50": 0
+  },
+  "book_B": {
+    "adaptive_book": {
+      "S": true,
+      "M": false,
+      "W": 0.0,
+      "D": true,
+      "K": false,
+      "n": 2,
+      "sharpe": 3.0443746247622983,
+      "months": 0.7355371900826446,
+      "worst_mo": -0.0638335646558218,
+      "max_dd": -0.0706995627054764,
+      "streak": 3,
+      "total_return": 43.37311623483168
+    },
+    "canonical": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 3.0542630547787266,
+      "months": 0.7355371900826446,
+      "worst_mo": -0.059697992905716646,
+      "max_dd": -0.06954881993260886,
+      "streak": 3,
+      "total_return": 42.67851487600515
+    },
+    "lookahead_cheat": {
+      "S": true,
+      "M": false,
+      "W": 1.0,
+      "D": true,
+      "K": false,
+      "n": 3,
+      "sharpe": 2.971769056631529,
+      "months": 0.7355371900826446,
+      "worst_mo": -0.0595202521183843,
+      "max_dd": -0.06972208743637764,
+      "streak": 3,
+      "total_return": 38.045764571706904
+    }
+  }
+}

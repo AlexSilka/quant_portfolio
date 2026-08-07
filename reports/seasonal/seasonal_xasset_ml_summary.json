@@ -1,0 +1,130 @@
+{
+  "config": {
+    "top_frac": 0.3,
+    "k_trailing_instances": 8,
+    "fomc_offsets": [
+      -1
+    ],
+    "tom": [
+      1,
+      3
+    ]
+  },
+  "A_cross_asset_relative_value": {
+    "crypto_pre_fomc": {
+      "n_instances": 53,
+      "n_names": 162,
+      "net_sharpe": -0.473,
+      "placebo_pctile": 60.0,
+      "placebo_mean": -0.586,
+      "placebo_p95": 0.003,
+      "per_year": {
+        "2020": -1.33,
+        "2021": -0.46,
+        "2022": 0.05,
+        "2023": 1.01,
+        "2024": -4.27,
+        "2025": -0.35,
+        "2026": -0.34
+      },
+      "corr_to_book": -0.116
+    },
+    "crypto_turn_of_month": {
+      "n_instances": 79,
+      "n_names": 219,
+      "net_sharpe": 0.36,
+      "placebo_pctile": 96.0,
+      "placebo_mean": -0.387,
+      "placebo_p95": 0.354,
+      "per_year": {
+        "2020": 0.38,
+        "2021": 1.35,
+        "2022": -0.39,
+        "2023": -0.53,
+        "2024": -0.06,
+        "2025": 1.35,
+        "2026": -0.82
+      },
+      "corr_to_book": 0.022
+    },
+    "stocks_turn_of_month": {
+      "n_instances": 200,
+      "n_names": 692,
+      "net_sharpe": -0.41,
+      "placebo_pctile": 18.0,
+      "placebo_mean": -0.152,
+      "placebo_p95": 0.11,
+      "per_year": {
+        "2010": 0.94,
+        "2011": -0.94,
+        "2012": -1.37,
+        "2013": -1.35,
+        "2014": -0.88,
+        "2015": -1.87,
+        "2016": -1.2,
+        "2017": -0.51,
+        "2018": -1.9,
+        "2019": 0.8,
+        "2020": -0.18,
+        "2021": 0.96,
+        "2022": -1.52,
+        "2023": -1.04,
+        "2024": 1.38,
+        "2025": 1.1,
+        "2026": -0.06
+      },
+      "corr_to_book": -0.002
+    }
+  },
+  "B1_conditional_pre_fomc_ml": {
+    "SPY": {
+      "n_events": 123,
+      "unconditional_sharpe": 0.237,
+      "ridge": {
+        "conditional_sharpe": 0.008,
+        "n_traded": 87,
+        "frac_traded": 0.71,
+        "oos_ic": -0.449
+      },
+      "logistic": {
+        "conditional_sharpe": 0.01,
+        "n_traded": 82,
+        "frac_traded": 0.67,
+        "oos_ic": -0.206
+      },
+      "lgbm": {
+        "conditional_sharpe": 0.068,
+        "n_traded": 88,
+        "frac_traded": 0.72,
+        "oos_ic": -0.186
+      }
+    },
+    "BTC": {
+      "n_events": 52,
+      "unconditional_sharpe": 0.278,
+      "ridge": {
+        "conditional_sharpe": -0.191,
+        "n_traded": 38,
+        "frac_traded": 0.73,
+        "oos_ic": -0.324
+      },
+      "logistic": {
+        "conditional_sharpe": -0.367,
+        "n_traded": 27,
+        "frac_traded": 0.52,
+        "oos_ic": -0.445
+      },
+      "lgbm": {
+        "conditional_sharpe": -0.353,
+        "n_traded": 36,
+        "frac_traded": 0.69,
+        "oos_ic": -0.298
+      }
+    }
+  },
+  "B2_cross_sectional_ml": {
+    "ml_all_days_sharpe": -0.938,
+    "ml_in_window_sharpe": -1.443,
+    "frac_days_in_window": 0.149
+  }
+}
