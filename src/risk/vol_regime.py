@@ -1,21 +1,23 @@
-"""VIX term-structure regime overlay for the short-vol (VRP) leg — §8 book-level risk management.
+"""VIX term-structure regime gate for the short-vol (VRP) strategy — a leg-level timing signal.
 
-The book's systemic tail — the short-vol crash that clusters its losing months — is preceded by the
-VIX curve inverting: when spot VIX rises above 3-month VIX (VIX3M/VIX < 1, *backwardation*), a vol
-shock is under way and short-vol bleeds. This overlay flattens the volprem leg's exposure in that
-regime and holds it in contango.
+The short-vol crash that clusters the leg's losing months is preceded by the VIX curve inverting: when
+spot VIX rises above 3-month VIX (VIX3M/VIX < 1, *backwardation*), a vol shock is under way and short-vol
+bleeds. This gate flattens the leg's exposure in that regime and holds it in contango. It is part of the
+volprem strategy's own signal — run_vol_premium_book.py publishes the gated series as `ret_gated`, and the
+master book simply consumes that. It is NOT a portfolio overlay like the book's drawdown ladder / daily-loss
+breaker (those react to whole-book state); this reacts to one leg's own regime.
 
 Design choices (kept honest, not fitted to the scorecard):
   - threshold = 1.0 — the contango/backwardation boundary itself (VIX3M = VIX), an a-priori economic
     line, not a number picked from results;
   - causal — the decision uses the *prior* close (shift 1); no same-bar look-ahead;
-  - point-in-time — VIX and VIX3M are published intraday and never revised (§9-compliant macro);
+  - point-in-time — VIX and VIX3M are published intraday and never revised;
   - parameter-light — one binary regime switch, no per-asset tuning.
 
 Validated in `scripts/run_ml_book_contribution.py` (`make ml-contribution`): it is the *timing*, not
 de-risking — a constant cut to the same average exposure does nothing and a random gate hurts — and no
 ML engine (logistic / RF / HistGB / LightGBM / MLP) beats this rule: the value is the VIX signal, not
-the model. Applied to the master book it closes the full-window scorecard from 3/5 to 5/5 (§5d/§6).
+the model. It is what closes the master book's full-window scorecard from 3/5 to 5/5.
 """
 from __future__ import annotations
 

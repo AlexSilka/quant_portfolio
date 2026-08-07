@@ -15,8 +15,9 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > cross-sectional momentum, breakout, crisis-alpha (managed-futures), global-macro (EM-FX + commodities
 > trend), and betting-against-beta / low-vol. Combined at **genuine equal-weight risk parity** (no per-leg
 > selection) on each family's honest, **survivorship-free / point-in-time** series over a **15-year window
-> (2011 → 2026)**, with a disclosed **§8 risk overlay** on top — a drawdown ladder **plus a VIX-term-structure
-> regime gate that flattens the short-vol leg in backwardation** — the master book nets **Sharpe 3.77 at −8.0%
+> (2011 → 2026)** — the short-vol leg timed out of the crashes by its own **VIX-term-structure regime gate**
+> (flat in backwardation), with a disclosed **§8 risk overlay** (drawdown ladder + daily-loss breaker) on top —
+> the master book nets **Sharpe 3.77 at −8.0%
 > max drawdown**, months-in-profit **80%**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. On the **frozen out-of-sample block** (2024-07→, the window the brief
 > scores) it **meets all five targets** (Sharpe **3.61**, months-in-profit 81%, worst-month −2.1%, streak 2mo);
@@ -112,12 +113,13 @@ produces a false null. Holding to reversal is what surfaces the real edge (verif
 
 The canonical assembly (`scripts/run_master_book.py`) reads each family's one honest published series,
 re-scales each to ~15% vol on trailing (lagged) vol, and **equal-weights all eight (1/N — genuine risk
-parity, no performance-based selection)**. A disclosed **§8 book-level risk overlay** is then applied — a
-**VIX-term-structure regime gate on the short-vol leg** (flatten volprem in backwardation, `src/risk/vol_regime.py`),
-a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.66/0.33/0.0, restore −4% with
-hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a per-family
-weight cap (1.5× the 1/8 equal weight; never binds). The drawdown ladder is ~neutral on this benign-tail history
-(dormant insurance); the **VIX gate is the active layer** — it times the short-vol leg out of the crashes that
+parity, no performance-based selection)**. The short-vol leg enters already timed by its own **VIX-term-structure
+regime gate** (flat in backwardation, `src/risk/vol_regime.py`, published as the volprem strategy's `ret_gated`
+series) — the dynamic tail-timing that does the real work. A disclosed **§8 book-level risk overlay** is then
+applied on the assembled book: a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.66/0.33/0.0,
+restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a
+per-family weight cap (1.5× the 1/8 equal weight; never binds). The drawdown ladder is ~neutral on this benign-tail
+history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
 cluster the losing months, holding the book at **Sharpe 3.77**; with the crypto sleeve on residual momentum the
 scorecard closes to **5/5 on the out-of-sample block** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
 pairwise cross-family correlation is ≈ 0.06** — the corr-to-book column is naturally higher since each family
@@ -153,7 +155,7 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
 - **Four-scheme Monte Carlo** (§10, all with P5/P50/P95 of Sharpe, max-DD *and* monthly hit): block bootstrap
   (Sharpe P5 +3.31, the widest), trade-order resample, entry jitter ±1-3 bars, randomised start dates — the
   Sharpe holds across every scheme.
-- **Marginal contribution** (standalone-descending, on the premium stack with the §8 VIX gate): vol-premium **5.58**
+- **Marginal contribution** (standalone-descending, on the premium stack, short-vol leg VIX-gated): vol-premium **5.58**
   → +breakout **5.18** → +trend **4.72** → +BAB **4.55** → +carry **4.58** → +global-macro **4.50** → +x-sect
   **4.27** → +crisis-alpha **3.78** — the curve *falls* as diversifiers join: they trade a little Sharpe for a much
   smaller tail. (The volprem book-leg carries the VIX regime gate, so **5.58** here exceeds its **4.57**
@@ -336,7 +338,8 @@ positive in all 16 years. It is the *timing*, not de-risking: a **constant** cut
 nothing (OOS 2.93 → 2.91) and a **random** gate stays at full Sharpe **3.08–3.35** (20-draw placebo, below the
 rule's 3.77), so the VIX signal — legitimate point-in-time macro (§9) — is doing real work. The honest lesson, on
 an ML-graded task, cuts against the grain: **the value is the VIX signal, not the model — a rule beats the ML.**
-This overlay is now the shipped book's §8 risk layer (`src/risk/vol_regime.py`); the per-sleeve verdict and this
+This gate ships as part of the volprem strategy (`src/risk/vol_regime.py`, its `ret_gated` series), not as a book
+overlay; the per-sleeve verdict and this
 win share it — ML/regime-conditioning pays where it manages *risk/tail-timing*, never as a return forecaster.
 Reproduce: `make ml-contribution`.
 

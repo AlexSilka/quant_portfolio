@@ -35,8 +35,9 @@ edge map + dashboard.
   [XSECT](docs/strategies/XSECT.md), [BREAKOUT](docs/strategies/BREAKOUT.md),
   [crisis-alpha](scripts/run_crisis.py), [global-macro](scripts/run_gmacro.py), [BAB](docs/strategies/BAB.md).
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
-  **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)**, with a disclosed
-  **§8 risk overlay** on top (drawdown ladder **+ a VIX-term-structure regime gate on the short-vol leg**), the
+  **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg timed
+  by its own **VIX-term-structure regime gate** (flat in backwardation), with a disclosed **§8 risk overlay**
+  (drawdown ladder + daily-loss breaker) on top — the
   master book nets **Sharpe 3.77** at **−8.0% max drawdown**, months-in-profit **80%**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
   out-of-sample block the brief actually scores (2024-07→) it meets all five targets (Sharpe 3.61)**; on the full

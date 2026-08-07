@@ -39,7 +39,6 @@ from src import bo_common as bo  # noqa: E402
 from src.config import CAPITAL_USD, OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
-from src.risk.vol_regime import gate_short_vol_leg  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
 
 PPY = 365
@@ -77,7 +76,10 @@ FAMILIES = [
     # no bought tail hedge (full -78% tail), NOT costless. Realised leg is OHLC (path+gap),
     # so its standalone Sharpe (~3.6) sits on a real -78% systemic-vol tail / -18 skew — it earns its slot
     # by decorrelation, and its own tail argues for sitting at or below risk parity, not above. docs/strategies/VOLPREM.md.
-    ("volprem", "volprem/volprem_book.parquet", "ret"),
+    # We read `ret_gated` — the deployed series with the VIX-backwardation regime gate that the strategy owns
+    # and publishes (raw `ret` stays available for the validation A/B). The gate is the strategy's timing
+    # signal, not a book-level risk overlay, so it lives in the volprem construction, not here.
+    ("volprem", "volprem/volprem_book.parquet", "ret_gated"),
     # x-sect leg = honest survivorship-free crypto+equity top-100 liquid momentum (standalone ~0.79).
     # See docs/strategies/XSECT.md. (The BAB swap was tested and reverted — it traded smoothness for an
     # unneeded Sharpe; x-sect is smoother. BAB stays a documented standalone source, docs/strategies/BAB.md.)
@@ -205,12 +207,6 @@ def describe(s, mc=True):
 def main():
     raw = {lab: load(lab, f, c) for lab, f, c in FAMILIES}
     raw = {k: v for k, v in raw.items() if v is not None}
-    # §8 risk overlay — VIX term-structure regime gate on the short-vol leg: flatten volprem when the VIX
-    # curve inverts (backwardation), the regime that precedes the systemic short-vol crash. Causal, point-in-
-    # time, un-fitted (the contango/backwardation boundary). This is the dynamic tail-timing that closes the
-    # scorecard to 5/5 on the out-of-sample block — the value is the VIX signal, not any ML model (§5d/§6).
-    if "volprem" in raw:
-        raw["volprem"] = gate_short_vol_leg(raw["volprem"])
     scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index()
     df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
     # UNION over the reporting window, not the intersection: crypto-perp legs (carry, breakout) only

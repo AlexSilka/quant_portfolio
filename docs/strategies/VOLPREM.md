@@ -214,14 +214,15 @@ trend rides) but not guaranteed in a whipsaw regime.
 
 ## 5. Honest limits & ceiling
 
-- **The systemic tail is the binding constraint; breadth cannot remove it, but *timing* sidesteps it at the book
-  level.** Even across 18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC
+- **The systemic tail is the binding constraint; breadth cannot remove it, but *timing* sidesteps it for the
+  portfolio.** Even across 18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC
   realised leg — the honest number; close-to-close showed only −50%). Cross-asset breadth over *uncorrelated*
   crashes softens it but does not defuse it, and an instrument-level tail hedge needs the live option smile (paid).
-  What the *book* does instead is **time** the exposure: a VIX-term-structure regime gate flattens this leg in
-  backwardation, *before* the systemic crash — a book-level §8 overlay (`src/risk/vol_regime.py`,
-  [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to 5/5 on the out-of-sample block. It cuts the tail's *portfolio*
-  clustering (the losing-month driver), not the standalone −78% (that still needs paid option data).
+  What this strategy does instead is **time** the exposure: a VIX-term-structure regime gate flattens the leg in
+  backwardation, *before* the systemic crash — the strategy's own signal (`src/risk/vol_regime.py`, published as
+  the `ret_gated` series the book consumes; [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to 5/5 on the
+  out-of-sample block. It cuts the tail's *portfolio* clustering (the losing-month driver), not the standalone
+  −78% (that still needs paid option data).
 - **Sharpe overstates; skew and drawdown are the honest metrics.** Correcting the realised leg from
   close-to-close to OHLC (path + gap) barely moved the Sharpe but nearly doubled the tail (DD −50% →
   −78%, skew −8.7 → −18). Trust the −18 skew and −78% DD, never the Sharpe.

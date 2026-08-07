@@ -33,6 +33,7 @@ from src.data.cboe import load_cboe_vol  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.risk.vol_regime import gate_short_vol_leg  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 from src.sleeves.vol_premium import realized_vol  # noqa: E402
 
@@ -237,7 +238,11 @@ def main():
     pdf.to_csv(VOLPREM_DIR / "volprem_book_sleeves.csv", index=False)
     out = book.copy()
     out.index = pd.DatetimeIndex(out.index).tz_localize("UTC")   # tz-aware UTC to match the other family series (master join)
-    out.to_frame("ret").to_parquet(VOLPREM_DIR / "volprem_book.parquet")
+    # Publish both the raw premium (`ret`) and the deployed series (`ret_gated`): the VIX term-structure
+    # regime gate (flat in backwardation, the regime that precedes the systemic short-vol crash) is part of
+    # THIS strategy's signal — validated as timing, not de-risking — so it ships from here, not the book
+    # assembler. The raw column stays intact: the master reads `ret_gated`, run_ml_book_contribution reads `ret`.
+    pd.DataFrame({"ret": out, "ret_gated": gate_short_vol_leg(out)}).to_parquet(VOLPREM_DIR / "volprem_book.parquet")
     print("\nVOLPREM-BOOK OK")
 
 
