@@ -272,7 +272,7 @@ months-in-profit **77%**):
 |---|---|---|---|---|
 | **Breakout** meta-gate *(shipped)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 2.75 → 2.64 | **73% → 77%** | gives back ~0.1 Sharpe for +consistency |
 | **Carry** timing overlay | honest leg +1.27 → +1.01 | 2.64 → 2.64 | 77% → 77% | flat on all five |
-| **Trend** meta-gate / conviction † | +0.90 → +0.57…+0.80 | 2.38 → 2.51…2.54 | 69% → 73% (streak 3→2) | cuts the sub-leg's risk |
+| **Trend** meta-gate / conviction † | +0.90 → +0.57…+0.97 | 2.38 → 2.45…2.54 | 69% → 73% (streak 3→2) | cuts the sub-leg's risk |
 | **X-sect** learning-to-rank | crypto rule +0.71 > LTR +0.61 | — (loses standalone) | — | nothing to add |
 
 † the trend swap holds the leg crypto-only, so both rows sit *below* the shipped raw+equities trend leg; the Δ
