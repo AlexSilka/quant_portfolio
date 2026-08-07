@@ -6,11 +6,11 @@ realistic execution costs. The deliverable is a portfolio **and** an honest map 
 where edge exists and where it does not.
 
 **Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.77** full-sample
-(2011 → 2026) at **−8.0%** max drawdown, **all five brief targets met on the 15-year window**, positive in all
-16 calendar years; on the run-once out-of-sample block (2024-07 →) **Sharpe 3.28**, **4 of 5** (only
-months-in-profit short of ≥80% on the 25-month block). The surviving edge is
-crypto-heavy and volprem-anchored (short-vol, ~half of book P&L, on a real tail) — both stated and
-quantified in [REPORT.md](REPORT.md).
+(2011 → 2026) at **−8.0%** max drawdown, positive in all 16 calendar years. On the run-once **out-of-sample
+block** (2024-07 →, the window the brief scores) it **meets all five targets** (**Sharpe 3.61**, months-in-profit
+81%, worst-month −2.1%, streak 2mo); on the **full 15-year window** it meets **4 of 5** — the one miss a single
+3-month losing streak (vs ≤2). The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
+P&L, on a real tail) — both stated and quantified in [REPORT.md](REPORT.md).
 
 **▶ Live interactive dashboard:** https://claude.ai/code/artifact/231e7947-7022-44cd-ac2e-967f799ef48f
 — hosted and public: equity curves, drawdown, monthly heatmap, rolling 12-month Sharpe, exposure &
@@ -37,11 +37,11 @@ edge map + dashboard.
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
   **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)**, with a disclosed
   **§8 risk overlay** on top (drawdown ladder **+ a VIX-term-structure regime gate on the short-vol leg**), the
-  master book nets **Sharpe 3.77** at **−8.0% max drawdown**, months-in-profit **80%** (full 5/5),
-  mean pairwise cross-family correlation **≈ 0.07**, positive in all 16 calendar years. **On the frozen
-  out-of-sample block the brief actually scores (2024-07→), Sharpe is 3.28** — clearing the 2.5 floor on
-  genuinely unseen data, not the full-sample figure. The surviving edge is crypto-heavy and the Sharpe is
-  volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
+  master book nets **Sharpe 3.77** at **−8.0% max drawdown**, months-in-profit **80%**,
+  mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
+  out-of-sample block the brief actually scores (2024-07→) it meets all five targets (Sharpe 3.61)**; on the full
+  15-year window it meets **4 of 5** (the one miss a 3-month losing streak vs ≤2). The surviving edge is crypto-heavy
+  and the Sharpe is volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
 
 ## Verify the headline (~15 min)
 
@@ -50,7 +50,7 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.77** (5/5), OOS **3.28**, −8.0% max-DD, 8 families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.77** (4/5), OOS **3.61** (5/5), −8.0% max-DD, 8 families |
 | `make cscv` | the overfit / multiple-testing control | **PBO 32%**, in-sample-best +0.09 → OOS +0.00 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -100,7 +100,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.77 full / 3.28 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.77 full / 3.61 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

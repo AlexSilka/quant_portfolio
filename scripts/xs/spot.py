@@ -1,11 +1,13 @@
-"""Full acceptance bar for the SHIPPED crypto·x-sect config, under the honest liquidity-aware cost.
+"""Full acceptance bar for the raw-price crypto·x-sect spot construction, under the honest liquidity-aware cost.
 
-Validates exactly what `build_xs_book.crypto_spot_xsect` ships — broad spot universe (226 names,
+Validates the raw-price crypto cross-sectional sleeve — broad spot universe (226 names,
 2017-08+), top-50 most-liquid each bar, mom-30d, inverse-vol legs, no-trade buffer, and the split
 commission + half-spread + √-impact cost from `src/config.py` — against the shared bar
 (docs/HYPOTHESES.md): shuffled-signal placebo (beat the 95th pct), purged/embargoed walk-forward OOS,
-block-bootstrap MC-P5, deflated Sharpe at the trial count. Costs use the FUTURES taker (the tradable
-2020+ venue where the shorts live); the venue-correct spot-cost pre-2020 splice lives in the builder.
+block-bootstrap MC-P5, deflated Sharpe at the trial count. This is the construction the crypto x-sect
+sleeve shipped before the idiosyncratic-momentum upgrade; the shipped leg now runs on residual momentum
+(docs/strategies/RESIDMOM.md, built in `build_xs_book.crypto_spot_xsect`). Costs use the FUTURES taker
+(the tradable 2020+ venue where the shorts live).
 
     python scripts/xs/spot.py
 """

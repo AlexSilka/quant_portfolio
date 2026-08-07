@@ -1,6 +1,6 @@
 # Residual / idiosyncratic momentum (H5) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.52** full / **2.64** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.77** full / **3.61** OOS; this family's residual-momentum construction now ships as the crypto x-sect leg — §0). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
 
 **Scope.** H5 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): residual (idiosyncratic) momentum
 — rank on the momentum of each name's **market-beta residual**, standardised by residual vol
@@ -26,9 +26,12 @@ execution (same lookback / skip / quantile / rebalance / universe), only the ran
   (+0.45 → **+0.61** standalone, walk-forward OOS incremental **+0.25**) and it **halves the momentum-crash
   bleed on equity** (in raw momentum's worst 5 months, residual loses −5.0% vs raw's −12.3%). But it is
   **~0.8 correlated with raw momentum**, adds **no significant alpha over it** (t = +0.1 to +1.1), and so
-  **does not lift the master book** (which already carries the x-sect momentum sleeve). Its honest role is a
-  **drop-in upgrade to the existing crypto momentum sleeve** and a **crash-hedge on the equity leg**, not a
-  new admitted family — exactly the "highest-certainty modest win, lowest diversification value" H5 predicted.
+  it **does not lift the book as a separate 9th family** (added @30% it dilutes, 3.77 → 3.48). Its honest
+  role — **now shipped** — is a **drop-in upgrade to the crypto x-sect momentum sleeve**
+  (`build_xs_book.crypto_spot_xsect`): swapped in as that leg's construction it holds the book's full-window
+  Sharpe (3.77) and **lifts the out-of-sample scorecard to 5/5** (OOS Sharpe 3.28 → 3.61, months 77% → 81%)
+  at the cost of the full-window losing streak (2 → 3). Plus a **crash-hedge on the equity leg**. Not a new
+  admitted family — exactly the "highest-certainty modest win, lowest diversification value" H5 predicted.
 - **The thesis was equity; the win is crypto.** On crypto the residual construction is textbook-clean and
   strictly better than raw at the a-priori config and at **every** timeframe 1d→15m (Δ up to +0.26). On
   equity the canonical decoupled construction actually **underperforms raw on full-sample Sharpe** (+0.41 vs

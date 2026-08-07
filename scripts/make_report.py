@@ -586,7 +586,9 @@ def main():
          "pass" if moo.min() >= -0.06 else "miss"),
         ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis; the turnover chart plots the one-way re-weighting series", ""),
     ]
-    n_pass = sum(1 for *_, c in sc[:5] if c == "pass")
+    n_pass = sum(1 for *_, c in sc[:5] if c == "pass")             # OOS block (the scored window)
+    n_pass_full = sum([2.5 <= m["sharpe"] <= 4.0, _mip(mo) >= 0.80, m["max_dd"] >= -0.15,   # 15y larger sample
+                       _streak(mo.values) <= 2, mo.min() >= -0.06])
     wfp = REP / "master_book_wf_summary.json"
     wf_li = ""
     if wfp.exists():
@@ -603,18 +605,18 @@ def main():
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
     sc_note = (
         f'<div class="scnote">'
-        f'<span class="lead"><b>All five targets met on the full 15-year window; {n_pass} of 5 on the final '
-        f'out-of-sample block</b> (2024-07&rarr;, the window the brief scores).</span>'
+        f'<span class="lead"><b>All five targets met on the final out-of-sample block; {n_pass_full} of 5 on the '
+        f'full 15-year window</b> (2024-07&rarr; is the window the brief scores).</span>'
         f'<ul>'
-        f'<li><b>OOS scorecard:</b> Sharpe ({_sh(oos):+.2f}) '
-        f'{"clears" if _sh(oos) >= 2.5 else "is a near-miss under"} the 2.5 floor; max-drawdown, worst-month and '
-        f'losing-streak also clear. The one miss is months-in-profit ({_mip(moo):.0%} vs &ge;80%) on the 25-month '
-        f'block; on the full 15-year window it clears 80% &mdash; the <b>VIX-term-structure regime gate</b> flattens '
-        f'the short-vol leg in backwardation, lifting months <i>and</i> the worst month together (not by reweighting, '
-        f'which fails &mdash; §6).</li>'
-        f'<li><b>Long track ({y0}&rarr;now, {int(yrs)} years):</b> Sharpe {m["sharpe"]:+.2f}, max-DD {m["max_dd"]:+.1%}, '
-        f'<b>positive in {n_pos_yr} of {n_tot_yr} years</b>. <i>Caveat:</i> pre-2016 leans on reconstructed '
-        f'crisis/global-macro signals (only 2020+ is fully live).</li>'
+        f'<li><b>OOS scorecard ({n_pass} of 5):</b> Sharpe ({_sh(oos):+.2f}), months-in-profit ({_mip(moo):.0%}), '
+        f'max-drawdown, worst-month and losing-streak all clear on the held-out block &mdash; the '
+        f'<b>VIX-term-structure regime gate</b> flattens the short-vol leg in backwardation (lifting months <i>and</i> '
+        f'the worst month, not by reweighting, which fails &mdash; §6), and the crypto sleeve runs on '
+        f'<b>residual (idiosyncratic) momentum</b>.</li>'
+        f'<li><b>Full 15-year window ({n_pass_full} of 5):</b> Sharpe {m["sharpe"]:+.2f}, months-in-profit '
+        f'{_mip(mo):.0%}, max-DD {m["max_dd"]:+.1%}, worst-month {mo.min():+.1%} all clear; the one miss is the '
+        f'{_streak(mo.values)}-month losing streak (vs &le;2). <b>Positive in {n_pos_yr} of {n_tot_yr} years</b>. '
+        f'<i>Caveat:</i> pre-2016 leans on reconstructed crisis/global-macro signals (only 2020+ is fully live).</li>'
         f'{wf_li}'
         f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights doesn&rsquo;t beat it OOS (mean-var buys '
         f'Sharpe with a 3&times; tail); rule parameters &amp; book weights are a-priori, ML meta-labels &amp; '

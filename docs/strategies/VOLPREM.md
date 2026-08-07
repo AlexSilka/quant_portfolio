@@ -189,7 +189,7 @@ not the standalone Sharpe, is what earns it a slot.
 
 In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over eight families), the
 honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.77 to
-**1.75**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
+**1.73**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
 with volprem vs ≈ −6% on the flattered close-to-close accounting** (§4b). So it is a genuine co-engine *and*
 the family that most needs its weight watched, exactly because its own tail is −78%.
 
@@ -202,7 +202,7 @@ instrument-level fix — an option wing that caps the tail — cannot be credibl
 hedge needs the live option smile — paid data. A sleeve-level P&L stop and an ex-ante implied-spike
 de-gross were both tested and **do not help** *reactively*: the crashes are too fast to de-risk into once vol is
 already spiking. (A **leading** signal is different — a VIX-term-structure backwardation gate fires *before* the
-crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure into a full-window 5/5.)
+crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure to close the scorecard to 5/5 on the out-of-sample block.)
 
 **The mandate is on the portfolio, and sizing meets it.** In the canonical master (equal weight, 1/8 to
 volprem), trend's long gamma structurally hedges VRP's vol-spike crashes, so the portfolio lands at
@@ -220,7 +220,7 @@ trend rides) but not guaranteed in a whipsaw regime.
   crashes softens it but does not defuse it, and an instrument-level tail hedge needs the live option smile (paid).
   What the *book* does instead is **time** the exposure: a VIX-term-structure regime gate flattens this leg in
   backwardation, *before* the systemic crash — a book-level §8 overlay (`src/risk/vol_regime.py`,
-  [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to a full-window 5/5. It cuts the tail's *portfolio*
+  [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to 5/5 on the out-of-sample block. It cuts the tail's *portfolio*
   clustering (the losing-month driver), not the standalone −78% (that still needs paid option data).
 - **Sharpe overstates; skew and drawdown are the honest metrics.** Correcting the realised leg from
   close-to-close to OHLC (path + gap) barely moved the Sharpe but nearly doubled the tail (DD −50% →

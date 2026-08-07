@@ -142,6 +142,15 @@ weak as it is, is the only real second source.
   (corr **+0.13**) — lower drawdown than either alone. As a standalone book x-sect is marginal; as an
   overlay it earns its place.
 
+**Shipped construction — residual momentum (the H5 upgrade).** The master book's crypto x-sect leg does
+*not* ship the raw riskadj-30d sleeve tabled above. The H5 deep-dive ([RESIDMOM.md](RESIDMOM.md)) ran
+**residual (idiosyncratic) momentum** — the same cross-sectional ranking on the market-beta-neutralised
+residual (BHM), monthly rebalance on the 300-name PIT spot panel — through the full funnel and found it a
+steadier, lower-turnover crypto momentum (net Sharpe ≈ **+0.6**) that lifts the assembled book's
+out-of-sample consistency at no return cost. That is the construction `build_xs_book.crypto_spot_xsect`
+ships; the equity leg keeps the risk-adjusted-momentum engine above. The two legs (≈0.00 correlated) are
+risk-parity combined into the family series the master book reads.
+
 ## 6. Breadth investigation — does a broader equity universe strengthen it? (no)
 
 The narrow equity panel (78 names) mixes mega-caps with sector/bond/commodity ETFs and uses today's

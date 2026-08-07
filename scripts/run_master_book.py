@@ -207,8 +207,8 @@ def main():
     raw = {k: v for k, v in raw.items() if v is not None}
     # §8 risk overlay — VIX term-structure regime gate on the short-vol leg: flatten volprem when the VIX
     # curve inverts (backwardation), the regime that precedes the systemic short-vol crash. Causal, point-in-
-    # time, un-fitted (the contango/backwardation boundary). This is the dynamic tail-timing that lifts the
-    # book from 3/5 to a full-window 5/5 — the value is the VIX signal, not any ML model (§5d/§6).
+    # time, un-fitted (the contango/backwardation boundary). This is the dynamic tail-timing that closes the
+    # scorecard to 5/5 on the out-of-sample block — the value is the VIX signal, not any ML model (§5d/§6).
     if "volprem" in raw:
         raw["volprem"] = gate_short_vol_leg(raw["volprem"])
     scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index()

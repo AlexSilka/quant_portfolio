@@ -1,18 +1,17 @@
 """Build the x-sect family block (reports/xs/xs_book.parquet) that feeds the master book.
 
-crypto·x-sect is on SPOT (2017-08+), not perp (2020+): a pure price signal needs no funding, so
-spot's deeper history is usable. It runs through the book's own engine (`xsect.xs_backtest`) with the
-HONEST, liquidity-aware cost, split into three visible pieces (never one opaque bps number):
-  - commission : venue-correct Binance taker — SPOT (10bps) while spot is the only venue (pre-2020),
-                 FUTURES (5bps) once perps exist and carry the shorts (2020+); spliced at 2020,
-  - half-spread: 1bp bid/ask floor,
-  - √-impact   : Almgren k·σ·√(order/ADV) per name, so the illiquid mid-cap tail of the top-50 pays
-                 its true wider cost instead of a flat spread.
-inverse-vol legs + a no-trade buffer keep the thin 2017-18 cross-section (4-18 names) from blowing up
-(the equal-weight build does). Honest net Sharpe ≈ +0.66 (venue-correct) / +0.70 (futures-only) — the
-√-impact term (~7-8%/yr at this book's turnover) is what a flat-cost build silently omits. All
-constants live in `src/config.py`. Equity·x-sect keeps the broad-panel engine. The two legs
-(≈0.00 correlated) are risk-parity combined. Feeds scripts/run_master_book.py.
+crypto·x-sect is IDIOSYNCRATIC (residual) momentum — the RESIDMOM.md deep-dive construction (Blitz-
+Huij-Martens): the crypto momentum signal on the market-beta-neutralised residual, not the raw price.
+On the 300-name PIT spot panel (crypto_1d, 2020+) ranked to the top-100 most-liquid, beta stripped
+over 90d (as BAB), residual momentum ranked over ~30d, monthly rebalance, honest 6bps + √-impact
+(Almgren k·σ·√(order/ADV) per name), vol-target 15%. Residualising and rebalancing monthly gives a
+steadier, lower-turnover crypto momentum than a daily raw-price sleeve — net Sharpe ≈ +0.6, and it
+lifts the assembled book's out-of-sample consistency. The deep-dive owns and validated the
+construction (scripts/residmom/run_residmom.py); this reuses its exact builder so the two never drift.
+
+Equity·x-sect keeps the broad-panel risk-adjusted-momentum engine (survivorship-free S&P panel,
+top-100 liquid, classic 12-1, decile legs, monthly, honest commission + half-spread + √-impact +
+borrow). The two legs (≈0.00 correlated) are risk-parity combined. Feeds scripts/run_master_book.py.
 
     python scripts/xs/build_xs_book.py
 """
@@ -26,8 +25,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src import config as cfg  # noqa: E402
 from src.metrics import summarise  # noqa: E402
-from src.sleeves.xsect import mom, risk_adj_mom, top_n_liquid, vol_target, xs_backtest  # noqa: E402
+from src.sleeves import bab  # noqa: E402
+from src.sleeves.xsect import idio_mom, risk_adj_mom, top_n_liquid, vol_target, xs_backtest  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+# The crypto x-sect leg IS the RESIDMOM.md deep-dive's idiosyncratic-momentum book — reuse its exact
+# builder (panel / winsor / signal / backtest) so the leg can never drift from the validated deep-dive.
+from scripts.residmom.run_residmom import ASSETS as RM_ASSETS, _book as rm_idio_book, _load as rm_load  # noqa: E402
 
 CACHE, OUT = cfg.CACHE_DIR / "xs", cfg.XS_DIR
 
@@ -39,50 +42,25 @@ def _norm(s):
     return s.dropna()
 
 
-def _tznaive(*frames):
-    for D in frames:
-        D.index = pd.to_datetime(D.index)
-        if D.index.tz is not None:
-            D.index = D.index.tz_localize(None)
-    return frames
-
-
 def crypto_spot_xsect(report=False):
-    """Robust, survivorship-free cross-sectional momentum on crypto SPOT with venue-correct costs.
-
-    The BROAD spot universe (226 names, 2017-08+) ranked to the top-50 most-liquid each bar (a sweep
-    found top-50 optimal even under honest costs — a smaller universe concentrates each order and pays
-    *more* impact, not less), plain mom-30d, inverse-vol legs, no-trade buffer. Commission is spliced
-    at 2020: spot taker before perps exist, futures taker after (the shorts execute on perps). The
-    √-impact term is per name from ADV. Honest full-sample net ≈ +0.66; the 2023-26 tail is weak —
-    crypto x-sect momentum has decayed as the market matured (the honest caveat)."""
-    close = pd.read_parquet(CACHE / "crypto_spotwide_1d_close.parquet")
-    adv = pd.read_parquet(CACHE / "crypto_spotwide_1d_adv.parquet")
-    close, adv = _tznaive(close, adv)
-    close = close[close.index >= pd.Timestamp("2017-08-01")]           # drop a 1970 glitch bar
-    adv = adv.reindex(close.index)
-    keep = [c for c in close.columns if c not in cfg.STABLECOINS]       # stablecoins have no momentum
-    close, adv = close[keep], adv[keep]
-
-    sig = top_n_liquid(mom(close, cfg.XS_LOOKBACK_D), adv, cfg.XS_TOP_N_LIQUID)
-
-    def leg(venue):
-        commission_bps, half_spread_bps = cfg.crypto_cost_bps(venue)
-        return xs_backtest(close, sig, top_frac=cfg.XS_TOP_FRAC, weighting=cfg.XS_WEIGHTING, rebal=1,
-                           buffer=cfg.XS_NO_TRADE_BUFFER, commission_bps=commission_bps,
-                           half_spread_bps=half_spread_bps, adv=adv, impact_k=cfg.IMPACT_K,
-                           capital=cfg.CAPITAL_USD, min_names=4)
-
-    bt_spot, bt_fut = leg("spot"), leg("futures")                       # identical but for the taker fee
-    split = pd.Timestamp(cfg.PERP_HISTORY_START)
-    raw = pd.concat([bt_spot["net"].loc[:split - pd.Timedelta(days=1)],
-                     bt_fut["net"].loc[split:]]).sort_index()           # venue-correct: spot<2020, fut>=2020
+    """Crypto x-sect = idiosyncratic (residual) momentum — the RESIDMOM.md deep-dive construction
+    (Blitz-Huij-Martens): the momentum signal on the market-beta-neutralised residual, not the raw
+    price. On the 300-name PIT spot panel (crypto_1d, 2020+) ranked to the top-100 most-liquid, beta
+    stripped over a 90d window (as BAB), residual momentum ranked over ~30d, monthly rebalance, honest
+    6bps + √-impact, vol-target 15%. Residualising and rebalancing monthly gives a steadier, lower-
+    turnover crypto momentum than a daily raw-price sleeve (net Sharpe ≈ +0.6, decorrelated from the
+    equity leg). Reuses the deep-dive's own builder so this leg can never drift from the validated run."""
+    c = RM_ASSETS["crypto"]; b = c["base"]
+    Craw, adv = rm_load(c["tag"])                                       # crypto_1d: 300-name PIT spot panel
+    C = bab.winsorize_panel(Craw, c["winsor"])                          # clip artifact name-days |ret|>100%
+    sig = idio_mom(C, b["lb"], c["beta_lb"], b["sk"], market=None)      # BHM residual momentum vs EW market
+    net, bt = rm_idio_book(C, sig, adv, c)                              # top-100 liquid, q0.3, monthly, 6bps+√-impact, vt15%
     if report:
-        yrs = (bt_fut["net"].index[-1] - bt_fut["net"].index[0]).days / 365.25
-        print(f"  crypto·x-sect cost/yr (futures leg): commission {bt_fut['commission'].sum()/yrs:.1%}"
-              f"  half-spread {bt_fut['spread'].sum()/yrs:.1%}  √-impact {bt_fut['impact'].sum()/yrs:.1%}"
-              f"  (total {bt_fut['cost'].sum()/yrs:.1%}, turnover {bt_fut['turnover'].sum()/yrs:.0f}x/yr)")
-    return _norm(vol_target(raw, cfg.CRYPTO_PPY, cfg.XS_VOL_TARGET).dropna())
+        yrs = (bt["net"].index[-1] - bt["net"].index[0]).days / 365.25
+        print(f"  crypto·x-sect (idio) cost/yr: total {bt['cost'].sum()/yrs:.1%}"
+              f"  √-impact {bt['impact'].sum()/yrs:.1%}  turnover {bt['turnover'].sum()/yrs:.0f}x/yr"
+              f"  (monthly rebalance — far below a daily sleeve)")
+    return _norm(net)
 
 
 def equity_xsect(report=False):
@@ -108,7 +86,7 @@ def equity_xsect(report=False):
 
 def main():
     cr, eq = crypto_spot_xsect(report=True), equity_xsect(report=True)
-    for nm, s, ppy in [("crypto·x-sect (SPOT)", cr, cfg.CRYPTO_PPY), ("equity·x-sect", eq, cfg.EQUITY_PPY)]:
+    for nm, s, ppy in [("crypto·x-sect (idio)", cr, cfg.CRYPTO_PPY), ("equity·x-sect", eq, cfg.EQUITY_PPY)]:
         x = summarise(s, ppy)
         p5 = bootstrap_sharpe(s, ppy, 800, cfg.SEED).get("sharpe_p5", np.nan)
         print(f"  {nm:22s} Sharpe {x['sharpe_ann']:+.2f}  DD {x['max_dd']:+.0%}  MC-P5 {p5:+.2f}  "

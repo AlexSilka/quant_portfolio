@@ -1,6 +1,6 @@
 # Carry — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.52** full / **2.64** OOS), assembled by `scripts/run_master_book.py` (the older `build_book.py` "streams" pipeline in §6 is superseded). Carry is one leg (P&L share ~5%), **not** the book's biggest contributor — vol-premium anchors it. Any master-book Sharpe below is a snapshot at evaluation time.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.77** full / **3.61** OOS), assembled by `scripts/run_master_book.py` (the older `build_book.py` "streams" pipeline in §6 is superseded). Carry is one leg (P&L share ~5%), **not** the book's biggest contributor — vol-premium anchors it. Any master-book Sharpe below is a snapshot at evaluation time.
 
 **Scope.** A full rework and evaluation of the perpetual-funding **carry** family: what the existing
 sleeve does, why it fails, the two constructions under which carry actually works, ML overlays,
