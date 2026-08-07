@@ -281,9 +281,10 @@ def main():
     pnl_share = (contrib / contrib.sum()).round(4).to_dict()
     print(f"per-family P&L share: { {k: round(v,3) for k,v in pnl_share.items()} }")
 
-    # §13 out-of-sample trade log — the book is return-composed, so its trades ARE the daily risk-parity
-    # rebalances of the family sleeves; instrument-level fills live in each family's deep-dive (e.g.
-    # reports/trend/trend_oos_trade_log.csv). One row per sleeve per OOS day it is re-weighted.
+    # §13 out-of-sample sleeve-rebalance log — the book is return-composed, so its "trades" ARE the daily
+    # risk-parity rebalances of the family sleeves; the combined instrument-level fills live separately in
+    # master_book_oos_trades.csv (make_oos_ledger, from each family's deep-dive e.g. trend_oos_trade_log.csv).
+    # One row per sleeve per OOS day it is re-weighted.
     w = scales.div(scales.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0)
     w_oos = w[w.index >= OOS]
     dw_oos = w_oos.diff().fillna(0.0)
@@ -296,8 +297,8 @@ def main():
             trades.append({"date": dt.date(), "sleeve": fam, "side": "buy" if d > 0 else "sell",
                            "delta_weight": round(d, 5), "weight_after": round(float(w_oos.at[dt, fam]), 5),
                            "notional_usd": round(abs(d) * CAPITAL_USD, 2)})
-    pd.DataFrame(trades).to_csv(R / "master_book_oos_trades.csv", index=False)
-    print(f"OOS trade log: {len(trades):,} sleeve-rebalances -> reports/master_book_oos_trades.csv")
+    pd.DataFrame(trades).to_csv(R / "master_book_oos_rebalances.csv", index=False)
+    print(f"OOS sleeve-rebalance log: {len(trades):,} rebalances -> reports/master_book_oos_rebalances.csv")
 
     # persist
     managed.to_frame().to_parquet(R / "master_book.parquet")
