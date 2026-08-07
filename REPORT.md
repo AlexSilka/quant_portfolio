@@ -67,6 +67,9 @@ A complete, reproducible pipeline, every stage runnable:
   honest survivorship-free universe): **trend, carry, short-vol/VRP, cross-sectional momentum, breakout,
   betting-against-beta / low-vol**, plus two structural diversifiers — **crisis-alpha** (multi-asset
   managed-futures trend, `run_crisis.py`) and **global-macro** (EM-FX + commodities trend, `run_gmacro.py`).
+  The systematic search's **survival funnel** (§6/§12): **1,279 candidate sleeves generated → 93 pass
+  in-sample (Sharpe > 0.5) → 54 clear Monte-Carlo (P5 > 0) → 54 enter** the discovery-zoo satellite
+  (`reports/book/zoo_summary.json`, `figures/funnel.png`); the family deep-dives are developed on top.
 - **Portfolio assembly** — one canonical script (`scripts/run_master_book.py`) risk-parity-combines the
   eight families from their published honest series into the master book (§4).
 - **Meta-label confidence gate — measured (§5's ML-incremental-value requirement)** — a LightGBM meta-label
@@ -80,7 +83,10 @@ A complete, reproducible pipeline, every stage runnable:
   baseline, not asserted (`scripts/run_meta_overlay.py`, `reports/book/meta_overlay.csv`). The
   **per-family baseline-vs-ML table is §5d.**
 - **Backtest** — bar-close→execution delay (no same-bar fill), liquidity-aware costs (commission +
-  half-spread + √-impact, never flat), funding charged at every 8h settlement.
+  half-spread + √-impact, never flat), funding charged at every 8h settlement. **Cost sensitivity (§9):**
+  the book re-charged at **1×/2×/3×** its modelled round-trip cost nets Sharpe **3.66 / 2.73 / 1.80**
+  (max-DD −8.1% / −14.6% / −21.5%), **break-even at ≈5×** the book-turnover cost; per-family break-even
+  runs higher still (breakout 10.4×, x-sect 7.8×) — no surviving sleeve is cost-fragile.
 - **Validation** — purged/embargoed CV; a **four-scheme Monte Carlo** (block bootstrap + trade-order resample
   + entry jitter ±1-3 bars + randomised start dates, each with P5/P50/P95 of Sharpe, max-DD and monthly hit);
   a placebo (shuffled-signal) arm; and the **mandatory multiple-testing triad** — deflated Sharpe, placebo-FDR,
@@ -298,6 +304,23 @@ every target at book level.
   timer) — and every route forces overweighting the short-vol leg, which deepens the worst month past
   −6%, with the 5/5 weight-corners collapsing under ±25% perturbation. Months-in-profit ≥80% fights
   worst-month ≥−6% for a short-gamma book — the frontier is real, not a tuning miss.
+- **The honest frontier, quantified** (`scripts/frontier.py`, `reports/figures/frontier.png`): a
+  **2,000-sample random search over the family weights** (seed 7) reaches **5 of 5 targets in 0 of 2,000**
+  weightings — months-in-profit ≥ 80% in only **1**, and months ≥ 80% *and* worst-month ≥ −6% *together*
+  in **0**. A single-knob volprem-weight sweep shows the mechanism — months-in-profit only rises by
+  over-weighting the short-vol leg, which breaks worst-month:
+
+  | volprem weight | Sharpe | months-in-profit | worst month | targets |
+  |---|---|---|---|---|
+  | 0.5 | 2.54 | 72% | −5.5% | 3/5 |
+  | 1.0 (equal risk) | 3.05 | 74% | −6.0% | 3/5 |
+  | 1.5 | 3.45 | 76% | −6.4% | 2/5 |
+  | 3.0 | 4.04 | 79% | −8.6% | 1/5 |
+
+  Months-in-profit never reaches 80% on any weight, and holding worst-month ≥ −6% caps it near 74% — so the
+  shipped equal-weight master book (Sharpe **3.66** full / **2.64** OOS, months 77%) is the honest 3–4-of-5,
+  not a fitted corner. *(Sweep on the core-family book; the 8-family master adds the crisis / global-macro
+  diversifiers and sits higher on consistency, still short of 80%.)*
 - **Binding constraints:** costs/turnover kill 5m (and most 15m) sleeves; the surviving edge is
   **crypto-heavy** (only trend spans equities), so the book carries crypto-regime risk (visible as the
   book's thinnest crypto-era years — 2024 +2.3, 2026 +0.6 partial — positive but well below the
