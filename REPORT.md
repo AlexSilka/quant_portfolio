@@ -268,17 +268,16 @@ targets, not Sharpe alone).** The book already clears max-DD (**−5.9%** OOS vs
 (**−3.1%** vs −6%) with 2–3× headroom, so its *binding* targets are **months-in-profit** (77% vs the 80% goal)
 and the full-sample **losing streak** (4 vs 2) — the consistency axes where ML's honest value shows if it is
 real. Swapping one family's leg for its ML variant, book otherwise identical (baseline OOS Sharpe **2.64**,
-months-in-profit **77%**). The **leg-standalone** column re-measures each family *inside this swap harness*
-(equal-weight core-10; trend held crypto-only), so it can differ from the deep-dive figure in the table above for
-the *same* rule — trend's **+0.90** here vs **+0.67** there is one EMA rule under two aggregations, not a
-discrepancy; read the raw→ML *delta* within each table. Reproduce: `make ml-contribution`
-(`scripts/run_ml_book_contribution.py` → `reports/book/ml_book_contribution.json`):
+months-in-profit **77%**). The **leg-standalone** column is each family's raw Sharpe re-measured inside this
+swap harness (equal-weight core-10; trend held crypto-only); it lines up with the deep-dive figure above
+(trend **+0.69** here ≈ **+0.67** there), so read the raw→ML *delta* within each table, not the standalone level.
+Reproduce: `make ml-contribution` (`scripts/run_ml_book_contribution.py` → `reports/book/ml_book_contribution.json`):
 
 | ML lever | leg standalone (raw → ML) | book OOS Sharpe | book OOS months-in-profit | on the binding axis |
 |---|---|---|---|---|
 | **Breakout** meta-gate *(shipped)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 2.75 → 2.64 | **73% → 77%** | gives back ~0.1 Sharpe for +consistency |
-| **Carry** timing overlay | honest leg +1.27 → +1.01 | 2.64 → 2.64 | 77% → 77% | flat on all five |
-| **Trend** meta-gate / conviction † | +0.90 → +0.57…+0.97 | 2.38 → 2.45…2.54 | 69% → 73% (streak 3→2) | cuts the sub-leg's risk |
+| **Carry** timing overlay | honest leg +1.33 → +1.04 | 2.64 → 2.64 | 77% → 77% | flat on all five |
+| **Trend** meta-gate / conviction † | +0.69 → +0.57…+1.00 | 2.38 → 2.45…2.55 | 69% → 73% (streak 3→2) | cuts the sub-leg's risk |
 | **X-sect** learning-to-rank | crypto rule +0.71 > LTR +0.61 | — (loses standalone) | — | nothing to add |
 
 † the trend swap holds the leg crypto-only, so both rows sit *below* the shipped raw+equities trend leg; the Δ
@@ -290,19 +289,20 @@ the book already uses ML where a non-Sharpe target binds. What ML does **not** d
 a return-forecaster — §7), buy DD or worst-month headroom the book does not need, or close the structural
 months-in-profit / streak gap — the short-gamma legs crash together, and only the crisis / global-macro
 long-gamma legs (already in the book) address that. The **carry** overlay's +1.21→+1.52 standalone lift, by
-contrast, is construction-specific: it does not reproduce on the honest carry leg (+1.27→+1.01) and is flat on
+contrast, is construction-specific: it does not reproduce on the honest carry leg (+1.33→+1.04) and is flat on
 every target at book level.
 
 **Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
 the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence
-gate to all eight legs a-priori nets ±0.1 OOS Sharpe — noise — and hard-gating buys OOS Sharpe only by cutting
-months-in-profit to 62–69% (the wrong axis); the sign flips with the classifier (logistic +0.22 vs LightGBM
-−0.09), the signature of noise. The cherry-pick (gate only where it helps standalone) reads +0.12 full-sample but
-**does not survive out-of-sample** (+0.04) — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
+gate to all eight legs a-priori, hard-gating buys ~**+0.2 OOS Sharpe** (logistic +0.23, boosting +0.21) — but
+only by **cutting months-in-profit to 65–69%** (from 77%) and deepening the worst month; it trades away the exact
+metric that binds, so a Sharpe bump bought that way is not an improvement. The cherry-pick (gate only where it
+helps standalone) reads +0.13 full-sample but **does not survive out-of-sample** (+0.04) — exactly the overfit it
+looks like. **(2) Objective-aligned sizing:**
 the meta-model optimises a binary win/loss log-loss → *precision*, not Sharpe/PnL (a +0.1% and a +50% win share
 the label `1`), so it is misaligned by construction — which is why it is flat on fat-tailed trend (OOS AUC 0.505).
 Replacing it with magnitude-aware sizing (regress the forward return, size by expected magnitude) is also within
-noise (+0.03–0.04 OOS). **(3) Direct-Sharpe allocation** is already tested (§5c) and overfits (trailing
+noise (Ridge +0.03 OOS at 81% months-in-profit, boosting −0.04). **(3) Direct-Sharpe allocation** is already tested (§5c) and overfits (trailing
 mean-variance buys Sharpe on a 3× drawdown tail). The implementation is textbook AFML meta-labelling over a
 **rule** primary — its correct niche (a meta-model adds no information to an ML primary; it earns its keep
 filtering a high-recall rule, not manufacturing alpha) — and the literature agrees with the measurement: on

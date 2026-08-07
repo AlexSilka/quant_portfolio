@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master discovery figures cscv wf features sessions ledger lint
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution discovery figures cscv wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -16,6 +16,11 @@ reproduce:
 # Assemble the master book from the eight families' published series (the canonical portfolio).
 master:
 	$(PY) scripts/run_master_book.py
+
+# §5d book-level ML: does ML lift the ASSEMBLED book? Leg-swap each family for its ML variant through
+# the risk-parity assembly (breakout/carry/trend) + uniform gate + magnitude sizing. ~several minutes.
+ml-contribution:
+	$(PY) scripts/run_ml_book_contribution.py
 
 # §6 probability of backtest overfitting (CSCV) on the full 1,279-sleeve trial set.
 cscv:
