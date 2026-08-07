@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution discovery figures cscv wf features sessions ledger lint
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution ml-portfolio discovery figures cscv wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -21,6 +21,11 @@ master:
 # the risk-parity assembly (breakout/carry/trend) + uniform gate + magnitude sizing. ~several minutes.
 ml-contribution:
 	$(PY) scripts/run_ml_book_contribution.py
+
+# §5d portfolio-level ML: does ML on top of the WHOLE book lift it? (measured — it does not: whole-book
+# gate / soft-exposure / ML-allocation, six engines, honest controls, all five targets.) ~3-4 min.
+ml-portfolio:
+	$(PY) scripts/run_ml_portfolio_overlay.py
 
 # §6 probability of backtest overfitting (CSCV) on the full 1,279-sleeve trial set.
 cscv:

@@ -343,6 +343,24 @@ overlay; the per-sleeve verdict and this
 win share it — ML/regime-conditioning pays where it manages *risk/tail-timing*, never as a return forecaster.
 Reproduce: `make ml-contribution`.
 
+**And ML *on top of the whole book* does not lift it either — three tactics, six engines (`make ml-portfolio`).**
+The VIX win above is *surgical*: it gates the single tail leg. Putting an ML layer on the **whole assembled book**
+instead helps on no honest reading of the five targets (causal walk-forward, quarterly refit, 21-day embargo,
+judged on Sharpe / CAGR / max-DD / worst-month / months-in-profit / streak, full + OOS). **(A) A whole-book regime
+gate** — logistic / RF / ExtraTrees / HistGB / LightGBM / MLP predicting P(book up next 21d) — flattens 14–22% of
+months, and a flat month is a non-profit month, so it *worsens the binding targets*: months-in-profit **81% →
+66–68%**, Sharpe **3.77 → 3.4–3.5**, CAGR **36% → 28–30%** on the full window; the marginal OOS uptick is short-block
+OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.16–3.59
+full — the ML adds no timing beyond de-risking). **(B) Soft exposure** (scale gross by the probability, cap 1.5×) is
+just leverage — CAGR rises to **52–54%** but max-DD **−12.4%** and worst-month **−6.1%** break the risk targets.
+**(C) ML allocation** (tilt the family weights off equal by predicted forward return) *collapses* the book — Sharpe
+**3.77 → 1.4**, months-in-profit 41–44% — trading away the decorrelation that is the whole edge (the mean-variance
+overfit signature of §5c). This is precisely *why the VIX gate is applied to one leg and not the book*:
+portfolio-level ML manages risk at best, never manufactures alpha, and de-risking the *whole* book cannot lift
+months-in-profit because flat months are not profits — only flattening the single tail leg (volprem) removes the
+crash months while the other seven families stay invested and earning. Reproduce: `make ml-portfolio`
+(`scripts/run_ml_portfolio_overlay.py` → `reports/book/ml_portfolio_overlay.json`).
+
 ## 6. Ceiling assessment & honest limits
 
 - **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.77** net (drawdown −8.0%,
