@@ -77,7 +77,8 @@ A complete, reproducible pipeline, every stage runnable:
   here is **risk reduction and signal quality, not a Sharpe boost** — it takes only high-probability
   signals, directly serving the ≤15% DD / ≥−6% worst-month targets. The same meta-gate also lifts entry
   precision on the event-dense mean-reversion sleeves — a confidence gate measured against its non-ML
-  baseline, not asserted (`scripts/run_meta_overlay.py`, `reports/book/meta_overlay.csv`).
+  baseline, not asserted (`scripts/run_meta_overlay.py`, `reports/book/meta_overlay.csv`). The
+  **per-family baseline-vs-ML table is §5d.**
 - **Backtest** — bar-close→execution delay (no same-bar fill), liquidity-aware costs (commission +
   half-spread + √-impact, never flat), funding charged at every 8h settlement.
 - **Validation** — purged/embargoed CV; a **four-scheme Monte Carlo** (block bootstrap + trade-order resample
@@ -214,11 +215,39 @@ allocation nets +4.04 but on a **−21% drawdown (3× the equal-weight tail)** �
 
 **What is and isn't fitted (the obvious question).** The task invites modelling (§5), and we fit where
 fitting is *validated*: the LightGBM **meta-label** models (fit inside purged/embargoed folds, with a non-ML
-baseline so incremental value is measured), the per-family **parameter walk-forward** (§5b), and the
+baseline so incremental value is measured — consolidated per family in §5d), the per-family **parameter walk-forward** (§5b), and the
 discovery-zoo **sleeve selection** (re-selected each rebalance, WF-OOS Sharpe +0.20). What is deliberately
 *a-priori* is (a) the classical-rule parameters — the sensitivity surface shows the edge is a plateau, not a
 fitted spike, so optimising them would only add overfit — and (b) the portfolio weights (equal, justified
 above). **Nothing is fit against the final OOS block.**
+
+## 5d. Non-ML baseline vs. ML — the model's incremental value, per family (§5)
+
+The brief (§5) requires a **non-ML baseline per family so the model's incremental value is measurable.** It is,
+and the verdict is consistent across the book: **ML is a risk-and-confidence layer, not an alpha source.** Each
+portfolio family carries a parameter-light classical rule as its baseline; the ML overlay is measured against it
+under purged/embargoed CV on the same held-out block, so the delta below is the model's honest incremental value —
+not an assertion.
+
+| Family | Non-ML baseline (Sharpe) | + ML overlay | Measured incremental value |
+|---|---|---|---|
+| **Trend** | ungated EMA-50/200 + chandelier **+0.67**, DD −14.4% (OOS +0.35) | meta-gate LightGBM **+1.00**, DD **−2.9%** (OOS +0.05); conviction-sizing +0.82, DD −1.0% (OOS +0.20) | **Risk-cut, not alpha.** DD collapses −14%→−1%, OOS return stays flat — the meta-model's OOS AUC is **0.505** (a coin-flip), so the DD cut is *mechanical* (fewer positions), not predictive. LSTM/GRU/TCN/Transformer all net-negative vs the EMA rule's +0.15. |
+| **Breakout** | ungated Donchian-55 **+0.41**, DD −13.3%, prec 36% | LightGBM gate **+1.01**, DD **−2.7%**, prec 39% (OOS **0.20→0.47**) | **Risk reduction + OOS robustness** — and the one family where the gate also **lifts OOS**: filtering false breakouts pays most in chop and rescues the 1h timeframe. |
+| **Cross-sectional momentum** | risk-adj-mom rule: crypto **+0.71**, equity **+0.62** | LTR-LightGBM: crypto +0.61; equity mixed-panel **+0.89** (DD −32%→−25%), broad survivorship-free +0.17 | **Conditional.** Combines factors on the rich equity panel (+0.62→+0.89), but only adds estimation noise on clean daily crypto and conjures no edge on the honest broad universe where the rule is already ~0.4. |
+| **Carry** | linear funding rank **+1.21**, DD −22% (MC-P5 +0.58) | ranker best +0.61 (funding-only *inverts* −0.70); **timing gate +1.52**, DD −16%, MC-P5 **0.58→0.94** | **Signal no, risk yes.** The ranker overfits low-SNR funding features; a regime-timing overlay cuts DD and lifts the MC-P5 — again risk reduction, not new return. |
+| **Short-vol / VRP** | always-short, **parameter-free +0.81** | — (none) | **No ML by design.** A parameter-free baseline *is* the strongest robustness evidence (no knob to fit); a forecaster would only add overfit to a structural premium. |
+| **BAB / low-vol** | classical FP beta-neutral **+0.77** | best forecaster Ridge-on-all **+0.43** (MC-P5 −0.19, not robust); trees go negative | **No alpha.** The premium pays through the *risk channel* (rank by beta, de-lever by beta) — a beta-only forecaster scores **+0.00** — so return-prediction is structurally the wrong tool; ML adds overfit risk, not edge. |
+
+Across six structurally distinct families the model **never manufactures out-of-sample alpha that is not already
+in the cross-section**; its honest, repeatable value is drawdown control and entry precision (trend, breakout,
+carry). ML was also run on two *rejected* families and **confirmed the rejection**: on-chain — a 21-trial ranker on
+on-chain features nets **+0.21** while the *identical harness on price features* nets **+1.02** (the method works,
+the data doesn't); and calendar-seasonality — a purged-CV pre-FOMC gate makes SPY *worse* (0.24→0.07, negative OOS
+IC), because removing the beta removes the return. Full per-family model grids and leakage controls:
+[TREND.md §7](docs/strategies/TREND.md), [BREAKOUT.md §6](docs/strategies/BREAKOUT.md),
+[XSECT.md §7](docs/strategies/XSECT.md), [CARRY.md §3](docs/strategies/CARRY.md),
+[BAB.md §3d](docs/strategies/BAB.md), [ONCHAIN.md](docs/strategies/ONCHAIN.md); artifacts under
+`reports/{trend,breakout,carry,onchain,xs}/`.
 
 ## 6. Ceiling assessment & honest limits
 
