@@ -255,6 +255,30 @@ IC), because removing the beta removes the return. Full per-family model grids a
 [BAB.md §3d](docs/strategies/BAB.md), [ONCHAIN.md](docs/strategies/ONCHAIN.md); artifacts under
 `reports/{trend,breakout,carry,onchain,xs}/`.
 
+**Does it help the assembled book? (measured — leg-swap through the risk-parity assembly).** The values
+above are *standalone*; the marginal-contribution question (§7) is whether any lever lifts the **book**.
+Re-running the exact assembly with one family's leg swapped for its ML variant, book otherwise identical
+(committed baseline OOS Sharpe **2.64**):
+
+| ML lever | leg standalone (raw → ML) | book OOS Sharpe (raw-leg → ML-leg) | book ΔSharpe (OOS) |
+|---|---|---|---|
+| **Breakout** meta-gate *(the book ships this)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 2.75 → 2.64 | **−0.11** |
+| **Carry** timing overlay | book's honest leg +1.27 → +1.01 | 2.64 → 2.64 | **0.00** |
+| **Trend** meta-gate / conviction | +0.90 → +0.57…+0.80 (DD cut) | 2.38 → 2.51…2.54 † | +0.13…+0.16 † |
+| **X-sect** learning-to-rank | crypto rule +0.71 > LTR +0.61; equity-broad LTR ≤ rule | — (loses standalone) | ≤ 0 |
+
+† trend swap holds the leg at crypto-only, so both rows sit below the shipped raw+equities leg (2.64); the
+Δ is the ML effect within that sub-construction. **Every delta is inside ±0.16 OOS Sharpe — Monte-Carlo noise
+on a 766-day block — so no ML lever materially moves the book.** Two results are worth stating plainly: (a) the
+**carry** timing gate that lifts the *curated study* baseline +1.21→+1.52 (reproduced here as a validation)
+does **not** transfer to the book's honest survivorship-free carry leg (+1.27→**+1.01**) — the standalone lift
+was construction-specific; and (b) the **breakout** meta-gate the book actually ships *helps the sleeve but
+marginally hurts the book* (a raw ungated breakout nets OOS 2.75 vs the gated 2.64, within noise). The cause is
+structural: the book vol-targets every leg to 15% and manages risk **centrally** (§8 ladder + the crisis /
+global-macro long-gamma legs), so a *per-leg* ML risk overlay is redundant and costs the leg return and
+decorrelation. ML earns its place as **risk and precision inside a sleeve**, not as a book-level Sharpe lever —
+which is why the assembled book is deliberately the honest rules, risk-parity-combined.
+
 ## 6. Ceiling assessment & honest limits
 
 - **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.66** net (drawdown −8.1%,
