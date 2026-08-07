@@ -255,29 +255,31 @@ IC), because removing the beta removes the return. Full per-family model grids a
 [BAB.md §3d](docs/strategies/BAB.md), [ONCHAIN.md](docs/strategies/ONCHAIN.md); artifacts under
 `reports/{trend,breakout,carry,onchain,xs}/`.
 
-**Does it help the assembled book? (measured — leg-swap through the risk-parity assembly).** The values
-above are *standalone*; the marginal-contribution question (§7) is whether any lever lifts the **book**.
-Re-running the exact assembly with one family's leg swapped for its ML variant, book otherwise identical
-(committed baseline OOS Sharpe **2.64**):
+**Does it help the assembled book? (measured — leg-swap through the risk-parity assembly, judged on all five
+targets, not Sharpe alone).** The book already clears max-DD (**−5.9%** OOS vs the −15% limit) and worst-month
+(**−3.1%** vs −6%) with 2–3× headroom, so its *binding* targets are **months-in-profit** (77% vs the 80% goal)
+and the full-sample **losing streak** (4 vs 2) — the consistency axes where ML's honest value shows if it is
+real. Swapping one family's leg for its ML variant, book otherwise identical (baseline OOS Sharpe **2.64**,
+months-in-profit **77%**):
 
-| ML lever | leg standalone (raw → ML) | book OOS Sharpe (raw-leg → ML-leg) | book ΔSharpe (OOS) |
-|---|---|---|---|
-| **Breakout** meta-gate *(the book ships this)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 2.75 → 2.64 | **−0.11** |
-| **Carry** timing overlay | book's honest leg +1.27 → +1.01 | 2.64 → 2.64 | **0.00** |
-| **Trend** meta-gate / conviction | +0.90 → +0.57…+0.80 (DD cut) | 2.38 → 2.51…2.54 † | +0.13…+0.16 † |
-| **X-sect** learning-to-rank | crypto rule +0.71 > LTR +0.61; equity-broad LTR ≤ rule | — (loses standalone) | ≤ 0 |
+| ML lever | leg standalone (raw → ML) | book OOS Sharpe | book OOS months-in-profit | on the binding axis |
+|---|---|---|---|---|
+| **Breakout** meta-gate *(shipped)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 2.75 → 2.64 | **73% → 77%** | gives back ~0.1 Sharpe for +consistency |
+| **Carry** timing overlay | honest leg +1.27 → +1.01 | 2.64 → 2.64 | 77% → 77% | flat on all five |
+| **Trend** meta-gate / conviction † | +0.90 → +0.57…+0.80 | 2.38 → 2.51…2.54 | 69% → 73% (streak 3→2) | cuts the sub-leg's risk |
+| **X-sect** learning-to-rank | crypto rule +0.71 > LTR +0.61 | — (loses standalone) | — | nothing to add |
 
-† trend swap holds the leg at crypto-only, so both rows sit below the shipped raw+equities leg (2.64); the
-Δ is the ML effect within that sub-construction. **Every delta is inside ±0.16 OOS Sharpe — Monte-Carlo noise
-on a 766-day block — so no ML lever materially moves the book.** Two results are worth stating plainly: (a) the
-**carry** timing gate that lifts the *curated study* baseline +1.21→+1.52 (reproduced here as a validation)
-does **not** transfer to the book's honest survivorship-free carry leg (+1.27→**+1.01**) — the standalone lift
-was construction-specific; and (b) the **breakout** meta-gate the book actually ships *helps the sleeve but
-marginally hurts the book* (a raw ungated breakout nets OOS 2.75 vs the gated 2.64, within noise). The cause is
-structural: the book vol-targets every leg to 15% and manages risk **centrally** (§8 ladder + the crisis /
-global-macro long-gamma legs), so a *per-leg* ML risk overlay is redundant and costs the leg return and
-decorrelation. ML earns its place as **risk and precision inside a sleeve**, not as a book-level Sharpe lever —
-which is why the assembled book is deliberately the honest rules, risk-parity-combined.
+† the trend swap holds the leg crypto-only, so both rows sit *below* the shipped raw+equities trend leg; the Δ
+is the ML effect within that sub-construction. Every move is ≈1 month on a 25-month block — MC noise — so the
+*direction* matters more than the size. Judged on the full scorecard, the picture is exactly what the standalone
+table implies: ML's value is **drawdown and consistency inside a sleeve**, and the shipped **breakout** gate
+spends precisely that — it returns ~0.1 Sharpe to push the book's *binding* months-in-profit the right way, so
+the book already uses ML where a non-Sharpe target binds. What ML does **not** do here is lift Sharpe (it is not
+a return-forecaster — §7), buy DD or worst-month headroom the book does not need, or close the structural
+months-in-profit / streak gap — the short-gamma legs crash together, and only the crisis / global-macro
+long-gamma legs (already in the book) address that. The **carry** overlay's +1.21→+1.52 standalone lift, by
+contrast, is construction-specific: it does not reproduce on the honest carry leg (+1.27→+1.01) and is flat on
+every target at book level.
 
 ## 6. Ceiling assessment & honest limits
 
