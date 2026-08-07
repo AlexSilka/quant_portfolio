@@ -238,8 +238,9 @@ def _ndx(ix):
 def volregime():
     """The regime overlay that DOES lift the book — and the honest finding that a simple RULE beats every ML
     engine. Flatten the volprem (tail) leg when the VIX curve inverts. Shows: the SHIPPED rule closes the
-    scorecard to a full-window 5/5; ML engines only match/underperform it; constant/random controls prove it
-    is *timing*, not de-risking. (`assemble()` here loads the UNGATED legs, so baseline is the pre-overlay book.)"""
+    scorecard to 5/5 on the out-of-sample block (4/5 full window, the 3-month streak the one miss); ML engines
+    only match/underperform it; constant/random controls prove it is *timing*, not de-risking. (`assemble()`
+    here loads the UNGATED legs, so baseline is the pre-overlay book.)"""
     from src.risk.vol_regime import short_vol_gate
     leg = _norm(load("volprem", "volprem/volprem_book.parquet", "ret")); leg.index = _ndx(leg.index)
     idx = leg.index
