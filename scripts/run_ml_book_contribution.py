@@ -23,7 +23,7 @@ import lightgbm as lgb
 
 warnings.filterwarnings("ignore")
 from scripts.run_master_book import (  # noqa: E402
-    FAMILIES, load, _scale, rescale, risk_overlay, scorecard, OOS, START_REPORT, R)
+    FAMILIES, load, rescale, risk_overlay, scorecard, OOS, START_REPORT, R)
 from src.metrics import summarise  # noqa: E402
 from src import bo_common as bo  # noqa: E402
 from src.backtest.engine import positions_from_events  # noqa: E402
@@ -65,8 +65,15 @@ def assemble(overrides=None):
 
 def _card(r):
     return {"sharpe_full": r["full"]["sharpe"], "sharpe_oos": r["oos"]["sharpe"],
-            "months_oos": r["oos"]["months_in_profit"], "worst_full": r["full"]["worst_month"],
+            "months_full": r["full"]["months_in_profit"], "months_oos": r["oos"]["months_in_profit"],
+            "worst_full": r["full"]["worst_month"], "dd_full": r["full"]["max_dd"],
             "streak_full": r["full"]["longest_losing_streak_mo"]}
+
+
+def _targets(c):
+    """How many of the 5 brief targets the full-window scorecard meets."""
+    return sum([2.5 <= c["sharpe_full"] <= 4.0, c["months_full"] >= 0.80, c["dd_full"] >= -0.15,
+                c["worst_full"] >= -0.06, c["streak_full"] <= 2])
 
 
 def _sh(net):
@@ -171,12 +178,12 @@ def _feat(r):
                          "lossfreq20": (r < 0).rolling(20).mean()}).replace([np.inf, -np.inf], np.nan)
 
 
-def _purged(X, y, model_fn, clf):
+def _purged(X, y, model_fn, clf, embargo=15):
     di = pd.DatetimeIndex(X.index); ud = np.array(sorted(di.unique()))
     oos = pd.Series(np.nan, index=X.index)
     for k in range(1, 7):
         tspan = pd.DatetimeIndex(np.array_split(ud, 7)[k]); t0 = tspan.min()
-        tr = di < (t0 - pd.Timedelta(days=15)); te = di.isin(tspan)
+        tr = di < (t0 - pd.Timedelta(days=embargo)); te = di.isin(tspan)
         if tr.sum() < 250 or te.sum() == 0 or (clf and y[tr].nunique() < 2):
             continue
         mdl = model_fn().fit(X[tr], y[tr])
@@ -223,11 +230,63 @@ def uniform_and_aligned():
         "magnitude_gbm": _card(assemble(_size_all(legs, gbm_r)))}
 
 
+def _ndx(ix):
+    ix = pd.to_datetime(ix)
+    return (ix.tz_localize(None) if ix.tz is not None else ix).normalize()
+
+
+def volregime():
+    """The regime overlay that DOES lift the book — and the honest finding that a simple RULE beats every ML
+    engine. Flatten the volprem (tail) leg when the VIX curve inverts. Shows: the SHIPPED rule closes the
+    scorecard to a full-window 5/5; ML engines only match/underperform it; constant/random controls prove it
+    is *timing*, not de-risking. (`assemble()` here loads the UNGATED legs, so baseline is the pre-overlay book.)"""
+    from src.risk.vol_regime import short_vol_gate
+    leg = _norm(load("volprem", "volprem/volprem_book.parquet", "ret")); leg.index = _ndx(leg.index)
+    idx = leg.index
+    vix = pd.read_parquet(R.parent / "data" / "raw" / "rates" / "VIXCLS.parquet")["val"]
+    v3 = pd.read_parquet(R.parent / "data" / "raw" / "vol_etp" / "VIX3M_yf.parquet")["close"]
+    vix.index, v3.index = _ndx(vix.index), _ndx(v3.index)
+    vix = vix.reindex(idx).ffill(); v3 = v3.reindex(idx).ffill()
+    ts = v3 / vix; eq = (1 + leg).cumprod(); dd = eq / eq.cummax() - 1.0
+    X = pd.DataFrame({"vix": vix, "vix_chg5": vix.diff(5),
+                      "vix_z": (vix - vix.rolling(63).mean()) / (vix.rolling(63).std() + 1e-9),
+                      "ts_ratio": ts, "ts_chg5": ts.diff(5),
+                      "leg_mom10": leg.rolling(10).mean(), "leg_dd": dd}).replace([np.inf, -np.inf], np.nan)
+    fwd = leg.rolling(21).sum().shift(-21); y = (fwd < 0).astype(int)
+    m = X.notna().all(axis=1) & fwd.notna()
+
+    def ml_soft(fac):
+        p = _purged(X[m], y[m], fac, True, embargo=25).reindex(idx).shift(1)
+        return (1.0 - p.clip(0, 1)).reindex(idx).fillna(1.0)
+
+    rule = short_vol_gate(idx, 1.0)                      # the SHIPPED non-ML rule (VIX backwardation)
+    logit = ml_soft(lambda: LogisticRegression(max_iter=500, C=1.0))
+    lgbm = ml_soft(lambda: lgb.LGBMClassifier(n_estimators=200, max_depth=3, learning_rate=0.03,
+                                              subsample=0.8, colsample_bytree=0.8, random_state=7, n_jobs=-1, verbose=-1))
+    avg = float(rule.mean())
+    rng = np.random.default_rng(7); rand = []
+    for _ in range(20):
+        g = pd.Series(rng.uniform(0, 2 * avg, len(leg)).clip(0, 1.5), index=idx); g = g * (avg / g.mean())
+        rand.append(assemble({"volprem": (leg * g).rename("ret")})["full"]["sharpe"])
+
+    def bk(g):
+        c = _card(assemble({"volprem": (leg * g.reindex(idx).fillna(1.0)).rename("ret")}))
+        c["targets_full"] = _targets(c)
+        return c
+    base = _card(assemble()); base["targets_full"] = _targets(base)
+    return {"baseline_ungated": base,
+            "RULE_vix_backwardation_shipped": bk(rule),
+            "ml_logistic_soft": bk(logit),
+            "ml_lightgbm_soft": bk(lgbm),
+            "constant_cut_same_avg": bk(pd.Series(avg, index=idx)),
+            "random_placebo_full_sharpe_min_mean_max": [round(min(rand), 2), round(float(np.mean(rand)), 2), round(max(rand), 2)]}
+
+
 def main():
     print("baseline:", _card(assemble()), flush=True)
     out = {"baseline": _card(assemble())}
     for name, fn in [("breakout", breakout_swap), ("carry", carry_swap), ("trend", trend_swap),
-                     ("uniform_and_aligned", uniform_and_aligned)]:
+                     ("uniform_and_aligned", uniform_and_aligned), ("volregime_overlay", volregime)]:
         print(f"... {name}", flush=True)
         out[name] = fn()
     (R / "book" / "ml_book_contribution.json").write_text(json.dumps(out, indent=2, default=float))

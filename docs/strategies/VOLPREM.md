@@ -188,7 +188,7 @@ VRP's crash. Correlation to the momentum and carry books is **~0** (+0.03 / −0
 not the standalone Sharpe, is what earns it a slot.
 
 In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over eight families), the
-honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.52 to
+honest 18-leg volprem book is the **top marginal contributor** (removing it drops the master from 3.77 to
 **1.75**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
 with volprem vs ≈ −6% on the flattered close-to-close accounting** (§4b). So it is a genuine co-engine *and*
 the family that most needs its weight watched, exactly because its own tail is −78%.
@@ -200,7 +200,9 @@ instrument-level fix — an option wing that caps the tail — cannot be credibl
 (`scripts/volprem/run_vol_premium_deploy.py`): leave the cap unpaid and vol-targeting inflates a fake Sharpe
 (15+); price it off the trailing realised tail and it over-/mis-charges into ruin (−100%). A real tail
 hedge needs the live option smile — paid data. A sleeve-level P&L stop and an ex-ante implied-spike
-de-gross were both tested and **do not help**: the crashes are too fast to de-risk into.
+de-gross were both tested and **do not help** *reactively*: the crashes are too fast to de-risk into once vol is
+already spiking. (A **leading** signal is different — a VIX-term-structure backwardation gate fires *before* the
+crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure into a full-window 5/5.)
 
 **The mandate is on the portfolio, and sizing meets it.** In the canonical master (equal weight, 1/8 to
 volprem), trend's long gamma structurally hedges VRP's vol-spike crashes, so the portfolio lands at
@@ -212,10 +214,14 @@ trend rides) but not guaranteed in a whipsaw regime.
 
 ## 5. Honest limits & ceiling
 
-- **The systemic tail is the binding constraint, and diversification cannot remove it.** Even across
-  18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC realised
-  leg — the honest number; close-to-close showed only −50%). Cross-asset breadth over *uncorrelated*
-  crashes softens it but does not defuse it — a real tail hedge needs the live option smile (paid).
+- **The systemic tail is the binding constraint; breadth cannot remove it, but *timing* sidesteps it at the book
+  level.** Even across 18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC
+  realised leg — the honest number; close-to-close showed only −50%). Cross-asset breadth over *uncorrelated*
+  crashes softens it but does not defuse it, and an instrument-level tail hedge needs the live option smile (paid).
+  What the *book* does instead is **time** the exposure: a VIX-term-structure regime gate flattens this leg in
+  backwardation, *before* the systemic crash — a book-level §8 overlay (`src/risk/vol_regime.py`,
+  [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to a full-window 5/5. It cuts the tail's *portfolio*
+  clustering (the losing-month driver), not the standalone −78% (that still needs paid option data).
 - **Sharpe overstates; skew and drawdown are the honest metrics.** Correcting the realised leg from
   close-to-close to OHLC (path + gap) barely moved the Sharpe but nearly doubled the tail (DD −50% →
   −78%, skew −8.7 → −18). Trust the −18 skew and −78% DD, never the Sharpe.

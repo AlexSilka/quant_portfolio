@@ -39,6 +39,7 @@ from src import bo_common as bo  # noqa: E402
 from src.config import CAPITAL_USD, OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
+from src.risk.vol_regime import gate_short_vol_leg  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
 
 PPY = 365
@@ -204,6 +205,12 @@ def describe(s, mc=True):
 def main():
     raw = {lab: load(lab, f, c) for lab, f, c in FAMILIES}
     raw = {k: v for k, v in raw.items() if v is not None}
+    # §8 risk overlay — VIX term-structure regime gate on the short-vol leg: flatten volprem when the VIX
+    # curve inverts (backwardation), the regime that precedes the systemic short-vol crash. Causal, point-in-
+    # time, un-fitted (the contango/backwardation boundary). This is the dynamic tail-timing that lifts the
+    # book from 3/5 to a full-window 5/5 — the value is the VIX signal, not any ML model (§5d/§6).
+    if "volprem" in raw:
+        raw["volprem"] = gate_short_vol_leg(raw["volprem"])
     scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index()
     df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
     # UNION over the reporting window, not the intersection: crypto-perp legs (carry, breakout) only

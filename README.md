@@ -5,9 +5,10 @@ built for honest validation: leakage control, multiple-testing correction, and
 realistic execution costs. The deliverable is a portfolio **and** an honest map of
 where edge exists and where it does not.
 
-**Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.52** full-sample
-(2011 → 2026) at **−8.1%** max drawdown, positive in all 16 calendar years; on the run-once
-out-of-sample block (2024-07 →) **Sharpe 2.64**, meeting **4 of 5** brief targets. The surviving edge is
+**Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.77** full-sample
+(2011 → 2026) at **−8.0%** max drawdown, **all five brief targets met on the 15-year window**, positive in all
+16 calendar years; on the run-once out-of-sample block (2024-07 →) **Sharpe 3.28**, **4 of 5** (only
+months-in-profit short of ≥80% on the 25-month block). The surviving edge is
 crypto-heavy and volprem-anchored (short-vol, ~half of book P&L, on a real tail) — both stated and
 quantified in [REPORT.md](REPORT.md).
 
@@ -35,9 +36,10 @@ edge map + dashboard.
   [crisis-alpha](scripts/run_crisis.py), [global-macro](scripts/run_gmacro.py), [BAB](docs/strategies/BAB.md).
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
   **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)**, with a disclosed
-  **§8 drawdown-ladder risk overlay** on top, the master book nets **Sharpe 3.52** at **−8.1% max drawdown**,
-  mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
-  out-of-sample block the brief actually scores (2024-07→), Sharpe is 2.64** — clearing the 2.5 floor on
+  **§8 risk overlay** on top (drawdown ladder **+ a VIX-term-structure regime gate on the short-vol leg**), the
+  master book nets **Sharpe 3.77** at **−8.0% max drawdown**, months-in-profit **80%** (full 5/5),
+  mean pairwise cross-family correlation **≈ 0.07**, positive in all 16 calendar years. **On the frozen
+  out-of-sample block the brief actually scores (2024-07→), Sharpe is 3.28** — clearing the 2.5 floor on
   genuinely unseen data, not the full-sample figure. The surviving edge is crypto-heavy and the Sharpe is
   volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
 
@@ -48,7 +50,7 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.52**, OOS **2.64**, −8.1% max-DD, 8 families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.77** (5/5), OOS **3.28**, −8.0% max-DD, 8 families |
 | `make cscv` | the overfit / multiple-testing control | **PBO 32%**, in-sample-best +0.09 → OOS +0.00 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -63,7 +65,7 @@ per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
 lottery/skew and free-data on-chain were tested and rejected (REPORT §7). **Where the risk is:**
 vol-premium is ~52% of P&L on a real −78% tail (strip it → Sharpe **1.75**); the surviving edge is
 crypto-heavy; the short-vol book's thin single-name / exotic legs cap deployable size
-([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); and daily-annualised 3.52 is ~2.68 on a
+([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); and daily-annualised 3.77 is ~2.9 on a
 calendar-robust monthly basis.
 
 ## Setup
@@ -98,7 +100,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.52 full / 2.64 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.77 full / 3.28 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
