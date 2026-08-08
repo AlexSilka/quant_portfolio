@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution ml-portfolio discovery figures cscv wf features sessions ledger lint
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution ml-portfolio discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -30,6 +30,11 @@ ml-portfolio:
 # §6 probability of backtest overfitting (CSCV) on the full 1,279-sleeve trial set.
 cscv:
 	$(PY) scripts/run_cscv.py
+
+# §6 dose-response behind CSCV: what a search budget buys in-sample vs. out of sample, and the same
+# winner deflated at a range of declared trial counts. Reads the committed zoo matrix; seconds.
+selection-bias:
+	$(PY) scripts/run_selection_bias.py
 
 # §10 book-level walk-forward: rolling & anchored, periodic allocation re-fit -> accumulated OOS track.
 wf:

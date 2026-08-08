@@ -182,6 +182,28 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
   single-sleeve selection is largely overfit, which is exactly why the traded book selects nothing and stacks
   decorrelated premia instead. Deflated Sharpe + placebo-FDR + CSCV together are the mandatory multiple-testing
   triad.
+- **The dose-response behind PBO — what a search budget actually buys** (`scripts/run_selection_bias.py`,
+  `make selection-bias`; the 385 dense-coverage candidates on CSCV's 2021+ window, median over 7 split
+  points, 2,000 random candidate subsets per budget). Sweeping the number of candidates searched from
+  1 to 385 and picking the in-sample winner each time:
+
+  | candidates searched | winner's in-sample Sharpe | its out-of-sample Sharpe | inflation | P(winner loses OOS) |
+  |---|---|---|---|---|
+  | 1 | −0.15 | −0.32 | +0.17 | 67% |
+  | 10 | +0.89 | +0.06 | +0.83 | 45% |
+  | 50 | +1.32 | +0.14 | +1.18 | 42% |
+  | 100 | +1.48 | +0.26 | +1.23 | 37% |
+  | 385 | +1.60 | +0.28 | +1.32 | 29% |
+
+  The in-sample column rises **an order of magnitude** with the search budget while the out-of-sample
+  column is **flat from N≈10 onward** — the gain is an order statistic, not edge, and the gap (**+0.17 →
+  +1.32**) is the part of any mined backtest that belongs to the search. Selection is not *worthless*
+  here — the winner does beat an unselected candidate (median OOS **−0.33**) by **+0.62** — but that
+  margin is mostly avoiding the structurally cost-killed families, a call available **before** looking at
+  results, and the winner still loses out-of-sample **29–45%** of the time. **The same winner, deflated at
+  a range of *declared* trial counts** (identical track record, only the disclosed search budget changes):
+  N=1 → **0.94**, N=10 → **0.46**, N=100 → **0.05**, N=1,279 → **0.00**. The multiple-testing penalty is
+  set by a number only the researcher knows, which is why the trial count is published here.
 - **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+3.31** (full four-scheme table in §4).
 - **Leakage:** execution is delayed to t+2 (never the signal bar's own close); funding is charged at
   every 8h settlement; costs are liquidity-aware (√-impact scaled to bar $-volume, never flat); vol
