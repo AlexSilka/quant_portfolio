@@ -250,6 +250,15 @@ appetite. The level is not scorecard-fitted: the scorecard is **flat at 4/5 from
 pick a level, and if it were driving the choice it would say 1.45× (CAGR 55.7% at the same 4/5). The frozen OOS
 block scores 5/5 everywhere on the grid and never enters the decision.
 
+**The full available history says the same thing louder.** Extend the canonical assembly back to 2005 — the
+window nobody reports on, because only **four** of the eight legs exist there (vol-premium, crisis, global-macro,
+x-sect; the crypto legs and trend have no 2005) — and the book fails the targets at **any** leverage: at 1.00× it
+already runs months-in-profit **76%** with an **8-month** losing streak and a **−12.7%** worst month, and at 1.20×
+the drawdown reaches **−15.6%**, outside the mandate. A window that rejects every leverage cannot choose one, and
+it is not the shipped configuration — but it is the only place the 2008 GFC lives, so it is stated, not dropped:
+with half the diversifiers missing, this book has no leverage headroom at all. The eight-leg era (2011+) is what
+the mandate is measured on, and there 1.20× holds with the margins above.
+
 **Why not spend the rest of the budget.** Two of the seven constraints are already violated at 1.00×: on an
 unlucky path of its *own* return distribution the book's worst month is **−6.8%**, and a repeat of the 2010 event
 costs **−7.6%**. And the realised **−4.2%** is not a cushion — it is a perfectly typical draw: the bootstrap's
@@ -418,7 +427,9 @@ The brief asks for **two distinct things**, and the book has both:
   rebalance it fits the leg weights on the training window (anchored `[start,t]` or rolling `[t−2y,t]`) and
   applies them to the next block out-of-sample; concatenating the blocks gives an **accumulated out-of-sample
   track over ~18 years (2006→2026), Sharpe +3.32, max-DD −14.2%** — the book is out-of-sample across nearly the
-  whole history, not just the final block. It is **invariant to the choice**: anchored vs rolling, quarterly vs
+  whole history, not just the final block. *(That track is measured on the **unlevered** stack; at the shipped
+  1.20× its drawdown would be −16.9%, outside the mandate. That is a property of the early, thinly-populated
+  window rather than of the shipped book — see §4b, "the full available history".)* It is **invariant to the choice**: anchored vs rolling, quarterly vs
   annual re-fit all land Sharpe in **[+3.18, +3.32]** (spread 0.14). **Crisis-window stress** on this long
   track: through the **2008 GFC** the book draws down only **−4.5%** (the crisis / managed-futures leg hedges
   the volprem short-vol tail), −6.6% through 2018 Volmageddon and −2.1% through COVID. *(Caveat: the pre-2020
