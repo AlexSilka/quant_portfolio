@@ -563,6 +563,8 @@ def main():
     # drawdown by a cash balance that grew, which flatters max-DD and the worst month.
     net_pnl = float(CAP * master.sum())
     pnl_per_year, simple_return = net_pnl / yrs, float(master.sum() / yrs)
+    cmp_final = float(CAP * eqf.iloc[-1])          # the same track with P&L put back to work
+    cmp_pnl = cmp_final - CAP
 
     # --- monthly / OOS / cross-asset (2020+) windows ---
     mo = (1.0 + master).resample("ME").prod() - 1.0
@@ -778,7 +780,7 @@ def main():
         f'(break-even &times; base cost, from the deep-dives): {perfam_be} &mdash; all well above 1&times;, '
         f'so no measured family is cost-fragile.</p></figure>')
 
-    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, dict(
+    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,
         year=year_svg, quarter=quarter_svg, stress=stress_rows, marg=marg_svg,
         marg_best=max(vals), corr=corr_svg, famtbl=fam_rows, famperiods=famperiods, param=_param_card(),
@@ -795,7 +797,7 @@ def _asset(name):
     return (ASSETS / name).read_text()
 
 
-def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, S):
+def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final, ca_sharpe, ca_cagr, S):
     """Fill report_assets/dashboard.html (page + copy) with computed values, CSS and JS."""
     m = summ["master"]
     # §9 fixed-size reading of the same track (run_master_book.fixed_size_scorecard) — published next to
@@ -820,7 +822,7 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr,
         cagr=f"{cagr:+.1%}", net_pnl_m=f"{net_pnl / 1e6:.2f}",
         pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=f"{simple_return:+.1%}",
         fx_dd=f"{fx['max_dd']:+.1%}", fx_dd_usd=f"{abs(fx['max_dd_usd']):,.0f}",
-        fx_wm_usd=f"{abs(fx['worst_month_usd']):,.0f}", dd_note=f"{m['max_dd']:+.1%}",
+        cmp_pnl_m=f"{cmp_pnl / 1e6:.1f}", cmp_final_m=f"{cmp_final / 1e6:.1f}", dd_note=f"{m['max_dd']:+.1%}",
         sc=S["sc"], sc_note=S["sc_note"], mc_p5=f"{m['mc_p5']:+.2f}", mc_p50=f"{m['mc_p50']:+.2f}", mc_p95=f"{m['mc_p95']:+.2f}",
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),
