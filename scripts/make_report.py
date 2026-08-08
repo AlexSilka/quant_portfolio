@@ -546,7 +546,6 @@ def main():
     corr = pd.read_csv(REP / "master_book_correlation.csv", index_col=0)
     marg = pd.read_csv(REP / "master_book_marginal.csv")
     m = summ["master"]
-    fx = summ["fixed_size_full"]     # §9 fixed-size reading, shown next to the compounded one
     fams = list(legs.columns)
     lines = {}
 
@@ -588,11 +587,11 @@ def main():
          "pass" if _sh(oos) >= 2.5 else "miss"),
         ("Months in profit", f"{_mip(moo):.0%}", f"{wlab} {_mip(mo):.0%} · target ≥80%",
          "pass" if _mip(moo) >= 0.80 else "miss"),
-        ("Max drawdown", f"{_mdd(oos):+.1%}", f"{wlab} {m['max_dd']:+.1%} ({fx['max_dd']:+.1%} not reinvested) · target ≤15%",
+        ("Max drawdown", f"{_mdd(oos):+.1%}", f"{wlab} {m['max_dd']:+.1%} · target ≤15%",
          "pass" if _mdd(oos) >= -0.15 else "miss"),
         ("Longest losing streak", f"{_streak(moo.values)} mo", f"{wlab} {_streak(mo.values)} mo · target ≤2 mo",
          "pass" if _streak(moo.values) <= 2 else "miss"),
-        ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} ({fx['worst_month']:+.1%} not reinvested) · target ≥−6%",
+        ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} · target ≥−6%",
          "pass" if moo.min() >= -0.06 else "miss"),
         ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis", ""),
     ]
@@ -801,9 +800,6 @@ def _asset(name):
 def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final, ca_sharpe, ca_cagr, S):
     """Fill report_assets/dashboard.html (page + copy) with computed values, CSS and JS."""
     m = summ["master"]
-    # §9 fixed-size reading of the same track (run_master_book.fixed_size_scorecard) — published next to
-    # the compounded scorecard so the reader can see the accounting convention changes nothing.
-    fx = summ["fixed_size_full"]
     fam = ", ".join(sf(f) for f in summ["families"])
     pos_years = sum(1 for v in summ["per_year"].values() if v > 0)
     rw = summ["window"]
@@ -822,8 +818,7 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final,
         report_window=f"{rw[0][:4]}–{rw[1][:4]}",
         cagr=f"{cagr:+.1%}", net_pnl_m=f"{net_pnl / 1e6:.2f}",
         pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=f"{simple_return:+.1%}",
-        fx_dd=f"{fx['max_dd']:+.1%}", fx_dd_usd=f"{abs(fx['max_dd_usd']):,.0f}",
-        cmp_pnl_m=f"{cmp_pnl / 1e6:.1f}", cmp_final_m=f"{cmp_final / 1e6:.1f}", dd_note=f"{m['max_dd']:+.1%}",
+        cmp_pnl_m=f"{cmp_pnl / 1e6:.1f}", cmp_final_m=f"{cmp_final / 1e6:.1f}",
         sc=S["sc"], sc_note=S["sc_note"], mc_p5=f"{m['mc_p5']:+.2f}", mc_p50=f"{m['mc_p50']:+.2f}", mc_p95=f"{m['mc_p95']:+.2f}",
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),
