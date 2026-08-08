@@ -11,11 +11,12 @@ equal-weight, <b>no performance-based selection</b>) &middot; net of costs on ${
 {report_window}. Each family contributes where it is live; the crypto-perp legs (carry, breakout) join in 2020.
 Hover any chart.</p>
 <div class="kpis">
-  <div class="kpi accent"><div class="label">Annualised return</div><div class="val">{cagr}</div><div class="note">CAGR on capital at constant risk &middot; net of costs &middot; {report_window}</div></div>
-  <div class="kpi accent"><div class="label">Net P&amp;L on ${cap_k}k</div><div class="val">+${net_pnl_m}M</div><div class="note">the brief&rsquo;s ${cap_k}k sizing capital, P&amp;L not reinvested &middot; net of all modelled costs</div></div>
-  <div class="kpi accent"><div class="label">Per year on ${cap_k}k</div><div class="val">+${pnl_per_year_k}k</div><div class="note">{simple_return} /yr simple &middot; costs are modelled at this size, so the figures hold at this scale</div></div>
+  <div class="kpi accent"><div class="label">Return, not reinvested</div><div class="val">{simple_return}</div><div class="note">/yr simple on the brief&rsquo;s ${cap_k}k sizing capital &middot; ${pnl_per_year_k}k/yr</div></div>
+  <div class="kpi accent"><div class="label">Return, reinvested</div><div class="val">{cagr}</div><div class="note">/yr compounded &middot; the same track with P&amp;L put back to work</div></div>
+  <div class="kpi accent"><div class="label">Net P&amp;L on ${cap_k}k</div><div class="val">+${net_pnl_m}M</div><div class="note">not reinvested, {report_window} &middot; net of all modelled costs</div></div>
+  <div class="kpi accent"><div class="label">Deepest drawdown</div><div class="val">&minus;${fx_dd_usd}</div><div class="note">{fx_dd} of the ${cap_k}k &middot; worst month &minus;${fx_wm_usd}</div></div>
 </div>
-<p class="valline gap">Sizing follows the brief: <b>${cap_k}k for sizing and costs</b>, P&amp;L not reinvested. Convention-independent &mdash; fixed size on that same ${cap_k}k gives max-DD {fx_dd} (${fx_dd_usd}) vs the compounded {dd_note} below. Full reinvestment is not claimed: the vol-premium leg&rsquo;s vega capacity (low tens of $M) caps the book around year&nbsp;8.</p>
+<p class="valline gap">Both readings of the same track: <b>${cap_k}k for sizing and costs</b> per the brief, so the dollar figures hold positions at that size. Compounding is shown as a rate, not as a balance &mdash; reinvesting to the end would put the book past the vol-premium leg&rsquo;s vega capacity (low tens of $M) around year&nbsp;8, and &radic;-impact is modelled at ${cap_k}k. Scorecard below is compounded ({dd_note} max-DD), within 0.4pp of the fixed-size {fx_dd} above.</p>
 {sc}
 {sc_note}
 <p class="valline gap">Validation (§10) &mdash; Monte-Carlo, block-bootstrap P5/50/95: Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95}. Positive in {pos_years} of {n_years}&nbsp;years &middot; mean cross-family correlation {mean_corr} &middot; remove the strongest leg ({top_family}) and the book still runs at Sharpe {top_removed}, with no family chosen on performance.</p>

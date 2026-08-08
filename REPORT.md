@@ -18,8 +18,9 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > (2011 → 2026)** — the short-vol leg timed out of the crashes by its own **VIX-term-structure regime gate**
 > (flat in backwardation), sized at a constant **1.20×** — the level the −15% drawdown mandate allows (§4b) — with a disclosed
 > **§8 risk overlay** (drawdown ladder + daily-loss breaker) on top —
-> the master book nets **Sharpe 3.76, CAGR 44.8%, at −10.3%
-> max drawdown**, months-in-profit **80%**, **positive in all 16 calendar years**, families essentially
+> the master book nets **Sharpe 3.76** at **−10.3% max drawdown** — on the brief's **$500k** sizing capital
+> that is **$2.93M** of P&L, **~$188k/yr** — **+37.6%/yr** not reinvested, **+44.8%/yr** compounded (a rate, not a
+> reachable balance: capacity caps the book long before the end of the window) — months-in-profit **80%**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. On the **frozen out-of-sample block** (2024-07→, the window the brief
 > scores) it **meets all five targets** (Sharpe **3.61**, months-in-profit 81%, worst-month −2.6%, streak 2mo);
 > on the **full 15-year window** it meets **four of five** — Sharpe **3.76**, months 80%, max-DD −10.3%, worst-month
@@ -160,8 +161,9 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
 > carry **1.27** vs **+1.21** raw ([CARRY.md](docs/strategies/CARRY.md)). The corr-to-book column is
 > naturally positive since each family is part of the book.*
 
-- **Master book (risk-managed deliverable, 1.20× = ~10% book vol):** full-sample Sharpe **3.76**, CAGR **44.8%**
-  (on the brief's **$500k** sizing capital that is **$2.93M** of P&L, **~$188k/yr**; §9), max DD **−10.3%**, months-in-profit
+- **Master book (risk-managed deliverable, 1.20× = ~10% book vol):** full-sample Sharpe **3.76**; on the brief's
+  **$500k** sizing capital **$2.93M** of P&L, **~$188k/yr** — **+37.6%/yr** not reinvested, **+44.8%/yr**
+  compounded (§9) — max DD **−10.3%**, months-in-profit
   **80%**, worst month **−5.1%**, streak **3mo** — **4 of 5 on the 15-year window** (only the losing streak, 3 vs
   ≤2, misses); block-bootstrap MC **[Sharpe P5 +3.31, P50 +3.77, P95 +4.25; max-DD P5 −11.9%, P50 −8.5%]**; mean
   pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe 3.61, CAGR 36.3%, months-in-profit
@@ -254,7 +256,7 @@ book goes flat and cannot earn anything back, and the stress drawdown jumps **�
 the mandate. Standing 0.05× from a discontinuity is not a margin. 1.20× also clears the two softer ceilings
 (bootstrap drawdown 1.50×, realised worst month 1.45×) and keeps the scorecard where it was: **4/5 full (Sharpe
 3.76, months 80.8%, DD −10.3%, worst −5.1%, the same 3-month streak the one miss) and 5/5 on the frozen OOS
-block**. CAGR goes **36.5% → 44.8%**.
+block**. Return on the brief's $500k goes from **$156k/yr to $188k/yr** (+31.4% → +37.6% simple).
 
 *Being explicit about what is measured and what is judgement:* the admissible range **[1.00×, 1.35×]** is measured
 — its floor is today's book, its ceiling is the mandate against the documented tail. The point inside it is risk
@@ -589,8 +591,8 @@ crash months while the other seven families stay invested and earning. Reproduce
 
 ## 6. Ceiling assessment & honest limits
 
-- **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.76** net (CAGR 44.8% at 1.20×,
-  drawdown −10.3%,
+- **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.76** net (+37.6%/yr on the
+  brief's $500k at 1.20×, drawdown −10.3%,
   block-bootstrap MC-P5 **+3.31**) that **meets all five targets on the final out-of-sample block** (Sharpe **3.61**,
   the window the brief scores), and **4 of 5 on the full 15-year window** (Sharpe 3.76; the one miss a 3-month
   losing streak vs ≤2). Vol-premium anchors the Sharpe; seven decorrelated sources cut its tail; a VIX-term-structure

@@ -6,7 +6,8 @@ realistic execution costs. The deliverable is a portfolio **and** an honest map 
 where edge exists and where it does not.
 
 **Headline result** — an eight-family, equal-weight cross-asset book run at a constant **1.20× leverage**
-(~10% annualised volatility): net **Sharpe 3.76** full-sample (2011 → 2026), **CAGR 44.8%** at **−10.3%** max drawdown,
+(~10% annualised volatility): net **Sharpe 3.76** full-sample (2011 → 2026) at **−10.3%** max drawdown, **+37.6%/yr** not reinvested on the brief's $500k of
+sizing capital ($2.93M, ~$188k/yr) or **+44.8%/yr** compounded,
 positive in all 16 calendar years. On the run-once **out-of-sample
 block** (2024-07 →, the window the brief scores) it **meets all five targets** (**Sharpe 3.61**, months-in-profit
 81%, worst-month −2.6%, streak 2mo); on the **full 15-year window** it meets **4 of 5** — the one miss a single
@@ -40,7 +41,7 @@ edge map + dashboard.
   by its own **VIX-term-structure regime gate** (flat in backwardation), sized at a constant **1.20×**
   (~10% book volatility — the level the −15% drawdown mandate allows, REPORT §4b), with a disclosed **§8 risk overlay**
   (drawdown ladder + daily-loss breaker) on top — the
-  master book nets **Sharpe 3.76**, **CAGR 44.8%** at **−10.3% max drawdown**, months-in-profit **80%**,
+  master book nets **Sharpe 3.76** at **−10.3% max drawdown**, **+37.6%/yr** on $500k, months-in-profit **80%**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
   out-of-sample block the brief actually scores (2024-07→) it meets all five targets (Sharpe 3.61)**; on the full
   15-year window it meets **4 of 5** (the one miss a 3-month losing streak vs ≤2). The surviving edge is crypto-heavy
