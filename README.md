@@ -70,7 +70,9 @@ lottery/skew and free-data on-chain were tested and rejected (REPORT §7). **Whe
 vol-premium is ~56% of P&L on a real −78% tail (strip it → Sharpe **1.73**); the surviving edge is
 crypto-heavy; the short-vol book's thin single-name / exotic legs cap deployable size
 ([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); daily-annualised 3.76 is ~2.9 on a
-calendar-robust monthly basis; and the leg's one systemic day (2010-05-06, −76% on the leg) sits **outside**
+calendar-robust monthly basis; the dollar figures are quoted on the brief's **$500k** sizing capital with P&L
+**not** reinvested (**$2.93M**, ~$188k/yr) — full compounding would outgrow the vol-premium leg's vega capacity
+around year 8, so it is not claimed; and the leg's one systemic day (2010-05-06, −76% on the leg) sits **outside**
 the reporting window — which is why the book is sized at 1.20×, not the 1.45× the realised scorecard would bear
 (REPORT §4b).
 

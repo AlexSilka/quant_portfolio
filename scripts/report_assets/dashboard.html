@@ -11,10 +11,19 @@ equal-weight, <b>no performance-based selection</b>) &middot; net of costs on ${
 {report_window}. Each family contributes where it is live; the crypto-perp legs (carry, breakout) join in 2020.
 Hover any chart.</p>
 <div class="kpis">
-  <div class="kpi accent"><div class="label">Annualised return</div><div class="val">{cagr}</div><div class="note">CAGR, net of costs &middot; {report_window}</div></div>
-  <div class="kpi accent"><div class="label">Total return</div><div class="val">{total_return}</div><div class="note">${cap_k}k &rarr; ${final_value_m}M</div></div>
-  <div class="kpi accent"><div class="label">Net P&amp;L on ${cap_k}k</div><div class="val">+${net_pnl_m}M</div><div class="note">net of all modelled costs</div></div>
+  <div class="kpi accent"><div class="label">Annualised return</div><div class="val">{cagr}</div><div class="note">CAGR on capital at constant risk &middot; net of costs &middot; {report_window}</div></div>
+  <div class="kpi accent"><div class="label">Net P&amp;L on ${cap_k}k</div><div class="val">+${net_pnl_m}M</div><div class="note">the brief&rsquo;s ${cap_k}k sizing capital, P&amp;L not reinvested &middot; net of all modelled costs</div></div>
+  <div class="kpi accent"><div class="label">Per year on ${cap_k}k</div><div class="val">+${pnl_per_year_k}k</div><div class="note">{simple_return} /yr simple &middot; costs are modelled at this size, so the figures hold at this scale</div></div>
 </div>
+<p class="valline">Sizing follows the brief: <b>${cap_k}k of capital for sizing and cost calculations</b>, so the
+dollar figures above are what that capital earns with positions held at that size. <b>The accounting convention does
+not move the verdict</b> &mdash; the scorecard below is compounded (risk a constant fraction of capital); holding size
+fixed at ${cap_k}k and taking percentages of that same capital gives max-DD {fx_dd} (${fx_dd_usd}) and worst month
+{fx_wm} (${fx_wm_usd}), i.e. ~0.4pp <i>stricter</i>, same targets met. (Measuring a fixed-size book against its own
+growing balance would print &minus;4.7% instead &mdash; that reading divides late drawdowns by accumulated cash, so it
+is not used.) Fully reinvesting is the one thing not claimed: it compounds to nine figures on paper, but the book
+would pass ${cap_k}k&rarr;$10M around year&nbsp;8, the vol-premium leg&rsquo;s vega capacity (low tens of $M) stops it
+there, and &radic;-impact &mdash; modelled at ${cap_k}k &mdash; would grow with size.</p>
 {sc}
 {sc_note}
 <p class="valline gap">Validation &mdash; out-of-sample and structural, not in-sample fit:<br>
@@ -23,7 +32,7 @@ mean cross-family correlation {mean_corr} (~0 by construction) &middot; remove t
 book still runs at Sharpe {top_removed}. No family is chosen on performance &mdash; each enters at equal risk, so the headline is
 diversification, not a fitted pick.</p>
 <div class="grid">
-  <figure class="card s6"><figcaption>Master book equity (${cap_k}k base, log &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
+  <figure class="card s6"><figcaption>Master book equity (growth of capital at constant risk, log &middot; a compounding curve, not a reachable balance &mdash; see the sizing note above &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
   <figure class="card s6"><figcaption>Per-family equity + master book (log &middot; hover a line)</figcaption>{psleq}</figure>
   <figure class="card s6"><figcaption>Monthly return heatmap</figcaption>{month}</figure>
   <figure class="card"><figcaption>Drawdown</figcaption>{dd}</figure>

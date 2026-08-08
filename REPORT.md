@@ -97,6 +97,18 @@ A complete, reproducible pipeline, every stage runnable:
   the book re-charged at **1×/2×/3×** its modelled round-trip cost nets Sharpe **3.76 / 2.90 / 2.03**
   (max-DD −10.3% / −15.9% / −23.0%), **break-even at ≈5×** the book-turnover cost; per-family break-even
   runs higher still (breakout 10.4×, x-sect 7.8×) — no surviving sleeve is cost-fragile.
+- **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
+  cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
+  quoted at that size with **P&L not reinvested**: **$2.93M** over the 15-year window, **~$188k/yr**, worst month
+  **−$25,943**, deepest drawdown **−$53,541**. **The accounting convention does not move the verdict** — the
+  scorecard is compounded (risk a constant fraction of capital, max-DD −10.3%, worst month −5.1%), while holding
+  size fixed at $500k and taking percentages *of that same capital* gives **−10.71%** and **−5.19%**: ~0.4pp
+  stricter, same four of five targets. (The third possible reading — fixed size measured against its own *growing*
+  balance — prints −4.7%, because it divides late drawdowns by accumulated cash. It flatters, so it is not used.)
+  What is **not** claimed is full reinvestment: it compounds to nine figures on paper, but the book would pass
+  $500k→$10M around year 8, the vol-premium leg's vega capacity (low tens of $M, [VOLPREM.md §3b](docs/strategies/VOLPREM.md))
+  stops it there, and √-impact — modelled at $500k — grows as the square root of size. The brief asks for five
+  scale-free targets (§11: Sharpe, months, max-DD, streak, worst month) and none of them depends on this choice.
 - **Validation** — purged/embargoed CV; a **four-scheme Monte Carlo** (block bootstrap + trade-order resample
   + entry jitter ±1-3 bars + randomised start dates, each with P5/P50/P95 of Sharpe, max-DD and monthly hit);
   a placebo (shuffled-signal) arm; and the **mandatory multiple-testing triad** — deflated Sharpe, placebo-FDR,
@@ -149,7 +161,7 @@ OOS-block 0.05, max pairwise shift 0.18) — not an in-sample artifact.
 > naturally positive since each family is part of the book.*
 
 - **Master book (risk-managed deliverable, 1.20× = ~10% book vol):** full-sample Sharpe **3.76**, CAGR **44.8%**
-  (**321×** compounded), max DD **−10.3%**, months-in-profit
+  (on the brief's **$500k** sizing capital that is **$2.93M** of P&L, **~$188k/yr**; §9), max DD **−10.3%**, months-in-profit
   **80%**, worst month **−5.1%**, streak **3mo** — **4 of 5 on the 15-year window** (only the losing streak, 3 vs
   ≤2, misses); block-bootstrap MC **[Sharpe P5 +3.31, P50 +3.77, P95 +4.25; max-DD P5 −11.9%, P50 −8.5%]**; mean
   pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe 3.61, CAGR 36.3%, months-in-profit

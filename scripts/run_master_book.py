@@ -150,6 +150,33 @@ def per_period(s, freq):
     return out
 
 
+def fixed_size_scorecard(s):
+    """The same five targets under the brief's §9 convention: positions always sized on the stated
+    $500k of capital (P&L not reinvested), percentages taken of that same capital.
+
+    The denominator never grows, which is what makes this honest — measuring a fixed-size book against
+    its own *running balance* would divide every later drawdown by accumulated cash and flatter it
+    (that reading gives −4.7% here). Reported alongside the compounded scorecard because the brief
+    fixes the sizing capital: if the two conventions disagreed, the number would be an artifact of
+    the accounting rather than of the book. They do not — this one lands ~0.4pp stricter."""
+    s = s.dropna()
+    cum = s.cumsum()                                   # P&L in units of the sizing capital
+    mo = s.resample("ME").sum()
+    neg = (mo <= 0).astype(int).to_numpy()
+    streak = mx = 0
+    for v in neg:
+        streak = streak + 1 if v else 0
+        mx = max(mx, streak)
+    return {"max_dd": round(float((cum - cum.cummax()).min()), 4),
+            "worst_month": round(float(mo.min()) if len(mo) else 0.0, 4),
+            "months_in_profit": round(float((mo > 0).mean()) if len(mo) else 0.0, 4),
+            "longest_losing_streak_mo": int(mx),
+            "pnl_usd": round(float(CAPITAL_USD * s.sum()), 2),
+            "pnl_usd_per_year": round(float(CAPITAL_USD * s.sum() / ((s.index[-1] - s.index[0]).days / 365.25)), 2),
+            "max_dd_usd": round(float(CAPITAL_USD * (cum - cum.cummax()).min()), 2),
+            "worst_month_usd": round(float(CAPITAL_USD * mo.min()) if len(mo) else 0.0, 2)}
+
+
 def scorecard(s, ppy=None):
     """The six task targets on a return series: Sharpe, max-DD, months-in-profit, worst month,
     longest losing streak (months). Reported for both the full window and the OOS block. Sharpe is
@@ -257,6 +284,11 @@ def main():
     sc_full, sc_oos = scorecard(managed), scorecard(managed[managed.index >= OOS])
     print(f"  FULL {df.index.min().date()}+: {sc_full}")
     print(f"  OOS  {OOS.date()}+: {sc_oos}")
+    fx_full, fx_oos = fixed_size_scorecard(managed), fixed_size_scorecard(managed[managed.index >= OOS])
+    print(f"  §9 fixed-size (${CAPITAL_USD // 1000}k sizing capital, P&L not reinvested): FULL max-DD "
+          f"{fx_full['max_dd']:+.2%} (${fx_full['max_dd_usd']:,.0f}) worst month {fx_full['worst_month']:+.2%} "
+          f"(${fx_full['worst_month_usd']:,.0f}) months {fx_full['months_in_profit']:.1%} · P&L "
+          f"${fx_full['pnl_usd']:,.0f} (${fx_full['pnl_usd_per_year']:,.0f}/yr)")
     print(f"  book gross exposure: min {gross.min():.2f} mean {gross.mean():.2f} max {gross.max():.2f} (cap {GROSS_CAP})")
     print(f"  book net exposure ~0 (legs dollar-neutral); per-family weight 1/{len(df.columns)} (cap {PER_FAMILY_CAP:.2f})")
 
@@ -335,6 +367,7 @@ def main():
         "oos_start": str(OOS.date()),
         "master": {**m, **{f"full_{k}": v for k, v in sc_full.items()}},
         "scorecard_full": sc_full, "scorecard_oos": sc_oos,
+        "fixed_size_full": fx_full, "fixed_size_oos": fx_oos, "sizing_capital_usd": CAPITAL_USD,
         "gross_premium_full": sc_raw_full, "gross_premium_oos": sc_raw_oos,
         "without_breakout": mw, "per_year": per_year, "per_quarter": per_period(managed, "Q"),
         "standalone_sharpe": solo, "mean_correlation": mean_corr, "correlation_stability": corr_stab,

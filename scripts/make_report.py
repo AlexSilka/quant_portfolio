@@ -555,7 +555,14 @@ def main():
     wlab = f"{int(yrs)}-yr"        # reporting-window label for the scorecard (e.g. "15-yr" for the 2011+ book)
     y0 = master.index[0].year
     cagr = float(eqf.iloc[-1] ** (1 / yrs) - 1) if yrs > 0 else 0.0
-    final_value, net_pnl = float(CAP * eqf.iloc[-1]), float(CAP * (eqf.iloc[-1] - 1))
+    # §9 fixes the sizing/cost capital at $500k, and the √-impact model is calibrated to exactly that
+    # order size — so the DOLLAR figures are quoted at that size, P&L not reinvested. Reinvesting would
+    # compound the notional far past both the modelled order size and the vol-premium leg's vega
+    # capacity, i.e. it would report a balance the cost model never charged for. Risk metrics stay on
+    # the compounded return series (the stricter convention): fixed-size equity divides every later
+    # drawdown by a cash balance that grew, which flatters max-DD and the worst month.
+    net_pnl = float(CAP * master.sum())
+    pnl_per_year, simple_return = net_pnl / yrs, float(master.sum() / yrs)
 
     # --- monthly / OOS / cross-asset (2020+) windows ---
     mo = (1.0 + master).resample("ME").prod() - 1.0
@@ -776,7 +783,7 @@ def main():
         f'(break-even &times; base cost, from the deep-dives): {perfam_be} &mdash; all well above 1&times;, '
         f'so no measured family is cost-fragile.</p></figure>')
 
-    _write(summ, cagr, final_value, net_pnl, ca_sharpe, ca_cagr, dict(
+    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,
         year=year_svg, quarter=quarter_svg, stress=stress_rows, marg=marg_svg,
         marg_best=max(vals), corr=corr_svg, famtbl=fam_rows, famperiods=famperiods, param=_param_card(),
@@ -793,9 +800,12 @@ def _asset(name):
     return (ASSETS / name).read_text()
 
 
-def _write(summ, cagr, final_value, net_pnl, ca_sharpe, ca_cagr, S):
+def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, S):
     """Fill report_assets/dashboard.html (page + copy) with computed values, CSS and JS."""
     m = summ["master"]
+    # §9 fixed-size reading of the same track (run_master_book.fixed_size_scorecard) — published next to
+    # the compounded scorecard so the reader can see the accounting convention changes nothing.
+    fx = summ["fixed_size_full"]
     fam = ", ".join(sf(f) for f in summ["families"])
     pos_years = sum(1 for v in summ["per_year"].values() if v > 0)
     rw = summ["window"]
@@ -812,8 +822,10 @@ def _write(summ, cagr, final_value, net_pnl, ca_sharpe, ca_cagr, S):
         css=_asset("dashboard.css"), js=_asset("dashboard.js"),
         lines_json=json.dumps(S["lines"], default=float), cap_k=CAP // 1000,
         report_window=f"{rw[0][:4]}–{rw[1][:4]}",
-        cagr=f"{cagr:+.1%}", total_return=f"{m['total_return']:+.0%}",
-        final_value_m=f"{final_value / 1e6:.2f}", net_pnl_m=f"{net_pnl / 1e6:.2f}",
+        cagr=f"{cagr:+.1%}", net_pnl_m=f"{net_pnl / 1e6:.2f}",
+        pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=f"{simple_return:+.1%}",
+        fx_dd=f"{fx['max_dd']:+.1%}", fx_wm=f"{fx['worst_month']:+.1%}",
+        fx_dd_usd=f"{abs(fx['max_dd_usd']):,.0f}", fx_wm_usd=f"{abs(fx['worst_month_usd']):,.0f}",
         sc=S["sc"], sc_note=S["sc_note"], mc_p5=f"{m['mc_p5']:+.2f}", mc_p50=f"{m['mc_p50']:+.2f}", mc_p95=f"{m['mc_p95']:+.2f}",
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),

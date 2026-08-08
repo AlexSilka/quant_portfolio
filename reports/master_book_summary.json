@@ -119,6 +119,27 @@
     "total_return": 0.913,
     "n_obs": 766
   },
+  "fixed_size_full": {
+    "max_dd": -0.1071,
+    "worst_month": -0.0519,
+    "months_in_profit": 0.8085,
+    "longest_losing_streak_mo": 3,
+    "pnl_usd": 2926669.27,
+    "pnl_usd_per_year": 187768.48,
+    "max_dd_usd": -53541.31,
+    "worst_month_usd": -25942.6
+  },
+  "fixed_size_oos": {
+    "max_dd": -0.0451,
+    "worst_month": -0.0254,
+    "months_in_profit": 0.8077,
+    "longest_losing_streak_mo": 2,
+    "pnl_usd": 328436.28,
+    "pnl_usd_per_year": 156812.23,
+    "max_dd_usd": -22535.0,
+    "worst_month_usd": -12712.98
+  },
+  "sizing_capital_usd": 500000,
   "gross_premium_full": {
     "sharpe": 3.78,
     "max_dd": -0.0909,
