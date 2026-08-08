@@ -602,32 +602,27 @@ def main():
         w = json.loads(wfp.read_text())
         h, rng = w["headline_wf_oos"], w["window_cadence_invariance_range"]
         gfc = (w.get("stress") or {}).get("2008 GFC")
-        gfc_s = (f' — and only {gfc["max_dd"]:+.1%} through the 2008 GFC (the crisis leg hedges the '
-                 f'short-vol tail)') if gfc else ''
-        wf_li = (f'<li><b>OOS is most of the history, not 2 years:</b> a book-level walk-forward (rolling &amp; '
-                 f'anchored, periodic re-fit) is out-of-sample across {h["start"]}&rarr;{h["end"]} '
-                 f'(~{round(h["n_obs"] / 365)}y) at Sharpe <b>{h["sharpe"]:+.2f}</b>, invariant to '
-                 f'cadence/window [{rng[0]:+.2f}, {rng[1]:+.2f}]{gfc_s}.</li>')
+        gfc_s = f', {gfc["max_dd"]:+.1%} through the 2008 GFC' if gfc else ''
+        wf_li = (f'<li><b>OOS is most of the history, not 2 years:</b> the book-level walk-forward runs '
+                 f'out-of-sample {h["start"][:4]}&rarr;{h["end"][:4]} (~{round(h["n_obs"] / 365)}y) at Sharpe '
+                 f'<b>{h["sharpe"]:+.2f}</b> [{rng[0]:+.2f}, {rng[1]:+.2f}] across cadences{gfc_s}.</li>')
     yr_ret = (1.0 + master).resample("YE").prod() - 1.0
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
     sc_note = (
         f'<div class="scnote">'
-        f'<span class="lead"><b>All five targets met on the final out-of-sample block; {n_pass_full} of 5 on the '
-        f'full 15-year window</b> (2024-07&rarr; is the window the brief scores).</span>'
+        f'<span class="lead"><b>All five targets met on the frozen out-of-sample block; {n_pass_full} of 5 on the '
+        f'full 15-year window.</b></span>'
         f'<ul>'
-        f'<li><b>OOS scorecard ({n_pass} of 5):</b> Sharpe ({_sh(oos):+.2f}), months-in-profit ({_mip(moo):.0%}), '
-        f'max-drawdown, worst-month and losing-streak all clear on the held-out block &mdash; the '
-        f'<b>VIX-term-structure regime gate</b> flattens the short-vol leg in backwardation (lifting months <i>and</i> '
-        f'the worst month, not by reweighting, which fails &mdash; §6), and the crypto sleeve runs on '
-        f'<b>residual (idiosyncratic) momentum</b>.</li>'
-        f'<li><b>Full 15-year window ({n_pass_full} of 5):</b> Sharpe {m["sharpe"]:+.2f}, months-in-profit '
-        f'{_mip(mo):.0%}, max-DD {m["max_dd"]:+.1%}, worst-month {mo.min():+.1%} all clear; the one miss is the '
-        f'{_streak(mo.values)}-month losing streak (vs &le;2). <b>Positive in {n_pos_yr} of {n_tot_yr} years</b>. '
-        f'<i>Caveat:</i> pre-2016 leans on reconstructed crisis/global-macro signals (only 2020+ is fully live).</li>'
+        f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the window the brief scores (2024-07&rarr;): Sharpe '
+        f'{_sh(oos):+.2f}, months-in-profit {_mip(moo):.0%}, max-DD, worst month and streak all clear. It is the '
+        f'<b>VIX-term-structure gate</b> on the short-vol leg that does this, not reweighting (which fails, §6).</li>'
+        f'<li><b>Full 15-year window ({n_pass_full} of 5):</b> Sharpe {m["sharpe"]:+.2f}, months {_mip(mo):.0%}, '
+        f'max-DD {m["max_dd"]:+.1%}, worst month {mo.min():+.1%}; the one miss is a {_streak(mo.values)}-month '
+        f'losing streak (vs &le;2). <b>Positive in {n_pos_yr} of {n_tot_yr} years</b>; pre-2016 leans on '
+        f'reconstructed crisis/global-macro signals.</li>'
         f'{wf_li}'
-        f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights doesn&rsquo;t beat it OOS (mean-var buys '
-        f'Sharpe with a 3&times; tail); rule parameters &amp; book weights are a-priori, ML meta-labels &amp; '
-        f'sleeve selection fit and walk-forwarded (§5/§10).</li>'
+        f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights does not beat it out-of-sample '
+        f'(mean-variance buys Sharpe with a 3&times; tail).</li>'
         f'</ul></div>')
 
     # --- equity, drawdown, rolling 12m Sharpe ---
