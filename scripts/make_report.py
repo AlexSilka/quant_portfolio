@@ -546,6 +546,7 @@ def main():
     corr = pd.read_csv(REP / "master_book_correlation.csv", index_col=0)
     marg = pd.read_csv(REP / "master_book_marginal.csv")
     m = summ["master"]
+    fx = summ["fixed_size_full"]     # §9 fixed-size reading, shown next to the compounded one
     fams = list(legs.columns)
     lines = {}
 
@@ -587,11 +588,11 @@ def main():
          "pass" if _sh(oos) >= 2.5 else "miss"),
         ("Months in profit", f"{_mip(moo):.0%}", f"{wlab} {_mip(mo):.0%} · target ≥80%",
          "pass" if _mip(moo) >= 0.80 else "miss"),
-        ("Max drawdown", f"{_mdd(oos):+.1%}", f"{wlab} {m['max_dd']:+.1%} · target ≤15%",
+        ("Max drawdown", f"{_mdd(oos):+.1%}", f"{wlab} {m['max_dd']:+.1%} ({fx['max_dd']:+.1%} not reinvested) · target ≤15%",
          "pass" if _mdd(oos) >= -0.15 else "miss"),
         ("Longest losing streak", f"{_streak(moo.values)} mo", f"{wlab} {_streak(mo.values)} mo · target ≤2 mo",
          "pass" if _streak(moo.values) <= 2 else "miss"),
-        ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} · target ≥−6%",
+        ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} ({fx['worst_month']:+.1%} not reinvested) · target ≥−6%",
          "pass" if moo.min() >= -0.06 else "miss"),
         ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis", ""),
     ]
