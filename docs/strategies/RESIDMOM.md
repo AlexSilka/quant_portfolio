@@ -1,6 +1,6 @@
 # Residual / idiosyncratic momentum (H5) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.77** full / **3.61** OOS; this family's residual-momentum construction now ships as the crypto x-sect leg — §0). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.76** full / **3.61** OOS; this family's residual-momentum construction now ships as the crypto x-sect leg — §0). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
 
 **Scope.** H5 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): residual (idiosyncratic) momentum
 — rank on the momentum of each name's **market-beta residual**, standardised by residual vol

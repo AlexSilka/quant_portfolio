@@ -5,10 +5,11 @@ built for honest validation: leakage control, multiple-testing correction, and
 realistic execution costs. The deliverable is a portfolio **and** an honest map of
 where edge exists and where it does not.
 
-**Headline result** — an eight-family, equal-weight cross-asset book: net **Sharpe 3.77** full-sample
-(2011 → 2026) at **−8.0%** max drawdown, positive in all 16 calendar years. On the run-once **out-of-sample
+**Headline result** — an eight-family, equal-weight cross-asset book run at a constant **1.20× leverage**
+(~10% annualised volatility): net **Sharpe 3.76** full-sample (2011 → 2026), **CAGR 44.8%** at **−10.3%** max drawdown,
+positive in all 16 calendar years. On the run-once **out-of-sample
 block** (2024-07 →, the window the brief scores) it **meets all five targets** (**Sharpe 3.61**, months-in-profit
-81%, worst-month −2.1%, streak 2mo); on the **full 15-year window** it meets **4 of 5** — the one miss a single
+81%, worst-month −2.6%, streak 2mo); on the **full 15-year window** it meets **4 of 5** — the one miss a single
 3-month losing streak (vs ≤2). The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
 P&L, on a real tail) — both stated and quantified in [REPORT.md](REPORT.md).
 
@@ -36,9 +37,10 @@ edge map + dashboard.
   [crisis-alpha](scripts/run_crisis.py), [global-macro](scripts/run_gmacro.py), [BAB](docs/strategies/BAB.md).
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
   **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg timed
-  by its own **VIX-term-structure regime gate** (flat in backwardation), with a disclosed **§8 risk overlay**
+  by its own **VIX-term-structure regime gate** (flat in backwardation), sized at a constant **1.20×**
+  (~10% book volatility — the level the −15% drawdown mandate allows, REPORT §4b), with a disclosed **§8 risk overlay**
   (drawdown ladder + daily-loss breaker) on top — the
-  master book nets **Sharpe 3.77** at **−8.0% max drawdown**, months-in-profit **80%**,
+  master book nets **Sharpe 3.76**, **CAGR 44.8%** at **−10.3% max drawdown**, months-in-profit **80%**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. **On the frozen
   out-of-sample block the brief actually scores (2024-07→) it meets all five targets (Sharpe 3.61)**; on the full
   15-year window it meets **4 of 5** (the one miss a 3-month losing streak vs ≤2). The surviving edge is crypto-heavy
@@ -51,7 +53,8 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.77** (4/5), OOS **3.61** (5/5), −8.0% max-DD, 8 families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.76** (4/5), OOS **3.61** (5/5), −10.3% max-DD, 8 families |
+| `make risk-budget` | how much leverage the book can carry (§4b) | mandate allows **1.35×**, shipped **1.20×**; worst month breaks first, at 1.45× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 32%**, in-sample-best +0.09 → OOS +0.00 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -64,10 +67,12 @@ per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
 
 **Where the edge is _not_** (kept, not hidden): cross-sectional reversal, stat-arb pairs, calendar/session,
 lottery/skew and free-data on-chain were tested and rejected (REPORT §7). **Where the risk is:**
-vol-premium is ~52% of P&L on a real −78% tail (strip it → Sharpe **1.75**); the surviving edge is
+vol-premium is ~56% of P&L on a real −78% tail (strip it → Sharpe **1.73**); the surviving edge is
 crypto-heavy; the short-vol book's thin single-name / exotic legs cap deployable size
-([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); and daily-annualised 3.77 is ~2.9 on a
-calendar-robust monthly basis.
+([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); daily-annualised 3.76 is ~2.9 on a
+calendar-robust monthly basis; and the leg's one systemic day (2010-05-06, −76% on the leg) sits **outside**
+the reporting window — which is why the book is sized at 1.20×, not the 1.45× the realised scorecard would bear
+(REPORT §4b).
 
 ## Setup
 
@@ -101,7 +106,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.77 full / 3.61 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.76 full / 3.61 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

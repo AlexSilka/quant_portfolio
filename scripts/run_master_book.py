@@ -8,13 +8,17 @@ its own deep-dive (reports/trend, reports/xs, docs/strategies/*). This script on
 published series and assembles the master.
 
 Two books are reported and persisted:
-  • gross premium stack  — the equal-weight risk-parity mean of the eight legs (the raw edge);
-  • risk-managed book     — the deliverable: the §8 portfolio risk overlay applied on top of the stack —
-                            a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → 0.66/0.33/
-                            flat, restore −4%, hysteresis) plus a daily-loss circuit breaker. On the
-                            realised (benign-tail) history the overlay COSTS a little Sharpe — it is
-                            tail insurance against the short-vol leg's −78% systemic tail the sample
-                            does not contain, kept because that tail is real, not to lift a metric.
+  • gross premium stack  — the equal-weight risk-parity mean of the eight legs (the raw edge), which
+                            runs at ~8.4% annualised vol on its own;
+  • risk-managed book     — the deliverable: the stack at the book's one constant leverage (BOOK_LEVERAGE,
+                            the level the −15% drawdown mandate allows) with the §8 portfolio risk
+                            overlay on top — a drawdown-responsive de-risking ladder (triggers
+                            −6/−9/−12% → 0.66/0.33/flat, restore −4%, hysteresis) plus a daily-loss
+                            circuit breaker. On the realised (benign-tail) history the overlay COSTS a
+                            little Sharpe — it is tail insurance against the short-vol leg's −78%
+                            systemic tail the sample does not contain, kept because that tail is real,
+                            not to lift a metric. That same excluded tail is why the leverage stops well
+                            short of what the realised scorecard would bear (run_risk_budget.py).
 
 Metrics are reported on BOTH the full 15-year window and the frozen out-of-sample block
 (OOS_START), because the brief scores targets on the final OOS block. Emits the assembled book,
@@ -36,7 +40,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from src.config import CAPITAL_USD, OOS_START  # noqa: E402
+from src.config import BOOK_LEVERAGE, CAPITAL_USD, OOS_START, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
@@ -116,12 +120,12 @@ def load(label, file, col):
     return s.rename(label)
 
 
-def _scale(net, target=0.15):
+def _scale(net, target=VOL_TARGET_ANNUAL):
     """Trailing (lagged) vol-target scale factor — the leg's risk-parity weight, computable-at-bar."""
     return (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
 
 
-def rescale(net, target=0.15):
+def rescale(net, target=VOL_TARGET_ANNUAL):
     return net * _scale(net, target)
 
 
@@ -165,17 +169,26 @@ def scorecard(s, ppy=None):
             "n_obs": int(len(s))}
 
 
-def risk_overlay(raw):
+def risk_overlay(raw, leverage=1.0, limits="book_equity"):
     """§8 book-level risk management applied to the equal-weight premium stack, all causal (t-1 info):
       1. daily-loss circuit breaker — flat the day after a book loss worse than DAILY_LOSS_LIMIT;
       2. drawdown-responsive de-risking ladder — cut gross to the stated step as drawdown deepens
          (flat = stop trading at the deepest trigger), restore only after recovery (hysteresis);
-      3. gross-exposure cap.
+      3. gross-exposure cap, which is what `leverage` is spent against.
+
+    `limits` says which yardstick the -6/-9/-12% and -4%/day triggers are measured against:
+      "book_equity" — percent of the LEVERED book's own equity, so a trigger means the same loss to the
+                      investor at any leverage. The ladder is what keeps the book inside its -15% mandate,
+                      so its triggers have to be quoted in the same units as that mandate; scaling them
+                      with leverage would push the deepest 'stop' trigger past the mandate itself.
+      "risk_budget" — percent of the UNLEVERED stack, i.e. the triggers scale with leverage. The exposure
+                      path is then leverage-invariant, which makes the whole book a pure constant scaling.
+    Measured both ways over a 1.0-2.0x grid in run_risk_budget.py; "book_equity" is what ships.
     Returns (managed_ret, gross_exposure, n_breaker_days)."""
-    breaker = (raw.shift(1).fillna(0.0) >= DAILY_LOSS_LIMIT).astype(float)   # 0 the day after a big loss
-    raw_b = raw * breaker
-    _, ladder_expo = drawdown_ladder(raw_b, LADDER, LADDER_RESTORE)
-    gross = (breaker * ladder_expo).clip(upper=GROSS_CAP)
+    sig = raw * leverage if limits == "book_equity" else raw   # the equity the triggers are read off
+    breaker = (sig.shift(1).fillna(0.0) >= DAILY_LOSS_LIMIT).astype(float)   # 0 the day after a big loss
+    _, ladder_expo = drawdown_ladder(sig * breaker, LADDER, LADDER_RESTORE)
+    gross = (leverage * breaker * ladder_expo).clip(upper=GROSS_CAP)
     managed = raw * gross                                     # apply the combined causal exposure
     return managed.rename("ret"), gross.rename("gross"), int((breaker == 0).sum())
 
@@ -204,32 +217,42 @@ def describe(s, mc=True):
     return out
 
 
-def main():
+def assemble(start=START_REPORT):
+    """The canonical leg matrix: every family's published series rescaled to the common per-leg vol
+    target. Returns (rescaled_legs, scale_factors) — the equal-weight mean of the legs IS the book.
+
+    UNION over the reporting window, not the intersection: crypto-perp legs (carry, breakout) only
+    exist from 2020, so `.dropna()` would collapse the 15-year book to 2020+. Average over the families
+    live each day (>=2), so 2011-2019 runs on trend/volprem/x-sect (+ reconstructed crisis/gmacro) and the
+    crypto-perp legs join in 2020."""
     raw = {lab: load(lab, f, c) for lab, f, c in FAMILIES}
     raw = {k: v for k, v in raw.items() if v is not None}
     scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index()
     df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
-    # UNION over the reporting window, not the intersection: crypto-perp legs (carry, breakout) only
-    # exist from 2020, so `.dropna()` would collapse the 15-year book to 2020+. Average over the families
-    # live each day (>=2), so 2011-2019 runs on trend/volprem/x-sect (+ reconstructed crisis/gmacro) and the
-    # crypto-perp legs join in 2020.
-    mask = df.index >= pd.Timestamp(START_REPORT)
+    mask = df.index >= pd.Timestamp(start)
     df, scales = df[mask], scales[mask]
     keep = df.notna().sum(axis=1) >= 2
-    df, scales = df[keep], scales[keep]
+    return df[keep], scales[keep]
+
+
+def main():
+    df, scales = assemble()
     live = df.notna().sum(axis=1)
     print(f"families: {list(df.columns)}\nreporting window: {df.index.min().date()}..{df.index.max().date()} "
           f"({len(df)} days; {int(live.min())}-{int(live.max())} live/day)\n")
 
     # genuine EQUAL-WEIGHT risk parity — every family at 1/N, no performance-based selection.
     raw_ew = df.mean(axis=1, skipna=True).rename("ret")
-    managed, gross, n_breaker = risk_overlay(raw_ew)
+    managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
     turn = book_turnover(scales)
+    stack_vol = float(raw_ew.std(ddof=1) * np.sqrt(ppy_of(raw_ew)))
 
-    print("=== GROSS PREMIUM STACK (equal-weight risk parity, no overlay) ===")
+    print("=== GROSS PREMIUM STACK (equal-weight risk parity, no overlay, unlevered) ===")
     sc_raw_full, sc_raw_oos = scorecard(raw_ew), scorecard(raw_ew[raw_ew.index >= OOS])
     print(f"  FULL {df.index.min().date()}+: {sc_raw_full}")
     print(f"  OOS  {OOS.date()}+: {sc_raw_oos}")
+    print(f"  stack realised vol {stack_vol:.1%} ann -> constant book leverage {BOOK_LEVERAGE:.2f}x "
+          f"= {BOOK_LEVERAGE * stack_vol:.1%} book vol (level set by the -15% mandate, see run_risk_budget.py)")
     print(f"\n=== RISK-MANAGED BOOK (deliverable: §8 DD-ladder + daily-loss breaker; breaker fired {n_breaker}d) ===")
     sc_full, sc_oos = scorecard(managed), scorecard(managed[managed.index >= OOS])
     print(f"  FULL {df.index.min().date()}+: {sc_full}")
@@ -319,7 +342,9 @@ def main():
         "breakout_delta_sharpe": summarise(raw_ew, ppy_of(raw_ew))["sharpe_ann"] - mw["sharpe"],
         "risk_limits": {"ladder": LADDER, "restore": LADDER_RESTORE, "daily_loss_limit": DAILY_LOSS_LIMIT,
                         "gross_cap": GROSS_CAP, "per_family_cap": round(PER_FAMILY_CAP, 3),
-                        "breaker_days": n_breaker, "max_gross": round(float(gross.max()), 2)},
+                        "breaker_days": n_breaker, "max_gross": round(float(gross.max()), 2),
+                        "leverage": BOOK_LEVERAGE, "stack_vol": round(stack_vol, 4),
+                        "book_vol": round(BOOK_LEVERAGE * stack_vol, 4), "limits_measured_in": "book_equity"},
         "mc_variants": m["mc_variants"]}, indent=2, default=float))
 
     _figure(managed, df, corr, marg, per_year)

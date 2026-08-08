@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master ml-contribution ml-portfolio discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -16,6 +16,11 @@ reproduce:
 # Assemble the master book from the eight families' published series (the canonical portfolio).
 master:
 	$(PY) scripts/run_master_book.py
+
+# §8 how much leverage the book can carry: constant-leverage grid 1.0-2.0x through the canonical
+# assembler, both §8 limit conventions, bootstrap tail + the 2010 systemic event the window excludes.
+risk-budget:
+	$(PY) scripts/run_risk_budget.py
 
 # §5d book-level ML: does ML lift the ASSEMBLED book? Leg-swap each family for its ML variant through
 # the risk-parity assembly (breakout/carry/trend) + uniform gate + magnitude sizing. ~several minutes.

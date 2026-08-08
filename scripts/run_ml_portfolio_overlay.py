@@ -154,6 +154,9 @@ def _row(c):
 
 
 def measure(ew, exposure, tag, out):
+    # Every arm runs on the UNLEVERED stack (risk_overlay's default 1.0x), not on the shipped book's
+    # leverage: the question here is whether an ML exposure path beats a flat one, and holding the base
+    # at 1x keeps that comparison free of the book's separate risk-budget dial (run_risk_budget.py).
     exp = exposure.reindex(ew.index).fillna(1.0).clip(0, 1.5)
     m = risk_overlay((ew * exp).dropna())[0]
     cf, co = _card(m), _card(m[m.index >= OOS])
