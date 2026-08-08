@@ -137,14 +137,20 @@ def _cagr(s):
 
 def _card(s):
     sc = scorecard(s)
-    return {"sharpe": round(sc["sharpe"], 2), "cagr": round(_cagr(s), 3), "max_dd": round(sc["max_dd"], 3),
+    dd = sc["max_dd"]
+    return {"sharpe": round(sc["sharpe"], 2), "cagr": round(_cagr(s), 3), "max_dd": round(dd, 3),
             "worst_month": round(sc["worst_month"], 3), "months_in_profit": round(sc["months_in_profit"], 3),
-            "streak": int(sc["longest_losing_streak_mo"]), "targets": tgt(sc)}
+            "streak": int(sc["longest_losing_streak_mo"]), "targets": tgt(sc),
+            # plain-reader companions to the scorecard: total compounding over the window, and return
+            # bought per unit of the deepest fall (the return/risk read that needs no Sharpe).
+            "growth_x": round(float((1 + s).prod()), 1),
+            "cagr_per_dd": round(_cagr(s) / abs(dd), 2) if dd else 0.0}
 
 
 def _row(c):
     return (f"Sh {c['sharpe']:+.2f} CAGR {c['cagr']:+.0%} DD {c['max_dd']:+.1%} worst {c['worst_month']:+.1%} "
-            f"mo {c['months_in_profit']:.0%} strk {c['streak']} [{c['targets']}/5]")
+            f"mo {c['months_in_profit']:.0%} strk {c['streak']} [{c['targets']}/5] "
+            f"x{c['growth_x']:.1f} r/dd {c['cagr_per_dd']:.2f}")
 
 
 def measure(ew, exposure, tag, out):
@@ -170,7 +176,13 @@ def main():
         probs[k] = walk_forward(X, y_sign, _clf(k))
         measure(ew, (probs[k] >= 0.50).astype(float), f"A gate:{k}", out)
     for k in ["logit", "lgbm"]:
-        measure(ew, (2.0 * probs[k]).clip(0, 1.5), f"B soft:{k}", out)
+        soft = (2.0 * probs[k]).clip(0, 1.5)
+        measure(ew, soft, f"B soft:{k}", out)
+        # Leverage-matched control: soft sizing averages >1x gross, so its higher CAGR must be judged
+        # against flat leverage at the SAME average exposure, not against the 1.0x base. Without this
+        # arm "ML raised the return" is unfalsifiable — any size dial raises return.
+        lev = float(soft.reindex(ew.index).fillna(1.0).clip(0, 1.5).mean())
+        measure(ew, pd.Series(lev, index=ew.index), f"B control: flat {lev:.2f}x", out)
 
     print("\ncontrols (isolate timing from de-risking):")
     avg = float((probs["lgbm"] >= 0.5).astype(float).reindex(ew.index).fillna(1.0).mean())

@@ -349,10 +349,17 @@ instead helps on no honest reading of the five targets (causal walk-forward, qua
 judged on Sharpe / CAGR / max-DD / worst-month / months-in-profit / streak, full + OOS). **(A) A whole-book regime
 gate** — logistic / RF / ExtraTrees / HistGB / LightGBM / MLP predicting P(book up next 21d) — flattens 14–22% of
 months, and a flat month is a non-profit month, so it *worsens the binding targets*: months-in-profit **81% →
-66–68%**, Sharpe **3.77 → 3.4–3.5**, CAGR **36% → 28–30%** on the full window; the marginal OOS uptick is short-block
+66–68%**, Sharpe **3.77 → 3.4–3.5**, CAGR **36% → 28–30%** on the full window (compounding **127× → 48–58×** the
+starting capital); the marginal OOS uptick is short-block
 OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.16–3.59
 full — the ML adds no timing beyond de-risking). **(B) Soft exposure** (scale gross by the probability, cap 1.5×) is
 just leverage — CAGR rises to **52–54%** but max-DD **−12.4%** and worst-month **−6.1%** break the risk targets.
+**The leverage-matched control settles that** (the arm without which "ML raised the return" is unfalsifiable — any
+size dial raises return): flat gross at the *same* average exposure (1.37× / 1.41×, no model) nets the **identical**
+CAGR (**52% / 54%**) on a **shallower** drawdown (**−11.0% / −11.4%** vs −12.7% / −12.4%) and a better worst month
+(**−5.6% / −5.7%** vs −6.1% / −6.0%) — return-per-max-DD **4.74 / 4.72 vs 4.12 / 4.33**, and **4/5 targets vs the
+model's 3/5**. The extra return is the size dial, not the model; out-of-sample the model's sizing edges CAGR
+(47% vs 42–44%) on a deeper drawdown — a wash on return-per-risk (8.55 / 8.57 vs 8.38 / 8.43).
 **(C) ML allocation** (tilt the family weights off equal by predicted forward return) *collapses* the book — Sharpe
 **3.77 → 1.4**, months-in-profit 41–44% — trading away the decorrelation that is the whole edge (the mean-variance
 overfit signature of §5c). This is precisely *why the VIX gate is applied to one leg and not the book*:
