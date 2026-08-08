@@ -18,11 +18,7 @@ Hover any chart.</p>
 <p class="valline gap">Sizing follows the brief: <b>${cap_k}k for sizing and costs</b>, P&amp;L not reinvested. Convention-independent &mdash; fixed size on that same ${cap_k}k gives max-DD {fx_dd} (${fx_dd_usd}) vs the compounded {dd_note} below. Full reinvestment is not claimed: the vol-premium leg&rsquo;s vega capacity (low tens of $M) caps the book around year&nbsp;8.</p>
 {sc}
 {sc_note}
-<p class="valline gap">Validation &mdash; out-of-sample and structural, not in-sample fit:<br>
-Monte-Carlo (block-bootstrap, P5/50/95) &mdash; Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95} &middot; positive in {pos_years} of {n_years}&nbsp;years &middot;
-mean cross-family correlation {mean_corr} (~0 by construction) &middot; remove the strongest single leg ({top_family}) and the
-book still runs at Sharpe {top_removed}. No family is chosen on performance &mdash; each enters at equal risk, so the headline is
-diversification, not a fitted pick.</p>
+<p class="valline gap">Validation (§10) &mdash; Monte-Carlo, block-bootstrap P5/50/95: Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95}. Positive in {pos_years} of {n_years}&nbsp;years &middot; mean cross-family correlation {mean_corr} &middot; remove the strongest leg ({top_family}) and the book still runs at Sharpe {top_removed}, with no family chosen on performance.</p>
 <div class="grid">
   <figure class="card s6"><figcaption>Master book equity (growth of capital at constant risk, log &middot; a compounding curve, not a reachable balance &mdash; see the sizing note above &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
   <figure class="card s6"><figcaption>Per-family equity + master book (log &middot; hover a line)</figcaption>{psleq}</figure>

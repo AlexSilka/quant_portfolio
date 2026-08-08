@@ -591,7 +591,7 @@ def main():
          "pass" if _streak(moo.values) <= 2 else "miss"),
         ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} · target ≥−6%",
          "pass" if moo.min() >= -0.06 else "miss"),
-        ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis; the turnover chart plots the one-way re-weighting series", ""),
+        ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis", ""),
     ]
     n_pass = sum(1 for *_, c in sc[:5] if c == "pass")             # OOS block (the scored window)
     n_pass_full = sum([2.5 <= m["sharpe"] <= 4.0, _mip(mo) >= 0.80, m["max_dd"] >= -0.15,   # 15y larger sample
