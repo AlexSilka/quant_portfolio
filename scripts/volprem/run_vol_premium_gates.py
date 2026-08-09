@@ -1,9 +1,9 @@
 """Gate lab for the short-vol book — can the leg's drawdown be cut further than the shipped gate?
 
-The shipped leg carries ONE timing rule: flat when the VIX curve is in backwardation (VIX3M/VIX < 1,
-`src/risk/vol_regime.py`). This script asks whether a better rule exists, and answers it the only way
-that is not curve-fitting: run every candidate through the SAME book, score all of them on the same
-windows, and hold each against two null controls that a lucky rule must beat --
+This is the lab the shipped timing rule came out of. It started from the long curve segment alone
+(VIX3M/VIX >= 1) and asks whether a better rule exists, answering it the only way that is not
+curve-fitting: run every candidate through the SAME book, score all of them on the same windows, and
+hold each against two null controls that a lucky rule must beat --
 
   * random gate  — same average exposure, dates shuffled in blocks (500 draws): does the TIMING matter,
     or would any rule that is flat 8% of the time have done this?
@@ -89,7 +89,7 @@ def build_candidates(index) -> dict[str, pd.Series]:
     c["none (ungated)"] = pd.Series(1.0, index=pd.Index(index))
     c["SHIPPED VIX3M/VIX>=1"] = causal((r3m >= 1.0).astype(float), index)
 
-    # --- the user's axis: shorter segment of the curve, alone and combined ---
+    # --- the short segment of the curve, alone and combined ("both segments" is what ships) ---
     c["fast VIX/VIX9D>=1"] = causal((r9d >= 1.0).astype(float), index)
     c["both segments"] = causal(((r3m >= 1.0) & (r9d >= 1.0)).astype(float), index)
     c["either segment"] = causal(((r3m >= 1.0) | (r9d >= 1.0)).astype(float), index)
