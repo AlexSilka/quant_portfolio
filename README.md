@@ -22,11 +22,11 @@ as supporting evidence, not as a second scorecard.
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
 |---|---|---|
 | Sharpe, net, 2.5–4.0 | **3.39** ✓ | **3.58** ✓ |
-| months in profit ≥ 80% | **76.9%** ✓ | **79.3%** ✓ |
+| months in profit ≥ 80% | **76.9%** ✗ | **79.3%** ✗ |
 | max drawdown ≤ 15% | **−5.1%** ✓ | **−7.4%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✓ |
-| worst single month ≥ −6% | **−2.0%** ✓ | **−4.41%** ✓ |
-| | **5 / 5** | **5 / 5** |
+| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✗ |
+| worst single month ≥ −6% | **−2.0%** ✓ | **−4.4%** ✓ |
+| | **4 / 5** | **3 / 5** |
 
 On the brief's $500k of sizing capital that is **$2.65M** of P&L, **~$170k/yr**
 (+34.0%/yr not reinvested, +39.9%/yr compounded). Positive in **16 of 16 calendar years**.
