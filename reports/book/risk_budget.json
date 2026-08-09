@@ -4,84 +4,84 @@
     "pre_oos": 0.0841,
     "oos": 0.0713
   },
-  "leverage": 1.2,
-  "book_vol": 0.1009,
+  "leverage": 1.15,
+  "book_vol": 0.0967,
   "limits": "book_equity",
   "selective_leverage": {
     "all legs": {
       "leverage": {
-        "trend_momentum": 1.2,
-        "carry": 1.2,
-        "volprem": 1.2,
-        "xs_momentum": 1.2,
-        "breakout": 1.2,
-        "crisis": 1.2,
-        "gmacro": 1.2,
-        "bab": 1.2
+        "trend_momentum": 1.15,
+        "carry": 1.15,
+        "volprem": 1.15,
+        "xs_momentum": 1.15,
+        "breakout": 1.15,
+        "crisis": 1.15,
+        "gmacro": 1.15,
+        "bab": 1.15
       },
       "full": {
         "sharpe": 3.72,
-        "cagr": 0.4358,
-        "max_dd": -0.0752,
-        "worst_month": -0.0599,
+        "cagr": 0.4145,
+        "max_dd": -0.0722,
+        "worst_month": -0.0574,
         "months_in_profit": 0.8138,
         "streak": 2,
         "targets": 5
       },
       "oos": {
         "sharpe": 3.77,
-        "cagr": 0.376,
-        "max_dd": -0.046,
-        "worst_month": -0.0193,
+        "cagr": 0.358,
+        "max_dd": -0.0441,
+        "worst_month": -0.0185,
         "months_in_profit": 0.8462,
         "streak": 2,
         "targets": 5
       },
-      "stress_max_dd": -0.1227,
-      "stress_worst_month": -0.0942,
+      "stress_max_dd": -0.1267,
+      "stress_worst_month": -0.0904,
       "stress_streak": 3,
       "stress_months_in_profit": 0.8032,
-      "mc_dd_p5": -0.124,
-      "mc_wmonth_p5": -0.075,
-      "mc_wmonth_p50": -0.0541,
+      "mc_dd_p5": -0.1191,
+      "mc_wmonth_p5": -0.072,
+      "mc_wmonth_p50": -0.0522,
       "volprem_pnl_share": 0.547
     },
     "ex-volprem": {
       "leverage": {
-        "trend_momentum": 1.237,
-        "carry": 1.237,
-        "xs_momentum": 1.237,
-        "breakout": 1.237,
-        "crisis": 1.237,
-        "gmacro": 1.237,
-        "bab": 1.237
+        "trend_momentum": 1.178,
+        "carry": 1.178,
+        "xs_momentum": 1.178,
+        "breakout": 1.178,
+        "crisis": 1.178,
+        "gmacro": 1.178,
+        "bab": 1.178
       },
       "full": {
-        "sharpe": 3.41,
-        "cagr": 0.3927,
-        "max_dd": -0.0791,
-        "worst_month": -0.0583,
+        "sharpe": 3.48,
+        "cagr": 0.3837,
+        "max_dd": -0.0752,
+        "worst_month": -0.0563,
         "months_in_profit": 0.7766,
         "streak": 2,
         "targets": 4
       },
       "oos": {
-        "sharpe": 3.55,
-        "cagr": 0.353,
-        "max_dd": -0.0471,
-        "worst_month": -0.02,
+        "sharpe": 3.6,
+        "cagr": 0.3411,
+        "max_dd": -0.0449,
+        "worst_month": -0.019,
         "months_in_profit": 0.8077,
         "streak": 2,
         "targets": 5
       },
-      "stress_max_dd": -0.1144,
-      "stress_worst_month": -0.0798,
+      "stress_max_dd": -0.1108,
+      "stress_worst_month": -0.0791,
       "stress_streak": 4,
       "stress_months_in_profit": 0.766,
-      "mc_dd_p5": -0.1222,
-      "mc_wmonth_p5": -0.0799,
-      "mc_wmonth_p50": -0.0528,
-      "volprem_pnl_share": 0.494
+      "mc_dd_p5": -0.1188,
+      "mc_wmonth_p5": -0.0753,
+      "mc_wmonth_p50": -0.0499,
+      "volprem_pnl_share": 0.506
     },
     "volprem cut": {
       "leverage": {
@@ -145,48 +145,48 @@
     "book_equity": {
       "full": {
         "sharpe": 3.72,
-        "cagr": 0.4358,
-        "max_dd": -0.0752,
-        "worst_month": -0.0599,
+        "cagr": 0.4145,
+        "max_dd": -0.0722,
+        "worst_month": -0.0574,
         "months_in_profit": 0.8138,
         "streak": 2,
         "targets": 5
       },
       "oos": {
         "sharpe": 3.77,
-        "cagr": 0.376,
-        "max_dd": -0.046,
-        "worst_month": -0.0193,
+        "cagr": 0.358,
+        "max_dd": -0.0441,
+        "worst_month": -0.0185,
         "months_in_profit": 0.8462,
         "streak": 2,
         "targets": 5
       },
-      "stress_max_dd": -0.1227,
-      "stress_worst_month": -0.0942,
+      "stress_max_dd": -0.1267,
+      "stress_worst_month": -0.0904,
       "stress_streak": 3,
       "stress_months_in_profit": 0.8032
     },
     "risk_budget": {
       "full": {
         "sharpe": 3.73,
-        "cagr": 0.4372,
-        "max_dd": -0.0789,
-        "worst_month": -0.0638,
+        "cagr": 0.416,
+        "max_dd": -0.0757,
+        "worst_month": -0.0612,
         "months_in_profit": 0.8138,
         "streak": 2,
         "targets": 4
       },
       "oos": {
         "sharpe": 3.77,
-        "cagr": 0.376,
-        "max_dd": -0.046,
-        "worst_month": -0.0193,
+        "cagr": 0.358,
+        "max_dd": -0.0441,
+        "worst_month": -0.0185,
         "months_in_profit": 0.8462,
         "streak": 2,
         "targets": 5
       },
-      "stress_max_dd": -0.1181,
-      "stress_worst_month": -0.0921,
+      "stress_max_dd": -0.1133,
+      "stress_worst_month": -0.0884,
       "stress_streak": 3,
       "stress_months_in_profit": 0.8032
     }

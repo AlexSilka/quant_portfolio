@@ -5,14 +5,14 @@ built for honest validation: leakage control, multiple-testing correction, and
 realistic execution costs. The deliverable is a portfolio **and** an honest map of
 where edge exists and where it does not.
 
-**Headline result** — an eight-family, equal-weight cross-asset book run at a constant **1.20× leverage**
-(~9.9% annualised volatility): net **Sharpe 3.72** full-sample (2011 → 2026) at **−7.5%** max drawdown, **+36.7%/yr** not reinvested on the brief's $500k of
-sizing capital ($2.86M, ~$183k/yr) or **+43.6%/yr** compounded,
+**Headline result** — an eight-family, equal-weight cross-asset book run at a constant **1.15× leverage**
+(~9.5% annualised volatility): net **Sharpe 3.72** full-sample (2011 → 2026) at **−7.2%** max drawdown, **+35.1%/yr** not reinvested on the brief's $500k of
+sizing capital ($2.74M, ~$176k/yr) or **+41.5%/yr** compounded,
 positive in all 16 calendar years. It **meets all five targets on both windows** — the run-once **out-of-sample
 block** (2024-07 →, the window the brief scores: **Sharpe 3.77**, months-in-profit 84.6%, worst month −1.9%,
-streak 2mo) and the **full 15-year window** (**Sharpe 3.72**, months 81.4%, max-DD −7.5%, worst month −6.0%,
-streak 2mo) — the last of those with essentially no margin, which [REPORT.md](REPORT.md) §4b states rather than
-rounds away. The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
+streak 2mo) and the **full 15-year window** (**Sharpe 3.72**, months 81.4%, max-DD −7.2%, worst month −5.7%,
+streak 2mo) — and under **both** of the brief's accounting conventions, which is what fixes the leverage at 1.15×
+rather than the 1.20× the compounded scorecard alone would allow ([REPORT.md](REPORT.md) §4b). The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
 P&L, on a real tail) — both stated and quantified in [REPORT.md](REPORT.md).
 
 **▶ Live interactive dashboard:** https://claude.ai/code/artifact/231e7947-7022-44cd-ac2e-967f799ef48f
@@ -39,13 +39,13 @@ edge map + dashboard.
   [crisis-alpha](scripts/run_crisis.py), [global-macro](scripts/run_gmacro.py), [BAB](docs/strategies/BAB.md).
   Combined at **genuine equal-weight risk parity** (no per-leg selection) on their honest
   **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg timed
-  by its own **VIX-term-structure regime gate** (flat unless both curve segments are in contango), sized at a constant **1.20×**
-  (~9.9% book volatility — now exactly the level the five targets allow, REPORT §4b), with a disclosed **§8 risk overlay**
+  by its own **VIX-term-structure regime gate** (flat unless both curve segments are in contango), sized at a constant **1.15×**
+  (~9.5% book volatility — the last level whose worst month holds on both accounting conventions, REPORT §4b), with a disclosed **§8 risk overlay**
   (drawdown ladder + daily-loss breaker) on top — the
-  master book nets **Sharpe 3.72** at **−7.5% max drawdown**, **+36.7%/yr** on $500k, months-in-profit **81.4%**,
+  master book nets **Sharpe 3.72** at **−7.2% max drawdown**, **+35.1%/yr** on $500k, months-in-profit **81.4%**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. It **meets all five
   targets on both windows** — the frozen out-of-sample block the brief actually scores (2024-07→, Sharpe **3.77**)
-  and the full 15-year window (Sharpe **3.72**), the latter with no margin on the worst month. The surviving edge is crypto-heavy
+  and the full 15-year window (Sharpe **3.72**). The surviving edge is crypto-heavy
   and the Sharpe is volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
 
 ## Verify the headline (~15 min)
@@ -55,8 +55,8 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.72** (5/5), OOS **3.77** (5/5), −7.5% max-DD, 8 families |
-| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.20×** is the ceiling — the worst month breaks first, at 1.25× |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.72** (5/5), OOS **3.77** (5/5), −7.2% max-DD, 8 families |
+| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×** — the worst month binds; 1.20× passes on one accounting convention only |
 | `make cscv` | the overfit / multiple-testing control | **PBO 32%**, in-sample-best +0.09 → OOS +0.00 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -73,10 +73,10 @@ vol-premium is ~55% of P&L on a real −78% tail (strip it → Sharpe **1.73**);
 crypto-heavy; the short-vol book's thin single-name / exotic legs cap deployable size
 ([VOLPREM.md](docs/strategies/VOLPREM.md) §capacity); daily-annualised 3.72 is lower on a
 calendar-robust monthly basis; the dollar figures are quoted on the brief's **$500k** sizing capital with P&L
-**not** reinvested (**$2.86M**, ~$183k/yr) — full compounding would outgrow the vol-premium leg's vega capacity
+**not** reinvested (**$2.74M**, ~$176k/yr) — full compounding would outgrow the vol-premium leg's vega capacity
 around year 8, so it is not claimed; and the leg's one systemic day (2010-05-06, −76% on the leg) sits **outside**
 the reporting window and is unreachable by the regime gate (the curve was in contango the session before), which
-is why the drawdown headroom at 1.20× is not treated as spare risk budget (REPORT §4b).
+is why the drawdown headroom at 1.15× is not treated as spare risk budget (REPORT §4b).
 
 ## Setup
 

@@ -91,17 +91,18 @@ SEED = 7
 VOL_TARGET_ANNUAL = 0.15          # annualised vol target per return stream — the per-sleeve sizing knob
                                   # (also the master book's per-leg risk-parity target: run_master_book
                                   # rescale() reads THIS, it has no target of its own)
-BOOK_LEVERAGE = 1.20              # the assembled book's constant leverage — the only dial that sets book
-                                  # risk (the equal-weight stack runs at ~8.4% annualised vol on its own,
-                                  # so this is ~10.3%). The stated risk budget is the -15% drawdown
-                                  # mandate, and the level is what that mandate allows, measured in
-                                  # run_risk_budget.py (reports/book/risk_budget.json), not read off a
-                                  # scorecard: 1.35x is the hard ceiling — above it a repeat of the
-                                  # vol-premium leg's documented one-day systemic tail (2010-05-06,
-                                  # -50.9% at book weight, OUTSIDE the 2011+ report window) breaches -15%
-                                  # — and 1.40x is a cliff, not a slope (the ladder's deepest rung flattens
-                                  # the book and the drawdown jumps -14.5% -> -16.3%), so the level sits
-                                  # below the ceiling rather than on it.
+BOOK_LEVERAGE = 1.15              # the assembled book's constant leverage — the only dial that sets book
+                                  # risk (the equal-weight stack runs at ~8.3% annualised vol on its own,
+                                  # so this is ~9.5%). Measured in run_risk_budget.py
+                                  # (reports/book/risk_budget.json), not read off a scorecard.
+                                  # The binding limit is the WORST MONTH, not the drawdown: with the
+                                  # two-segment regime gate the drawdown still has room (-7.2% against
+                                  # the -15% mandate) while the monthly floor does not. 1.25x breaches
+                                  # -6% outright; 1.20x clears it by 1bp on the compounded scorecard but
+                                  # reads -6.11% under the brief's fixed-$500k convention, i.e. passes on
+                                  # one accounting reading and fails the other. 1.15x is the last level
+                                  # that holds on BOTH (-5.74% / -5.85%), so the book sits below its
+                                  # binding limit rather than on it. Costs ~$7.7k/yr on the brief's $500k.
 CRYPTO_PPY = 365                  # crypto trades 24/7
 EQUITY_PPY = 252                  # US trading days
 PERP_HISTORY_START = "2020-01-01"  # USD-M perps + funding begin here; spot reaches back to 2017-08
