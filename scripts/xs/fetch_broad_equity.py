@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import CACHE_DIR  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
+from src.data.sp500_membership import truncate_after_exit  # noqa: E402
 
 OUT = CACHE_DIR / "xs"
 # argv: [universe_json_basename] [output_prefix]  (defaults = large-cap S&P 500 panel)
@@ -56,10 +57,16 @@ def main():
     cp = pd.DataFrame(close).sort_index()
     cp.index = pd.to_datetime(cp.index).tz_localize(None)
     cp = cp.dropna(how="all").ffill(limit=3)
-    cp.to_parquet(OUT / f"{_PREFIX}_1d_close.parquet")
     ap = pd.DataFrame(dollar).sort_index()
     ap.index = pd.to_datetime(ap.index).tz_localize(None)
-    ap.reindex(cp.index).to_parquet(OUT / f"{_PREFIX}_1d_adv.parquet")
+    ap = ap.reindex(cp.index)
+    # A ticker outlives its company. Once the US listing is gone the feed answers the bare symbol
+    # with whatever else carries it — 67 of this universe's dead tickers come back as foreign
+    # companies in EUR/CAD/GBp/MXN/IDR — so each de-listed name ends where its index life ended.
+    cp = truncate_after_exit(cp, label=f"{_PREFIX} close")
+    ap = ap.where(cp.notna())
+    cp.to_parquet(OUT / f"{_PREFIX}_1d_close.parquet")
+    ap.to_parquet(OUT / f"{_PREFIX}_1d_adv.parquet")
     print(f"BROAD EQUITY PANEL: {cp.shape[0]} bars × {cp.shape[1]} names "
           f"({ok} fetched, {fail} unavailable)  {cp.index[0].date()}→{cp.index[-1].date()}")
 

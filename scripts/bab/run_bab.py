@@ -62,8 +62,8 @@ def _sh(net, ppy):
     return summarise(net.dropna(), ppy)["sharpe_ann"]
 
 
-def _liq(sig, A):
-    return top_n_liquid(sig, A, TOPN)
+def _liq(sig, A, px):
+    return top_n_liquid(sig, A, TOPN, px=px)
 
 
 def _dollar(C, A, sig, cost, ppy):
@@ -121,18 +121,18 @@ def run_asset(kind: str) -> tuple[dict, dict]:
           f"{C.index.min().date()}..{C.index.max().date()}, {len(C)} bars\n{'='*78}")
 
     # ── data integrity: how many artifact name-days, and does cleaning move the headline number? ──
-    rliq = _liq(Craw.pct_change().replace([np.inf, -np.inf], np.nan), A)
+    rliq = _liq(Craw.pct_change(fill_method=None).replace([np.inf, -np.inf], np.nan), A, Craw)
     n_inf = int(np.isinf(Craw.pct_change().to_numpy()).sum())
     n_big = int((rliq.abs() > winsor).to_numpy().sum())
-    beta_raw = _liq(bab.panel_beta(Craw, BETA_LB), A)
+    beta_raw = _liq(bab.panel_beta(Craw, BETA_LB), A, Craw)
     raw_head = _sh(_beta_neutral(Craw, A, beta_raw, cost, ppy)[0], ppy)
     print(f"  data integrity: {n_big} artifact name-days |ret|>{winsor:.0%} (+{n_inf} ∞ from a zero prior "
           f"close) winsorised → flat; raw-panel beta-neutral Sharpe {raw_head:+.2f} (vs clean below)")
 
     # ── signals: trailing panel beta (EW-market), plus the vol proxy and the skew (lottery) control
-    beta = _liq(bab.panel_beta(C, BETA_LB), A)
-    vol = _liq(bab.trailing_vol(C, VOL_LB), A)
-    skew = _liq(bab.trailing_skew(C, SKEW_LB), A)
+    beta = _liq(bab.panel_beta(C, BETA_LB), A, C)
+    vol = _liq(bab.trailing_vol(C, VOL_LB), A, C)
+    skew = _liq(bab.trailing_skew(C, SKEW_LB), A, C)
 
     # ── sign: BAB theory is long LOW beta (signal −beta). Verify −beta beats +beta on the data ──
     s_neg = _sh(_dollar(C, A, -beta, cost, ppy)[0], ppy)
@@ -143,7 +143,7 @@ def run_asset(kind: str) -> tuple[dict, dict]:
     # ── construction surface: beta lookback × quintile fraction, both neutralisations ───────────
     grid = []
     for lb in (60, 90, 120):
-        b_lb = _liq(bab.panel_beta(C, lb), A)
+        b_lb = _liq(bab.panel_beta(C, lb), A, C)
         for tf in (0.1, 0.2, 0.3):
             sd = _sh(vol_target(xs_backtest(C, -b_lb, top_frac=tf, rebal=REBAL, exec_lag=EXEC_LAG,
                                             cost_bps=cost, adv=A, impact_k=IMPACT_K)["net"], ppy, TVOL), ppy)
@@ -197,7 +197,7 @@ def run_asset(kind: str) -> tuple[dict, dict]:
     # ── purged/embargoed walk-forward OOS over the (lb × top_frac × neutral) grid ───────────────
     M = {}
     for lb in (60, 90, 120):
-        b_lb = _liq(bab.panel_beta(C, lb), A)
+        b_lb = _liq(bab.panel_beta(C, lb), A, C)
         for tf in (0.1, 0.2, 0.3):
             M[f"d_{lb}_{tf}"] = vol_target(
                 xs_backtest(C, -b_lb, top_frac=tf, rebal=REBAL, exec_lag=EXEC_LAG,
@@ -246,7 +246,7 @@ def run_asset(kind: str) -> tuple[dict, dict]:
     btc_row = {}
     if cfg["mkt_col"] and cfg["mkt_col"] in C.columns:
         mkt_r = C[cfg["mkt_col"]].pct_change()
-        beta_btc = _liq(bab.panel_beta(C, BETA_LB, market=mkt_r), A)
+        beta_btc = _liq(bab.panel_beta(C, BETA_LB, market=mkt_r), A, C)
         s_btc = _sh(_beta_neutral(C, A, beta_btc, cost, ppy)[0], ppy)
         btc_row = {"beta_neutral_sharpe_BTC_market": round(s_btc, 3)}
         print(f"  robustness — beta vs BTC market (not EW panel): beta-neutral {s_btc:+.2f}")

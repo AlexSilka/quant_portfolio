@@ -94,7 +94,7 @@ def _signals(C, cfg):
 def _book(C, sig, A, cfg, *, tf=None, rebal=None, cost_mult=1.0):
     """Vol-targeted net return of a signal-swap into xs_backtest at the asset's a-priori config."""
     b = cfg["base"]
-    s = top_n_liquid(sig, A, cfg["topn"]) if cfg["topn"] else sig
+    s = top_n_liquid(sig, A, cfg["topn"], px=C) if cfg["topn"] else sig
     bt = xs_backtest(C, s, top_frac=tf or b["tf"], weighting="equal", rebal=rebal or b["rebal"],
                      exec_lag=2, cost_bps=cfg["cost"] * cost_mult, adv=A, impact_k=cfg["imp"])
     return vol_target(bt["net"], cfg["ppy"], TVOL), bt

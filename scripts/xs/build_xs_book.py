@@ -70,7 +70,7 @@ def equity_xsect(report=False):
     px = pd.read_parquet(CACHE / "stocks_broad_1d_close.parquet")
     px = px[px.notna().sum(axis=1) >= 100]
     adv = pd.read_parquet(CACHE / "stocks_broad_1d_adv.parquet").reindex(px.index)
-    sig = top_n_liquid(risk_adj_mom(px, cfg.XS_EQUITY_LOOKBACK_D, cfg.XS_EQUITY_SKIP_D), adv, 100)
+    sig = top_n_liquid(risk_adj_mom(px, cfg.XS_EQUITY_LOOKBACK_D, cfg.XS_EQUITY_SKIP_D), adv, 100, px=px)
     bt = xs_backtest(px, sig, top_frac=cfg.XS_EQUITY_TOP_FRAC, weighting="equal", rebal=21,
                      commission_bps=cfg.EQUITY_COMMISSION_BPS, half_spread_bps=cfg.EQUITY_HALF_SPREAD_BPS,
                      adv=adv, impact_k=cfg.IMPACT_K, capital=cfg.CAPITAL_USD, min_names=6,

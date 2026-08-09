@@ -221,19 +221,45 @@ def liquidity_mask(signal: pd.DataFrame, adv: pd.DataFrame | None, daily_floor: 
 
 
 def top_n_liquid(signal: pd.DataFrame, adv: pd.DataFrame | None, n: int,
-                 bpd_: int = 1, lookback_days: int = 30) -> pd.DataFrame:
+                 bpd_: int = 1, lookback_days: int = 30,
+                 px: pd.DataFrame | None = None, max_flat_frac: float = 0.25) -> pd.DataFrame:
     """Restrict ranking to the N most-liquid names *at each bar* (by trailing daily $-volume).
 
     This is the honest, tradable "top-N universe": survivorship-free (the membership rotates as
     liquidity changes, using only past data) and focused (small-cap microstructure noise is simply
     excluded, not survived-into). Contrast a "top-N by today's market cap" list, which is chosen
     with hindsight and inflates a momentum long-short.
+
+    Reported volume alone is not proof a name is really trading. Zero volume already drops out
+    below, which is what removes delisted crypto perps — their ADV goes to zero when they die. A
+    *stale or mis-resolved equity ticker* fails differently: it keeps a large reported ADV while its
+    tape stops moving. In the broad equity panel one such name ranks **first** by volume, ahead of
+    NVDA, on a price series that is not the company the ticker names. Passing `px` adds the screen
+    that catches it: a genuinely traded name does not print an unchanged close on a quarter of the
+    bars, so heavy volume together with a flat tape is a contradiction, and the contradiction is the
+    signal. Trailing and shifted exactly like the volume rank, so it stays point-in-time.
+
+    `max_flat_frac` is calibrated for **daily** bars, where an unchanged close is informative. On
+    intraday bars flat prints are ordinary, so leave `px` unset there (no current caller passes an
+    intraday panel).
     """
     if adv is None or not n:
         return signal
     win = max(5, lookback_days * bpd_)
     daily = adv.reindex_like(signal).replace(0.0, np.nan) * bpd_
     trail = daily.rolling(win, min_periods=max(5, win // 3)).median().shift(1)
+    if px is not None:
+        flat = (px.reindex_like(signal).pct_change(fill_method=None) == 0.0)
+        # Count flatness only on bars the market actually traded. This panel carries Sundays and
+        # holidays with the previous close repeated, so a naive count charges every name ~20% flat
+        # for the calendar and screens the whole universe out. A bar where nearly everything is
+        # unchanged says nothing about any single name, so those bars are excluded from both the
+        # numerator and the denominator.
+        traded = flat.sum(axis=1).div(flat.count(axis=1).replace(0, np.nan)) < 0.8
+        f = flat.where(traded)
+        flat_frac = (f.rolling(win, min_periods=max(5, win // 3)).sum()
+                     / f.notna().rolling(win, min_periods=max(5, win // 3)).sum().replace(0, np.nan)).shift(1)
+        trail = trail.where(~(flat_frac > max_flat_frac))
     rank = trail.rank(axis=1, ascending=False)      # 1 = most liquid that bar
     return signal.where(rank <= n)
 

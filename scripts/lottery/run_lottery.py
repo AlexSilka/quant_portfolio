@@ -110,7 +110,7 @@ def sleeve_net(C, A, sig_raw, sign, ppy, cost, *, tf=TFRAC, rb=REBAL, bpd=1, ext
     sig = sign * sig_raw
     if extra_mask is not None:
         sig = sig.where(~extra_mask)
-    sig = top_n_liquid(sig, A, TOPN, bpd)
+    sig = top_n_liquid(sig, A, TOPN, bpd, px=C if bpd == 1 else None)
     bt = xs_backtest(C, sig, top_frac=tf, weighting="equal", rebal=max(1, rb * bpd), cost_bps=cost,
                      adv=A, impact_k=IMPACT, min_names=MINNAMES)
     return vol_target(bt["net"], ppy, TVOL), bt

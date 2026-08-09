@@ -91,7 +91,7 @@ def ltr(px, adv, feats, cfg, fwd, label, rows):
     ml_rets = {}
     for name, factory in models.items():
         pred = expanding_predict(X, y, ts, factory, n_folds=6, embargo_bars=fwd)
-        sig = top_n_liquid(predictions_to_panel(pred, px), adv, cfg["topn"]) if cfg["topn"] else predictions_to_panel(pred, px)
+        sig = top_n_liquid(predictions_to_panel(pred, px), adv, cfg["topn"], px=px) if cfg["topn"] else predictions_to_panel(pred, px)
         s, ret = backtest_signal(px, sig, adv, cfg)
         p5 = bootstrap_sharpe(ret, cfg["ppy"], 400, SEED).get("sharpe_p5", np.nan) if s["sharpe_ann"] > 0.4 else np.nan
         ml_rets[name] = ret
@@ -116,7 +116,7 @@ def run(tag):
     print(f"\n{'='*78}\n{tag}  ({px.shape[0]}×{px.shape[1]})\n{'='*78}")
 
     # ── baseline: the residual RULE book (idio_mom a-priori) — what ML must beat ─────────────
-    rule = top_n_liquid(idio_mom(px, cfg["form"], cfg["beta"], cfg["sk"], market=None), adv, cfg["topn"]) \
+    rule = top_n_liquid(idio_mom(px, cfg["form"], cfg["beta"], cfg["sk"], market=None), adv, cfg["topn"], px=px) \
         if cfg["topn"] else idio_mom(px, cfg["form"], cfg["beta"], cfg["sk"], market=None)
     bs, base_ret = backtest_signal(px, rule, adv, cfg)
     print(f"  RULE idio_mom(form={cfg['form']},beta={cfg['beta']}): Sharpe {bs['sharpe_ann']:+.2f}  "

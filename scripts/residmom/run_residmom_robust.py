@@ -78,7 +78,7 @@ def _halves(net, ppy):
 
 def _book(C, sig, A, kind, *, tf=None, weighting="equal", rebal=None, cost_mult=1.0, ppy=None):
     c = CFG[kind]
-    s = top_n_liquid(sig, A, c["topn"]) if c["topn"] else sig
+    s = top_n_liquid(sig, A, c["topn"], px=C) if c["topn"] else sig
     vol = C.pct_change().rolling(20).std() if weighting == "volinv" else None
     bt = xs_backtest(C, s, top_frac=tf or c["tf"], weighting=weighting, rebal=rebal or c["rebal_d"],
                      exec_lag=2, cost_bps=c["cost"] * cost_mult, adv=A, impact_k=c["imp"])
@@ -98,8 +98,8 @@ def universe_sweep(rows):
         print(f"\n  {kind.upper()} ({C.shape[1]} names)   "
               f"{'topN':>6} {'raw Sh':>7} {'res Sh':>7} {'Δ':>6} {'raw β':>7} {'res β':>7}")
         for n in (10, 25, 50, 100, 200, 0):
-            rs = top_n_liquid(raw, A, n) if n else raw          # mask to the swept N (0 = all)
-            is_ = top_n_liquid(idio, A, n) if n else idio
+            rs = top_n_liquid(raw, A, n, px=C) if n else raw    # mask to the swept N (0 = all)
+            is_ = top_n_liquid(idio, A, n, px=C) if n else idio
             def bk(sig):                                         # backtest the already-masked signal
                 bt = xs_backtest(C, sig, top_frac=c["tf"], weighting="equal", rebal=c["rebal_d"],
                                  exec_lag=2, cost_bps=c["cost"], adv=A, impact_k=c["imp"])
