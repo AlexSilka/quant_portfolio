@@ -13,7 +13,8 @@
                        accumulated out-of-sample track (whole history, not just the final block)
   run_cscv.py          §6 probability of backtest overfitting (CSCV) on the full trial set
   make_oos_ledger.py   §13 portfolio-level out-of-sample trade/position ledger
-  make_figures.py      §13 all nine required charts as standalone PNGs
+  make_figures.py      §13 the required charts as standalone PNGs
+  render_report.py     REPORT.md from its prose template + the measured numbers (no hand-typed figures)
   make_report.py       dashboard
 
 Each step's output is streamed to the console AND captured to logs/run_all_<start>.log (named by the
@@ -35,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
          ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
          ("run_wf_book.py",), ("run_cscv.py",), ("make_oos_ledger.py",), ("make_figures.py",),
-         ("make_report.py",))
+         ("render_report.py",), ("make_report.py",))
 
 
 def main() -> None:

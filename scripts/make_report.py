@@ -389,6 +389,8 @@ def _family_edge_card(summ, legs):
         # reads positive for a family whose own headline is dead.
         ("on-chain",          "crypto",          "1d",           _dig("onchain/onchain_summary.json", "cross_section", "headline", "sharpe"),
          "value is a coin-type tilt; exchange flows lose to random timing"),
+        ("chain fundamentals", "crypto L1/L2",   "1d",           _dig("onchain/fundamentals_summary.json", "headline", "sharpe"),
+         "fee yield inverted (placebo 6th pctile); a standing tilt short BTC"),
         ("volume-spike",      "crypto alts",     "1h",           _pq_sharpe("volspike/volspike_wf_oos.parquet"),
          "small-alt drift killed by cost (walk-forward OOS)"),
         ("pairs / stat-arb",  "equity / crypto", "1d",           -1.18,
@@ -631,6 +633,10 @@ def main():
     ann_turn_held = summ.get("annual_turnover_weights_held", 0.0)
     sc_held = summ.get("scorecard_weights_held", {})
     cost_levels, breakeven = _cost_levels(master, turn)
+    # publish the §9 sweep so the report quotes it instead of a reader transcribing it from this page
+    (REP / "master_book_cost_levels.json").write_text(json.dumps(
+        {"levels": cost_levels, "breakeven_mult": breakeven, "cost_bps": COST_BPS,
+         "turnover_basis": ann_turn}, indent=2, default=float))
 
     # --- §11 scorecard — judged on the FINAL OOS BLOCK (the brief scores targets there); the full window
     #     (now the 15y 2011+ book) sits in the note as the larger-sample estimate ---

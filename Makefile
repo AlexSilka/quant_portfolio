@@ -139,12 +139,15 @@ seasonal:
 	$(PY) scripts/seasonal/run_seasonal.py
 	$(PY) scripts/seasonal/run_seasonal_xasset_ml.py
 
-# On-chain / network-signal deep-dive (H3): free Coin Metrics community + blockchain.com; network-activity &
-# valuation cross-section + BTC/ETH overlays (a tested-and-mapped family, dead on free data). See ONCHAIN.md.
+# On-chain / network-signal deep-dive (H3): free Coin Metrics community + blockchain.com + DefiLlama;
+# activity/valuation cross-section, BTC/ETH exchange-flow overlays, and a chain-fundamentals (fees /
+# revenue / TVL) cross-section over the chains CM cannot see (tested and mapped, dead). See ONCHAIN.md.
 onchain:
 	$(PY) -m src.data.onchain
 	$(PY) scripts/onchain/run_onchain.py
 	$(PY) scripts/onchain/run_onchain_ml.py
+	$(PY) -m src.data.defillama
+	$(PY) scripts/onchain/run_fundamentals.py
 
 # Breakout deep-dive -> publishes reports/breakout/bo_combined_portfolio.parquet. See docs/BREAKOUT.md.
 breakout:
@@ -174,9 +177,15 @@ smoke:
 smoke-math:
 	$(PY) scripts/smoke_math.py
 
-# Lint gate: the curated ruff ruleset (pyflakes + syntax errors) from pyproject.toml [tool.ruff].
+# Lint gate: the curated ruff ruleset (pyflakes + syntax errors) from pyproject.toml [tool.ruff], plus
+# the report-freshness check — REPORT.md is generated, so a book re-run that leaves it behind fails here.
 lint:
 	.venv/bin/ruff check .
+	$(PY) scripts/render_report.py --check
+
+# Rebuild REPORT.md from scripts/report_assets/report.md + the measured numbers.
+report:
+	$(PY) scripts/render_report.py
 
 clean:
 	find reports -type f \( -name '*.parquet' -o -name '*.png' \) -delete
