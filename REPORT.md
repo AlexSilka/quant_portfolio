@@ -21,10 +21,11 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > the master book nets **Sharpe 3.72** at **−7.2% max drawdown** — on the brief's **$500k** sizing capital
 > that is **$2.74M** of P&L, **~$176k/yr** — **+35.1%/yr** not reinvested, **+41.5%/yr** compounded (a rate, not a
 > reachable balance: capacity caps the book long before the end of the window) — months-in-profit **81%**, **positive in all 16 calendar years**, families essentially
-> **uncorrelated (mean pairwise ≈ 0.06)**. It **meets all five targets on both windows** — full 15-year
-> (Sharpe **3.72**, months **81.4%**, max-DD **−7.2%**, worst month **−5.7%**, streak **2**) and the **frozen
-> out-of-sample block** (2024-07→, the window the brief scores: Sharpe **3.77**, months **84.6%**, max-DD
-> **−4.6%**, worst month **−1.9%**, streak **2**).
+> **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
+> there it clears **all five** (2024-07→: Sharpe **3.77**, months **84.6%**, max-DD **−4.6%**, worst month
+> **−1.9%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
+> second scorecard — the same five also clear (Sharpe **3.72**, months **81.4%**, max-DD **−7.2%**, worst month
+> **−5.7%**, streak **2**).
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 
@@ -454,8 +455,10 @@ deflated-Sharpe penalty sized to the grid — never peak-picking on the full sam
 The brief asks for **two distinct things**, and the book has both:
 
 - **A final out-of-sample block, held to the end and run exactly once** (§10/§11) — `OOS_START=2024-07-01`,
-  the last ~2 years, never inspected until the end. The §11 scorecard is reported on it (Sharpe **3.77**, all
-  five targets). It is small *by design* (a run-once terminal holdout), not "we only tested 2 years".
+  the last ~2 years, never inspected until the end. **§11 scores the targets on this block and nothing else**,
+  so it is the deliverable's scorecard (Sharpe **3.77**, all five targets); the 15-year window is reported
+  alongside it because §10 asks for per-year/per-quarter metrics and §12 for a ceiling assessment — it is
+  supporting evidence, never a second scorecard.
 - **A rolling & anchored walk-forward with periodic re-fitting** (§10) at the portfolio level
   (`scripts/run_wf_book.py`), over **all available data** — the 5 non-crypto legs reach back to 2005–2012, so
   the 2016 reporting window is not a data limit; only crypto (carry/breakout) is stuck at 2020. At each
@@ -471,6 +474,44 @@ The brief asks for **two distinct things**, and the book has both:
   crisis/gmacro track runs on **real ETF/FX prices** (SPY/GLD/TLT/EM-FX — the instruments traded and were liquid), so it
   is a strategy-logic backtest, not a live *product* track (the 2008 result is evidence the diversification
   logic works, not a tradeable record); every Sharpe is annualised by the track's actual obs/yr, not a flat 365.)*
+
+**Why the block is ~2 years, and what that length costs.** The brief fixes that a final block exists and is
+run once; it does **not** fix its length, so this is a stated design choice. The binding consideration is not
+Sharpe but the two **count-based** targets — months-in-profit ≥80% and the ≤2-month streak — which need enough
+months to mean anything:
+
+| block length | months | 1 s.e. of Sharpe | months you may lose and still hold ≥80% |
+|---|---|---|---|
+| 1 year | 12 | ±1.01 | 2 |
+| **2 years (shipped)** | **26** | **±0.71** | **5** |
+| 3 years | 36 | ±0.58 | 7 |
+| 5 years | 60 | ±0.45 | 12 |
+
+At one year a ≤2-month streak target is close to a coin flip and one bad quarter breaks months-in-profit. Going
+longer is bounded from the other side: the crypto legs list only from 2020, so a 5-year block would leave a
+single year of live crypto history for construction. **The honest caveat that comes with the choice: at 26
+months the standard error of the OOS Sharpe is ±0.71, so 3.77 is 3.77 ± 0.71**, and the block is a benign
+stretch — its only real stress is the Aug-2024 yen-carry unwind (book −1.0%), while Apr-2025 was *positive*
+(+1.0%). The boundary is not re-cut now that results are known: moving it after the fact is window-shopping,
+which is exactly what `OOS_START`'s frozen-constant comment forbids.
+
+**The one change made after the block existed, and how its integrity was restored.** The two-segment regime
+gate (§5d) was chosen *after* the block had been created, and the gate lab initially printed the block's
+metrics next to every candidate — enough to contaminate a run-once holdout even if it was not consciously
+used. The selection is therefore re-run on data that **stops at 2024-06-30** (`SELECT_END`,
+`run_vol_premium_gates.py`), with the block printed only afterwards as a read-out. The choice reproduces
+without it:
+
+| volprem leg, book scored 2011-01 → 2024-06 | Sharpe | max-DD | worst month | months | streak | targets |
+|---|---|---|---|---|---|---|
+| ungated | 3.57 | −9.8% | −6.1% | 77.8% | 3 | 2/5 |
+| long segment only (the previous rule) | 3.64 | −9.8% | −5.4% | 78.4% | 3 | 3/5 |
+| **both segments (shipped)** | **3.76** | **−7.2%** | **−5.7%** | **81.5%** | **2** | **5/5** |
+| both + re-entry 5d | 3.35 | −7.2% | −4.7% | 75.3% | 2 | 4/5 |
+
+Same winner, same margin, same reason the runners-up are rejected — so the rule is recoverable from
+pre-block data alone and the block's one-shot status survives in substance. The threshold surface and the
+200-draw block-random null are scored on the same truncated window.
 
 **Why the full-sample number is itself an honest OOS estimate.** The portfolio weights are a-priori equal
 (1/N), so there is nothing to fit at the book level — its walk-forward *equals* its full post-burn-in track.

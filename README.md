@@ -8,11 +8,12 @@ where edge exists and where it does not.
 **Headline result** — an eight-family, equal-weight cross-asset book run at a constant **1.15× leverage**
 (~9.5% annualised volatility): net **Sharpe 3.72** full-sample (2011 → 2026) at **−7.2%** max drawdown, **+35.1%/yr** not reinvested on the brief's $500k of
 sizing capital ($2.74M, ~$176k/yr) or **+41.5%/yr** compounded,
-positive in all 16 calendar years. It **meets all five targets on both windows** — the run-once **out-of-sample
-block** (2024-07 →, the window the brief scores: **Sharpe 3.77**, months-in-profit 84.6%, worst month −1.9%,
-streak 2mo) and the **full 15-year window** (**Sharpe 3.72**, months 81.4%, max-DD −7.2%, worst month −5.7%,
-streak 2mo) — and under **both** of the brief's accounting conventions, which is what fixes the leverage at 1.15×
-rather than the 1.20× the compounded scorecard alone would allow ([REPORT.md](REPORT.md) §4b). The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
+positive in all 16 calendar years. **The brief scores its targets on the final out-of-sample block** (§11), and
+there the book clears **all five** (2024-07 →: **Sharpe 3.77**, months-in-profit 84.6%, max-DD −4.4%, worst month
+−1.9%, streak 2mo). The **full 15-year window** is reported alongside as supporting evidence (§10/§12), and the
+same five clear there too (**Sharpe 3.72**, months 81.4%, max-DD −7.2%, worst month −5.7%, streak 2mo) — under
+**both** of the brief's accounting conventions, which is what fixes the leverage at 1.15× rather than the 1.20×
+the compounded scorecard alone would allow ([REPORT.md](REPORT.md) §4b). The surviving edge is crypto-heavy and volprem-anchored (short-vol, ~half of book
 P&L, on a real tail) — both stated and quantified in [REPORT.md](REPORT.md).
 
 **▶ Live interactive dashboard:** https://claude.ai/code/artifact/231e7947-7022-44cd-ac2e-967f799ef48f

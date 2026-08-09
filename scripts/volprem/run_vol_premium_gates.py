@@ -9,8 +9,10 @@ hold each against two null controls that a lucky rule must beat --
     or would any rule that is flat 8% of the time have done this?
   * constant     — the same average exposure applied every day: is this de-risking rather than timing?
 
-A candidate only counts if it beats the block-random distribution AND holds on the frozen OOS block.
-Everything is causal (decided on the prior close, `shift(1)`); no candidate sees its own bar.
+Everything is causal (decided on the prior close, `shift(1)`); no candidate sees its own bar, and the
+SELECTION itself stops at SELECT_END: §10 runs the final out-of-sample block exactly once, so the rule
+that ships has to be recoverable from data that ends before that block starts. The block is printed
+afterwards as a read-out, never as an input to the choice.
 
     python scripts/volprem/run_vol_premium_gates.py   ->  reports/volprem/volprem_gates.csv
 """
@@ -38,6 +40,8 @@ from scripts.volprem.run_vol_premium_book import (  # noqa: E402
 )
 
 WINDOW_START = "2011-01-01"      # master-book window; VIX9D only exists from 2011-01-04
+SELECT_END = "2024-06-30"        # selection stops the day before OOS_START — §10's final block is run
+                                 # once, so the rule that ships must be recoverable without it
 N_RANDOM = 500
 
 
@@ -148,11 +152,24 @@ def gate_switches(gate: pd.Series) -> float:
     return float(flips / max(yrs, 1e-9))
 
 
-def book_impact(gated: dict[str, pd.Series], picks: list[str]) -> pd.DataFrame:
-    """Push each candidate volprem leg through the CANONICAL assembler and score the five task targets.
+TARGETS = {"sharpe": (2.5, 4.0), "months_in_profit": (0.80, None), "max_dd": (-0.15, None),
+           "longest_losing_streak_mo": (None, 2), "worst_month": (-0.06, None)}      # §11, verbatim
+
+
+def n_targets(card: dict) -> int:
+    return sum((lo is None or card[k] >= lo) and (hi is None or card[k] <= hi)
+               for k, (lo, hi) in TARGETS.items())
+
+
+def book_impact(gated: dict[str, pd.Series], picks: list[str], end: str | None = None) -> pd.DataFrame:
+    """Push each candidate volprem leg through the CANONICAL assembler and score the five §11 targets.
 
     The leg's own drawdown is not the deliverable — the book's is. A gate that flatters the leg but
-    costs the book its decorrelation would show up here and nowhere else."""
+    costs the book its decorrelation would show up here and nowhere else.
+
+    `end` truncates the scoring window. Passing SELECT_END is what keeps the selection honest: §10 runs
+    the final block exactly once, so the rule that ships has to be recoverable from data that stops
+    before it. With `end=None` the same legs are simply read out over the full window."""
     import scripts.run_master_book as mb
 
     base = {lab: mb.load(lab, f, c) for lab, f, c in mb.FAMILIES}
@@ -165,15 +182,22 @@ def book_impact(gated: dict[str, pd.Series], picks: list[str]) -> pd.DataFrame:
         raw["volprem"] = leg.rename("volprem")
         df = pd.DataFrame({k: mb.rescale(v) for k, v in raw.items()}).sort_index()
         df = df[df.index >= pd.Timestamp(mb.START_REPORT)]
+        if end is not None:
+            df = df[df.index <= pd.Timestamp(end)]
         df = df[df.notna().sum(axis=1) >= 2]
         stack = df.mean(axis=1, skipna=True).dropna()
         managed, _, _ = mb.risk_overlay(stack, leverage=mb.BOOK_LEVERAGE)
-        f, o = mb.scorecard(managed), mb.scorecard(managed.loc[mb.OOS:])
-        rows.append({"volprem leg": label,
-                     "sharpe": f["sharpe"], "max_dd": f["max_dd"], "worst_month": f["worst_month"],
-                     "months_pos": f["months_in_profit"], "streak_mo": f["longest_losing_streak_mo"],
-                     "oos_sharpe": o["sharpe"], "oos_dd": o["max_dd"], "oos_worst_mo": o["worst_month"],
-                     "oos_months_pos": o["months_in_profit"], "oos_streak": o["longest_losing_streak_mo"]})
+        f = mb.scorecard(managed)
+        row = {"volprem leg": label,
+               "sharpe": f["sharpe"], "max_dd": f["max_dd"], "worst_month": f["worst_month"],
+               "months_pos": f["months_in_profit"], "streak_mo": f["longest_losing_streak_mo"],
+               "targets": f"{n_targets(f)}/5"}
+        if end is None:                                   # OOS read-out only on the untruncated window
+            o = mb.scorecard(managed.loc[mb.OOS:])
+            row |= {"oos_sharpe": o["sharpe"], "oos_dd": o["max_dd"], "oos_worst_mo": o["worst_month"],
+                    "oos_months_pos": o["months_in_profit"], "oos_streak": o["longest_losing_streak_mo"],
+                    "oos_targets": f"{n_targets(o)}/5"}
+        rows.append(row)
     return pd.DataFrame(rows).set_index("volprem leg")
 
 
@@ -273,9 +297,16 @@ def main():
         print(f"  {label:24s} switches/yr {sw:5.1f}   free-gate Sharpe {free['sharpe']:+.2f} / DD {free['max_dd']:+.1%}"
               f"   -> PAID Sharpe {pay['sharpe']:+.2f} / DD {pay['max_dd']:+.1%} / worst mo {pay['worst_month']:+.1%}")
 
-    # --- the number that actually decides it: the five task targets on the assembled master book ---
-    print("\n=== MASTER-BOOK EFFECT — each candidate as the volprem leg, canonical assembly, 1.20x ===")
-    print("(targets: max-DD > -15%   months >= 74%   worst month > -6%   streak <= 2)\n")
+    # --- THE SELECTION: five task targets on the assembled book, scored on data that STOPS before the
+    # frozen OOS block. §10 runs that block exactly once, so the shipped rule has to be recoverable
+    # without it; the OOS columns further down are a read-out, never an input. ---
+    print(f"\n=== SELECTION — master-book targets on {WINDOW_START}..{SELECT_END} (OOS block NOT used) ===")
+    print("(targets: Sharpe 2.5-4.0 · months >= 80% · max-DD > -15% · worst month > -6% · streak <= 2)\n")
+    sel = book_impact(priced, picks, end=SELECT_END)
+    print(sel[["sharpe", "max_dd", "worst_month", "months_pos", "streak_mo", "targets"]].to_string())
+
+    # --- the same legs read out on the full window, INCLUDING the block. Reported, not selected on. ---
+    print("\n=== READ-OUT — full window incl. the frozen OOS block (not a selection input) ===\n")
     bi = book_impact(priced, picks)
     print(bi.to_string())
 
@@ -287,9 +318,9 @@ def main():
     grid = {f"{t3:.2f}/{t9:.2f}":
             (book_full * causal(((r3 >= t3) & (r9 >= t9)).astype(float), book_full.index)).dropna()
             for t3 in (0.96, 0.98, 1.00, 1.02, 1.04) for t9 in (0.96, 0.98, 1.00, 1.02, 1.04)}
-    gb = book_impact(grid, list(grid))
+    gb = book_impact(grid, list(grid), end=SELECT_END)   # a selection diagnostic -> same truncated window
     gb[["t3", "t9"]] = [k.split("/") for k in gb.index]
-    print("\n=== THRESHOLD ROBUSTNESS — book Sharpe / max-DD / streak over both boundaries ===")
+    print(f"\n=== THRESHOLD ROBUSTNESS — book Sharpe / max-DD / streak, {WINDOW_START}..{SELECT_END} ===")
     print("(shape only: gates applied to the finished P&L, so levels sit above the costed table above)")
     for col in ("sharpe", "max_dd", "streak_mo"):
         print(f"\n  {col} (rows = VIX3M/VIX threshold, cols = VIX/VIX9D threshold)")
@@ -305,10 +336,10 @@ def main():
         for s0 in rng.integers(0, max(1, n - block), size=nb):
             g[s0:s0 + block] = 0.0
         rnd_c[f"rnd{i}"] = (book_full * pd.Series(g, index=book_full.index)).dropna()
-    rb = book_impact(rnd_c, list(rnd_c))
+    rb = book_impact(rnd_c, list(rnd_c), end=SELECT_END)  # the null the choice is judged against
     real_row, rnd_rows = rb.loc["REAL"], rb.drop(index="REAL")
     print(f"\n=== BOOK-LEVEL NULL — 200 block-random gates at the same {exp:.1%} exposure ===")
-    print("(real and randoms both on the finished-P&L basis, so the comparison is like-for-like)")
+    print(f"(real and randoms on the finished-P&L basis, scored {WINDOW_START}..{SELECT_END} — like-for-like)")
     for col in ("sharpe", "max_dd", "worst_month", "months_pos"):
         q = rnd_rows[col]
         print(f"  {col:12s} real {real_row[col]:+.4f}   random [P5 {q.quantile(.05):+.4f}, P50 {q.quantile(.50):+.4f}, "
