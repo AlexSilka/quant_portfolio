@@ -22,7 +22,7 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > that is **$2.74M** of P&L, **~$176k/yr** — **+35.1%/yr** not reinvested, **+41.5%/yr** compounded (a rate, not a
 > reachable balance: capacity caps the book long before the end of the window) — months-in-profit **81%**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
-> there it clears **all five** (2024-07→: Sharpe **3.77**, months **84.6%**, max-DD **−4.6%**, worst month
+> there it clears **all five** (2024-07→: Sharpe **3.77**, months **84.6%**, max-DD **−4.4%**, worst month
 > **−1.9%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
 > second scorecard — the same five also clear (Sharpe **3.72**, months **81.4%**, max-DD **−7.2%**, worst month
 > **−5.7%**, streak **2**).
@@ -106,9 +106,11 @@ A complete, reproducible pipeline, every stage runnable:
   **per-family baseline-vs-ML table is §5d.**
 - **Backtest** — bar-close→execution delay (no same-bar fill), liquidity-aware costs (commission +
   half-spread + √-impact, never flat), funding charged at every 8h settlement. **Cost sensitivity (§9):**
-  the book re-charged at **1×/2×/3×** its modelled round-trip cost nets Sharpe **3.72 / 2.85 / 1.97**
-  (max-DD −7.2% / −10.8% / −18.2%), **break-even at ≈5×** the book-turnover cost; per-family break-even
-  runs higher still (breakout 10.4×, x-sect 7.8×) — no surviving sleeve is cost-fragile.
+  the book re-charged at **1×/2×/3×** the rebalancing cost it is charged nets Sharpe **3.72 / 2.79 / 1.85**
+  (max-DD −7.2% / −11.7% / −19.8%), **break-even at ≈5×**; that charge is deliberately conservative — it
+  counts the mixed 252/365 calendar's weekend renormalisation as trading, so it bills ~117× round-trip a year
+  against the ~7× the book actually rebalances. Per-family robustness runs higher still (breakout break-even
+  10.4×, x-sect 7.8×, vol-prem Sharpe 2.16 at 5× its vega spread) — no surviving sleeve is cost-fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
   quoted at that size with **P&L not reinvested**: **$2.74M** over the 15-year window, **~$176k/yr**, worst month
@@ -181,7 +183,7 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
   **81.4%**, worst month **−5.7%**, streak **2mo** — **5 of 5 on the 15-year window**;
   block-bootstrap MC **[Sharpe P5 +3.22, P50 +3.74, P95 +4.23; max-DD P5 −12.3%, P50 −8.5%]**; mean
   pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe 3.77, CAGR 37.6%, months-in-profit
-  84.6%, max-DD −4.6%, worst −1.9%, streak 2mo — all five clear (5 of 5).**
+  84.6%, max-DD −4.4%, worst −1.9%, streak 2mo — all five clear (5 of 5).**
   Per-family P&L share: **volprem 55%**, trend 10%, gmacro 8%, x-sect 6%, breakout 6%, BAB 6%, carry 5%,
   crisis 4% — volprem-dominated, stated not hidden.
 - **Four-scheme Monte Carlo** (§10, all with P5/P50/P95 of Sharpe, max-DD *and* monthly hit): block bootstrap
@@ -299,9 +301,10 @@ the mandate is measured on, and there 1.15× holds with the margins above.
 
 **Why not spend the rest of the budget.** Two of the seven constraints are already violated at 1.00×: on an
 unlucky path of its *own* return distribution the book's worst month is **−6.6%**, and a repeat of the 2010 event
-costs **−7.7%**. The realised worst month is not a cushion either — at the shipped level it *is* the limit
-(−5.99% against −6%). The floor therefore has no headroom at any leverage, and every extra 0.1× makes that tail
-proportionally worse; only the drawdown dimension genuinely has room (−7.5% against −15%). The honest summary: the
+costs **−7.7%**. The realised worst month is barely a cushion either — at the shipped level it sits 0.3pp inside
+the floor (−5.7% against −6%), and one step up, at 1.20×, the two accounting conventions straddle the line. The
+floor therefore has no headroom to speak of at any leverage, and every extra 0.1× makes that tail
+proportionally worse; only the drawdown dimension genuinely has room (−7.2% against −15%). The honest summary: the
 book is under-risked **on drawdown** and exactly fully-risked **on the monthly floor**.
 
 **"Then don't lever the aggressive leg" — measured, and it is worse.** The obvious refinement is to leave the
@@ -715,8 +718,8 @@ crash months while the other seven families stay invested and earning. Reproduce
   regime gate times the short-vol leg out of the crashes that used to break the worst month and cluster the losing
   months; and the crypto cross-sectional sleeve runs on **residual (idiosyncratic) momentum**, a better-built
   momentum that steadies recent-year consistency. **5/5 is reachable — by dynamic tail-timing
-  plus a better-built momentum, not by reweighting** (next bullet), and on the full window it is reached with
-  **no margin on the worst month** (−5.99% against −6%). The realistic ceiling on liquid assets net of
+  plus a better-built momentum, not by reweighting** (next bullet), and on the full window the **worst month is
+  the tightest of the five** — 0.3pp inside the floor at −5.7% against −6%. The realistic ceiling on liquid assets net of
   honest costs is **~3.3–3.8 depending on the window**.
 - **Reweighting cannot close months-in-profit — but tail-timing can.** Every *static reweighting* route
   (adaptive inverse-drawdown, inverse-vol, trailing mean-variance, per-leg dispersion caps) forces

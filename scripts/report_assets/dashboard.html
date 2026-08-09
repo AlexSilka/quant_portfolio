@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Cross-Asset Systematic Book — Master Portfolio</title>
 <style>
 {css}
@@ -8,29 +9,28 @@
 <p class="sub">{n_families} structurally distinct families &mdash; {fam} &middot; each
 family developed and validated in its own deep-dive, then combined at risk parity (vol-matched to a common target,
 equal-weight, <b>no performance-based selection</b>) &middot; net of costs on ${cap_k}k &middot; reported over
-{report_window}. Each family contributes where it is live; the crypto-perp legs (carry, breakout) join in 2020.
+{report_window}. Each family contributes where it is live; the three crypto legs (carry, breakout, BAB) join in 2020.
 Hover any chart.</p>
 <div class="kpis">
   <div class="kpi accent"><div class="label">Return, not reinvested</div><div class="val">{simple_return}</div><div class="note">/yr on the brief&rsquo;s ${cap_k}k sizing capital</div></div>
   <div class="kpi accent"><div class="label">P&amp;L, not reinvested</div><div class="val">+${net_pnl_m}M</div><div class="note">{report_window} &middot; ${pnl_per_year_k}k/yr &middot; net of all modelled costs</div></div>
-  <div class="kpi accent"><div class="label">Return, reinvested</div><div class="val">{cagr}</div><div class="note">/yr compounded &middot; the same track, P&amp;L put back to work</div></div>
-  <div class="kpi accent"><div class="label">P&amp;L, reinvested</div><div class="val">+${cmp_pnl_m}M</div><div class="note">${cap_k}k &rarr; ${cmp_final_m}M &middot; past capacity from ~year&nbsp;8 (below)</div></div>
+  <div class="kpi accent"><div class="label">Return, compounded</div><div class="val">{cagr}</div><div class="note">/yr &middot; the rate the risk metrics are measured on</div></div>
 </div>
-<p class="valline gap"><b>${cap_k}k for sizing and costs</b> per the brief &mdash; the not-reinvested pair is what that capital earns with positions held at that size. Reinvesting is arithmetic on the same returns, not a deliverable: from ~year&nbsp;8 the book is past the vol-premium leg&rsquo;s vega capacity (low tens of $M) and past the order size the cost model charges for.</p>
+<p class="valline gap"><b>${cap_k}k for sizing and costs</b> per the brief &mdash; the dollar figures are what that capital earns with positions held at that size, P&amp;L not reinvested, because the &radic;-impact cost model is calibrated to exactly that order size. The compounded rate is what the scorecard&rsquo;s Sharpe, drawdown and monthly figures are measured on (risk a constant fraction of capital &mdash; the stricter of the two conventions). Compounding it into a terminal balance would not be a deliverable: from ~year&nbsp;8 that notional is past the vol-premium leg&rsquo;s vega capacity (low tens of $M) and past the order size the cost model charges for.</p>
 {sc}
 {sc_note}
-<p class="valline gap">Validation (§10) &mdash; Monte-Carlo, block-bootstrap P5/50/95: Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95}. Positive in {pos_years} of {n_years}&nbsp;years &middot; mean cross-family correlation {mean_corr} &middot; remove the strongest leg ({top_family}) and the book still runs at Sharpe {top_removed}, with no family chosen on performance.</p>
+<p class="valline gap">Validation (§10) &mdash; Monte-Carlo, block-bootstrap P5/50/95: Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95}. Sharpe and drawdown clear their targets even on the 5th-percentile draw; months-in-profit does not ({mc_hit_p5} against &ge;80%), so that is the target that depends on a kind path rather than on the edge. Mean cross-family correlation {mean_corr}; remove the strongest leg ({top_family}) and the book still runs at Sharpe {top_removed}.</p>
 <div class="grid">
-  <figure class="card s6"><figcaption>Master book equity (growth of capital at constant risk, log &middot; a compounding curve, not a reachable balance &mdash; see the sizing note above &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
+  <figure class="card s6"><figcaption>Master book equity (growth of capital at constant risk, log &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
   <figure class="card s6"><figcaption>Per-family equity + master book (log &middot; hover a line)</figcaption>{psleq}</figure>
   <figure class="card s6"><figcaption>Monthly return heatmap (% of capital at each month&rsquo;s start &middot; compounded, like the scorecard)</figcaption>{month}</figure>
   <figure class="card"><figcaption>Drawdown (compounded)</figcaption>{dd}</figure>
   <figure class="card"><figcaption>Rolling 12-month Sharpe</figcaption>{roll}</figure>
   <figure class="card"><figcaption>Per-year Sharpe</figcaption>{year}</figure>
-  <figure class="card"><figcaption>Stress windows (§10) — isolated performance</figcaption><table><tr><th>window</th><th>Sharpe</th><th>return</th><th>max DD</th></tr>{stress}</table></figure>
+  <figure class="card"><figcaption>Stress windows (§10) — isolated performance</figcaption><table><tr><th>window</th><th>Sharpe</th><th>return</th><th>max DD</th></tr>{stress}</table>{stress_note}</figure>
   <figure class="card"><figcaption>Per-quarter Sharpe (§10)</figcaption>{quarter}</figure>
-  <figure class="card"><figcaption>Marginal contribution (§7) — Sharpe / max-DD / months-in-profit as families join (best Sharpe {marg_best})</figcaption>{marg}</figure>
-  <figure class="card s6"><figcaption>Per-family contribution — standalone vs the book (§7/§12)</figcaption><table><tr><th>family</th><th>standalone Sharpe</th><th>standalone max DD</th><th>% of P&amp;L</th><th>corr &rarr; book</th><th>book w/o</th><th>&Delta; Sharpe</th></tr>{famtbl}</table></figure>
+  <figure class="card"><figcaption>Marginal contribution (§7) &mdash; Sharpe / max-DD / months-in-profit as families join, strongest standalone first</figcaption>{marg}</figure>
+  <figure class="card s6"><figcaption>Per-family contribution — standalone vs the book (§7/§12)</figcaption><table><tr><th>family</th><th>standalone Sharpe</th><th>standalone max DD</th><th>% of P&amp;L</th><th>corr &rarr; book</th><th>book w/o</th><th>&Delta; Sharpe</th></tr>{famtbl}</table>{famnote}</figure>
   {famperiods}
   <figure class="card s6"><figcaption>Cross-family correlation &amp; its stability (§7) &mdash; rows = columns, same order &middot; hover for value</figcaption>{corr}</figure>
   {edge_map}
@@ -40,16 +40,17 @@ Hover any chart.</p>
   {param}
   {honesty}
 </div>
-<div class="foot"><b>Construction (Task §2):</b> eight strategy families, each frozen and validated in its own deep-dive, are
+<div class="foot"><b>Construction (Task §2):</b> {n_families} strategy families, each frozen and validated in its own deep-dive, are
 re-scaled to a common ~15% vol on a trailing (point-in-time, lagged) estimate and equal-weighted &mdash; risk parity with
-<b>no performance-based selection</b>. The reported window is {report_window}; families contribute where live, so 2011&ndash;2019
-runs on trend / vol-premium / cross-sectional and the crypto-perp legs (carry, breakout) join in 2020. On the fully
-cross-asset window (2020+) the book is <b>Sharpe {ca_sharpe}, CAGR {ca_cagr}</b>.<br><br>
+<b>no performance-based selection</b>, each family run uniformly across its whole universe (no per-asset mining), fixed
+seeds, no held-out block tuned against. The reported window is {report_window} and families contribute where live: 2011
+runs on vol-premium, cross-sectional, crisis-alpha and global-macro, trend joins in 2012, and the three crypto legs
+(carry, breakout, BAB) join in 2020. On the fully cross-asset window (2020+) the book is <b>Sharpe {ca_sharpe}, CAGR {ca_cagr}</b>.<br><br>
 <b>Honest reading of the headline:</b> the {sharpe_ann} book Sharpe is dominated by the short-vol / variance-risk-premium
-leg, whose standalone Sharpe is high but sits on a real systemic-vol tail &mdash; remove it and the book runs at Sharpe
-{top_removed}. That is the point of the construction: at mean cross-family correlation {mean_corr} the families barely overlap,
-so the book earns its robustness from <b>diversification</b>, not from any single leg or any fitted selection. Each family
-runs uniformly across its whole universe (no per-asset mining); fixed seeds; no held-out block tuned against.</div>
+leg &mdash; {vp_pnl} of the book&rsquo;s P&amp;L &mdash; whose own Sharpe is high but sits on a real systemic-vol tail. That
+is why it is held at the same {fam_w} risk weight as every other leg and never sized on its Sharpe. Remove it entirely
+and the remaining seven families still run at Sharpe {top_removed} &mdash; the robustness is in the decorrelation, not
+in that leg.</div>
 <div class="tip" id="tip"></div></div>
 <script>const LINES={lines_json};
 {js}</script>

@@ -86,6 +86,16 @@ def _mip(monthly):
     return float((monthly > 0).mean()) if len(monthly) else 0.0
 
 
+def _pc(v, dp=1):
+    """Percent with a typographic minus, so a value reads the same as the '≥ −6%' target beside it."""
+    return f"{v:+.{dp}%}".replace("-", "−")
+
+
+def _n(v, dp=2):
+    """Signed number, same typographic minus as _pc — one glyph for negatives across the whole page."""
+    return f"{v:+.{dp}f}".replace("-", "−")
+
+
 # ---------- svg builders (w = natural viewBox width in px; capped via max-width) ----------
 def line_svg(key, pts, w, h, log=False, pct=False):
     l, r, t, b = 60, 18, 16, 30
@@ -154,7 +164,7 @@ def curve_svg(labels, values, w, h, mark=None):
     for i, (lab, v) in enumerate(zip(labels, values)):
         cls = "pt mk" if i == mark else "pt"
         p.append(f'<circle class="{cls}" cx="{X(i):.1f}" cy="{Y(v):.1f}" r="{5 if i == mark else 3}" '
-                 f'data-tip="+{lab} ({i + 1} families): Sharpe {v:+.2f}"/>')
+                 f'data-tip="+{lab} ({i + 1} families): Sharpe {_n(v)}"/>')
         p.append(f'<text class="ax" x="{X(i):.0f}" y="{h - 9}" text-anchor="middle">{i + 1}</text>')
     return _svg(w, h, "".join(p))
 
@@ -211,7 +221,7 @@ def bars_svg(items, w, h, pct=False):
         bw = step * 0.64
         yy, hh = min(Y(v), y0), abs(Y(v) - y0)
         cls = "bar-pos" if v >= 0 else "bar-neg"
-        val = f"{v * 100:.0f}%" if pct else f"{v:+.2f}"
+        val = f"{v * 100:.0f}%" if pct else _n(v, 2)
         p.append(f'<rect class="{cls}" x="{cx - bw / 2:.1f}" y="{yy:.1f}" width="{bw:.1f}" '
                  f'height="{hh:.1f}" rx="2.5" data-tip="{lab}: {val}"/>')
         p.append(f'<text class="ax" x="{cx:.0f}" y="{h - 12}" text-anchor="end" '
@@ -220,7 +230,7 @@ def bars_svg(items, w, h, pct=False):
 
 
 def heat_svg(rows, cols, matrix, w, vmax, scheme, show_val=True, col_labels=True, fmt=None, rowh=32, val_fs=None):
-    fmt = fmt or (lambda v: f"{v:+.2f}")
+    fmt = fmt or (lambda v: _n(v, 2))
     labcol, ch = 118, rowh
     cw = (w - labcol - 10) / len(cols)
     ct = 26 if col_labels else 10
@@ -280,29 +290,43 @@ def _honesty_card():
     if not p.exists():
         return ""
     z = json.loads(p.read_text())
-    rows = "".join(f"<tr><td>{lab}</td><td>{int(n):,}</td></tr>" for lab, n in z.get("funnel", []))
+    # collapse consecutive gates that admit the same count — a row that filters nothing reads as a stage
+    # that did work. The brief's five-stage funnel wants a walk-forward gate; the zoo does not have one
+    # (it screens on in-sample Sharpe then Monte-Carlo), and the note below says so rather than faking a row.
+    funnel = []
+    for lab, n in z.get("funnel", []):
+        if funnel and int(n) == funnel[-1][1]:
+            funnel[-1] = (f"{funnel[-1][0]} &rarr; {lab} (nothing dropped)", int(n))
+        else:
+            funnel.append((lab, int(n)))
+    rows = "".join(f"<tr><td>{lab}</td><td>{n:,}</td></tr>" for lab, n in funnel)
     n = int(z.get("n_trials", 0))
     ins = z.get("portfolio", {}).get("sharpe_ann", float("nan"))
     wf = z.get("wf_oos_sharpe", float("nan"))
     dsr = z.get("best_sleeve_dsr", float("nan"))
     fdr = z.get("placebo_fdr", float("nan"))
-    wf_s = f"{wf:+.2f}" if wf == wf else "n/a"        # NaN-safe (zoo not fully run)
+    wf_s = _n(wf, 2) if wf == wf else "n/a"        # NaN-safe (zoo not fully run)
     fdr_s = f"{fdr:.1%}" if fdr == fdr else "n/a"
     # CSCV probability of backtest overfitting (scripts/run_cscv.py) — the §6 "PBO or equivalent" metric
     cp = REP / "book" / "cscv_pbo.json"
     pbo_s = ""
     if cp.exists():
         c = json.loads(cp.read_text())
-        pbo_s = (f' &middot; CSCV probability of backtest overfitting <b>{c["pbo"]:.0%}</b> '
-                 f'(IS-best sleeve degrades {c["is_sharpe_mean"]:+.2f}&rarr;{c["oos_sharpe_mean"]:+.2f}/bar OOS)')
+        pbo_s = (f' &middot; CSCV probability of backtest overfitting <b>{c["pbo"]:.0%}</b> across '
+                 f'{c["n_strategies"]} strategies (the in-sample-best pick averages '
+                 f'{_n(c["is_sharpe_mean"], 3)} per-bar Sharpe in sample and {_n(c["oos_sharpe_mean"], 3)} out of it)')
     return (f'<figure class="card s6"><figcaption>Honest search &mdash; why the book selects nothing '
             f'(anti-overfitting §6/§10/§12)</figcaption>'
             f'<table><tr><th>discovery gate</th><th>candidates</th></tr>{rows}</table>'
-            f'<p class="valline">{n:,} candidates mined &middot; naive in-sample Sharpe {ins:+.2f} '
+            f'<p class="valline">{n:,} candidates mined &middot; naive in-sample Sharpe {_n(ins)} '
             f'&middot; the same selection walk-forwarded out-of-sample gives Sharpe {wf_s} &middot; best '
-            f'single-sleeve deflated Sharpe {dsr:.2f} (N={n:,}) &middot; shuffled-signal false-discovery '
-            f'rate {fdr_s}{pbo_s} &rarr; mining winners is selection bias, so the traded book <b>selects '
-            f'nothing</b> and applies theory uniformly across the whole universe.</p></figure>')
+            f'single-sleeve deflated Sharpe {dsr:.2f} (N={n:,}){pbo_s} &rarr; mining winners is selection '
+            f'bias, so the traded book <b>selects nothing</b> and applies theory uniformly across the whole '
+            f'universe. The gates themselves are not the problem &mdash; run the same pipeline on shuffled '
+            f'signals and only <b>{fdr_s}</b> of candidates get through, so what the funnel admits is '
+            f'mostly not noise; it is choosing the winners among them that does not survive. The funnel '
+            f'screens on in-sample Sharpe then Monte-Carlo: walk-forward is not a gate here, it is the '
+            f'{wf_s} verdict on the whole selection.</p></figure>')
 
 
 # --- §12/§13 edge map, family level: every family we evaluated on ONE consistent scale (its honest
@@ -343,7 +367,7 @@ def _pq_sharpe(path):
         return None
 
 
-def _family_edge_card(summ):
+def _family_edge_card(summ, legs):
     """§12/§13 edge map at family granularity: honest Sharpe for EVERY distinct alpha family we tested,
     live and rejected, on one scale — so where-edge-is and where-it-is-not read off a single table. The
     timeframe finding and the tested overlays/variants that are not separate families are in the footnote."""
@@ -374,7 +398,7 @@ def _family_edge_card(summ):
             return '<td style="background:var(--empty)">n/a</td>'
         bg = heatcolor(v, 1.2, "rdylgn")
         return (f'<td style="background:{bg};color:#fff;font-weight:700;'
-                f'text-shadow:0 1px 2px rgba(0,0,0,.6)">{v:+.2f}{mark}</td>')
+                f'text-shadow:0 1px 2px rgba(0,0,0,.6)">{_n(v)}{mark}</td>')
 
     def rowhtml(lab, asset, tf, v, why, mark=""):
         return (f'<tr><td><b>{lab}</b></td><td>{asset}</td><td>{tf}</td>'
@@ -385,8 +409,13 @@ def _family_edge_card(summ):
 
     live = "".join(rowhtml(SHORT.get(fid, fid), a, tf, ss.get(fid), why,
                            mark=("&#8224;" if fid == "volprem" else ""))
-                   for fid, a, tf, why in LIVE_FAM)
+                   for fid, a, tf, why in sorted(LIVE_FAM, key=lambda r: -(ss.get(r[0]) or 0.0)))
     rej = "".join(rowhtml(lab, a, tf, v, why) for lab, a, tf, v, why in rejected)
+    # vol-prem's tail, measured rather than quoted: the leg as the book holds it (vol-targeted, gated), and
+    # the standalone Cboe book behind it, whose OHLC-measured tail is the number the sizing respects.
+    vp = legs["volprem"].dropna()
+    vp_eq = (1.0 + vp).cumprod()
+    vp_skew, vp_dd = float(vp.skew()), float((vp_eq / vp_eq.cummax() - 1.0).min())
     return (
         '<figure class="card s6"><figcaption>Edge map (§12) &mdash; honest Sharpe by strategy family '
         '&middot; where edge was found, and where it was not</figcaption>'
@@ -396,8 +425,11 @@ def _family_edge_card(summ):
         + grp("Tested, rejected &mdash; where edge was not") + rej
         + '</table><p class="valline">Each Sharpe is the family&rsquo;s honest standalone result from its '
         'own validated construction &mdash; live families from the master-book legs, rejected families '
-        'from their deep-dive walk-forward. &#8224; vol-prem&rsquo;s Sharpe overstates: skew &minus;8.7 and a '
-        '&minus;50% systemic-vol tail &mdash; it is sized on that tail, not on Sharpe. <b>Timeframe:</b> edge '
+        'from their deep-dive walk-forward. &#8224; vol-prem&rsquo;s Sharpe overstates the risk it carries: as '
+        f'the book holds it (vol-targeted, gated) the leg prints skew {_n(vp_skew)} and a {_pc(vp_dd)} '
+        'drawdown, and the Cboe book behind it &mdash; measured on OHLC, so the intraday path a delta-hedged '
+        'short-gamma book actually pays &mdash; carries skew &minus;18 and a &minus;78% systemic-vol tail. It '
+        'is sized on that tail, not on Sharpe. <b>Timeframe:</b> edge '
         'concentrates at 1d; intraday (1h/4h) decays to turnover &times; cost across every sweep-able family. '
         '<b>Also run, not separate alpha families:</b> book-construction / overlay studies (convexity '
         'tail-hedge, dispersion robustness, managed-futures / defensive) and within-family variants (carry on '
@@ -418,6 +450,11 @@ def _feature_card():
         f"<td>{r['n_kept']}</td><td>{r['mean_abs_ic']:.3f}</td></tr>"
         for r in sorted(d.get("per_family", []), key=lambda x: (-x.get("n_kept", 0), -x.get("mean_abs_ic", 0))))
     nothing = ", ".join(d.get("families_contributed_nothing", [])) or "none"
+    per = d.get("per_family", [])
+    kept0 = [r["family"] for r in per if not r.get("n_kept") and r.get("n_significant")]
+    kept0_txt = (f' A further <b>{len(kept0)}</b> families clear significance but keep nothing after the '
+                 f'redundancy reduction ({", ".join(kept0)}) &mdash; their signal is already carried by a '
+                 f'kept feature, which is not the same as having none.' if kept0 else "")
     return (
         '<figure class="card s6"><figcaption>Feature-family survival (§4/§12) &mdash; which of the '
         f'{d.get("n_features", 0)}-feature library survived selection</figcaption>'
@@ -425,8 +462,8 @@ def _feature_card():
         f'<th>mean |IC|</th></tr>{rows}</table>'
         f'<p class="valline">{d.get("n_features", 0)} features &rarr; <b>{d.get("n_significant", 0)}</b> '
         f'clear |IC&middot;t|&ge;2 &rarr; <b>{d.get("n_kept", 0)}</b> survive a stability + redundancy '
-        f'reduction ({d.get("n_redundancy_clusters", 0)} clusters). Contributed nothing: <b>{nothing}</b>. '
-        f'{d.get("note", "")}</p></figure>')
+        f'reduction ({d.get("n_redundancy_clusters", 0)} clusters). Nothing significant at all: '
+        f'<b>{nothing}</b>.{kept0_txt} {d.get("note", "")}</p></figure>')
 
 
 def _param_card():
@@ -440,8 +477,8 @@ def _param_card():
     agg = g.agg(["median", "min", "max", "count"]).reset_index().sort_values("median", ascending=False)
     posfrac = g.apply(lambda x: float((x > 0).mean()))
     rows = "".join(
-        f"<tr><td>{r.cfg}</td><td>{int(r.count)}</td><td>{r.median:+.2f}</td>"
-        f"<td>{r.min:+.2f}</td><td>{r.max:+.2f}</td><td>{posfrac[r.cfg]:.0%}</td></tr>" for r in agg.itertuples())
+        f"<tr><td>{r.cfg}</td><td>{int(r.count)}</td><td>{_n(r.median)}</td>"
+        f"<td>{_n(r.min)}</td><td>{_n(r.max)}</td><td>{posfrac[r.cfg]:.0%}</td></tr>" for r in agg.itertuples())
     allpos = float((d["sharpe"] > 0).mean())
     return (
         '<figure class="card s6"><figcaption>Parameter sensitivity (§10) &mdash; trend EMA surface across '
@@ -468,7 +505,7 @@ def _timeframe_card():
     e = e.reindex(order)
     cols = [short.get(str(c), str(c)) for c in e.columns]
     mat = [[None if not np.isfinite(v) else float(v) for v in row] for row in e.values]
-    svg = heat_svg(order, cols, mat, 548, 1.2, "rdylgn", fmt=lambda v: f"{v:+.2f}", rowh=46)
+    svg = heat_svg(order, cols, mat, 548, 1.2, "rdylgn", fmt=lambda v: _n(v, 2), rowh=46)
     return (
         '<figure class="card"><figcaption>Timeframe robustness (§12) &mdash; raw discovery Sharpe by '
         'timeframe &times; family &middot; which timeframes produced the most robust sleeves</figcaption>'
@@ -482,10 +519,11 @@ def _timeframe_card():
 # --- §9/§13: the return-only master series carry no positions, so recover the book's leverage,
 # turnover and cost sensitivity by mirroring run_master_book's assembly (each family vol-targeted to
 # 15% on a trailing 60d estimate, x3 cap, equal risk over the families live that day) on the blocks. ---
-BLOCKS = [("trend", "trend/trend_block_returns.parquet"), ("carry", "carry/carry_breadth_headline.parquet"),
-          ("vol-prem", "volprem/volprem_book.parquet"), ("x-sect", "xs/xs_book.parquet"),
-          ("breakout", "breakout/bo_combined_portfolio.parquet"), ("crisis", "book/crisis_sleeve.parquet"),
-          ("gmacro", "book/gmacro_sleeve.parquet")]
+BLOCKS = [("trend", "trend/trend_block_returns.parquet", "ret"), ("carry", "carry/carry_breadth_headline.parquet", "ret"),
+          # volprem must be the GATED series the book trades (the raw `ret` column also sits in that file)
+          ("vol-prem", "volprem/volprem_book.parquet", "ret_gated"), ("x-sect", "xs/xs_book.parquet", "ret"),
+          ("breakout", "breakout/bo_combined_portfolio.parquet", "ret"), ("crisis", "book/crisis_sleeve.parquet", "ret"),
+          ("gmacro", "book/gmacro_sleeve.parquet", "ret"), ("BAB", "bab/bab_book_c25.parquet", "ret")]
 COST_BPS = 8.0    # blended round-trip cost applied to book turnover for the §9 sweep; each family is
                   # already net of its own itemised costs (per-family break-evens live in the deep-dives)
 
@@ -495,29 +533,50 @@ def _leverage(net, target=0.15):
 
 
 def _book_ops(master):
-    """Book gross exposure + turnover over time + annual turnover, reconstructed the way
-    run_master_book assembles the families (equal risk over the families live each day)."""
+    """Book gross exposure + turnover, reconstructed the way run_master_book assembles the families
+    (each family vol-targeted, equal risk across the families it holds).
+
+    Two turnover series, because the mixed 252/365 calendar makes them differ by ~15x. A family whose
+    market is shut today (equities/Cboe at a weekend) still HOLDS its position — it is not liquidated
+    and re-bought on Monday. `turn` measures that book: weights held through each family's calendar
+    gaps, so only genuine rebalancing and entry/exit count, and it is the honest §11 turnover.
+    `turn_charged` renormalises across only the families that print each day, which counts every
+    weekend as a full round-trip of the equity/vol legs; it overstates trading by ~15x, and the §9
+    cost sweep is deliberately charged on it so the stress is conservative rather than flattering."""
     lev = {}
-    for lab, f in BLOCKS:
+    for lab, f, col in BLOCKS:
         p = REP / f
         if not p.exists():
             continue
         s = pd.read_parquet(p)
-        s = (s["ret"] if "ret" in s.columns else s.iloc[:, 0]).dropna()
+        s = (s[col] if col in s.columns else s.iloc[:, 0]).dropna()
         s.index = pd.to_datetime(s.index)
         if s.index.tz is not None:
             s.index = s.index.tz_localize(None)
         lev[lab] = _leverage(s)
     if not lev:
-        return None, None, 0.0
+        return None, None, 0.0, None, 0.0
     L = pd.DataFrame(lev).reindex(master.index)
-    live = L > 0
-    w = L.where(live).div(live.sum(axis=1).replace(0, np.nan), axis=0)      # equal-risk weight x leverage
+
+    def _weights(lv):
+        live = lv > 0
+        return lv.where(live).div(live.sum(axis=1).replace(0, np.nan), axis=0)   # equal risk x leverage
+
+    held = L.copy()
+    for c in held.columns:                             # hold each family flat through its calendar gaps
+        s = L[c].where(L[c] > 0)
+        span = (held.index >= s.first_valid_index()) & (held.index <= s.last_valid_index())
+        held.loc[span, c] = s.ffill()[span]
+    w, w_charged = _weights(held), _weights(L)
     gross = w.abs().sum(axis=1)
-    turn = w.fillna(0.0).diff().abs().sum(axis=1)
-    ann = float(turn.reindex(master.index).mean() * PPY) if turn.notna().any() else 0.0
     gross = gross[gross > 1e-9]                        # drop warm-up/edge days with no live leverage yet
-    return gross.dropna(), turn.reindex(gross.index).dropna(), ann
+    def _turn(ww):
+        t = ww.fillna(0.0).diff().abs().sum(axis=1)
+        return t, (float(t.reindex(master.index).mean() * PPY) if t.notna().any() else 0.0)
+    turn, ann = _turn(w)
+    turn_charged, ann_charged = _turn(w_charged)
+    return (gross.dropna(), turn.reindex(gross.index).dropna(), ann,
+            turn_charged.reindex(gross.index).dropna(), ann_charged)
 
 
 def _cost_levels(master, turn):
@@ -553,7 +612,6 @@ def main():
     eqf = (1.0 + master).cumprod()
     yrs = (master.index[-1] - master.index[0]).days / 365.25
     wlab = f"{int(yrs)}-yr"        # reporting-window label for the scorecard (e.g. "15-yr" for the 2011+ book)
-    y0 = master.index[0].year
     cagr = float(eqf.iloc[-1] ** (1 / yrs) - 1) if yrs > 0 else 0.0
     # §9 fixes the sizing/cost capital at $500k, and the √-impact model is calibrated to exactly that
     # order size — so the DOLLAR figures are quoted at that size, P&L not reinvested. Reinvesting would
@@ -563,8 +621,6 @@ def main():
     # drawdown by a cash balance that grew, which flatters max-DD and the worst month.
     net_pnl = float(CAP * master.sum())
     pnl_per_year, simple_return = net_pnl / yrs, float(master.sum() / yrs)
-    cmp_final = float(CAP * eqf.iloc[-1])          # the same track with P&L put back to work
-    cmp_pnl = cmp_final - CAP
 
     # --- monthly / OOS / cross-asset (2020+) windows ---
     mo = (1.0 + master).resample("ME").prod() - 1.0
@@ -577,37 +633,49 @@ def main():
     ca_cagr = float(eca.iloc[-1] ** (1 / yca) - 1) if yca > 0 else 0.0
 
     # --- §9/§13: book leverage, turnover and cost sensitivity, recovered from the family blocks ---
-    gross, turn, ann_turn = _book_ops(master)
-    cost_levels, breakeven = _cost_levels(master, turn)
+    gross, turn, ann_turn, turn_charged, ann_charged = _book_ops(master)
+    cost_levels, breakeven = _cost_levels(master, turn_charged)
 
     # --- §11 scorecard — judged on the FINAL OOS BLOCK (the brief scores targets there); the full window
     #     (now the 15y 2011+ book) sits in the note as the larger-sample estimate ---
     sc = [
-        ("Sharpe (net)", f"{_sh(oos):+.2f}", f"{wlab} {m['sharpe']:+.2f} · target 2.5–4.0",
-         "pass" if _sh(oos) >= 2.5 else "miss"),
+        # §11 scores Sharpe as a BAND, so the tile tests the band — the same test the full-window count uses
+        ("Sharpe (net)", _n(_sh(oos), 2), f"{wlab} {_n(m['sharpe'])} · target 2.5–4.0",
+         "pass" if 2.5 <= _sh(oos) <= 4.0 else "miss"),
         ("Months in profit", f"{_mip(moo):.0%}", f"{wlab} {_mip(mo):.0%} · target ≥80%",
          "pass" if _mip(moo) >= 0.80 else "miss"),
-        ("Max drawdown", f"{_mdd(oos):+.1%}", f"{wlab} {m['max_dd']:+.1%} · target ≤15%",
+        ("Max drawdown", _pc(_mdd(oos)), f"{wlab} {_pc(m['max_dd'])} · target ≤15%",
          "pass" if _mdd(oos) >= -0.15 else "miss"),
         ("Longest losing streak", f"{_streak(moo.values)} mo", f"{wlab} {_streak(mo.values)} mo · target ≤2 mo",
          "pass" if _streak(moo.values) <= 2 else "miss"),
-        ("Worst single month", f"{moo.min():+.1%}", f"{wlab} {mo.min():+.1%} · target ≥−6%",
+        ("Worst single month", _pc(moo.min()), f"{wlab} {_pc(mo.min())} · target ≥ −6%",
          "pass" if moo.min() >= -0.06 else "miss"),
-        ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr, the §11 cost basis", ""),
+        ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr · §11 asks for it, sets no cap", ""),
     ]
     n_pass = sum(1 for *_, c in sc[:5] if c == "pass")             # OOS block (the scored window)
     n_pass_full = sum([2.5 <= m["sharpe"] <= 4.0, _mip(mo) >= 0.80, m["max_dd"] >= -0.15,   # 15y larger sample
                        _streak(mo.values) <= 2, mo.min() >= -0.06])
     wfp = REP / "master_book_wf_summary.json"
-    wf_li = ""
+    wf_li, mv_li = "", ""
     if wfp.exists():
         w = json.loads(wfp.read_text())
         h, rng = w["headline_wf_oos"], w["window_cadence_invariance_range"]
+        # the re-fit-the-weights alternative, on the SAME walk-forward as equal weight (so it is comparable)
+        cfg = w.get("configs") or {}
+        mv, eq_cfg = cfg.get("meanvar_anchored_Q"), cfg.get(w.get("headline_config"))
+        if mv and eq_cfg:
+            mv_li = (f' &mdash; on the same walk-forward the mean-variance fit buys its Sharpe '
+                     f'({_n(mv["sharpe"])} vs {_n(eq_cfg["sharpe"])}) with a {mv["max_dd"] / eq_cfg["max_dd"]:.0f}'
+                     f'&times; deeper drawdown ({_pc(mv["max_dd"], 0)} against {_pc(eq_cfg["max_dd"], 0)})')
         gfc = (w.get("stress") or {}).get("2008 GFC")
-        gfc_s = f', {gfc["max_dd"]:+.1%} through the 2008 GFC' if gfc else ''
+        gfc_s = f', {_pc(gfc["max_dd"])} through the 2008 GFC' if gfc else ''
+        # span from the dates, not obs/365 — the mixed 252/365 calendar makes the latter understate the years
+        wf_yrs = (pd.Timestamp(h["end"]) - pd.Timestamp(h["start"])).days / 365.25
         wf_li = (f'<li><b>OOS is most of the history, not 2 years:</b> the book-level walk-forward runs '
-                 f'out-of-sample {h["start"][:4]}&rarr;{h["end"][:4]} (~{round(h["n_obs"] / 365)}y) at Sharpe '
-                 f'<b>{h["sharpe"]:+.2f}</b> [{rng[0]:+.2f}, {rng[1]:+.2f}] across cadences{gfc_s}.</li>')
+                 f'out-of-sample {h["start"][:4]}&rarr;{h["end"][:4]} (~{wf_yrs:.0f}y) at Sharpe '
+                 f'<b>{_n(h["sharpe"])}</b> [{_n(rng[0])}, {_n(rng[1])}] across cadences{gfc_s}. That longer '
+                 f'track pays for the extra history in drawdown: max-DD {_pc(h["max_dd"])} and months-in-profit '
+                 f'{h["months_in_profit"]:.0%}, against {_pc(m["max_dd"])} on the reported window.</li>')
     yr_ret = (1.0 + master).resample("YE").prod() - 1.0
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
     # the streak clause only makes sense while the streak is the miss — once the full window passes it, say so
@@ -615,22 +683,26 @@ def main():
     full_tail = (f'streak {streak_full} month{"s" if streak_full != 1 else ""} &mdash; every target clear'
                  if n_pass_full == 5 else
                  f'the one miss is a {streak_full}-month losing streak (vs &le;2)')
+    wtext = f"{int(yrs)}-year"        # prose form of the window label; stays in step with the tiles' wlab
+    part = " (the last one partial)" if master.index[-1].month < 12 else ""
     sc_note = (
         f'<div class="scnote">'
         f'<span class="lead"><b>All five targets met on the frozen out-of-sample block'
-        f'{" and on the full 15-year window" if n_pass_full == 5 else f"; {n_pass_full} of 5 on the full 15-year window"}'
+        f'{f" and on the full {wtext} window" if n_pass_full == 5 else f"; {n_pass_full} of 5 on the full {wtext} window"}'
         f'.</b></span>'
         f'<ul>'
         f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the window the brief scores (2024-07&rarr;): Sharpe '
-        f'{_sh(oos):+.2f}, months-in-profit {_mip(moo):.0%}, max-DD, worst month and streak all clear. It is the '
-        f'<b>VIX-term-structure gate</b> on the short-vol leg that does this, not reweighting (which fails, §6).</li>'
-        f'<li><b>Full 15-year window ({n_pass_full} of 5):</b> Sharpe {m["sharpe"]:+.2f}, months {_mip(mo):.0%}, '
-        f'max-DD {m["max_dd"]:+.1%}, worst month {mo.min():+.1%}, {full_tail}. '
-        f'<b>Positive in {n_pos_yr} of {n_tot_yr} years</b>; pre-2016 leans on '
-        f'reconstructed crisis/global-macro signals.</li>'
+        f'{_n(_sh(oos))}, months-in-profit {_mip(moo):.0%}, max-DD, worst month and streak all clear. Two '
+        f'mechanisms carry it: the <b>VIX-term-structure gate</b>, which stands the short-vol leg down while the '
+        f'curve is inverted, and the crypto sleeve running on <b>residual momentum</b>.</li>'
+        f'<li><b>Full {wtext} window ({n_pass_full} of 5):</b> Sharpe {_n(m["sharpe"])}, months {_mip(mo):.0%}, '
+        f'max-DD {_pc(m["max_dd"])}, worst month {_pc(mo.min())}, {full_tail}. '
+        f'<b>Positive in {n_pos_yr} of {n_tot_yr} calendar years</b>{part}. Read the early years with the '
+        f'caveat they carry: before ~2019 the vol-premium, crisis and global-macro legs are strategy-logic '
+        f'backtests on published index data &mdash; the tradeable products post-date them &mdash; not a live track.</li>'
         f'{wf_li}'
-        f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights does not beat it out-of-sample '
-        f'(mean-variance buys Sharpe with a 3&times; tail).</li>'
+        f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights does not beat it out-of-sample'
+        f'{mv_li}.</li>'
         f'</ul></div>')
 
     # --- equity, drawdown, rolling 12m Sharpe ---
@@ -652,7 +724,7 @@ def main():
     for d, v in mo.items():
         mmat[yi[d.year]][d.month - 1] = float(v)
     month_svg = heat_svg([str(y) for y in years], MONTHS, mmat, 1120, 0.10, "rdylgn",
-                         fmt=lambda v: f"{v:+.1%}")
+                         fmt=lambda v: _pc(v, 1))
 
     # --- per-year & per-quarter Sharpe (from the master summary) ---
     py = sorted((int(k), v) for k, v in summ["per_year"].items())
@@ -664,7 +736,7 @@ def main():
     for k, v in pq.items():
         qmat[qi[int(k[:4])]][int(k[5]) - 1] = float(v)
     quarter_svg = heat_svg([str(y) for y in qyears], ["Q1", "Q2", "Q3", "Q4"], qmat, 548, 3.0,
-                           "rdylgn", fmt=lambda v: f"{v:+.1f}")
+                           "rdylgn", fmt=lambda v: _n(v, 1))
 
     # --- §13 per-family (sleeve-leg) Sharpe by year AND quarter — the sleeves the book is built from,
     #     not only the book aggregate above ---
@@ -682,11 +754,11 @@ def main():
     fqr_r, fqr_c, fqr_m = _leg_grid("Q")
     famperiods = (
         '<figure class="card s6"><figcaption>Per-family Sharpe by year (§13) &mdash; the sleeve legs the '
-        f'book is built from, net</figcaption>{heat_svg(fyr_r, fyr_c, fyr_m, 1120, 2.0, "rdylgn", fmt=lambda v: f"{v:+.1f}")}'
+        f'book is built from, net</figcaption>{heat_svg(fyr_r, fyr_c, fyr_m, 1120, 2.0, "rdylgn", fmt=lambda v: _n(v, 1))}'
         '<figcaption style="margin-top:18px">Per-family Sharpe by quarter (§13) &mdash; hover a cell for its Sharpe</figcaption>'
         # too many quarters now span the columns for a legible per-cell number, so the value is hover-only
         # (each cell's data-tip); the heat colour still carries the pattern at a glance
-        f'{heat_svg(fqr_r, fqr_c, fqr_m, 1120, 2.0, "rdylgn", show_val=False, rowh=34, fmt=lambda v: f"{v:+.1f}")}</figure>')
+        f'{heat_svg(fqr_r, fqr_c, fqr_m, 1120, 2.0, "rdylgn", show_val=False, rowh=34, fmt=lambda v: _n(v, 1))}</figure>')
 
     # --- stress windows (§10) ---
     stress_rows = ""
@@ -694,32 +766,74 @@ def main():
         w = master[(master.index >= pd.Timestamp(a)) & (master.index <= pd.Timestamp(b))]
         if not len(w):
             continue
-        stress_rows += (f"<tr><td>{lab}</td><td>{_sh(w):+.2f}</td>"
-                        f"<td>{(1 + w).prod() - 1:+.1%}</td><td>{_mdd(w):+.1%}</td></tr>")
+        stress_rows += (f"<tr><td>{lab}</td><td>{_n(_sh(w))}</td>"
+                        f"<td>{_pc((1 + w).prod() - 1)}</td><td>{_pc(_mdd(w))}</td></tr>")
+    # These five windows are the ones the brief names, and the book's own deepest drawdown is in none of
+    # them — so locate it and say what drove it, rather than letting the reader read the table's worst row
+    # as the worst episode (Q4 2018 and the real trough happen to print the same -7.2%).
+    _e = (1.0 + master).cumprod()
+    _dd = _e / _e.cummax() - 1.0
+    trough = _dd.idxmin()
+    peak = _e[:trough].idxmax()
+    ep = legs.loc[peak:trough].sum().sort_values()
+    worst_legs = ", ".join(f"{sf(k)} {_pc(v)}" for k, v in ep.head(2).items())
+    stress_note = (
+        f'<p class="valline">The book&rsquo;s deepest drawdown of the whole window is in <b>none of these '
+        f'five</b>: it is {_pc(m["max_dd"])} over {peak.date()}&rarr;{trough.date()}, driven by the '
+        f'managed-futures legs ({worst_legs}) reversing together while the short-vol leg was up. Q4 2018 '
+        f'prints the same {_pc(_mdd(master[(master.index >= pd.Timestamp("2018-10-01")) & (master.index <= pd.Timestamp("2018-12-31"))]))} '
+        f'inside its own window for an unrelated reason &mdash; a trend reversal plus a vol spike &mdash; and '
+        f'it is the quarter that sets the worst month ({_pc(mo.min())}). Two different failure modes at the '
+        f'same depth; the diversification is what keeps either from going further.</p>')
 
     # --- marginal-contribution curve + table: Sharpe, max-DD and months-in-profit as families join (§7) ---
     labels = [sf(a) for a in marg["added"]]
     vals = [float(v) for v in marg["sharpe"]]
-    mark = int(np.argmax(vals))
     marg_rows = "".join(
-        f"<tr><td>{int(r.n)}</td><td>+{sf(r.added)}</td><td>{r.sharpe:+.2f}</td>"
-        f"<td>{r.max_dd:+.1%}</td><td>{r.months_in_profit:.0%}</td></tr>" for r in marg.itertuples())
-    marg_svg = (curve_svg(labels, vals, 548, 240, mark=mark)
+        f"<tr><td>{int(r.n)}</td><td>+{sf(r.added)}</td><td>{_n(r.sharpe)}</td>"
+        f"<td>{_pc(r.max_dd)}</td><td>{r.months_in_profit:.0%}</td></tr>" for r in marg.itertuples())
+    first, last = marg.iloc[0], marg.iloc[-1]
+    # mark the SHIPPED book, not the argmax: the single-family peak is the point the construction gives up
+    marg_svg = (curve_svg(labels, vals, 548, 240, mark=len(vals) - 1)
                 + '<table><tr><th>n</th><th>+family</th><th>Sharpe</th><th>max DD</th><th>months+</th></tr>'
-                + marg_rows + '</table>')
+                + marg_rows + '</table>'
+                + f'<p class="valline">Sharpe and months-in-profit both <b>fall</b> as families join '
+                  f'({_n(first.sharpe)}&rarr;{_n(last.sharpe)}, {first.months_in_profit:.0%}&rarr;'
+                  f'{last.months_in_profit:.0%}); what the additions buy is the <b>tail</b> '
+                  f'({_pc(first.max_dd)}&rarr;{_pc(last.max_dd)}). That trade is the point: vol-prem alone sits '
+                  f'outside the 2.5&ndash;4.0 Sharpe band and fails the &le;15% drawdown target. On the '
+                  f'drawdown axis the curve has <b>not</b> flattened by the eighth family &mdash; the last '
+                  f'three additions still cut '
+                  f'{_pc(marg.iloc[-3].max_dd)}&rarr;{_pc(marg.iloc[-2].max_dd)}&rarr;{_pc(last.max_dd)} '
+                  f'&mdash; which is why none is dropped. (Equal-weight mean of the legs, so the eighth point '
+                  f'reads {_n(last.sharpe)} against the deliverable book&rsquo;s {_n(m["sharpe"])}, which '
+                  f'also carries the drawdown ladder and the daily-loss breaker.)</p>')
 
     # --- per-family contribution table: standalone Sharpe/DD, corr->book, book-without & delta ---
     solo = summ["standalone_sharpe"]
     pnl = summ.get("pnl_share", {})     # each family's share of book P&L (§7)
+    # baseline for the leave-one-out delta must be the SAME construction as the counterfactual — the
+    # equal-weight mean of all legs; the deliverable's own Sharpe additionally carries the risk overlay,
+    # so subtracting from it would bias every delta by that difference.
+    all_legs = _sh(legs.mean(axis=1, skipna=True))
     fam_rows = ""
     for f in sorted(fams, key=lambda c: -solo.get(c, 0.0)):
         s = legs[f].dropna()
         joined = pd.concat([legs[f], master], axis=1).dropna()
         c = float(joined.corr().iloc[0, 1]) if len(joined) > 2 else 0.0
         wo = _sh(legs.drop(columns=[f]).mean(axis=1, skipna=True))   # book with this family removed
-        fam_rows += (f"<tr><td>{sf(f)}</td><td>{solo.get(f, 0.0):+.2f}</td><td>{_mdd(s):+.1%}</td>"
+        fam_rows += (f"<tr><td>{sf(f)}</td><td>{_n(solo.get(f, 0.0))}</td><td>{_pc(_mdd(s))}</td>"
                      f"<td>{pnl.get(f, 0.0):.0%}</td>"
-                     f"<td>{c:+.2f}</td><td>{wo:+.2f}</td><td>{m['sharpe'] - wo:+.2f}</td></tr>")
+                     f"<td>{_n(c)}</td><td>{_n(wo)}</td><td>{_n(all_legs - wo)}</td></tr>")
+    n_neg = sum(1 for f in fams if all_legs - _sh(legs.drop(columns=[f]).mean(axis=1, skipna=True)) <= 0)
+    fam_note = (f'<p class="valline">&Delta; Sharpe is measured against the equal-weight mean of all legs '
+                f'({_n(all_legs)}), the same construction as each counterfactual. <b>{n_neg} of '
+                f'{len(fams)} families carry a &le;0 &Delta;</b> and are held anyway, which is a stated '
+                f'choice rather than an oversight: Sharpe is a band (2.5&ndash;4.0), not a maximand, and what '
+                f'these legs serve are the other targets &mdash; drawdown, worst month, losing streak, '
+                f'months in profit. Dropping crisis-alpha lifts Sharpe past the top of the band and returns '
+                f'the losing streak to 3 months. The book trades Sharpe for tail and consistency on '
+                f'purpose.</p>')
 
     # --- cross-family correlation matrix + its stability over time (§7) ---
     corr_svg = heat_svg([sf(f) for f in corr.index], [sf(f) for f in corr.columns],
@@ -737,9 +851,9 @@ def main():
     roll_corr = pd.Series(rc_val, index=rc_idx).dropna()
     rcorr_svg, lines["rcorr"] = line_svg("rcorr", _pts(_ds(roll_corr)), 1120, 200)
     cs = summ.get("correlation_stability", {})
-    cs_txt = (f'<p class="valline">first-half mean {cs.get("first_half_mean", float("nan")):+.2f} &rarr; '
-              f'second-half {cs.get("second_half_mean", float("nan")):+.2f} &middot; OOS mean '
-              f'{cs.get("oos_mean", float("nan")):+.2f} &middot; largest pairwise shift '
+    cs_txt = (f'<p class="valline">first-half mean {_n(cs.get("first_half_mean", float("nan")))} &rarr; '
+              f'second-half {_n(cs.get("second_half_mean", float("nan")))} &middot; OOS mean '
+              f'{_n(cs.get("oos_mean", float("nan")))} &middot; largest pairwise shift '
               f'{cs.get("max_pairwise_shift", float("nan")):.2f} &mdash; near-zero and stable, so the '
               f'diversification is not an in-sample artefact.</p>') if cs else ""
     corr_svg = (corr_svg + '<figcaption style="margin-top:18px">Correlation stability &mdash; 126-day rolling '
@@ -751,16 +865,22 @@ def main():
         expt_svg, lines["expt"] = line_svg("expt", _pts(_ds(turn)), 548, 240, pct=True)
     else:
         expg_svg = expt_svg = '<p class="valline">exposure/turnover unavailable (family blocks missing)</p>'
-    cost_rows = "".join(f"<tr><td>{lv['label']}</td><td>{lv['sharpe']:+.2f}</td><td>{lv['max_dd']:+.1%}</td>"
-                        f"<td>{lv['cagr']:+.1%}</td></tr>" for lv in cost_levels)
-    be_txt = (f"break-even at {breakeven:.0f}&times; the book-turnover cost" if breakeven
-              else "break-even &gt; 80&times; the book-turnover cost")
+    cost_rows = "".join(f"<tr><td>{lv['label']}</td><td>{_n(lv['sharpe'])}</td><td>{_pc(lv['max_dd'])}</td>"
+                        f"<td>{_pc(lv['cagr'])}</td></tr>" for lv in cost_levels)
+    be_txt = (f"break-even at {breakeven:.0f}&times; the charged rebalancing cost" if breakeven
+              else "break-even &gt; 80&times; the charged rebalancing cost")
     # per-family cost-fragility (§9/§12): break-even multiple from each deep-dive where published
     bo_be, xs_be = _dig("breakout/bo_final_summary.json", "breakeven_mult"), _dig("xs/xs_summary.json", "breakeven_cost_mult")
     tr_c3 = _dig("trend/trend_book_blend_summary.json", "cost_levels", "3x")
-    be_parts = [p for p in (f"breakout {bo_be:.1f}&times;" if bo_be else "",
-                            f"x-sect {xs_be:.1f}&times;" if xs_be else "",
+    be_parts = [p for p in (f"breakout break-even {bo_be:.1f}&times;" if bo_be else "",
+                            f"x-sect break-even {xs_be:.1f}&times;" if xs_be else "",
+                            # trend and vol-prem publish a Sharpe at a multiple, not a break-even — quoted as such
                             f"trend Sharpe {tr_c3:.2f} at 3&times;" if tr_c3 else "") if p]
+    try:
+        vpc = pd.read_csv(REP / "volprem" / "volprem_cost_robustness.csv").iloc[-1]
+        be_parts.append(f"vol-prem Sharpe {vpc['sharpe']:.2f} at {vpc['cost_mult']:.0f}&times;")
+    except Exception:
+        pass
     perfam_be = ", ".join(be_parts) if be_parts else "in the deep-dives"
     # §13 OOS trade log — reference the artifact the book emits (return-composed book => its trades are
     # the daily sleeve rebalances; instrument-level fills are per-family)
@@ -776,22 +896,40 @@ def main():
                    f'return-composed, so its trades are the daily risk-parity rebalances; the combined '
                    f'instrument-level fills ({n_tr:,}) are in <code>reports/master_book_oos_trades.csv</code> '
                    f'and per-family logs (e.g. <code>reports/trend/trend_oos_trade_log.csv</code>).</p>')
+    rl = summ.get("risk_limits", {})
+    lim_txt = (f' The declared limits sit on the book multiplier, not on this sum: it runs at a constant '
+               f'{rl["leverage"]:.2f}&times; against a {rl["gross_cap"]:.1f}&times; cap, net exposure ~0.'
+               if rl.get("leverage") and rl.get("gross_cap") else "")
     ops_html = (
-        f'<figure class="card"><figcaption>Book gross exposure over time (§13)</figcaption>{expg_svg}</figure>'
-        f'<figure class="card"><figcaption>Book turnover over time (§13) &middot; risk-parity rebalancing</figcaption>{expt_svg}{tl_note}</figure>'
+        f'<figure class="card"><figcaption>Family exposure over time (§13) &mdash; sum of the eight '
+        f'risk-parity weights &times; their vol-target leverage</figcaption>{expg_svg}'
+        f'<p class="valline">This is the notional the sleeves add up to (mean {gross.mean():.2f}&times; capital, '
+        f'peak {gross.max():.2f}&times;), reconstructed from the family blocks &mdash; it rises when the legs&rsquo; '
+        f'own volatility falls and their vol targeting levers up.{lim_txt}</p></figure>'
+        f'<figure class="card"><figcaption>Book rebalancing turnover over time (§13) &middot; '
+        f'{ann_turn:.1f}&times; round-trip/yr</figcaption>{expt_svg}'
+        f'<p class="valline">Weights held through each family&rsquo;s calendar gaps: a leg whose market is shut '
+        f'(equities and the Cboe complex at a weekend) holds its position rather than being liquidated and '
+        f'bought back. Renormalising across only the legs that print each day instead reads '
+        f'<b>{ann_charged:.0f}&times;</b> &mdash; ~{ann_charged / max(ann_turn, 1e-9):.0f}&times; the trading the '
+        f'book does, and an artefact of the mixed 252/365 calendar rather than turnover. This is the '
+        f'book&rsquo;s own rebalancing only; each family&rsquo;s instrument turnover is charged inside its own '
+        f'net returns and reported in its deep-dive.</p>{tl_note}</figure>'
         f'<figure class="card"><figcaption>Cost sensitivity (§9) &mdash; {be_txt}</figcaption>'
         f'<table><tr><th>cost level</th><th>Sharpe</th><th>max DD</th><th>CAGR</th></tr>{cost_rows}</table>'
-        f'<p class="valline">book turnover re-charged at 1&times;/2&times;/3&times; a blended {COST_BPS:.0f}bps '
-        f'round-trip; each family is already net of its own itemised costs. Per-family cost-fragility '
-        f'(break-even &times; base cost, from the deep-dives): {perfam_be} &mdash; all well above 1&times;, '
-        f'so no measured family is cost-fragile.</p></figure>')
+        f'<p class="valline">Charged on the conservative basis deliberately: the {ann_charged:.0f}&times;/yr '
+        f'renormalisation turnover at a blended {COST_BPS:.0f}bps round-trip, re-charged at '
+        f'1&times;/2&times;/3&times; &mdash; about {ann_charged * COST_BPS / 1e4:.0%} of capital a year at 1&times;, '
+        f'on top of the itemised costs already inside every family&rsquo;s returns. Per-family cost robustness, '
+        f'as each deep-dive publishes it: {perfam_be} &mdash; none of them is cost-fragile. Carry, crisis, '
+        f'global-macro and BAB run no cost sweep of their own, so they are not measured on this axis.</p></figure>')
 
-    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final, ca_sharpe, ca_cagr, dict(
+    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,
-        year=year_svg, quarter=quarter_svg, stress=stress_rows, marg=marg_svg,
-        marg_best=max(vals), corr=corr_svg, famtbl=fam_rows, famperiods=famperiods, param=_param_card(),
+        year=year_svg, quarter=quarter_svg, stress=stress_rows, stress_note=stress_note, marg=marg_svg,
+        corr=corr_svg, famtbl=fam_rows, famnote=fam_note, famperiods=famperiods, param=_param_card(),
         timeframe=_timeframe_card(), ops=ops_html,
-        edge_map=_family_edge_card(summ),
+        edge_map=_family_edge_card(summ, legs),
         feature=_feature_card(), honesty=_honesty_card(), lines=lines))
     print("dashboard -> reports/dashboard.html\nMAKE REPORT OK")
 
@@ -803,41 +941,39 @@ def _asset(name):
     return (ASSETS / name).read_text()
 
 
-def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_pnl, cmp_final, ca_sharpe, ca_cagr, S):
+def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, S):
     """Fill report_assets/dashboard.html (page + copy) with computed values, CSS and JS."""
     m = summ["master"]
     fam = ", ".join(sf(f) for f in summ["families"])
-    pos_years = sum(1 for v in summ["per_year"].values() if v > 0)
     rw = summ["window"]
     tr = summ["top_removed"]
+    nf = len(summ["families"])
     # §10 Monte-Carlo maxDD / monthly-hit-rate percentiles live under the canonical block-bootstrap
     # variant; fall back to any legacy top-level mirror, and to n/a if the MC has not been run.
     bbmc = (m.get("mc_variants") or {}).get("block_bootstrap") or {}
 
     def _mcp(k, sign=False):
         v = bbmc.get(k, m.get("mc_" + k))
-        return (f"{v:+.1%}" if sign else f"{v:.0%}") if isinstance(v, (int, float)) and v == v else "n/a"
+        return (_pc(v, 1) if sign else f"{v:.0%}") if isinstance(v, (int, float)) and v == v else "n/a"
 
     html = _asset("dashboard.html").format(
         css=_asset("dashboard.css"), js=_asset("dashboard.js"),
         lines_json=json.dumps(S["lines"], default=float), cap_k=CAP // 1000,
         report_window=f"{rw[0][:4]}–{rw[1][:4]}",
-        cagr=f"{cagr:+.1%}", net_pnl_m=f"{net_pnl / 1e6:.2f}",
-        pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=f"{simple_return:+.1%}",
-        cmp_pnl_m=f"{cmp_pnl / 1e6:.1f}", cmp_final_m=f"{cmp_final / 1e6:.1f}",
-        sc=S["sc"], sc_note=S["sc_note"], mc_p5=f"{m['mc_p5']:+.2f}", mc_p50=f"{m['mc_p50']:+.2f}", mc_p95=f"{m['mc_p95']:+.2f}",
+        cagr=_pc(cagr, 1), net_pnl_m=f"{net_pnl / 1e6:.2f}",
+        pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=_pc(simple_return, 1),
+        sc=S["sc"], sc_note=S["sc_note"], mc_p5=_n(m['mc_p5'], 2), mc_p50=_n(m['mc_p50'], 2), mc_p95=_n(m['mc_p95'], 2),
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),
-        pos_years=pos_years, n_years=len(summ["per_year"]),
-        mean_corr=f"{summ['mean_correlation']:+.2f}", n_families=len(summ["families"]),
-        top_family=sf(tr["family"]), top_removed=f"{tr['sharpe']:+.2f}",
+        mean_corr=_n(summ['mean_correlation'], 2), n_families=nf,
+        top_family=sf(tr["family"]), top_removed=_n(tr['sharpe'], 2),
+        vp_pnl=f"{summ.get('pnl_share', {}).get('volprem', float('nan')):.0%}", fam_w=f"1/{nf}",
         eq=S["eq"], psleq=S["psleq"], month=S["month"], dd=S["dd"], roll=S["roll"],
-        year=S["year"], quarter=S["quarter"], stress=S["stress"],
-        marg=S["marg"], marg_best=f"{S['marg_best']:+.2f}",
-        corr=S["corr"], famtbl=S["famtbl"], ops=S["ops"], edge_map=S["edge_map"],
+        year=S["year"], quarter=S["quarter"], stress=S["stress"], stress_note=S["stress_note"], marg=S["marg"],
+        corr=S["corr"], famtbl=S["famtbl"], famnote=S["famnote"], ops=S["ops"], edge_map=S["edge_map"],
         feature=S["feature"], famperiods=S["famperiods"], param=S["param"], timeframe=S["timeframe"], honesty=S["honesty"], fam=fam,
         sharpe_ann=f"{m['sharpe']:.2f}",
-        ca_sharpe=f"{ca_sharpe:.2f}", ca_cagr=f"{ca_cagr:+.1%}",
+        ca_sharpe=f"{ca_sharpe:.2f}", ca_cagr=_pc(ca_cagr, 1),
     )
     (REP / "dashboard.html").write_text(html)
 
