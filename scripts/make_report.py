@@ -610,17 +610,23 @@ def main():
                  f'<b>{h["sharpe"]:+.2f}</b> [{rng[0]:+.2f}, {rng[1]:+.2f}] across cadences{gfc_s}.</li>')
     yr_ret = (1.0 + master).resample("YE").prod() - 1.0
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
+    # the streak clause only makes sense while the streak is the miss — once the full window passes it, say so
+    streak_full = _streak(mo.values)
+    full_tail = (f'streak {streak_full} month{"s" if streak_full != 1 else ""} &mdash; every target clear'
+                 if n_pass_full == 5 else
+                 f'the one miss is a {streak_full}-month losing streak (vs &le;2)')
     sc_note = (
         f'<div class="scnote">'
-        f'<span class="lead"><b>All five targets met on the frozen out-of-sample block; {n_pass_full} of 5 on the '
-        f'full 15-year window.</b></span>'
+        f'<span class="lead"><b>All five targets met on the frozen out-of-sample block'
+        f'{" and on the full 15-year window" if n_pass_full == 5 else f"; {n_pass_full} of 5 on the full 15-year window"}'
+        f'.</b></span>'
         f'<ul>'
         f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the window the brief scores (2024-07&rarr;): Sharpe '
         f'{_sh(oos):+.2f}, months-in-profit {_mip(moo):.0%}, max-DD, worst month and streak all clear. It is the '
         f'<b>VIX-term-structure gate</b> on the short-vol leg that does this, not reweighting (which fails, §6).</li>'
         f'<li><b>Full 15-year window ({n_pass_full} of 5):</b> Sharpe {m["sharpe"]:+.2f}, months {_mip(mo):.0%}, '
-        f'max-DD {m["max_dd"]:+.1%}, worst month {mo.min():+.1%}; the one miss is a {_streak(mo.values)}-month '
-        f'losing streak (vs &le;2). <b>Positive in {n_pos_yr} of {n_tot_yr} years</b>; pre-2016 leans on '
+        f'max-DD {m["max_dd"]:+.1%}, worst month {mo.min():+.1%}, {full_tail}. '
+        f'<b>Positive in {n_pos_yr} of {n_tot_yr} years</b>; pre-2016 leans on '
         f'reconstructed crisis/global-macro signals.</li>'
         f'{wf_li}'
         f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights does not beat it out-of-sample '
