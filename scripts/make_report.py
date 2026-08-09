@@ -895,12 +895,9 @@ def main():
     if tlp.exists():
         tl = pd.read_csv(tlp)
         n_tr = len(pd.read_csv(trp)) if trp.exists() else 0
-        tl_note = (f'<p class="valline">OOS trade log (§13): <b>{len(tl):,}</b> daily book rebalances '
-                   f'{tl["date"].min()}&rarr;{tl["date"].max()} in <code>reports/master_book_oos_ledger.csv</code> '
-                   f'(per-family P&amp;L contribution + gross exposure + $ P&amp;L each day) &mdash; the book is '
-                   f'return-composed, so its trades are the daily risk-parity rebalances; the combined '
-                   f'instrument-level fills ({n_tr:,}) are in <code>reports/master_book_oos_trades.csv</code> '
-                   f'and per-family logs (e.g. <code>reports/trend/trend_oos_trade_log.csv</code>).</p>')
+        tl_note = (f'<p class="valline">OOS log (§13): <b>{len(tl):,}</b> daily rebalances '
+                   f'{tl["date"].min()}&rarr;{tl["date"].max()} &middot; <b>{n_tr:,}</b> instrument fills &mdash; '
+                   f'<code>master_book_oos_ledger.csv</code>, <code>master_book_oos_trades.csv</code>.</p>')
     # §9/§12 per family: measured by re-running each family with its cost model off (measure_family_costs)
     fcp = REP / "book" / "family_cost_shares.json"
     fam_cost_txt = ""
@@ -933,18 +930,15 @@ def main():
         f'own volatility falls and their vol targeting levers up.{lim_txt}</p></figure>'
         f'<figure class="card"><figcaption>Book rebalancing turnover over time (§13) &middot; '
         f'{ann_turn:.0f}&times; round-trip/yr</figcaption>{expt_svg}'
-        f'<p class="valline"><b>Most of that is the calendar, not conviction &mdash; and it is the one place '
-        f'the construction leaves money on the table.</b> The book equal-weights the legs that <i>print</i> '
-        f'each day, so when the equity and Cboe markets shut for a weekend the three crypto legs are '
-        f're-weighted up to carry it and traded back down on Monday. Hold every started leg through its own '
-        f'market&rsquo;s closures instead and the same eight families turn over <b>{ann_turn_held:.1f}&times;</b> '
-        f'&mdash; {ann_turn / max(ann_turn_held, 1e-9):.0f}&times; less'
-        + (f' &mdash; for Sharpe {sc_held["sharpe"]:+.2f}, max-DD {_pc(sc_held["max_dd"])} and worst month '
-           f'{_pc(sc_held["worst_month"])}, i.e. no worse on any target' if sc_held else '')
-        + f'. The shipped convention is what every figure on this page measures and charges; the cheaper one '
-        f'is a stated, measured improvement to make deliberately, not a number claimed here. This is the '
-        f'assembly layer only &mdash; each family&rsquo;s instrument turnover is charged inside its own net '
-        f'returns and reported in its deep-dive.</p>{tl_note}</figure>'
+        f'<p class="valline"><b>Most of it is the calendar, not conviction.</b> The book equal-weights the '
+        f'legs that <i>print</i> each day, so a weekend closure re-weights the crypto legs up and back down '
+        f'on Monday. Holding each leg through its own market&rsquo;s closures instead turns over '
+        f'<b>{ann_turn_held:.1f}&times;</b> ({ann_turn / max(ann_turn_held, 1e-9):.0f}&times; less)'
+        + (f' at Sharpe {sc_held["sharpe"]:+.2f}, max-DD {_pc(sc_held["max_dd"])}, worst month '
+           f'{_pc(sc_held["worst_month"])} &mdash; no worse on any target' if sc_held else '')
+        + f'. Every figure here measures and charges the shipped convention; the cheaper one is a measured '
+        f'option, not a claim. Assembly layer only &mdash; instrument turnover is charged inside each '
+        f'family&rsquo;s own returns.</p>{tl_note}</figure>'
         f'<figure class="card"><figcaption>Cost sensitivity (§9) &mdash; {be_txt}</figcaption>'
         f'<table><tr><th>cost level</th><th>Sharpe</th><th>max DD</th><th>CAGR</th></tr>{cost_rows}</table>'
         f'<p class="valline">The book&rsquo;s {ann_turn:.0f}&times;/yr rebalancing turnover at a blended '
