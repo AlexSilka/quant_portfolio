@@ -245,7 +245,7 @@ betting-against-beta / low-vol (§4 of the report).
 **Targets (declared per sleeve): triple-barrier** — upper `+pt·σ_t`, lower `−sl·σ_t`, vertical at
 `t+h` (max holding). The label is the sign of the first barrier touched; the meta-label is whether the
 primary's bet won. `σ_t` is trailing volatility; sample weights account for label overlap in time. The
-total candidate count generated and evaluated is reported (the 1,279-sleeve discovery zoo, §6).
+total candidate count generated and evaluated is reported (the 2,129-sleeve discovery zoo, §6).
 
 ---
 

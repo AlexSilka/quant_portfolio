@@ -220,13 +220,24 @@ def risk_overlay(raw, leverage=1.0, limits="book_equity"):
     return managed.rename("ret"), gross.rename("gross"), int((breaker == 0).sum())
 
 
-def book_turnover(scales):
-    """Book rebalancing turnover time-series (annualised), from the daily change in each leg's
-    risk-parity weight w_i = scale_i / Σ scale. Captures the re-weighting turnover the assembly adds;
-    intra-sleeve turnover is reported per-family in each deep-dive (§9). Proxy, labelled as such."""
-    w = scales.div(scales.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0)
-    dturn = 0.5 * w.diff().abs().sum(axis=1)                  # one-way fraction traded per bar
-    return (dturn.rolling(30).mean() * PPY).rename("turnover")   # annualised, 30-bar smooth
+def book_weights(df, scales):
+    """The per-leg weights the book's own return series implies, day by day — the single source every
+    exposure / turnover / rebalance-log figure is derived from (verified: (raw_legs * these).sum(axis=1)
+    reproduces `df.mean(axis=1, skipna=True)` to 1e-17).
+
+    The book averages over the legs that PRINT each day, so a leg's weight is scale_i / n_printing, and
+    on a day when the equity and Cboe markets are shut the crypto legs carry the whole book. That is a
+    consequence of the equal-weight-over-live-legs convention, and it is where most of the book's
+    measured turnover comes from — quantified on the dashboard, not smoothed away here."""
+    n_live = df.notna().sum(axis=1).replace(0, np.nan)
+    return scales.where(df.notna()).div(n_live, axis=0)
+
+
+def book_turnover(w):
+    """Book rebalancing turnover per day, round-trip (Σ|Δweight|), from the weights above. Unsmoothed
+    and unannualised — consumers annualise. Intra-sleeve turnover is charged inside every family's own
+    net returns and reported per-family in the deep-dives (§9); this is the assembly layer only."""
+    return w.fillna(0.0).diff().abs().sum(axis=1).rename("turnover")
 
 
 def describe(s, mc=True):
@@ -271,7 +282,19 @@ def main():
     # genuine EQUAL-WEIGHT risk parity — every family at 1/N, no performance-based selection.
     raw_ew = df.mean(axis=1, skipna=True).rename("ret")
     managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
-    turn = book_turnover(scales)
+    w = book_weights(df, scales)
+    turn = book_turnover(w)
+    ann_turn = float(turn.mean() * PPY)
+    # The same book with every leg that has STARTED holding a weight every day — its last computable
+    # scale carried through the days its own market is shut — instead of the book renormalising onto
+    # whoever is open. Both the turnover it would trade and the return it would earn, because the gap
+    # between the two conventions is the honest measure of what the shipped one costs.
+    started = pd.DataFrame({c: (df.index >= df[c].first_valid_index())
+                               & (df.index <= df[c].last_valid_index()) for c in df.columns}, index=df.index)
+    w_held = scales.where(df.notna()).ffill().where(started).div(started.sum(axis=1), axis=0)
+    ann_turn_held = float(book_turnover(w_held).mean() * PPY)
+    ret_held = df.fillna(0.0).where(started).sum(axis=1) / started.sum(axis=1)
+    sc_held = scorecard(ret_held.dropna())
     stack_vol = float(raw_ew.std(ddof=1) * np.sqrt(ppy_of(raw_ew)))
 
     print("=== GROSS PREMIUM STACK (equal-weight risk parity, no overlay, unlevered) ===")
@@ -291,6 +314,10 @@ def main():
           f"${fx_full['pnl_usd']:,.0f} (${fx_full['pnl_usd_per_year']:,.0f}/yr)")
     print(f"  book gross exposure: min {gross.min():.2f} mean {gross.mean():.2f} max {gross.max():.2f} (cap {GROSS_CAP})")
     print(f"  book net exposure ~0 (legs dollar-neutral); per-family weight 1/{len(df.columns)} (cap {PER_FAMILY_CAP:.2f})")
+    print(f"  annual turnover {ann_turn:.1f}x round-trip. Holding every started leg through the days its own "
+          f"market is shut, instead of renormalising onto whoever is open, would turn over {ann_turn_held:.1f}x "
+          f"for {sc_held} — same book, a fifteenth of the trading; the shipped convention is what is measured "
+          f"and charged everywhere, this is the improvement it points at")
 
     m = describe(managed)          # MC on the deliverable (managed) book
     per_year = per_period(managed, "Y")
@@ -340,8 +367,7 @@ def main():
     # risk-parity rebalances of the family sleeves; the combined instrument-level fills live separately in
     # master_book_oos_trades.csv (make_oos_ledger, from each family's deep-dive e.g. trend_oos_trade_log.csv).
     # One row per sleeve per OOS day it is re-weighted.
-    w = scales.div(scales.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0)
-    w_oos = w[w.index >= OOS]
+    w_oos = w[w.index >= OOS].fillna(0.0)
     dw_oos = w_oos.diff().fillna(0.0)
     trades = []
     for dt in w_oos.index:
@@ -359,7 +385,11 @@ def main():
     managed.to_frame().to_parquet(R / "master_book.parquet")
     raw_ew.rename("ret").to_frame().to_parquet(R / "master_book_raw.parquet")
     df.to_parquet(R / "master_book_legs.parquet")
-    pd.DataFrame({"gross": gross, "turnover": turn}).to_parquet(R / "master_book_exposure.parquet")
+    # every exposure/turnover/cost figure downstream reads these two files — nothing re-derives the
+    # assembly from the family blocks, which is how a stale family list or the wrong column slips in
+    w.to_parquet(R / "master_book_weights.parquet")
+    pd.DataFrame({"gross": gross, "family_gross": w.abs().sum(axis=1),
+                  "turnover": turn}).to_parquet(R / "master_book_exposure.parquet")
     corr.to_csv(R / "master_book_correlation.csv")
     pd.DataFrame(marg).to_csv(R / "master_book_marginal.csv", index=False)
     (R / "master_book_summary.json").write_text(json.dumps({
@@ -371,6 +401,12 @@ def main():
         "gross_premium_full": sc_raw_full, "gross_premium_oos": sc_raw_oos,
         "without_breakout": mw, "per_year": per_year, "per_quarter": per_period(managed, "Q"),
         "standalone_sharpe": solo, "mean_correlation": mean_corr, "correlation_stability": corr_stab,
+        # §11 turnover, round-trip x capital per year. `weights_held` is the same book with every started
+        # leg holding a weight through the days its own market is shut, instead of the book renormalising
+        # onto whoever is open; the gap between the two is what the shipped convention costs in trading,
+        # and `scorecard_weights_held` is what it earns, so the comparison is not one-sided.
+        "annual_turnover": round(ann_turn, 1), "annual_turnover_weights_held": round(ann_turn_held, 1),
+        "scorecard_weights_held": sc_held,
         "pnl_share": pnl_share, "marginal": marg, "top_removed": {"family": top, "sharpe": notop},
         "breakout_delta_sharpe": summarise(raw_ew, ppy_of(raw_ew))["sharpe_ann"] - mw["sharpe"],
         "risk_limits": {"ladder": LADDER, "restore": LADDER_RESTORE, "daily_loss_limit": DAILY_LOSS_LIMIT,

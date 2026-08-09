@@ -64,7 +64,7 @@ no key, offline, seconds each:
 
 Re-running `make master` then `git diff reports/master_book_summary.json` shows **no change** —
 byte-for-byte reproducibility. The Sharpe is high because the book **selects no single sleeve** (the
-best sleeve's deflated Sharpe ≈ 0 at N = 1,279): it stacks eight decorrelated premia (mean ρ ≈ 0.06).
+best sleeve's deflated Sharpe ≈ 0 at N = 2,129): it stacks eight decorrelated premia (mean ρ ≈ 0.06).
 Every Sharpe is annualised by actual obs/yr (not a flat 365), and the short-vol leg is net of
 per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
 

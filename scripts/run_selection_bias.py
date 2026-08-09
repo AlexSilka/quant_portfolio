@@ -27,15 +27,17 @@ import numpy as np
 import pandas as pd
 
 from src import bo_common as bo
-from src.config import SEED
+from src.config import REPORTS_DIR, SEED
 from src.metrics import deflated_sharpe
 
 PPY = 365                      # zoo sleeves are carried as daily series on the crypto calendar
 WINDOW_START = "2021-01-01"    # CSCV's window: the point where a large pool is simultaneously live
 MIN_COVERAGE = 0.95            # a candidate must be this dense on the window to be rank-comparable
 N_DRAWS = 2000                 # random candidate subsets per search-budget level
-BUDGETS = [1, 2, 3, 5, 10, 20, 50, 100, 200, 385]
-DECLARED = [1, 2, 5, 10, 50, 100, 385, 1279]   # trial counts to deflate the same winner at
+BUDGETS = [1, 2, 3, 5, 10, 20, 50, 100, 200]   # search budgets; the live pool size is appended at run time
+DECLARED = [1, 2, 5, 10, 50, 100]              # trial counts to deflate the same winner at; the pool size
+                                               # and the zoo's real trial count are appended at run time,
+                                               # so the top rung can never drift from the mined N
 SPLITS = np.linspace(0.35, 0.65, 7)            # split points; one chronological cut is a single draw
 
 
@@ -52,6 +54,12 @@ def main():
     # so every candidate is scored on the identical calendar
     panel = win[win.columns[win.notna().mean() >= MIN_COVERAGE]].fillna(0.0)
     pool = panel.shape[1]
+    # the ladders end at what was actually mined, read from the zoo rather than pinned in this file —
+    # a hardcoded top rung silently understates the haircut the moment the grid grows
+    zp = REPORTS_DIR / "book" / "zoo_summary.json"
+    n_mined = int(json.loads(zp.read_text()).get("n_trials", pool)) if zp.exists() else pool
+    budgets = sorted({n for n in BUDGETS if n <= pool} | {pool})
+    declared = sorted({n for n in DECLARED if n <= n_mined} | {pool, n_mined})
     ann = np.sqrt(PPY)
     cuts = [int(len(panel) * f) for f in SPLITS]
     print(f"pool {pool} candidates on {panel.index[0].date()}..{panel.index[-1].date()} "
@@ -61,7 +69,7 @@ def main():
     rng = np.random.default_rng(SEED)
     # accumulate every split's answer, then report the median across splits — a single chronological
     # cut is one draw from a noisy distribution and would read as precision the design does not have
-    acc = {n: {"is": [], "oos": [], "lose": [], "vs_rand": []} for n in BUDGETS if n <= pool}
+    acc = {n: {"is": [], "oos": [], "lose": [], "vs_rand": []} for n in budgets}
     randoms, var_list = [], []
 
     for cut in cuts:
@@ -116,7 +124,7 @@ def main():
     declared = [{"declared_trials": n,
                  "deflated_sharpe": round(float(deflated_sharpe(float(sr_is[best]), len(col), sk, ku,
                                                                 max(n, 2), var_trials)), 3)}
-                for n in DECLARED]
+                for n in declared]
     print(f"\nbest sleeve ({panel.columns[best]}): in-sample Sharpe {sr_is[best] * ann:+.2f}, "
           f"out-of-sample {sr_oos[best] * ann:+.2f}")
     print("  same track record, deflated at a declared trial count of:")

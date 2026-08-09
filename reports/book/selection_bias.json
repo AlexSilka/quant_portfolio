@@ -12,11 +12,11 @@
     "2024-05-10",
     "2024-08-20"
   ],
-  "pool": 385,
+  "pool": 641,
   "n_bars": 2043,
   "n_draws": 2000,
-  "var_across_trials": 0.0024398,
-  "random_pick_sharpe_oos": -0.328,
+  "var_across_trials": 0.07627075,
+  "random_pick_sharpe_oos": -0.722,
   "best_sleeve": {
     "name": "SOLUSDT_1h_trend",
     "sharpe_is": 1.421,
@@ -25,137 +25,137 @@
   "by_budget": [
     {
       "n_candidates": 1,
-      "winner_sharpe_is": -0.15,
-      "winner_sharpe_oos": -0.319,
-      "winner_sharpe_oos_min_split": -0.391,
-      "winner_sharpe_oos_max_split": -0.306,
-      "p_winner_loses_oos": 0.671,
-      "edge_over_random_oos": -0.016,
-      "inflation_is_over_oos": 0.17
+      "winner_sharpe_is": -0.562,
+      "winner_sharpe_oos": -0.74,
+      "winner_sharpe_oos_min_split": -0.798,
+      "winner_sharpe_oos_max_split": -0.671,
+      "p_winner_loses_oos": 0.768,
+      "edge_over_random_oos": -0.018,
+      "inflation_is_over_oos": 0.178
     },
     {
       "n_candidates": 2,
-      "winner_sharpe_is": 0.264,
-      "winner_sharpe_oos": -0.144,
-      "winner_sharpe_oos_min_split": -0.183,
-      "winner_sharpe_oos_max_split": -0.082,
-      "p_winner_loses_oos": 0.573,
-      "edge_over_random_oos": 0.156,
-      "inflation_is_over_oos": 0.409
+      "winner_sharpe_is": 0.072,
+      "winner_sharpe_oos": -0.329,
+      "winner_sharpe_oos_min_split": -0.359,
+      "winner_sharpe_oos_max_split": -0.303,
+      "p_winner_loses_oos": 0.66,
+      "edge_over_random_oos": 0.4,
+      "inflation_is_over_oos": 0.402
     },
     {
       "n_candidates": 3,
-      "winner_sharpe_is": 0.465,
-      "winner_sharpe_oos": -0.035,
-      "winner_sharpe_oos_min_split": -0.119,
-      "winner_sharpe_oos_max_split": -0.012,
-      "p_winner_loses_oos": 0.523,
-      "edge_over_random_oos": 0.272,
-      "inflation_is_over_oos": 0.5
+      "winner_sharpe_is": 0.308,
+      "winner_sharpe_oos": -0.188,
+      "winner_sharpe_oos_min_split": -0.267,
+      "winner_sharpe_oos_max_split": -0.17,
+      "p_winner_loses_oos": 0.606,
+      "edge_over_random_oos": 0.536,
+      "inflation_is_over_oos": 0.496
     },
     {
       "n_candidates": 5,
-      "winner_sharpe_is": 0.67,
-      "winner_sharpe_oos": 0.018,
-      "winner_sharpe_oos_min_split": -0.017,
-      "winner_sharpe_oos_max_split": 0.065,
-      "p_winner_loses_oos": 0.484,
-      "edge_over_random_oos": 0.357,
-      "inflation_is_over_oos": 0.652
+      "winner_sharpe_is": 0.509,
+      "winner_sharpe_oos": -0.108,
+      "winner_sharpe_oos_min_split": -0.188,
+      "winner_sharpe_oos_max_split": -0.037,
+      "p_winner_loses_oos": 0.559,
+      "edge_over_random_oos": 0.63,
+      "inflation_is_over_oos": 0.617
     },
     {
       "n_candidates": 10,
-      "winner_sharpe_is": 0.889,
-      "winner_sharpe_oos": 0.058,
-      "winner_sharpe_oos_min_split": 0.014,
-      "winner_sharpe_oos_max_split": 0.129,
-      "p_winner_loses_oos": 0.454,
-      "edge_over_random_oos": 0.39,
-      "inflation_is_over_oos": 0.83
+      "winner_sharpe_is": 0.774,
+      "winner_sharpe_oos": 0.011,
+      "winner_sharpe_oos_min_split": -0.106,
+      "winner_sharpe_oos_max_split": 0.06,
+      "p_winner_loses_oos": 0.509,
+      "edge_over_random_oos": 0.724,
+      "inflation_is_over_oos": 0.762
     },
     {
       "n_candidates": 20,
-      "winner_sharpe_is": 1.097,
-      "winner_sharpe_oos": 0.071,
-      "winner_sharpe_oos_min_split": -0.093,
-      "winner_sharpe_oos_max_split": 0.149,
-      "p_winner_loses_oos": 0.451,
-      "edge_over_random_oos": 0.369,
-      "inflation_is_over_oos": 1.026
+      "winner_sharpe_is": 0.997,
+      "winner_sharpe_oos": 0.019,
+      "winner_sharpe_oos_min_split": -0.033,
+      "winner_sharpe_oos_max_split": 0.098,
+      "p_winner_loses_oos": 0.481,
+      "edge_over_random_oos": 0.757,
+      "inflation_is_over_oos": 0.977
     },
     {
       "n_candidates": 50,
-      "winner_sharpe_is": 1.317,
-      "winner_sharpe_oos": 0.142,
-      "winner_sharpe_oos_min_split": 0.011,
-      "winner_sharpe_oos_max_split": 0.349,
-      "p_winner_loses_oos": 0.423,
-      "edge_over_random_oos": 0.484,
-      "inflation_is_over_oos": 1.175
+      "winner_sharpe_is": 1.28,
+      "winner_sharpe_oos": 0.113,
+      "winner_sharpe_oos_min_split": -0.018,
+      "winner_sharpe_oos_max_split": 0.307,
+      "p_winner_loses_oos": 0.452,
+      "edge_over_random_oos": 0.821,
+      "inflation_is_over_oos": 1.167
     },
     {
       "n_candidates": 100,
-      "winner_sharpe_is": 1.48,
-      "winner_sharpe_oos": 0.255,
-      "winner_sharpe_oos_min_split": 0.011,
-      "winner_sharpe_oos_max_split": 0.351,
-      "p_winner_loses_oos": 0.373,
-      "edge_over_random_oos": 0.583,
-      "inflation_is_over_oos": 1.225
+      "winner_sharpe_is": 1.38,
+      "winner_sharpe_oos": 0.149,
+      "winner_sharpe_oos_min_split": -0.254,
+      "winner_sharpe_oos_max_split": 0.35,
+      "p_winner_loses_oos": 0.422,
+      "edge_over_random_oos": 0.854,
+      "inflation_is_over_oos": 1.231
     },
     {
       "n_candidates": 200,
-      "winner_sharpe_is": 1.559,
+      "winner_sharpe_is": 1.48,
       "winner_sharpe_oos": 0.276,
-      "winner_sharpe_oos_min_split": -1.004,
-      "winner_sharpe_oos_max_split": 0.638,
-      "p_winner_loses_oos": 0.286,
-      "edge_over_random_oos": 0.618,
-      "inflation_is_over_oos": 1.282
+      "winner_sharpe_oos_min_split": -0.609,
+      "winner_sharpe_oos_max_split": 0.351,
+      "p_winner_loses_oos": 0.355,
+      "edge_over_random_oos": 0.981,
+      "inflation_is_over_oos": 1.204
     },
     {
-      "n_candidates": 385,
+      "n_candidates": 641,
       "winner_sharpe_is": 1.597,
       "winner_sharpe_oos": 0.276,
       "winner_sharpe_oos_min_split": -1.287,
       "winner_sharpe_oos_max_split": 0.638,
       "p_winner_loses_oos": 0.286,
-      "edge_over_random_oos": 0.618,
+      "edge_over_random_oos": 0.981,
       "inflation_is_over_oos": 1.321
     }
   ],
   "by_declared_trials": [
     {
       "declared_trials": 1,
-      "deflated_sharpe": 0.943
+      "deflated_sharpe": 0.012
     },
     {
       "declared_trials": 2,
-      "deflated_sharpe": 0.943
+      "deflated_sharpe": 0.012
     },
     {
       "declared_trials": 5,
-      "deflated_sharpe": 0.692
+      "deflated_sharpe": 0.0
     },
     {
       "declared_trials": 10,
-      "deflated_sharpe": 0.456
+      "deflated_sharpe": 0.0
     },
     {
       "declared_trials": 50,
-      "deflated_sharpe": 0.108
+      "deflated_sharpe": 0.0
     },
     {
       "declared_trials": 100,
-      "deflated_sharpe": 0.05
+      "deflated_sharpe": 0.0
     },
     {
-      "declared_trials": 385,
-      "deflated_sharpe": 0.009
+      "declared_trials": 641,
+      "deflated_sharpe": 0.0
     },
     {
-      "declared_trials": 1279,
-      "deflated_sharpe": 0.002
+      "declared_trials": 2129,
+      "deflated_sharpe": 0.0
     }
   ]
 }

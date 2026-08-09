@@ -3,10 +3,12 @@ master-book artifacts. The interactive dashboard renders these inline as SVG; th
 PNG deliverables the brief asks for so they never go stale relative to the book.
 
 Charts: portfolio equity, per-sleeve equity curves, drawdown, monthly-return heatmap, rolling 12-month
-Sharpe, book gross exposure over time, book turnover over time, sleeve correlation matrix, edge map.
+Sharpe, book gross exposure over time, book turnover over time, sleeve correlation matrix, edge map,
+survival funnel.
 
     python scripts/make_figures.py
 """
+import json
 import warnings
 from pathlib import Path
 
@@ -106,9 +108,11 @@ def main():
         _save(fig, "exposure.png")
 
         fig, ax = plt.subplots(figsize=(11, 3.0))
-        ax.plot(ex.index, ex["turnover"], color="#9467bd", lw=1.2)
-        ax.set_title("Book rebalancing turnover over time (annualised; intra-sleeve reported per-family)")
-        ax.set_ylabel("×/yr")
+        # the book publishes the daily round-trip series; smooth it to a rolling annual rate so the chart
+        # reads in the same unit the scorecard quotes, rather than as a daily fraction
+        ax.plot(ex.index, ex["turnover"].rolling(30, min_periods=5).mean() * 365, color="#9467bd", lw=1.2)
+        ax.set_title("Book rebalancing turnover (30-day mean, annualised; intra-sleeve reported per-family)")
+        ax.set_ylabel("× round-trip/yr")
         _save(fig, "turnover.png")
 
     # (h) sleeve correlation matrix
@@ -138,6 +142,25 @@ def main():
         ax.set_title("Edge map — Sharpe by timeframe × strategy family (discovery zoo)")
         ax.grid(False); fig.colorbar(im, ax=ax, fraction=0.03)
         _save(fig, "edge_map.png")
+
+    # (j) §6 survival funnel — the five gate counts, drawn from the zoo's own summary rather than kept
+    # as a hand-made PNG no command can rebuild
+    zp = R / "book" / "zoo_summary.json"
+    if zp.exists():
+        fn = json.loads(zp.read_text()).get("funnel", [])
+        if fn:
+            labels = [lab for lab, _ in fn][::-1]
+            counts = [int(n) for _, n in fn][::-1]
+            fig, ax = plt.subplots(figsize=(9, 0.55 * len(fn) + 1.4))
+            ax.barh(range(len(fn)), counts, color="#4a69c7", height=0.62)
+            ax.set_yticks(range(len(fn))); ax.set_yticklabels(labels, fontsize=8)
+            ax.set_xscale("log")
+            for i, n in enumerate(counts):
+                ax.text(n * 1.08, i, f"{n:,}", va="center", fontsize=8)
+            ax.set_title(f"Survival funnel (§6) — {counts[-1]:,} candidates mined, "
+                         f"{counts[0]:,} entered the portfolio")
+            ax.set_xlabel("candidates (log scale)")
+            _save(fig, "funnel.png")
 
     print("FIGURES OK")
 

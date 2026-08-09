@@ -100,9 +100,13 @@ A complete, reproducible pipeline, every stage runnable:
   honest survivorship-free universe): **trend, carry, short-vol/VRP, cross-sectional momentum, breakout,
   betting-against-beta / low-vol**, plus two structural diversifiers — **crisis-alpha** (multi-asset
   managed-futures trend, `run_crisis.py`) and **global-macro** (EM-FX + commodities trend, `run_gmacro.py`).
-  The systematic search's **survival funnel** (§6/§12): **1,279 candidate sleeves generated → 93 pass
-  in-sample (Sharpe > 0.5) → 54 clear Monte-Carlo (P5 > 0) → 54 enter** the discovery-zoo satellite
-  (`reports/book/zoo_summary.json`, `figures/funnel.png`); the family deep-dives are developed on top.
+  The systematic search's **survival funnel** (§6/§12), the five stages in the order the gates are applied:
+  **2,129 candidate sleeves generated → 107 pass in-sample (Sharpe > 0.5) → 61 pass walk-forward (their own
+  out-of-sample track > 0.5) → 46 clear Monte-Carlo (bootstrap P5 > 0) → 46 enter** the discovery-zoo
+  satellite (`reports/book/zoo_summary.json`, `figures/funnel.png`); the family deep-dives are developed on
+  top. The trial count is 2,129 rather than the 1,279 an earlier run declared because that run mined a
+  partly-warm bar cache; the FX leg of the grid is now a written-down list, so N cannot drift with cache
+  state again — and a larger declared N is the stricter of the two, since it deepens the deflation haircut.
 - **Portfolio assembly** — one canonical script (`scripts/run_master_book.py`) risk-parity-combines the
   eight families from their published honest series into the master book (§4).
 - **Meta-label confidence gate — measured (§5's ML-incremental-value requirement)** — a LightGBM meta-label
@@ -139,7 +143,7 @@ A complete, reproducible pipeline, every stage runnable:
 - **Validation** — purged/embargoed CV; a **four-scheme Monte Carlo** (block bootstrap + trade-order resample
   + entry jitter ±1-3 bars + randomised start dates, each with P5/P50/P95 of Sharpe, max-DD and monthly hit);
   a placebo (shuffled-signal) arm; and the **mandatory multiple-testing triad** — deflated Sharpe, placebo-FDR,
-  and **CSCV probability of backtest overfitting** (`run_cscv.py`, PBO = 32%) — all at the true trial count.
+  and **CSCV probability of backtest overfitting** (`run_cscv.py`, PBO = 13%) — all at the true trial count.
 
 ## 3. Method — search everywhere, size by risk
 
@@ -450,38 +454,40 @@ to −4% turns it back on. All three are causal — they read yesterday's equity
 
 ## 5. Validation evidence
 
-- **Discovery multiple-testing (the full 1,279-sleeve zoo):** the placebo (shuffled-signal) arm gives a
-  **false-discovery rate of 1.3%**; the best single sleeve's **deflated Sharpe is ~0.02 at N = 1,279** —
+- **Discovery multiple-testing (the full 2,129-sleeve zoo):** the placebo (shuffled-signal) arm gives a
+  **false-discovery rate of 0.6%**; the best single sleeve's **deflated Sharpe is 0.00 at N = 2,129** —
   individually marginal, so the book's robustness is a diversification effect, not a lucky sleeve.
 - **Probability of backtest overfitting (CSCV, §6, `scripts/run_cscv.py`):** across all
-  C(16,8)=12,870 in/out splits of the trial set (385 sleeves with dense coverage on the 2021+ common window),
-  **PBO = 32%**, and the in-sample-best sleeve degrades from
-  **+0.09 to +0.00 Sharpe/bar** out of sample (P(selected loses OOS) = 45%) — a quantified confirmation that
+  C(16,8)=12,870 in/out splits of the trial set (641 sleeves with dense coverage on the 2021+ common window),
+  **PBO = 13%**, and the in-sample-best sleeve degrades from
+  **+0.09 to +0.00 Sharpe/bar** out of sample (P(selected loses OOS) = 44%) — a quantified confirmation that
   single-sleeve selection is largely overfit, which is exactly why the traded book selects nothing and stacks
   decorrelated premia instead. Deflated Sharpe + placebo-FDR + CSCV together are the mandatory multiple-testing
   triad.
 - **The dose-response behind PBO — what a search budget actually buys** (`scripts/run_selection_bias.py`,
-  `make selection-bias`; the 385 dense-coverage candidates on CSCV's 2021+ window, median over 7 split
+  `make selection-bias`; the 641 dense-coverage candidates on CSCV's 2021+ window, median over 7 split
   points, 2,000 random candidate subsets per budget). Sweeping the number of candidates searched from
-  1 to 385 and picking the in-sample winner each time:
+  1 to 641 and picking the in-sample winner each time:
 
   | candidates searched | winner's in-sample Sharpe | its out-of-sample Sharpe | inflation | P(winner loses OOS) |
   |---|---|---|---|---|
-  | 1 | −0.15 | −0.32 | +0.17 | 67% |
-  | 10 | +0.89 | +0.06 | +0.83 | 45% |
-  | 50 | +1.32 | +0.14 | +1.18 | 42% |
-  | 100 | +1.48 | +0.26 | +1.23 | 37% |
-  | 385 | +1.60 | +0.28 | +1.32 | 29% |
+  | 1 | −0.56 | −0.74 | +0.18 | 77% |
+  | 10 | +0.77 | +0.01 | +0.76 | 51% |
+  | 50 | +1.28 | +0.11 | +1.17 | 45% |
+  | 100 | +1.38 | +0.15 | +1.23 | 42% |
+  | 641 | +1.60 | +0.28 | +1.32 | 29% |
 
   The in-sample column rises **an order of magnitude** with the search budget while the out-of-sample
-  column is **flat from N≈10 onward** — the gain is an order statistic, not edge, and the gap (**+0.17 →
+  column is **flat from N≈10 onward** — the gain is an order statistic, not edge, and the gap (**+0.18 →
   +1.32**) is the part of any mined backtest that belongs to the search. Selection is not *worthless*
-  here — the winner does beat an unselected candidate (median OOS **−0.33**) by **+0.62** — but that
+  here — the winner does beat an unselected candidate (median OOS **−0.72**) by **+1.00** — but that
   margin is mostly avoiding the structurally cost-killed families, a call available **before** looking at
-  results, and the winner still loses out-of-sample **29–45%** of the time. **The same winner, deflated at
+  results, and the winner still loses out-of-sample **29–51%** of the time. **The same winner, deflated at
   a range of *declared* trial counts** (identical track record, only the disclosed search budget changes):
-  N=1 → **0.94**, N=10 → **0.46**, N=100 → **0.05**, N=1,279 → **0.00**. The multiple-testing penalty is
-  set by a number only the researcher knows, which is why the trial count is published here.
+  N=1 → **0.01**, N=5 → **0.00**, and **0.00** at every rung above it, to the full N = 2,129. The
+  multiple-testing penalty is set by a number only the researcher knows, which is why the trial count is
+  published here — and why the ladder now ends at whatever the zoo actually mined rather than at a
+  constant pinned in the script.
 - **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+3.22** (full four-scheme table in §4).
 - **Leakage:** execution is delayed to t+2 (never the signal bar's own close); funding is charged at
   every 8h settlement; costs are liquidity-aware (√-impact scaled to bar $-volume, never flat); vol
@@ -586,7 +592,7 @@ allocation nets +3.68 but on a **−44% drawdown (3× the equal-weight tail)** �
 **What is and isn't fitted (the obvious question).** The task invites modelling (§5), and we fit where
 fitting is *validated*: the LightGBM **meta-label** models (fit inside purged/embargoed folds, with a non-ML
 baseline so incremental value is measured — consolidated per family in §5d), the per-family **parameter walk-forward** (§5b), and the
-discovery-zoo **sleeve selection** (re-selected each rebalance, WF-OOS Sharpe +0.20). What is deliberately
+discovery-zoo **sleeve selection** (re-selected each rebalance, WF-OOS Sharpe +0.13). What is deliberately
 *a-priori* is (a) the classical-rule parameters — the sensitivity surface shows the edge is a plateau, not a
 fitted spike, so optimising them would only add overfit — and (b) the portfolio weights (equal, justified
 above). **Nothing is fit against the final OOS block.**
