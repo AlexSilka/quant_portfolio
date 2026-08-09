@@ -74,7 +74,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
   **worst month**: at **−4.1%** against **−6%** it clears on both accounting conventions (fixed-$500k reads
   **−5.85%**), but it is a single month (Oct-2018; the next worst is −4.0%) sitting close to the floor, and the
   bootstrap puts a −7.8% month inside its 5th percentile. **1.15× is the level that ships, on both
-  conventions** — 1.20× passes the compounded one by 1bp and fails the fixed-size one, 1.25× fails both (§4b). The **−78% standalone tail is untouched by the gate** (§6c-bis prices a hedge that would bound it): into the 2010 flash crash the
+  conventions** — 1.20× passes the compounded one by 1bp and fails the fixed-size one, 1.25× fails both (§4b). The **−78% standalone tail is untouched**: into the 2010 flash crash the
   curve stood at VIX3M/VIX **1.059** and inverted only on the crash day, so a one-session dislocation out of a
   calm curve is unreachable by any term-structure rule.
 
@@ -129,8 +129,25 @@ A complete, reproducible pipeline, every stage runnable:
   +2.68 / +1.73** (max-DD −7.4% / −11.5% / −20.5%),
   **break-even at ≈5×**; that charge is deliberately conservative — it counts the mixed 252/365
   calendar's weekend renormalisation as trading, so it bills ~119× round-trip a year against the
-  ~7.4× the book actually rebalances. Per-family robustness runs higher still (breakout break-even
-  10.4×, x-sect 7.8×, vol-prem Sharpe 2.16 at 5× its vega spread) — no surviving sleeve is cost-fragile.
+  ~7.4× the book actually rebalances. **Per family, cost as a share of gross P&L**, each measured
+  by re-running that family's own construction with its cost model switched off
+  (`scripts/measure_family_costs.py`):
+
+| family | cost / gross P&L | break-even | cost-fragile |
+|---|---|---|---|
+| crisis-alpha | 33.8% | 3.0× | **yes** |
+| carry * | 20.3% | 4.9× | no |
+| x-sect | 15.6% | 6.4× | no |
+| global-macro | 14.8% | 6.8× | no |
+| breakout | 9.6% | 10.4× | no |
+| BAB | 1.6% | 63.6× | no |
+
+  \* carry's re-run reproduces the published series to 2.6% rather than exactly, so its share is
+  approximate. **1 of the eight is cost-fragile: crisis-alpha**, which
+  pays 33.8% of its gross P&L in cost and breaks even at 3.0× — expected for a
+  crash-hedge that trades to stay long gamma, and the reason it is held at 1/8 risk for what it does in the
+  bad months rather than for its own P&L. Vol-prem and trend publish a Sharpe at a cost multiple instead of a
+  break-even (vol-prem 2.16 at 5× its vega spread, trend 0.87 at 3×); neither is fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
   quoted at that size with **P&L not reinvested**: **$2.69M** over the 15-year window, **~$172k/yr**, worst month
@@ -952,37 +969,6 @@ book already clears all five targets on that block, so paying scored Sharpe to b
 *supporting*-window metric that already passes is the wrong trade. Recorded as a measured option, not taken:
 if a future window puts the worst month back on its limit, E at 0.15–0.25 of a slot is the lever with the
 evidence already attached.
-
-## 6c-bis. The −78% tail is hedgeable after all — priced, not shipped (§12)
-
-The book's largest single risk is the short-vol leg's **−78% tail**, and every prior section treats it as
-irreducible because "a real tail hedge needs the live option smile — paid data". **That claim is retracted.**
-The obstacle was never the price of data; it was that no part of this project had ever looked at an option
-quote. historicaldata.net publishes **Jan–Jun 2013 free**, full chain with bid/ask, greeks and IV on 3,800
-underlyings — enough to price the wing directly ([VOLPREM.md §4c](docs/strategies/VOLPREM.md),
-`scripts/volprem/run_wing_cost.py`).
-
-The wing's price *is* a truncation of the variance strip — cap at `var_cap·K²` and you give up its far tail,
-so `wing = K²(full) − K²(truncated)`, both legs from the same quoted chain. Measured over **615 chain-days**
-on the five deep legs it costs **12.0% of sold variance**; scaled through the cycle by Cboe's free **SKEW**
-index it is **16.2%**. The load-bearing surprise is the sign of that scaling in a crash: **×0.74 through the
-2008 GFC**, i.e. *below* the calm-window calibration, because at-the-money variance explodes faster than the
-tail strip. Tail protection gets relatively **cheaper** exactly when it pays, which is what makes a
-permanently-held cap affordable at all.
-
-| construction (18-leg book, VIX-gated) | Sharpe | max-DD | worst day | skew |
-|---|---|---|---|---|
-| naked — **what ships** | +4.42 | **−77.6%** | **−76.4%** | −26.3 |
-| capped 2.5×, wing unpaid — the known trap | +10.74 | −36.4% | −7.1% | −0.9 |
-| capped 2.5×, wing paid at the through-cycle 16.2% | **+6.89** | **−43.9%** | **−6.4%** | **−0.8** |
-
-**It is not shipped, and the reason is the margin.** Break-even is **~3× the calibration**: at 2× the leg
-still returns +4.3 but on a −64% drawdown, at 3× it is worthless. A 2.2× margin is thinner than every other
-cost sensitivity in this report (the book breaks even at 5×, the sleeve's vega spread at 22×), and the 12%
-comes from five legs in one calm half-year extended by an index proxy rather than by quotes. One crisis year
-of chains (~$99) settles it directly — a justified purchase now rather than a speculative one. Until then the
-deliverable keeps the naked book and its disclosed tail, because a headline resting on a 2.2× margin from a
-proxy is not a headline.
 
 ## 6d. The last hindsight universe: the trend leg's crypto core (§12)
 

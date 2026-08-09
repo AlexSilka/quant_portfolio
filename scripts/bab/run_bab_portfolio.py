@@ -28,14 +28,17 @@ from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 REP, CACHE = REPORTS_DIR, CACHE_DIR / "xs"
 SEED, PPY = SEED, 365
+COST_BPS = 6.0        # per-side crypto taker+spread on the BAB legs — the shipped charge
 
 
-def _bab_net(top_n):
+def _bab_net(top_n, cost_bps=COST_BPS):
+    """`cost_bps` is a parameter only so the same book can be re-run costless — that pair is what §9's
+    "cost as a share of gross P&L" is measured from; the shipped book always uses the default."""
     C = bab.winsorize_panel(pd.read_parquet(CACHE / "crypto_1d_close.parquet"), 1.0)
     A = pd.read_parquet(CACHE / "crypto_1d_adv.parquet").reindex_like(C)
     beta = top_n_liquid(bab.panel_beta(C, 90), A, top_n)
     w = bab.bab_weights(beta, top_frac=0.2, neutral="beta", rebal=21)
-    net = vol_target(bab.bab_backtest(C, w, exec_lag=2, cost_bps=6.0, adv=A, impact_k=0.1)["net"], PPY, VOL_TARGET_ANNUAL)
+    net = vol_target(bab.bab_backtest(C, w, exec_lag=2, cost_bps=cost_bps, adv=A, impact_k=0.1)["net"], PPY, VOL_TARGET_ANNUAL)
     net.index = net.index.tz_localize(None)
     return net.dropna()
 

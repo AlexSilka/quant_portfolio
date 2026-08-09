@@ -45,6 +45,7 @@ COMMOD_TD = ["XAG/USD", "XPT/USD", "WTI/USD", "URA", "CORN", "WEAT", "SOYB"]  # 
 COMMOD_LOCAL = ["GLD", "SLV", "USO", "DBC", "DBA"]                            # commodity ETFs (local store)
 LOOKBACKS = [(10, 20, 40), (20, 40, 63), (40, 63, 120)]
 PPY = 252
+COST_BPS = 2.0        # per unit of turnover on liquid EM-FX / commodity futures — the shipped charge
 
 
 def _fetch_td(sym: str) -> pd.Series | None:
@@ -92,24 +93,26 @@ def _vol_target(x, target=0.15, lb=60):
     return (x * lev).dropna()
 
 
-def _tsmom(close, lookbacks):
+def _tsmom(close, lookbacks, cost_bps=COST_BPS):
     r = close.pct_change(); vol = r.rolling(40).std()
     sig = sum(np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
     pos = sig.shift(1) * (0.15 / np.sqrt(PPY) / vol).clip(upper=3.0)
     n = close.shape[1]
-    return _vol_target((pos * r).sum(axis=1) / n - (pos.diff().abs().sum(axis=1) / n) * 2 / 1e4)
+    return _vol_target((pos * r).sum(axis=1) / n - (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4)
 
 
-def _class_book(close):
+def _class_book(close, cost_bps=COST_BPS):
     if close.empty or close.shape[1] == 0:
         return None
-    tranches = [_vol_target(_tsmom(close, lb)) for lb in LOOKBACKS]
+    tranches = [_vol_target(_tsmom(close, lb, cost_bps)) for lb in LOOKBACKS]
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna())
 
 
-def build_gmacro() -> pd.Series:
-    books = {"emfx": _class_book(_panel(EMFX)),
-             "commod": _class_book(_panel(COMMOD_TD, COMMOD_LOCAL))}
+def build_gmacro(cost_bps=COST_BPS) -> pd.Series:
+    """`cost_bps` is a parameter only so the same book can be re-run costless — that pair is what §9's
+    "cost as a share of gross P&L" is measured from; the shipped book always uses the default."""
+    books = {"emfx": _class_book(_panel(EMFX), cost_bps),
+             "commod": _class_book(_panel(COMMOD_TD, COMMOD_LOCAL), cost_bps)}
     live = {k: v for k, v in books.items() if v is not None and len(v) > 100}
     df = pd.DataFrame(live).sort_index()
     return _vol_target(df.mean(axis=1, skipna=True).dropna()).rename("ret")

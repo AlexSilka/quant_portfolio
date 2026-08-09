@@ -901,6 +901,26 @@ def main():
                    f'return-composed, so its trades are the daily risk-parity rebalances; the combined '
                    f'instrument-level fills ({n_tr:,}) are in <code>reports/master_book_oos_trades.csv</code> '
                    f'and per-family logs (e.g. <code>reports/trend/trend_oos_trade_log.csv</code>).</p>')
+    # §9/§12 per family: measured by re-running each family with its cost model off (measure_family_costs)
+    fcp = REP / "book" / "family_cost_shares.json"
+    fam_cost_txt = ""
+    if fcp.exists():
+        fc = json.loads(fcp.read_text())
+        shares = {k: v for src in (fc.get("re_run_here") or {}, fc.get("from_deep_dives") or {})
+                  for k, v in src.items() if "cost_share_of_gross_pnl" in v}
+        frag = [k for k, v in shares.items() if v.get("cost_fragile")]
+        if shares:
+            worst = max(shares, key=lambda k: shares[k]["cost_share_of_gross_pnl"])
+            fam_cost_txt = (
+                f' Measured per family by re-running each construction with its cost model switched off: '
+                f'the eight legs pay between '
+                f'{min(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} and '
+                f'{max(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} of gross P&amp;L in cost, '
+                + (f'and <b>{len(frag)} is cost-fragile ({", ".join(frag)}, break-even '
+                   f'{shares[worst]["breakeven_cost_mult"]:.1f}&times;)</b> &mdash; a crash hedge that trades '
+                   f'to stay long gamma, held for what it does in the bad months rather than for its own P&amp;L.'
+                   if frag else 'and none is cost-fragile.'))
+
     rl = summ.get("risk_limits", {})
     lim_txt = (f' The declared limits sit on the book multiplier, not on this sum: it runs at a constant '
                f'{rl["leverage"]:.2f}&times; against a {rl["gross_cap"]:.1f}&times; cap, net exposure ~0.'
@@ -931,8 +951,7 @@ def main():
         f'{COST_BPS:.0f}bps round-trip &mdash; about {ann_turn * COST_BPS / 1e4:.0%} of capital a year at '
         f'1&times; &mdash; re-charged at 1&times;/2&times;/3&times; on top of the itemised costs already inside '
         f'every family&rsquo;s returns. Per-family cost robustness, '
-        f'as each deep-dive publishes it: {perfam_be} &mdash; none of them is cost-fragile. Carry, crisis, '
-        f'global-macro and BAB run no cost sweep of their own, so they are not measured on this axis.</p></figure>')
+        f'as each deep-dive publishes it: {perfam_be}.{fam_cost_txt}</p></figure>')
 
     _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,

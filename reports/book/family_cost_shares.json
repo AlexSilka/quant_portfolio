@@ -1,0 +1,67 @@
+{
+  "re_run_here": {
+    "crisis-alpha": {
+      "gross_pnl": 2.6598,
+      "net_pnl": 1.7597,
+      "cost_share_of_gross_pnl": 0.3384,
+      "breakeven_cost_mult": 3.0,
+      "cost_fragile": true,
+      "reproduces_published_series": true
+    },
+    "global-macro": {
+      "gross_pnl": 4.3183,
+      "net_pnl": 3.6811,
+      "cost_share_of_gross_pnl": 0.1475,
+      "breakeven_cost_mult": 6.8,
+      "cost_fragile": false,
+      "reproduces_published_series": true
+    },
+    "BAB": {
+      "gross_pnl": 1.772,
+      "net_pnl": 1.7441,
+      "cost_share_of_gross_pnl": 0.0157,
+      "breakeven_cost_mult": 63.6,
+      "cost_fragile": false,
+      "reproduces_published_series": true
+    },
+    "carry": {
+      "gross_pnl": 1.6958,
+      "net_pnl": 1.3511,
+      "cost_share_of_gross_pnl": 0.2032,
+      "breakeven_cost_mult": 4.9,
+      "cost_fragile": false,
+      "reproduces_published_series": false,
+      "note": "re-run total return +1.351 vs published +1.387 (2.6% apart)"
+    }
+  },
+  "from_deep_dives": {
+    "breakout": {
+      "breakeven_cost_mult": 10.4,
+      "cost_share_of_gross_pnl": 0.0962,
+      "cost_fragile": false,
+      "source": "breakout/bo_final_summary.json"
+    },
+    "x-sect": {
+      "breakeven_cost_mult": 6.4,
+      "cost_share_of_gross_pnl": 0.1562,
+      "cost_fragile": false,
+      "source": "xs/xs_summary.json"
+    },
+    "vol-prem": {
+      "sharpe_at_cost_mult": {
+        "5": 2.16
+      },
+      "cost_fragile": false,
+      "source": "volprem/volprem_cost_robustness.csv"
+    },
+    "trend": {
+      "sharpe_at_cost_mult": {
+        "3": 0.87
+      },
+      "cost_fragile": false,
+      "source": "trend/trend_book_blend_summary.json"
+    }
+  },
+  "n_cost_fragile": 1,
+  "method": "same construction re-run with its cost model off; share = 1 - net/gross total return"
+}

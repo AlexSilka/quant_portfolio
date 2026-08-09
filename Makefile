@@ -184,9 +184,13 @@ lint:
 	.venv/bin/ruff check .
 	$(PY) scripts/render_report.py --check
 
-# Rebuild REPORT.md from scripts/report_assets/report.md + the measured numbers.
+# Rebuild REPORT.md and README.md from scripts/report_assets/ + the measured numbers.
 report:
 	$(PY) scripts/render_report.py
+
+# §9 per family: cost as a share of gross P&L, by re-running each family with its cost model off. ~5 min.
+family-costs:
+	$(PY) scripts/measure_family_costs.py
 
 clean:
 	find reports -type f \( -name '*.parquet' -o -name '*.png' \) -delete

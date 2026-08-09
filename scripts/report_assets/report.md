@@ -127,8 +127,18 @@ A complete, reproducible pipeline, every stage runnable:
   {{cost_2x_sharpe}} / {{cost_3x_sharpe}}** (max-DD {{cost_1x_dd}} / {{cost_2x_dd}} / {{cost_3x_dd}}),
   **break-even at ≈{{cost_breakeven}}**; that charge is deliberately conservative — it counts the mixed 252/365
   calendar's weekend renormalisation as trading, so it bills ~{{turnover}} round-trip a year against the
-  ~{{turnover_held}} the book actually rebalances. Per-family robustness runs higher still (breakout break-even
-  10.4×, x-sect 7.8×, vol-prem Sharpe 2.16 at 5× its vega spread) — no surviving sleeve is cost-fragile.
+  ~{{turnover_held}} the book actually rebalances. **Per family, cost as a share of gross P&L**, each measured
+  by re-running that family's own construction with its cost model switched off
+  (`scripts/measure_family_costs.py`):
+
+{{family_cost_table}}
+
+  \* carry's re-run reproduces the published series to 2.6% rather than exactly, so its share is
+  approximate. **{{n_family_cost_fragile}} of the eight is cost-fragile: {{family_cost_fragile_names}}**, which
+  pays {{family_cost_worst_share}} of its gross P&L in cost and breaks even at 3.0× — expected for a
+  crash-hedge that trades to stay long gamma, and the reason it is held at 1/8 risk for what it does in the
+  bad months rather than for its own P&L. Vol-prem and trend publish a Sharpe at a cost multiple instead of a
+  break-even (vol-prem 2.16 at 5× its vega spread, trend 0.87 at 3×); neither is fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
   quoted at that size with **P&L not reinvested**: **{{pnl_usd}}** over the 15-year window, **~{{pnl_usd_per_year}}/yr**, worst month

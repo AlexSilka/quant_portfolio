@@ -13,6 +13,7 @@
                        accumulated out-of-sample track (whole history, not just the final block)
   run_cscv.py          §6 probability of backtest overfitting (CSCV) on the full trial set
   make_oos_ledger.py   §13 portfolio-level out-of-sample trade/position ledger
+  measure_family_costs.py  §9 per-family cost as a share of gross P&L (each family re-run costless)
   make_figures.py      §13 the required charts as standalone PNGs
   render_report.py     REPORT.md from its prose template + the measured numbers (no hand-typed figures)
   make_report.py       dashboard
@@ -35,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # a smaller N and quietly weaken every multiple-testing number that cites it.
 STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
          ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
-         ("run_wf_book.py",), ("run_cscv.py",), ("make_oos_ledger.py",), ("make_figures.py",),
+         ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",), ("make_oos_ledger.py",), ("make_figures.py",),
          ("render_report.py",), ("make_report.py",))
 
 

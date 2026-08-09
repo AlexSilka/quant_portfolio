@@ -44,6 +44,7 @@ BOND = ["TLT", "IEF", "SHY", "HYG", "LQD"]                            # treasuri
 FX = ["AUD-JPY", "EUR-JPY", "GBP-JPY", "USD-JPY", "USD-CHF", "EUR-CHF", "AUD-USD", "NZD-USD",
       "EUR-USD", "GBP-USD", "USD-CAD", "USD-MXN", "USD-ZAR", "USD-NOK", "USD-SEK"]
 CRYPTO_TOP = 20
+COST_BPS = 2.0        # per unit of turnover on liquid ETFs/FX — the shipped charge
 LOOKBACKS = [(10, 20, 40), (20, 40, 63), (40, 63, 120)]   # fast/medium/slow tranches
 STOCK_PPY, CRYPTO_PPY = 252, 365
 
@@ -92,33 +93,35 @@ def _vol_target(x, ppy, target=0.15, lb=60):
     return (x * lev).dropna()
 
 
-def _tsmom(close, lookbacks, ppy):
-    """Long/short TSMOM over one lookback set: per-asset vol-targeted sign-blend, ~2bps cost, then vol-targeted."""
+def _tsmom(close, lookbacks, ppy, cost_bps=COST_BPS):
+    """Long/short TSMOM over one lookback set: per-asset vol-targeted sign-blend, ~2bps cost, then
+    vol-targeted. `cost_bps` is a parameter only so the same book can be re-run costless — that pair is
+    what §9's "cost as a share of gross P&L" is measured from; the shipped book always uses the default."""
     r = close.pct_change()
     vol = r.rolling(40).std()
     sig = sum(np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
     pos = sig.shift(1) * (0.15 / np.sqrt(ppy) / vol).clip(upper=3.0)
     n = close.shape[1]
     gross = (pos * r).sum(axis=1) / n
-    cost = (pos.diff().abs().sum(axis=1) / n) * 2 / 1e4
+    cost = (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4
     return _vol_target(gross - cost, ppy)
 
 
-def _class_book(close, ppy):
+def _class_book(close, ppy, cost_bps=COST_BPS):
     """Average the fast/medium/slow TSMOM tranches (timeframe diversification), vol-target to 15%."""
     if close.empty or close.shape[1] == 0:
         return None
-    tranches = [_vol_target(_tsmom(close, lb, ppy), ppy) for lb in LOOKBACKS]
+    tranches = [_vol_target(_tsmom(close, lb, ppy, cost_bps), ppy) for lb in LOOKBACKS]
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna(), ppy)
 
 
-def build_crisis() -> pd.Series:
+def build_crisis(cost_bps=COST_BPS) -> pd.Series:
     books = {
-        "equity": _class_book(_panel(EQUITY, _etf), STOCK_PPY),
-        "commod": _class_book(_panel(COMMOD, _etf), STOCK_PPY),
-        "bond": _class_book(_panel(BOND, _etf), STOCK_PPY),
-        "fx": _class_book(_panel(FX, _fx), STOCK_PPY),
-        "crypto": _class_book(_crypto_panel(CRYPTO_TOP), CRYPTO_PPY),
+        "equity": _class_book(_panel(EQUITY, _etf), STOCK_PPY, cost_bps),
+        "commod": _class_book(_panel(COMMOD, _etf), STOCK_PPY, cost_bps),
+        "bond": _class_book(_panel(BOND, _etf), STOCK_PPY, cost_bps),
+        "fx": _class_book(_panel(FX, _fx), STOCK_PPY, cost_bps),
+        "crypto": _class_book(_crypto_panel(CRYPTO_TOP), CRYPTO_PPY, cost_bps),
     }
     live = {k: v for k, v in books.items() if v is not None and len(v) > 100}
     df = pd.DataFrame(live).sort_index()

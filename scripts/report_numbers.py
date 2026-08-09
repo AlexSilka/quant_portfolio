@@ -200,6 +200,36 @@ def _targets_hit(sc: dict) -> int:
                     sc["worst_month"] >= -0.06, sc["longest_losing_streak_mo"] <= 2]))
 
 
+def _family_costs():
+    """§9/§12 per family: cost as a share of gross P&L and the break-even multiple, from
+    measure_family_costs (four re-run with their cost model off) plus the four their deep-dives already
+    publish. Ordered worst-first, because the question the section answers is which leg is fragile."""
+    d = _load("book/family_cost_shares.json")
+    if not d:
+        return {}
+    rows, frag = [], []
+    for src in (d.get("re_run_here") or {}, d.get("from_deep_dives") or {}):
+        for name, v in src.items():
+            if "cost_share_of_gross_pnl" not in v:
+                continue
+            rows.append((name, v["cost_share_of_gross_pnl"], v.get("breakeven_cost_mult"),
+                         bool(v.get("cost_fragile")), v.get("reproduces_published_series", True)))
+            if v.get("cost_fragile"):
+                frag.append(name)
+    if not rows:
+        return {}
+    rows.sort(key=lambda r: -r[1])
+    out = ["| family | cost / gross P&L | break-even | cost-fragile |", "|---|---|---|---|"]
+    for name, share, be, fragile, exact in rows:
+        mark = "" if exact else " *"
+        out.append(f"| {name}{mark} | {_pcu(share)} | {be:.1f}× | "
+                   f"{'**yes**' if fragile else 'no'} |")
+    return {"family_cost_table": "\n".join(out),
+            "n_family_cost_fragile": str(len(frag)),
+            "family_cost_fragile_names": ", ".join(frag) if frag else "none",
+            "family_cost_worst": rows[0][0], "family_cost_worst_share": _pcu(rows[0][1])}
+
+
 def build():
     """The registry: {placeholder name -> rendered string}. Missing artifacts drop their keys rather
     than resolving to a guess, so render_report fails loudly instead of publishing a blank."""
@@ -308,6 +338,7 @@ def build():
         out.update(_gate_table())
         out.update(_selective_leverage())
         out.update(_ml_overlay())
+        out.update(_family_costs())
 
         cl = _load("master_book_cost_levels.json")
         for lv in cl.get("levels", []):
