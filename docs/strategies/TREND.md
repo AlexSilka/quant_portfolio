@@ -17,15 +17,19 @@ direction mode, timeframe and instrument, adds an ML overlay, and validates it w
 shuffled-data null. Headline results, net of liquidity-aware costs + funding, t+2 execution, vol-targeted
 to 15%, on **50 crypto perps + 10 US equities/ETFs, 2012–2026** (crypto spliced spot-2017 + perp-2020):
 
-> **The recommended trend book** (frozen config **core-10 crypto (1d+4h) + 10 US equities (1d)**, EMA long-biased,
-> equal-risk, 30 sleeves) nets **Sharpe +1.32, max drawdown −11.3%, MC-P5 +0.88, held-out OOS +0.67**, positive in
-> **13 of 15 years**, and is **invariant to the walk-forward window/cadence choice**. Alternative constructions on that core (measured
+> **The recommended trend book** — EMA long-biased, equal-risk — nets **Sharpe +1.32** on the *frozen* config
+> (core-10 crypto 1d+4h + 10 US equities 1d) and **+0.89 on the shipped one**, which replaces both hand-picked
+> lists with point-in-time universes (§4b below; REPORT §6d). The −0.4 between those two numbers is this study's
+> most important result and it is a *survivorship* correction, not a construction change. Everything else here —
+> long-only beats long-short, hold-to-reversal, ML as risk-control — is measured on the frozen config and holds
+> on both. The frozen book is **max drawdown −11.3%, MC-P5 +0.88, held-out OOS +0.67**, positive in
+> **13 of 15 years**, and **invariant to the walk-forward window/cadence choice**. Alternative constructions on that core (measured
 > on the fuller 1d+4h+1h set — dropping 1h is what lifts OOS to the +0.67 headline above):
 > - **Peak Sharpe — EMA long-only / asym 70/30:** Sharpe **+1.32**, DD −9.9%, OOS +0.44.
 > - **Peak robustness — conviction-blend, long-only:** Sharpe **+1.13**, DD **−4.8%**, OOS +0.38.
 > - **Sized to the −15% budget — blend vol-managed (§8):** raises CAGR at ~constant Sharpe, tail DD ~−15%.
 >
-> (A broad 50-name crypto universe is *worse* — Sharpe 1.16, OOS +0.11 — see finding 4.)
+> (A broad 50-name crypto universe is *worse* — Sharpe 1.16, OOS +0.11 — see finding 4, and read its correction.)
 
 **Four findings that matter, stated up front:**
 1. **Long-only beats long-short on every entry.** The short leg is pure drag on a
@@ -36,11 +40,17 @@ to 15%, on **50 crypto perps + 10 US equities/ETFs, 2012–2026** (crypto splice
 3. **ML is a risk-reduction tool, not an alpha engine** — a meta-gate cuts max drawdown from −14% to −1%
    at flat-to-slightly-positive Sharpe; it does not lift out-of-sample return (its trade-outcome AUC is
    0.86 in-sample but **0.505 out-of-sample** — no forward edge; the DD cut is mechanical).
-4. **For crypto, fewer instruments is better** — a small liquid core (~10 majors) beats a broad 50–200 alt
-   universe on Sharpe *and* OOS *and* drawdown. Crypto is one correlated cluster; the illiquid tail adds cost
-   and 2022–2025 bad-regime drag, not diversification. Breadth belongs across *asset classes*, not alts.
+4. **For crypto, fewer instruments is better — but only the *concentration* part survives.** A small liquid core
+   (~10 names) beats a broad 50–200 alt universe on Sharpe *and* OOS *and* drawdown: crypto is one correlated
+   cluster, and the illiquid tail adds cost and 2022–2025 bad-regime drag, not diversification. Breadth belongs
+   across *asset classes*, not alts. **The correction (§4b): the original test compared a broad universe against
+   a core chosen with hindsight, so it measured two things at once.** Holding the count at ten and choosing the
+   names *point-in-time* by trailing liquidity gives **+1.13** against the hindsight core's **+1.31** — so roughly
+   0.18 of what looked like "small core wins" was survivorship, and the equity half cost another 0.22. Concentration
+   is real and is kept; the specific names are no longer chosen in hindsight.
 
-The honest ceiling is **~1.3 net on the liquid core** (1.0–1.16 if over-broadened), not the aspirational
+The honest ceiling is **~0.9 net on a point-in-time liquid core** (~1.3 if the names are chosen with hindsight,
+1.0–1.16 if over-broadened), not the aspirational
 2.5–4.0. The binding constraint is that trend is **one premium**: it decays in chop (2022, and the 2025 crypto
 trend death) and whipsaws at sharp reversals — no construction fixes the absence of a trend to capture.
 
@@ -181,7 +191,7 @@ many alts you add — no new diversification), the marginal names are **illiquid
 +0.04 vs the 50-name book's −0.62). The frozen **config core-10** (defined before any evaluation) *is* that
 liquid core — **Sharpe +1.32, OOS +0.44, MC-P5 +0.88** — beating the 50-name book (1.16 / +0.11) on every metric
 at the same drawdown. So: freeze the universe by liquidity, hold the whole *core*, and keep the **core small**
-(~10 crypto majors + the 10 equities). Breadth belongs across *asset classes*, not across correlated alts.
+(~10 crypto names + ~10 equities) — but pick the names point-in-time, not with hindsight (§5b). Breadth belongs across *asset classes*, not across correlated alts.
 
 There is also a **floor** — shrinking below ~7–10 is not free. At N=3 the point drawdown is −15.8% (over the
 −15% budget) and the tail −22.8%; N=5 is −12.6% / −20.2% vs N=10's −10.1% / −18.5%, and 2022 deepens (−2.2 vs
@@ -189,6 +199,33 @@ There is also a **floor** — shrinking below ~7–10 is not free. At N=3 the po
 (+0.72 vs +0.64) is within noise, and tuning universe size to a 2-year window is itself overfitting. Robust
 criteria (full-sample Sharpe + drawdown) and the frozen config core-10 both land at **~10**: enough names to
 control drawdown, few enough to stay in the liquid quality core.
+
+## 5b. The universe correction — concentration is real, hindsight is not
+
+Everything in §5 compares universe *sizes*. It never asks how the small core's **names** were chosen, and they
+were chosen by looking at the present: `CORE10` is the crypto majors as of 2026 (SOL and AVAX did not list until
+Sep-2020) and the equity half was seven hand-picked mega-caps including **NVDA** and **META**, which did not IPO
+until May-2012. That is the bias the x-sect deep-dive makes its headline of correcting, so the comparison in §5
+measured concentration and survivorship at once.
+
+`scripts/trend/run_trend_pit_universe.py` separates them by holding the *count* fixed and choosing the *names*
+point-in-time by trailing dollar volume — the same membership rule the breakout and carry legs already use:
+
+| universe | leg Sharpe / CAGR | book at 1.15× (selection window / frozen block) |
+|---|---|---|
+| hindsight lists, both halves | +1.31 / +11.1% | 3.72 / 3.77 |
+| point-in-time crypto, hand-picked equity | +1.13 / +9.2% | 3.67 / 3.75 |
+| **point-in-time crypto + equity (shipped)** | **+0.91 / +6.2%** | **3.61 / 3.72** |
+
+**~0.40 Sharpe of this leg was survivorship** — 0.18 crypto, 0.22 equity, about 30% of the §5 headline. The
+universes are materially different: **78 distinct crypto names** are ever in the honest top-10 (today's CORE10
+hold ~63% of member-days) and **44 distinct equities** (the hand-picked seven hold 45%).
+
+What survives §5 intact is the *concentration* finding — ten names still beat fifty, and the reasons in §5 (one
+correlated cluster, illiquid tail, 2022-25 regime) are unaffected by how the ten are picked. What does not
+survive is reading "+1.32" as the trend premium: that number includes knowing which coins and which mega-caps
+would win. The shipped leg is the point-in-time one, and REPORT §6d carries the book-level consequence
+(months-in-profit falls to 80.3% full / 80.8% OOS, still 5/5 on both windows).
 
 ## 6. Where the return comes from — beta vs timing (the honest core)
 
@@ -376,17 +413,18 @@ as *one* equal-risk return stream over these 160 sleeves (`run_trend_composition
 - **1h is the marginal timeframe** (18% of P&L for 32% of risk); 4h is the most efficient. A leaner book can drop
   1h at little cost; the full set is kept for breadth.
 
-**Recommended wiring:** the trend block = **EMA (or EMA+Blend) long-biased, equal-risk over the frozen config
-core-10 crypto (1d+4h) + 10 US equities (1d)** — a *small liquid core*, not the broad 50–200 alt universe (§5
-breadth), and **without 1h** (it adds no Sharpe and drags OOS: 1d+4h OOS +0.67 vs 1d+4h+1h +0.44; edge map and
-composition both flag 1h as the marginal timeframe). That 30-sleeve book is **Sharpe +1.32, DD −11.3%, MC-P5
-+0.88, OOS +0.67**; sized at the portfolio level to its share of the −15% budget (§8). It combines with the other families' blocks — each on its **own**
+**Recommended wiring:** the trend block = **EMA (or EMA+Blend) long-biased, equal-risk over a point-in-time
+top-10 crypto (1d+4h) + index ETFs & a point-in-time top-7 of US single names (1d)** — a *small liquid core*
+whose size comes from §5 and whose **names come from trailing liquidity, not hindsight (§5b)** — and **without 1h** (it adds no Sharpe and drags OOS: 1d+4h OOS +0.67 vs 1d+4h+1h +0.44; edge map and
+composition both flag 1h as the marginal timeframe). On the frozen (hindsight) config that book is **Sharpe +1.32, DD −11.3%, MC-P5 +0.88, OOS +0.67**; on the
+shipped point-in-time universe it is **+0.89** (§5b); sized at the portfolio level to its share of the −15% budget (§8). It combines with the other families' blocks — each on its **own**
 universe (breakout crypto-only, vol-premium equity/FX-led) — at the master-portfolio layer, where trend's
 decorrelation from cross-sectional (~0.4) and vol-premium is the diversification that lifts the whole book beyond
-any single premium. Do **not** hand-pick names by backtest inside the block (§5); freeze the core by liquidity.
+any single premium. Do **not** hand-pick names inside the block — not by backtest (§5) and not by what is large today (§5b); let
+trailing liquidity choose them at each bar.
 
 **Integration result (`run_trend_in_portfolio.py`, wired into `run_master_book.py`).** The block is published as
-`reports/trend/trend_block_returns.parquet` (standalone Sharpe ~1.31) and enters the master book as one
+`reports/trend/trend_block_returns.parquet` (standalone Sharpe ~0.89 on the shipped point-in-time universe) and enters the master book as one
 equal-risk leg. Trend is **decorrelated from every other family** (carry −0.08, vol-prem +0.04,
 cross-sectional −0.11, breakout −0.07; mean ≈ −0.06 across the eight) — a genuine diversifier. In the
 shipped eight-family book it contributes **~11% of P&L**, lifts the portfolio **+0.28 Sharpe** over the book
