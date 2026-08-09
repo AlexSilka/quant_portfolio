@@ -3,44 +3,44 @@
   "headline_config": "equal_anchored_Q",
   "full_history": true,
   "headline_wf_oos": {
-    "sharpe": 3.34,
+    "sharpe": 3.31,
     "max_dd": -0.1864,
-    "months_in_profit": 0.8025,
+    "months_in_profit": 0.7901,
     "n_obs": 6439,
     "start": "2006-06-15",
     "end": "2026-08-05"
   },
   "headline_final_block_oos": {
-    "sharpe": 3.63,
-    "max_dd": -0.0408,
-    "months_in_profit": 0.8077,
+    "sharpe": 3.39,
+    "max_dd": -0.0444,
+    "months_in_profit": 0.7692,
     "n_obs": 766,
     "start": "2024-07-01",
     "end": "2026-08-05"
   },
   "master_window_2016_oos": {
-    "sharpe": 3.94,
+    "sharpe": 3.87,
     "max_dd": -0.0647,
-    "months_in_profit": 0.8017,
+    "months_in_profit": 0.7769,
     "n_obs": 3597,
     "start": "2016-08-01",
     "end": "2026-08-05"
   },
   "window_cadence_invariance_range": [
-    3.29,
-    3.34
+    3.26,
+    3.31
   ],
   "configs": {
     "equal_anchored_Q": {
-      "sharpe": 3.34,
+      "sharpe": 3.31,
       "max_dd": -0.1864,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.7901,
       "n_obs": 6439,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "invvol_anchored_Q": {
-      "sharpe": 2.83,
+      "sharpe": 2.81,
       "max_dd": -0.1699,
       "months_in_profit": 0.7531,
       "n_obs": 6439,
@@ -48,33 +48,33 @@
       "end": "2026-08-05"
     },
     "meanvar_anchored_Q": {
-      "sharpe": 3.87,
+      "sharpe": 3.8,
       "max_dd": -0.451,
-      "months_in_profit": 0.8436,
+      "months_in_profit": 0.8477,
       "n_obs": 6434,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "equal_rolling2y_Q": {
-      "sharpe": 3.34,
+      "sharpe": 3.31,
       "max_dd": -0.1864,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.7901,
       "n_obs": 6439,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "equal_anchored_A": {
-      "sharpe": 3.29,
+      "sharpe": 3.26,
       "max_dd": -0.1864,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.7901,
       "n_obs": 6422,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "invvol_rolling2y_Q": {
-      "sharpe": 2.91,
+      "sharpe": 2.88,
       "max_dd": -0.1709,
-      "months_in_profit": 0.7737,
+      "months_in_profit": 0.7613,
       "n_obs": 6439,
       "start": "2006-06-15",
       "end": "2026-08-05"
@@ -99,30 +99,30 @@
   },
   "window_robustness": {
     "full_21y_2005": {
-      "sharpe": 3.31,
+      "sharpe": 3.28,
       "max_dd": -0.1754,
-      "months_in_profit": 0.7731,
+      "months_in_profit": 0.7615,
       "worst_month": -0.1681,
       "longest_losing_streak_mo": 7,
-      "total_return": 734.265,
+      "total_return": 690.729,
       "n_obs": 6821
     },
     "15y_2011": {
-      "sharpe": 3.72,
+      "sharpe": 3.67,
       "max_dd": -0.0647,
-      "months_in_profit": 0.8122,
-      "worst_month": -0.0357,
+      "months_in_profit": 0.7956,
+      "worst_month": -0.0384,
       "longest_losing_streak_mo": 3,
-      "total_return": 90.668,
+      "total_return": 85.24,
       "n_obs": 5132
     },
     "10y_2016": {
-      "sharpe": 3.85,
+      "sharpe": 3.78,
       "max_dd": -0.0647,
-      "months_in_profit": 0.7934,
-      "worst_month": -0.0357,
+      "months_in_profit": 0.7686,
+      "worst_month": -0.0384,
       "longest_losing_streak_mo": 3,
-      "total_return": 20.606,
+      "total_return": 19.327,
       "n_obs": 3597
     }
   },

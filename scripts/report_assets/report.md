@@ -19,8 +19,8 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > (flat unless **both** curve segments, VIX3M/VIX and VIX/VIX9D, are in contango), sized at a constant **1.15×** (§4b) — with a disclosed
 > **§8 risk overlay** (drawdown ladder + daily-loss breaker) on top —
 > the master book nets **Sharpe {{book_sharpe}}** at **{{book_dd}} max drawdown** — on the brief's **{{capital}}** sizing capital
-> that is **$2.69M** of P&L, **~$173k/yr** — **+34.6%/yr** not reinvested, **+40.6%/yr** compounded (a rate, not a
-> reachable balance: capacity caps the book long before the end of the window) — months-in-profit **81%**, **positive in all 16 calendar years**, families essentially
+> that is **{{pnl_usd}}** of P&L, **~{{pnl_usd_per_year}}/yr** — **+34.6%/yr** not reinvested, **+40.6%/yr** compounded (a rate, not a
+> reachable balance: capacity caps the book long before the end of the window) — months-in-profit **{{book_months_round}}**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
 > there it clears **{{oos_targets}}** (2024-07→: Sharpe **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month
 > **{{oos_worst_month}}**, streak **{{oos_streak}}**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
@@ -31,8 +31,8 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > strike frozen in Feb-2022 for the three years Cboe stopped publishing their index. The first correction
 > improved four of five full-window figures and lengthened the streak to three months (Dec-2021→Feb-2022); the
 > second cost the book 0.14 Sharpe on the full window and 0.24 out-of-sample, because the manufactured legs had
-> been quietly padding the calm months. Nothing was re-tuned to win the targets back. Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
-> price of the honest trend universe — §6d.
+> been quietly padding the calm months. Nothing was re-tuned to win the targets back, and the leverage grid (§4b) shows nothing could be: both
+> misses are properties of the *sign* of a month, which scaling cannot move.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 

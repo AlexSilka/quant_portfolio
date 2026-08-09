@@ -50,7 +50,8 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
                    k_rich: float = 1.0, timed: bool = True, var_cap: float = 2.5,
                    restrike_days: int = 7, vega_cost_volpts: float = 0.75, wing_markup: float = 0.0,
                    spike_degross: float = 0.0, exec_lag: int = 2,
-                   gate: pd.Series | None = None, wing_cost_frac: float = 0.0) -> pd.DataFrame:
+                   gate: pd.Series | None = None, wing_cost_frac: float = 0.0,
+                   max_stale_quote_bars: int = 5) -> pd.DataFrame:
     """Daily capped-variance-swap P&L for a short-vol book on one asset (variance units).
 
     timed=False is the always-short non-ML baseline; timed=True shorts only when implied is rich
@@ -69,7 +70,15 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
         r2 = realized_var_ohlc(bars.reindex(close.index), ppy)
     else:                                                     # close-to-close (net daily move only)
         r2 = (np.log(close / close.shift(1)) ** 2) * ppy
-    dv = dvol.reindex(close.index).ffill() / 100.0            # implied vol (decimal), info at t
+    # Implied vol carried onto the underlying's calendar. The fill is BOUNDED: the two series keep
+    # slightly different holidays, so a few bars of carry is alignment — but an unbounded fill turns a
+    # discontinued index into a frozen strike that keeps trading. Cboe stopped publishing VXSLV, VXFXI
+    # and VXGDX in Feb-2022 and resumed in 2025; unbounded, those three sold variance at their
+    # February-2022 level for three years, and the manufactured P&L flattered the out-of-sample block
+    # by +0.49 Sharpe. Past the limit the quote is gone, and a leg with no quote is a leg you do not
+    # have — masked out below rather than held flat, so the book renormalises onto the live sleeves.
+    dv = dvol.reindex(close.index).ffill(limit=max_stale_quote_bars) / 100.0
+    quoted = dv.notna()
     rv = realized_vol(close, rv_lookback, ppy)                # trailing realised vol, info at t
 
     # --- side (decision at t): always-short baseline, or short-only-when-rich ---
@@ -125,6 +134,9 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
     protected = np.maximum(r2 - var_cap * Kvar, 0.0)          # per-bar tail truncated by the cap (wing payoff)
     wing = wing_markup * protected.rolling(252, min_periods=20).mean().shift(1).fillna(0.0) * sidex.abs()
 
-    net = (gross - cost - wing).where(sidex != 0.0, 0.0)
+    # A bar the leg was gated or de-grossed out of is flat but real (it still pays the switch above);
+    # a bar with no live quote is a leg that does not exist, so it drops out of the frame entirely and
+    # the book's equal-weight average renormalises onto whatever is actually quoted.
+    net = (gross - cost - wing).where(sidex != 0.0, 0.0).where(quoted.shift(exec_lag).fillna(False))
     return pd.DataFrame({"side": sidex, "K": Kx, "rich": (dv - rv).shift(exec_lag),
                          "gross": gross, "cost": cost, "net": net, "turnover": turnover}).dropna()
