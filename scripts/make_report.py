@@ -319,15 +319,11 @@ def _honesty_card():
             f'(anti-overfitting §6/§10/§12)</figcaption>'
             f'<table><tr><th>discovery gate</th><th>candidates</th></tr>{rows}</table>'
             f'<p class="valline">{n:,} candidates mined &middot; naive in-sample Sharpe {_n(ins)} '
-            f'&middot; the same selection walk-forwarded out-of-sample gives Sharpe {wf_s} &middot; best '
-            f'single-sleeve deflated Sharpe {dsr:.2f} (N={n:,}){pbo_s} &rarr; mining winners is selection '
-            f'bias, so the traded book <b>selects nothing</b> and applies theory uniformly across the whole '
-            f'universe. The gates themselves are not the problem &mdash; run the same pipeline on shuffled '
-            f'signals and only <b>{fdr_s}</b> of candidates get through, so what the funnel admits is '
-            f'mostly not noise; it is choosing the winners among them that does not survive. Note what the '
-            f'two walk-forward numbers are asking: as a <i>gate</i> it is applied per candidate above, and '
-            f'sleeves that clear it individually still assemble into a book that walk-forwards to '
-            f'{wf_s} once the <i>selection itself</i> is made out of sample.</p></figure>')
+            f'&middot; the same selection walk-forwarded gives {wf_s} &middot; best single-sleeve deflated '
+            f'Sharpe {dsr:.2f} (N={n:,}){pbo_s} &rarr; mining winners is selection bias, so the traded book '
+            f'<b>selects nothing</b> and applies theory uniformly across the whole universe. The gates are '
+            f'not the problem: on shuffled signals only <b>{fdr_s}</b> get through, so what the funnel admits '
+            f'is mostly not noise &mdash; it is picking winners among them that fails.</p></figure>')
 
 
 # --- §12/§13 edge map, family level: every family we evaluated on ONE consistent scale (its honest
@@ -429,18 +425,13 @@ def _family_edge_card(summ, legs):
         '<th>where the edge is &middot; why it is not</th></tr>'
         + grp("In the book &mdash; where edge was found") + live
         + grp("Tested, rejected &mdash; where edge was not") + rej
-        + '</table><p class="valline">Each Sharpe is the family&rsquo;s honest standalone result from its '
-        'own validated construction &mdash; live families from the master-book legs, rejected families '
-        'from their deep-dive walk-forward. &#8224; vol-prem&rsquo;s Sharpe overstates the risk it carries: as '
-        f'the book holds it (vol-targeted, gated) the leg prints skew {_n(vp_skew)} and a {_pc(vp_dd)} '
-        'drawdown, and the Cboe book behind it &mdash; measured on OHLC, so the intraday path a delta-hedged '
-        'short-gamma book actually pays &mdash; carries skew &minus;18 and a &minus;78% systemic-vol tail. It '
-        'is sized on that tail, not on Sharpe. <b>Timeframe:</b> edge '
-        'concentrates at 1d; intraday (1h/4h) decays to turnover &times; cost across every sweep-able family. '
-        '<b>Also run, not separate alpha families:</b> book-construction / overlay studies (convexity '
-        'tail-hedge, dispersion robustness, managed-futures / defensive) and within-family variants (carry on '
-        'FX / equity / basis, breakout cross-sectional / intraday) &mdash; folded into their family row or the '
-        'deep-dives, not omitted.</p></figure>')
+        + '</table><p class="valline">Each Sharpe is the family&rsquo;s standalone result from its own '
+        'validated construction &mdash; live families from the master-book legs, rejected ones from their '
+        'deep-dive walk-forward. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
+        f'it the leg prints skew {_n(vp_skew)} / {_pc(vp_dd)} drawdown, and the Cboe book behind it skew '
+        '&minus;18 / a &minus;78% systemic tail. It is sized on that tail, not on Sharpe. Edge concentrates '
+        'at <b>1d</b>; intraday decays to turnover &times; cost everywhere. Overlay studies and within-family '
+        'variants are folded into their family row or the deep-dives, not omitted.</p></figure>')
 
 
 
@@ -487,9 +478,9 @@ def _feature_card():
     nothing = ", ".join(d.get("families_contributed_nothing", [])) or "none"
     per = d.get("per_family", [])
     kept0 = [r["family"] for r in per if not r.get("n_kept") and r.get("n_significant")]
-    kept0_txt = (f' A further <b>{len(kept0)}</b> families clear significance but keep nothing after the '
-                 f'redundancy reduction ({", ".join(kept0)}) &mdash; their signal is already carried by a '
-                 f'kept feature, which is not the same as having none.' if kept0 else "")
+    kept0_txt = (f' <b>{len(kept0)}</b> more clear significance but keep nothing after the redundancy '
+                 f'reduction &mdash; their signal is already carried by a kept feature, which is not the '
+                 f'same as having none.' if kept0 else "")
     return (
         '<figure class="card s6"><figcaption>Feature-family survival (§4/§12) &mdash; which of the '
         f'{d.get("n_features", 0)}-feature library survived selection</figcaption>'
@@ -669,18 +660,17 @@ def main():
         cfg = w.get("configs") or {}
         mv, eq_cfg = cfg.get("meanvar_anchored_Q"), cfg.get(w.get("headline_config"))
         if mv and eq_cfg:
-            mv_li = (f' &mdash; on the same walk-forward the mean-variance fit buys its Sharpe '
-                     f'({_n(mv["sharpe"])} vs {_n(eq_cfg["sharpe"])}) with a {mv["max_dd"] / eq_cfg["max_dd"]:.0f}'
-                     f'&times; deeper drawdown ({_pc(mv["max_dd"], 0)} against {_pc(eq_cfg["max_dd"], 0)})')
+            mv_li = (f': the mean-variance fit buys Sharpe ({_n(mv["sharpe"])} vs {_n(eq_cfg["sharpe"])}) '
+                     f'with a {mv["max_dd"] / eq_cfg["max_dd"]:.0f}&times; deeper drawdown '
+                     f'({_pc(mv["max_dd"], 0)} vs {_pc(eq_cfg["max_dd"], 0)})')
         gfc = (w.get("stress") or {}).get("2008 GFC")
         gfc_s = f', {_pc(gfc["max_dd"])} through the 2008 GFC' if gfc else ''
         # span from the dates, not obs/365 — the mixed 252/365 calendar makes the latter understate the years
         wf_yrs = (pd.Timestamp(h["end"]) - pd.Timestamp(h["start"])).days / 365.25
         wf_li = (f'<li><b>OOS is most of the history, not 2 years:</b> the book-level walk-forward runs '
                  f'out-of-sample {h["start"][:4]}&rarr;{h["end"][:4]} (~{wf_yrs:.0f}y) at Sharpe '
-                 f'<b>{_n(h["sharpe"])}</b> [{_n(rng[0])}, {_n(rng[1])}] across cadences{gfc_s}. That longer '
-                 f'track pays for the extra history in drawdown: max-DD {_pc(h["max_dd"])} and months-in-profit '
-                 f'{h["months_in_profit"]:.0%}, against {_pc(m["max_dd"])} on the reported window.</li>')
+                 f'<b>{_n(h["sharpe"])}</b>{gfc_s}, paying for that history in drawdown '
+                 f'({_pc(h["max_dd"])} vs {_pc(m["max_dd"])}).</li>')
     yr_ret = (1.0 + master).resample("YE").prod() - 1.0
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
     # the streak clause only makes sense while the streak is the miss — once the full window passes it, say so
@@ -696,15 +686,13 @@ def main():
         f'{f" and on the full {wtext} window" if n_pass_full == 5 else f"; {n_pass_full} of 5 on the full {wtext} window"}'
         f'.</b></span>'
         f'<ul>'
-        f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the window the brief scores (2024-07&rarr;): Sharpe '
-        f'{_n(_sh(oos))}, months-in-profit {_mip(moo):.0%}, max-DD, worst month and streak all clear. Two '
-        f'mechanisms carry it: the <b>VIX-term-structure gate</b>, which stands the short-vol leg down while the '
-        f'curve is inverted, and the crypto sleeve running on <b>residual momentum</b>.</li>'
+        f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the scored window (2024-07&rarr;): Sharpe '
+        f'{_n(_sh(oos))}, months {_mip(moo):.0%}, rest clear. Carried by the <b>VIX-term-structure gate</b> '
+        f'and the crypto sleeve&rsquo;s <b>residual momentum</b>.</li>'
         f'<li><b>Full {wtext} window ({n_pass_full} of 5):</b> Sharpe {_n(m["sharpe"])}, months {_mip(mo):.0%}, '
         f'max-DD {_pc(m["max_dd"])}, worst month {_pc(mo.min())}, {full_tail}. '
-        f'<b>Positive in {n_pos_yr} of {n_tot_yr} calendar years</b>{part}. Read the early years with the '
-        f'caveat they carry: before ~2019 the vol-premium, crisis and global-macro legs are strategy-logic '
-        f'backtests on published index data &mdash; the tradeable products post-date them &mdash; not a live track.</li>'
+        f'<b>Positive in {n_pos_yr} of {n_tot_yr} calendar years</b>{part}. Before ~2019 the vol-premium, '
+        f'crisis and global-macro legs are strategy-logic backtests on index data, not a live track.</li>'
         f'{wf_li}'
         f'<li><b>Equal weight is evidence-based:</b> re-fitting the weights does not beat it out-of-sample'
         f'{mv_li}.</li>'
@@ -832,13 +820,10 @@ def main():
                      f"<td>{_n(c)}</td><td>{_n(wo)}</td><td>{_n(all_legs - wo)}</td></tr>")
     n_neg = sum(1 for f in fams if all_legs - _sh(legs.drop(columns=[f]).mean(axis=1, skipna=True)) <= 0)
     fam_note = (f'<p class="valline">&Delta; Sharpe is measured against the equal-weight mean of all legs '
-                f'({_n(all_legs)}), the same construction as each counterfactual. <b>{n_neg} of '
-                f'{len(fams)} families carry a &le;0 &Delta;</b> and are held anyway, which is a stated '
-                f'choice rather than an oversight: Sharpe is a band (2.5&ndash;4.0), not a maximand, and what '
-                f'these legs serve are the other targets &mdash; drawdown, worst month, losing streak, '
-                f'months in profit. Dropping crisis-alpha lifts Sharpe past the top of the band and returns '
-                f'the losing streak to 3 months. The book trades Sharpe for tail and consistency on '
-                f'purpose.</p>')
+                f'({_n(all_legs)}). <b>{n_neg} of {len(fams)} families carry a &le;0 &Delta;</b> and are held '
+                f'anyway &mdash; a stated choice: Sharpe is a band (2.5&ndash;4.0), not a maximand, and these '
+                f'legs serve the other four targets. Dropping crisis-alpha lifts Sharpe past the top of the '
+                f'band. Tail and consistency are bought with Sharpe on purpose.</p>')
 
     # --- cross-family correlation matrix + its stability over time (§7) ---
     corr_svg = heat_svg([sf(f) for f in corr.index], [sf(f) for f in corr.columns],
@@ -941,11 +926,9 @@ def main():
         f'family&rsquo;s own returns.</p>{tl_note}</figure>'
         f'<figure class="card"><figcaption>Cost sensitivity (§9) &mdash; {be_txt}</figcaption>'
         f'<table><tr><th>cost level</th><th>Sharpe</th><th>max DD</th><th>CAGR</th></tr>{cost_rows}</table>'
-        f'<p class="valline">The book&rsquo;s {ann_turn:.0f}&times;/yr rebalancing turnover at a blended '
-        f'{COST_BPS:.0f}bps round-trip &mdash; about {ann_turn * COST_BPS / 1e4:.0%} of capital a year at '
-        f'1&times; &mdash; re-charged at 1&times;/2&times;/3&times; on top of the itemised costs already inside '
-        f'every family&rsquo;s returns. Per-family cost robustness, '
-        f'as each deep-dive publishes it: {perfam_be}.{fam_cost_txt}</p></figure>')
+        f'<p class="valline">The book&rsquo;s {ann_turn:.0f}&times;/yr rebalancing turnover at {COST_BPS:.0f}bps '
+        f'round-trip (~{ann_turn * COST_BPS / 1e4:.0%} of capital a year), re-charged on top of the costs '
+        f'already inside every family&rsquo;s returns. Per family: {perfam_be}.{fam_cost_txt}</p></figure>')
 
     _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,
