@@ -106,6 +106,18 @@ ETH −0.86 on the honest leg), and the free EURUSD OHLC carries corrupt prints 
 1% range) with EVZ discontinued 2025-03. Dropping the weak-but-clean single names would be overfitting,
 so they stay.
 
+**Three of the eighteen are not continuously live, and until 2026-08 the loader hid it.** Cboe stopped
+publishing **VXSLV, VXFXI and VXGDX in Feb-2022** — the same month it discontinued VXXLE, which the
+universe rule already excludes for exactly this reason — and resumed them in 2025. The implied series was
+reindexed onto the underlying's trading calendar with an *unbounded* forward fill, so through 2022-2024
+those three legs kept selling variance at their frozen February-2022 strike against live realised vol.
+Three years of P&L out of a number that had stopped moving, and the book counted eighteen live sleeves the
+whole time when it had **fifteen**. The fill is now capped at five bars (enough to cross a holiday
+mismatch, not enough to invent a strike) and an unquoted bar drops the leg from the frame instead of
+holding it flat, so the equal-weight average renormalises onto what is genuinely quoted. Everything below
+is measured after that repair; it cost the book **0.14 Sharpe on the full window and 0.59 out-of-sample**,
+where the manufactured legs had been padding the calm stretch that the OOS block mostly is.
+
 **Run it as a book, not one asset.** Under the honest OHLC realised leg the per-sleeve picture is brutal
 (`reports/volprem/volprem_book_sleeves.csv`): the legs that carry the book are **gold-miners +3.32, EM +3.11, Russell +2.84, gold
 +2.41, bonds +2.38, China +2.20**, while several equity-index legs (VIX→SPY, VXD→DIA, OVX→USO) carry
@@ -114,7 +126,7 @@ the 18, which stays positive only because these catastrophes fall on *different*
 
 | | Sharpe | maxDD | skew | months+ | span |
 |---|---|---|---|---|---|
-| **diversified book (18 legs)** | **+3.72** | **−78%** | **−18** | 84% | 2005–2026 |
+| **diversified book (18 legs; 15 live 2022-24)** | **+3.58** | **−78%** | **−18** | 84% | 2005–2026 |
 | average single sleeve | ~+1.4 | ~−82% | — | — | — |
 | placebo book (fair strike, no premium) | **−1.73** | — | — | — | — |
 
