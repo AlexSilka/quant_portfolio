@@ -27,7 +27,7 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > there it clears **all five** (2024-07→: Sharpe **3.73**, months **80.8%**, max-DD **−4.4%**, worst month
 > **−2.4%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
 > second scorecard — the same five also clear (Sharpe **3.62**, months **80.3%**, max-DD **−7.6%**, worst month
-> **−5.2%**, streak **2**). Months-in-profit is the thin one on both windows now — 0.3pp of headroom on the
+> **−5.15%**, streak **2**). Months-in-profit is the thin one on both windows now — 0.3pp of headroom on the
 > full window, 0.8pp OOS — the price of running every family on a survivorship-free universe (§6d).
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
@@ -59,7 +59,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
   Against the task scorecard, the book **meets all five targets on both windows** — the final out-of-sample block
   (2024-07→, the window the brief scores: Sharpe **3.73**, months-in-profit **80.8%**, max-DD −4.4%, worst month
   −2.4%, streak 2) and the **full 15-year window** (Sharpe **3.62**, months-in-profit **80.3%**, max-DD −7.6%,
-  worst month −5.2%, streak 2). Months-in-profit ≥80%, the worst month and the ≤2-month streak hold
+  worst month −5.15%, streak 2). Months-in-profit ≥80%, the worst month and the ≤2-month streak hold
   **not** by reweighting the short-vol leg — that route deepens the worst month past −6% and collapses under ±25%
   perturbation (the old, and correct, reweighting-ceiling) — but by a **VIX-term-structure regime gate** that
   flattens the short-vol leg when the curve inverts, *before* the systemic crash: dynamic **tail-timing**, validated
@@ -69,7 +69,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
   end; the crypto cross-sectional sleeve's **residual-momentum** construction is the H5 deep-dive's pre-registered
   choice ([docs/strategies/RESIDMOM.md](docs/strategies/RESIDMOM.md)). The 15-year window is the larger-sample estimate.
 - **Where the margin is thin — stated, not buried.** The binding target is no longer the drawdown but the
-  **worst month**: at **−5.2%** against **−6%** it clears on both accounting conventions (fixed-$500k reads
+  **worst month**: at **−5.15%** against **−6%** it clears on both accounting conventions (fixed-$500k reads
   **−5.85%**), but it is a single month (Oct-2018; the next worst is −4.0%) sitting close to the floor, and the
   bootstrap puts a −7.1% month inside its 5th percentile. **1.15× is the last leverage that holds on both
   conventions** — 1.20× passes the compounded one by 1bp and fails the fixed-size one, 1.25× fails both (§4b). The **−78% standalone tail is untouched**: into the 2010 flash crash the
