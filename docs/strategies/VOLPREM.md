@@ -1,6 +1,6 @@
 # Vol premium — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.76** full / **3.61** OOS, run at a constant 1.20× whose ceiling this leg's 2010 tail sets — REPORT §4b). Any master-book number quoted below is measured on the **unlevered** stack, or is a snapshot at the time this family was evaluated.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS, 5/5 targets on both windows, run at a constant 1.20× — REPORT §4b). Any master-book number quoted below is measured on the **unlevered** stack, or is a snapshot at the time this family was evaluated.
 
 **Scope.** Build and honestly evaluate a **short-volatility / variance-risk-premium (VRP)** sleeve —
 the source structurally *orthogonal* to the trend book (short gamma vs long gamma), chosen after
@@ -203,8 +203,8 @@ instrument-level fix — an option wing that caps the tail — cannot be credibl
 (15+); price it off the trailing realised tail and it over-/mis-charges into ruin (−100%). A real tail
 hedge needs the live option smile — paid data. A sleeve-level P&L stop and an ex-ante implied-spike
 de-gross were both tested and **do not help** *reactively*: the crashes are too fast to de-risk into once vol is
-already spiking. (A **leading** signal is different — a VIX-term-structure backwardation gate fires *before* the
-crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure to close the scorecard to 5/5 on the out-of-sample block.)
+already spiking. (A **leading** signal is different — a VIX-term-structure gate fires *before* the
+crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure to close the scorecard to 5/5 on both windows.)
 
 **The mandate is on the portfolio, and sizing meets it.** In the canonical master (equal weight, 1/8 to
 volprem), trend's long gamma structurally hedges VRP's vol-spike crashes, so the portfolio lands at
@@ -220,11 +220,17 @@ trend rides) but not guaranteed in a whipsaw regime.
   portfolio.** Even across 18 underlyings the book draws down **−78%** in a systemic vol event (measured on the OHLC
   realised leg — the honest number; close-to-close showed only −50%). Cross-asset breadth over *uncorrelated*
   crashes softens it but does not defuse it, and an instrument-level tail hedge needs the live option smile (paid).
-  What this strategy does instead is **time** the exposure: a VIX-term-structure regime gate flattens the leg in
-  backwardation, *before* the systemic crash — the strategy's own signal (`src/risk/vol_regime.py`, published as
-  the `ret_gated` series the book consumes; [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to 5/5 on the
-  out-of-sample block. It cuts the tail's *portfolio* clustering (the losing-month driver), not the standalone
-  −78% (that still needs paid option data).
+  What this strategy does instead is **time** the exposure: a VIX-term-structure regime gate flattens the leg
+  whenever *either* curve segment inverts (VIX3M/VIX < 1 or VIX/VIX9D < 1), *before* the systemic crash — the
+  strategy's own signal (`src/risk/vol_regime.py`, published as
+  the `ret_gated` series the book consumes; [REPORT.md](../../REPORT.md) §5d/§6) that lifts the master to 5/5 on
+  both windows. It catches **9 of the leg's 10 worst days** (the long segment alone catches 4), and its switching
+  is charged the vega spread at the sleeve — ~27 round trips a year — so the timing is not free: on the finished
+  P&L it would read a full 0.3 of book Sharpe higher, straight through the ≤4.0 target band. It cuts the tail's
+  *portfolio* clustering (the losing-month driver), not the standalone −78%, and it cannot reach a one-session
+  dislocation out of a calm curve: into 2010-05-06 the curve stood at VIX3M/VIX **1.059** and inverted only on the
+  crash day (VIX9D does not even list until 2011, so that day cannot test the fast segment either).
+  Gated standalone: Sharpe **+3.91**, months-in-profit **87%**, DD still **−77.7%** — the tail is the flash crash.
 - **Sharpe overstates; skew and drawdown are the honest metrics.** Correcting the realised leg from
   close-to-close to OHLC (path + gap) barely moved the Sharpe but nearly doubled the tail (DD −50% →
   −78%, skew −8.7 → −18). Trust the −18 skew and −78% DD, never the Sharpe.

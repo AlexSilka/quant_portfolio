@@ -33,7 +33,7 @@ from src.data.cboe import load_cboe_vol  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
-from src.risk.vol_regime import gate_short_vol_leg  # noqa: E402
+from src.risk.vol_regime import short_vol_gate  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 from src.sleeves.vol_premium import realized_vol  # noqa: E402
 
@@ -124,6 +124,41 @@ def book_from(rets: dict) -> pd.Series:
     R = pd.DataFrame(rets).sort_index()
     raw = R.mean(axis=1, skipna=True).dropna()          # available-sleeve equal weight each day
     return vt(raw, PPY_BOOK)
+
+
+def gated_leg(src, sym, und, cls, ppy, gate: pd.Series) -> pd.Series:
+    """One sleeve under the regime gate, with the two things a gate costs kept honest:
+
+      * the switch is PAID — flattening the swap and putting it back on crosses the same vega spread a
+        roll does, so the gate goes into `short_vol_book` (on the side) where the cost model charges it,
+        not onto the finished P&L where timing would look free;
+      * the vol-target is sized off the UNGATED leg. Sizing it off the gated series reads the flat
+        stretches as low volatility and levers the leg up on re-entry — free leverage exactly when the
+        gate steps back in, which is an accounting artifact, not an edge.
+    """
+    iv = naive_dt(implied(src, sym))
+    bars = underlying_bars(und, cls)
+    px = bars["close"]
+    base = {"timed": False, "var_cap": 1e9, "bars": bars,
+            "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5)}
+    ungated = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
+    net = vp.short_vol_book(px, iv, ppy=ppy, gate=gate, **base)["net"]
+    scale = (TVOL / (ungated.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
+
+
+def gated_book(rets_ungated: dict, gate: pd.Series) -> pd.Series:
+    """The deployed (gated) book. The re-entry artifact bites a second time at book level — `vt` would
+    re-target the equal-risk mean on ITS trailing vol, which the gated flat stretches deflate — so the
+    book's scale is taken from the ungated book and applied to the gated one."""
+    gat = {}
+    for src, sym, und, cls, ppy in UNIVERSE:
+        if sym in rets_ungated:
+            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate)
+    raw_u = pd.DataFrame(rets_ungated).sort_index().mean(axis=1, skipna=True).dropna()
+    raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
+    scale = (TVOL / (raw_u.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)
+    return (raw_g * scale.reindex(raw_g.index)).clip(lower=-0.999).dropna()
 
 
 def main():
@@ -236,13 +271,22 @@ def main():
           f"cost already charged; edge survives 3x wider spreads ({cost_rows[3]['sharpe']:+.2f})")
 
     pdf.to_csv(VOLPREM_DIR / "volprem_book_sleeves.csv", index=False)
-    out = book.copy()
-    out.index = pd.DatetimeIndex(out.index).tz_localize("UTC")   # tz-aware UTC to match the other family series (master join)
     # Publish both the raw premium (`ret`) and the deployed series (`ret_gated`): the VIX term-structure
-    # regime gate (flat in backwardation, the regime that precedes the systemic short-vol crash) is part of
-    # THIS strategy's signal — validated as timing, not de-risking — so it ships from here, not the book
-    # assembler. The raw column stays intact: the master reads `ret_gated`, run_ml_book_contribution reads `ret`.
-    pd.DataFrame({"ret": out, "ret_gated": gate_short_vol_leg(out)}).to_parquet(VOLPREM_DIR / "volprem_book.parquet")
+    # regime gate (flat unless BOTH curve segments are in contango — the regime that precedes the systemic
+    # short-vol crash) is part of THIS strategy's signal — validated as timing, not de-risking — so it
+    # ships from here, not the book assembler. `ret_gated` is rebuilt through the sleeves rather than
+    # multiplied onto `ret`, so every switch pays the vega spread. The raw column stays intact: the master
+    # reads `ret_gated`, run_ml_book_contribution reads `ret`.
+    gate = short_vol_gate(book.index)
+    deployed = gated_book(rets, gate)
+    print(f"\n  gate: live {gate.mean():.1%} of days, {int((gate.diff().abs() > 0).sum())} switches "
+          f"({(gate.diff().abs() > 0).sum() / ((gate.index[-1] - gate.index[0]).days / 365.25):.1f}/yr, spread charged)")
+    sg = summarise(deployed, PPY_BOOK)
+    print(f"  gated book:      Sharpe {sg['sharpe_ann']:+.2f}  maxDD {sg['max_dd']:+.1%}  "
+          f"skew {deployed.skew():+.2f}  months+ {sg['months_in_profit']:.0%}")
+    out = pd.DataFrame({"ret": book, "ret_gated": deployed}).sort_index()
+    out.index = pd.DatetimeIndex(out.index).tz_localize("UTC")   # tz-aware UTC to match the other family series (master join)
+    out.to_parquet(VOLPREM_DIR / "volprem_book.parquet")
     print("\nVOLPREM-BOOK OK")
 
 

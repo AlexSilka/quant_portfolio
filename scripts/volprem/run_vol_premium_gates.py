@@ -34,10 +34,8 @@ from src.sleeves.vol_premium import realized_vol  # noqa: E402
 # reuse the shipped book's own universe / sleeve builder so the candidates are measured on the
 # identical legs the deliverable uses — no re-implementation to drift from it
 from scripts.volprem.run_vol_premium_book import (  # noqa: E402
-    COST_BY_CLASS, PPY_BOOK, UNIVERSE, book_from, implied, naive_dt, sleeve, underlying_bars,
+    PPY_BOOK, UNIVERSE, book_from, gated_book, naive_dt, sleeve,
 )
-from src.config import VOL_TARGET_ANNUAL  # noqa: E402
-from src.sleeves import vol_premium as vp  # noqa: E402
 
 WINDOW_START = "2011-01-01"      # master-book window; VIX9D only exists from 2011-01-04
 N_RANDOM = 500
@@ -137,44 +135,10 @@ def score(ret: pd.Series, label: str, gate: pd.Series | None = None) -> dict:
             "exposure": round(float(gate.mean()), 3) if gate is not None else 1.0}
 
 
-def priced_leg(src, sym, und, cls, ppy, gate: pd.Series | None) -> pd.Series:
-    """One sleeve with the gate honestly accounted, which needs two things kept apart:
-
-      * the switch is PAID — turning the swap off and back on crosses the same vega spread a roll does,
-        charged here through the sleeve's own cost model (gate passed into `short_vol_book`);
-      * the vol-target is sized off the UNGATED leg. Sizing it off the gated series would read the
-        flat stretches as 'low volatility' and lever the leg up on re-entry — a pure accounting
-        artifact that hands a gate free leverage exactly when it steps back in.
-    """
-    iv = naive_dt(implied(src, sym))
-    bars = underlying_bars(und, cls)
-    px = bars["close"]
-    cost = COST_BY_CLASS.get(cls, 1.5)
-    base = {"timed": False, "var_cap": 1e9, "bars": bars, "vega_cost_volpts": cost}
-    ung = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
-    net = ung if gate is None else vp.short_vol_book(px, iv, ppy=ppy, gate=gate, **base)["net"]
-    scale = (VOL_TARGET_ANNUAL / (ung.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
-    return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
-
-
-def priced_book(gate: pd.Series | None) -> pd.Series:
-    """The 18-leg book rebuilt on `priced_leg` — gate paid for, vol-target free of the re-entry artifact.
-
-    The same artifact bites a second time at book level: `book_from` re-targets the equal-risk mean on
-    ITS trailing vol, which the gated flat stretches deflate. So the book's scale is taken from the
-    ungated book and applied to the gated one — matching how the shipped pipeline gates (after the
-    vol-target, never inside it)."""
-    ung, gat = {}, {}
-    for src, sym, und, cls, ppy in UNIVERSE:
-        try:
-            ung[sym] = priced_leg(src, sym, und, cls, ppy, None)
-            gat[sym] = ung[sym] if gate is None else priced_leg(src, sym, und, cls, ppy, gate)
-        except Exception as e:
-            print(f"  SKIP {sym}: {str(e)[:70]}")
-    raw_u = pd.DataFrame(ung).sort_index().mean(axis=1, skipna=True).dropna()
-    raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
-    scale = (VOL_TARGET_ANNUAL / (raw_u.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)
-    return (raw_g * scale.reindex(raw_g.index)).clip(lower=-0.999).dropna()
+def priced_book(rets_ungated: dict, gate: pd.Series | None) -> pd.Series:
+    """A candidate's book with the switch paid for — the shipped deployed construction
+    (`run_vol_premium_book.gated_book`), so a candidate is scored exactly as it would ship."""
+    return book_from(rets_ungated) if gate is None else gated_book(rets_ungated, gate)
 
 
 def gate_switches(gate: pd.Series) -> float:
@@ -300,7 +264,7 @@ def main():
     priced = {}
     for label in picks:
         g = None if label == "none (ungated)" else cands_full[label]
-        b = priced_book(g)
+        b = priced_book(rets, g)
         priced[label] = b
         sl = b.loc[WINDOW_START:]
         free = score(gated_full[label].loc[WINDOW_START:], label)

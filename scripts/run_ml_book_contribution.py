@@ -238,9 +238,9 @@ def _ndx(ix):
 def volregime():
     """The regime overlay that DOES lift the book — and the honest finding that a simple RULE beats every ML
     engine. Flatten the volprem (tail) leg when the VIX curve inverts. Shows: the SHIPPED rule closes the
-    scorecard to 5/5 on the out-of-sample block (4/5 full window, the 3-month streak the one miss); ML engines
-    only match/underperform it; constant/random controls prove it is *timing*, not de-risking. (`assemble()`
-    here loads the UNGATED legs, so baseline is the pre-overlay book.)"""
+    scorecard to 5/5 on BOTH windows; ML engines only match/underperform it; constant/random controls prove it
+    is *timing*, not de-risking. The free-switching row is kept alongside the shipped one to show what the
+    unpaid version would have claimed — it overshoots the Sharpe band, which is why switching is charged."""
     from src.risk.vol_regime import short_vol_gate
     leg = _norm(load("volprem", "volprem/volprem_book.parquet", "ret")); leg.index = _ndx(leg.index)
     idx = leg.index
@@ -274,9 +274,13 @@ def volregime():
         c = _card(assemble({"volprem": (leg * g.reindex(idx).fillna(1.0)).rename("ret")}))
         c["targets_full"] = _targets(c)
         return c
-    base = _card(assemble()); base["targets_full"] = _targets(base)
+    # baseline must override volprem with the UNGATED leg — `assemble()` with no override would load the
+    # published `ret_gated`, i.e. the overlay this function is trying to measure the value of.
+    base = bk(pd.Series(1.0, index=idx))
+    shipped = _card(assemble()); shipped["targets_full"] = _targets(shipped)
     return {"baseline_ungated": base,
-            "RULE_vix_backwardation_shipped": bk(rule),
+            "SHIPPED gated leg (switching charged)": shipped,
+            "RULE_vix_backwardation_free_switching": bk(rule),
             "ml_logistic_soft": bk(logit),
             "ml_lightgbm_soft": bk(lgbm),
             "constant_cut_same_avg": bk(pd.Series(avg, index=idx)),

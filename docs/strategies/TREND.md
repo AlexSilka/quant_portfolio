@@ -1,6 +1,6 @@
 # Trend-Following Deep-Dive
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.76** full / **3.61** OOS, mean cross-family corr 0.06). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated* (the book grew as families were added, and gmacro became the 7th); the canonical headline is REPORT.md.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS, mean cross-family corr 0.06). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated* (the book grew as families were added, and gmacro became the 7th); the canonical headline is REPORT.md.
 
 **Dashboard:** [trend_dashboard.html](../../reports/trend/trend_dashboard.html) · **Reproduce:** `python scripts/trend/run_all_trend.py`
 · **Code:** `src/sleeves/trend_lab.py`, `scripts/trend/*` · **Sibling deep-dives:** breakout, cross-sectional, carry, mean-reversion
