@@ -230,9 +230,10 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
 > naturally positive since each family is part of the book.*
 
 - **Master book (risk-managed deliverable, 1.15× = ~9.5% book vol):** full-sample Sharpe **3.63**; on the brief's
-  **$500k** sizing capital **$2.74M** of P&L, **~$176k/yr** — **+35.1%/yr** not reinvested, **+41.5%/yr**
-  compounded (§9) — max DD **−7.4%**, months-in-profit
-  **80.9%**, worst month **−4.1%**, streak **3mo** — **5 of 5 on the 15-year window**;
+  **$500k** sizing capital **$2.69M** of P&L, **~$172k/yr** — **+34.5%/yr**
+  not reinvested, **+40.5%/yr** compounded (§9) — max DD **−7.4%**, months-in-profit
+  **80.9%**, worst month **−4.1%**, streak **3mo** — **4 of 5 on the
+  15-year window** (a 3-month losing streak against ≤2);
   block-bootstrap MC **[Sharpe P5 +3.22, P50 +3.74, P95 +4.23; max-DD P5 −12.3%, P50 −8.5%]**; mean
   pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe 3.63, months-in-profit
   80.8%, max-DD −4.7%, worst −2.0%, streak 2mo — 5/5.**
@@ -599,12 +600,12 @@ without it:
 
 | volprem leg, book scored 2011-01 → 2024-06 | Sharpe | max-DD | worst month | months | streak | targets |
 |---|---|---|---|---|---|---|
-| ungated | 3.42 | −8.3% | −5.5% | 78.7% | 3 | 3/5 |
-| long segment only (the previous rule) | 3.46 | −8.3% | −4.7% | 79.3% | 3 | 3/5 |
-| fast segment only | 3.66 | −7.4% | −5.0% | 80.8% | 2 | 5/5 |
-| **both segments (shipped)** | **3.66** | **−7.4%** | **−5.0%** | **80.8%** | **2** | **5/5** |
-| both + re-entry 5d | 3.29 | −7.4% | −4.6% | 75.0% | 2 | 4/5 |
-| SHIPPED + re-entry 5d | 3.49 | −8.3% | −4.7% | 76.6% | 3 | 3/5 |
+| ungated | 3.42 | −8.3% | −5.1% | 78.2% | 3 | 3/5 |
+| long segment only (the previous rule) | 3.45 | −8.3% | −4.9% | 78.2% | 3 | 3/5 |
+| fast segment only | 3.67 | −7.4% | −4.1% | 80.8% | 3 | 4/5 |
+| **both segments (shipped)** | **3.67** | **−7.4%** | **−4.1%** | **80.8%** | **3** | **4/5** |
+| both + re-entry 5d | 3.31 | −8.3% | −3.9% | 74.5% | 3 | 3/5 |
+| SHIPPED + re-entry 5d | 3.46 | −8.4% | −5.0% | 79.3% | 3 | 3/5 |
 
 Same winner, same margin, same reason the runners-up are rejected — so the rule is recoverable from
 pre-block data alone and the block's one-shot status survives in substance. The threshold surface and the
@@ -785,8 +786,8 @@ short-vol exposure before spikes. The ML gates (logistic and LightGBM; a wider s
 book Sharpe **3.59–3.68** full / **3.03–3.07** OOS — the engine does not matter. **A parameter-light non-ML rule
 beats them all**: flatten volprem unless **both** curve segments are in contango (VIX3M/VIX ≥ 1 *and* VIX/VIX9D ≥ 1
 — the contango/backwardation boundary on each, un-fitted, causal on the prior close) nets book
-**Sharpe 3.42 → 3.66** full (**OOS 2.86 → 3.71**), **months-in-profit 78.7% → 80.8%**, **worst month −5.5% → −5.0%**,
-**max-DD −8.3% → −7.4%** and the **losing streak 3 → 2** — **all five targets on both windows** (§6),
+**Sharpe 3.42 → 3.67** full (**OOS 2.79 → 3.63**), **months-in-profit 78.2% → 80.8%**, **worst month −5.1% → −4.1%**,
+**max-DD −8.3% → −7.4%** and the **losing streak 3 → 3** — taking the leg's own scorecard from **3/5** to **4/5** (§6),
 positive in all 16 years. It is the *timing*, not de-risking: a **constant** cut to the same average exposure does
 nothing (OOS 2.93 → 2.90) and a **random** gate stays at full Sharpe **3.08–3.34** (20-draw placebo, below the
 rule's 3.73), so the VIX signal — legitimate point-in-time macro (§9) — is doing real work. **The switching is
@@ -833,9 +834,9 @@ crash months while the other seven families stay invested and earning. Reproduce
 
 - **Reachable here:** a diversified eight-family book at full-sample Sharpe ≈ **3.63** net
   (+34.5%/yr on the brief's $500k at 1.15×, drawdown −7.4%,
-  block-bootstrap MC-P5 **+3.20**) that **meets all five targets on both windows** — the final
-  out-of-sample block (Sharpe **3.63**, the window the brief scores) and the full 15-year window
-  (Sharpe **3.63**). Vol-premium anchors the Sharpe; seven decorrelated sources cut its tail; a VIX-term-structure
+  block-bootstrap MC-P5 **+3.20**) that meets **all five** targets on the window the brief
+  scores — the final out-of-sample block (Sharpe **3.63**) — and **four of the five** on the full
+  15-year window (Sharpe **3.63**, missing on a 3-month losing streak against ≤2). Vol-premium anchors the Sharpe; seven decorrelated sources cut its tail; a VIX-term-structure
   regime gate times the short-vol leg out of the crashes that used to break the worst month and cluster the losing
   months; and the crypto cross-sectional sleeve runs on **residual (idiosyncratic) momentum**, a better-built
   momentum that steadies recent-year consistency. **5/5 is reachable — by dynamic tail-timing
@@ -848,7 +849,7 @@ crash months while the other seven families stay invested and earning. Reproduce
   ±25% perturbation — so on the **weighting axis** ≥80% months genuinely fights ≥−6% worst-month, a real frontier
   (quantified next). What closes it is a different mechanism: a **dynamic VIX-term-structure gate** that
   *under*-weights the short-vol leg only when the curve inverts — *avoiding* the crashes rather than trading them —
-  lifting months-in-profit to **80.8%**, holding worst-month at **−5.0%** and cutting the losing streak to **2** at
+  lifting months-in-profit to **80.8%**, holding worst-month at **−4.1%** and cutting the losing streak to **3** at
   once (unlevered A/B; worst month **−5.7%** at the shipped 1.15× of §4b). That the overlay beats
   every ML engine and a constant/random control (§5d) confirms it is the VIX timing, not a fitted corner.
 - **The *reweighting* frontier, quantified** — it is the *weighting* axis that is capped; the VIX tail-timing
@@ -866,10 +867,10 @@ crash months while the other seven families stay invested and earning. Reproduce
 
   Months-in-profit never reaches 80% by *reweighting*, and holding worst-month ≥ −6% caps it near 74% — the
   weighting axis genuinely cannot hit 5/5. The **dynamic VIX tail-timing gate breaks that trade-off** — it avoids
-  the short-vol crashes instead of trading them — so the shipped master book reaches months **80.9%** *and*
-  worst-month **−5.7%** and a **2-month** streak together, clearing the reweighting frontier; with the
-  residual-momentum crypto sleeve the scorecard is **5/5 on both windows** (OOS Sharpe **3.77**), not a fitted
-  corner. *(Sweep on the core-family book; the deliverable is the 8-family master with the VIX overlay.)*
+  the short-vol crashes instead of trading them — so the shipped master book reaches months **80.9%**
+  *and* worst-month **−4.1%** together, which no weighting could, clearing the reweighting
+  frontier; the scorecard reads **5 of 5** on the scored block and **4 of 5** on the
+  full window, not a fitted corner. *(Sweep on the core-family book; the deliverable is the 8-family master with the VIX overlay.)*
 - **Every diversifier earns its place — crisis-alpha is not redundant after the VIX gate (checked).** The VIX
   gate times the *short-vol* leg out of vol spikes; the crisis / managed-futures leg hedges the *broad-market*
   crashes it cannot, and the two are complementary, not overlapping. Dropping crisis (7 families + VIX gate)
@@ -1034,6 +1035,45 @@ defend at any price, and this one is nearly free.
 
 **What it costs, stated:** months-in-profit on the frozen block falls from **84.6% to 80.8%** — still clear of
 the ≥80% target, but with 0.8pp of headroom rather than 4.6pp. That is now the thinnest of the five.
+
+## 6e. The five hardest questions, answered with the measurement
+
+Every objection below is one this report invites. Each is answered from an artifact, not from prose, and
+where the answer is "yes, that is a real weakness" it says so.
+
+**1. "Sharpe 3.6 net is not credible for a real book."** It would not be for a *sleeve*, and no sleeve here
+earns it: the best single sleeve's **deflated Sharpe is 0.00 at N=2,129 trials**, and the same selection
+walk-forwarded out-of-sample gives **+0.13**. The book's number comes from *not selecting* — eight premia
+at mean pairwise correlation **0.06**, each applied uniformly across its whole universe. The check that
+matters: **remove the anchor leg and the remaining seven still make Sharpe 1.55**, positive every year. If
+the number were a mining artifact it would collapse there.
+
+**2. "Half the P&L is one leg with a −78% tail."** True, and it is the book's largest stated risk: vol-prem
+is **56% of P&L**. Three things bound it — it is sized on the tail rather than on its Sharpe (equal risk,
+never above parity), its own VIX-term-structure gate stands it down while the curve is inverted, and §6c-bis
+prices a wing that would cut the worst day from **−76% to −6%** for ~16% of sold variance. That hedge is
+**not shipped**, because its margin over break-even is 2.2× on a level measured in one calm half-year. The
+honest position is a disclosed tail, not a hedged one.
+
+**3. "A two-year out-of-sample block proves nothing."** At 26 months the standard error of the OOS Sharpe is
+**±0.70**, stated in §5c — 3.63 is 3.63 ± 0.70. The length is a trade: at one year the ≤2-month streak
+target is close to a coin flip, and the crypto legs only list from 2020 so a five-year block leaves one year
+to build on. The wider evidence is the book-level walk-forward, which runs out-of-sample **2006→2026 at
+Sharpe 3.34** and pays for that history in drawdown (−18.6%).
+
+**4. "It is a crypto book with a hedge bolted on."** Four of eight families are crypto-only, and only trend
+spans both classes — stated in the first screen. But the equity and FX absences are *measured deaths*, not
+gaps: equity BAB's beta ranking sits at the **14th percentile of shuffled rankings** (random does better),
+FX carry nets **+0.39** because the price leg offsets the accrual, and breakout is negative on equities and
+FX under every construction. The book is crypto-heavy because that is where the edge survived costs.
+
+**5. "You miss a target."** Yes — the full window's losing streak is **3 months** (Dec-2021 −2.5%,
+Jan-2022 −0.8%, Feb-2022 −1.7%, −4.9% cumulative) against ≤2. The scored OOS block is 5/5. It is not a knob
+that was left untuned: **a streak is a sign property and leverage is a positive scalar**, so the grid shows
+streak 3 at *every* level from 1.00× to 2.00×. Nor can it be de-risked away — a flat month is not a
+profitable month, measured in §5d, where a classifier aimed at exactly this target pushed months-in-profit
+from 81% to 68%. Fixing it needs a source that *earns* through a crypto unwind; §6c searched for one and
+found nothing that did not break another target.
 
 ## 7. What did not survive (kept, not hidden)
 
