@@ -101,7 +101,13 @@ def main():
     print("\n=== survivorship test (top-100) ===")
     elig100 = carry_xs.pit_eligible(V, 100)
     pit = vt(run_carry(C, fd, sig_full, elig100, beta_ret=btc)[0])
-    survivors = C.columns[C.iloc[-1].notna()]          # names still trading at the end
+    # "Still trading" has to mean traded, not quoted. Binance's archive keeps emitting daily bars for a
+    # settled contract — 123 perps here carry a frozen last price at zero volume, FTM/BAL/AGIX for 407
+    # days — so a non-NaN final close counts dead names as survivors and *understates* the very bias
+    # this test exists to measure. Volume is the honest liveness test; it is also what keeps them out of
+    # the eligible universe above.
+    traded_recently = V.tail(30).fillna(0.0).sum() > 0
+    survivors = C.columns[C.iloc[-1].notna() & traded_recently.reindex(C.columns).fillna(False)]
     C_surv = C[survivors]
     surv_only = vt(run_carry(C_surv, fd[survivors], carry_xs.signal_level(fd[survivors], 7),
                              carry_xs.pit_eligible(V[survivors], 100), beta_ret=btc)[0])

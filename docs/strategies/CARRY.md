@@ -185,8 +185,15 @@ is traded only while it was actually liquid, so a delisted coin simply leaves th
 - **Carry lives in the mid-cap tier, not the megacaps.** Top-30 is *weak* (+0.84): the largest coins
   have compressed, low-dispersion funding, so there is little carry spread to harvest. The dispersion —
   the fuel — is in names ~50–100. The illiquid **150–200 tail adds cost and noise, not edge**.
-- **No survivorship inflation.** PIT-with-delisted (+1.33) is *higher* than current-listed-only (+1.20),
-  so the edge is not a survivor artifact; if anything, excluding dead names slightly understates it.
+- **Survivorship inflation is small but real: +0.05 Sharpe.** PIT-with-delisted nets **+1.29** against
+  current-listed-only **+1.34**. An earlier version of this line claimed the *opposite* sign — that
+  including dead names raised the Sharpe — and that was a measurement artifact. "Still listed" was read
+  as "has a non-NaN last close", but Binance's archive keeps emitting daily bars for a **settled**
+  contract at a frozen price and zero volume (FTM, BAL, AGIX, ALPACA, FTT ran on for 407 such bars;
+  `exchangeInfo` reports them `SETTLING`). That put 123 dead perps into the survivors-only book and
+  flattened the very comparison the test exists to make. Survivors are now defined by traded volume.
+  The eligible universe was never affected — zero volume already keeps these names out of the PIT
+  top-N — so only this diagnostic moved.
 - **Cost / regime caveat.** The wide universe is more cost-sensitive (top-100 breaks even ~30 bps/side vs
   the curated core's ~30 bps too, but degrades faster) and more exposed to deleveraging — 2022 turns
   **negative (−0.5)** vs the curated 50's +0.8, as junk alts crash together. Gate the tail by liquidity
