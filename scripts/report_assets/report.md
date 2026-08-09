@@ -25,9 +25,13 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > there it clears **{{oos_targets}}** (2024-07→: Sharpe **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month
 > **{{oos_worst_month}}**, streak **{{oos_streak}}**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
 > second scorecard — it scores **{{book_targets}}** (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD **{{book_dd}}**, worst month
-> **{{book_worst_month}}**, streak **{{book_streak}}**): the losing-month streak runs to three in Dec-2021→Feb-2022,
-> which surfaced once the equity panel stopped carrying foreign companies behind dead US tickers (§3a). Four of
-> the five full-window figures improved with that correction; this one got worse, and it is reported as it fell. Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
+> **{{book_worst_month}}**, streak **{{book_streak}}**): what it misses is **months-in-profit and the
+> losing-month streak**, and both appeared when two data defects were repaired (§3a): the equity panel had been
+> carrying foreign companies behind dead US tickers, and three short-vol legs had been selling variance at a
+> strike frozen in Feb-2022 for the three years Cboe stopped publishing their index. The first correction
+> improved four of five full-window figures and lengthened the streak to three months (Dec-2021→Feb-2022); the
+> second cost the book 0.14 Sharpe on the full window and 0.24 out-of-sample, because the manufactured legs had
+> been quietly padding the calm months. Nothing was re-tuned to win the targets back. Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
 > price of the honest trend universe — §6d.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
@@ -322,8 +326,9 @@ headroom is not treated as spare risk budget.
 *Being explicit about what is measured and what is judgement:* the ceilings above are measured — each is a
 constraint evaluated on the grid. Which rung inside them the book takes is risk appetite, and the scorecard no
 longer decides it for us: the full-window score is {{book_targets}} across the whole usable span, because the
-target it misses is the losing-month **streak**, and leverage cannot change the sign of a month — scaling every
-return by 1.15 or 1.45 leaves Dec-2021→Feb-2022 exactly as negative as it was. The grid is a plateau rather than
+targets it misses — **months-in-profit and the losing-month streak** — are both properties of the *sign* of a
+month, and leverage cannot change a sign: scaling every return by 1.15 or 1.45 leaves Dec-2021→Feb-2022 exactly
+as negative as it was, and moves no month across zero. The grid is a plateau rather than
 a single passing point, and the scorecard no longer picks a rung. The shipped {{leverage}} is a choice made
 inside that plateau, on the tail evidence rather than on the scorecard — which is the honest way to describe it.
 The frozen OOS block {{oos_grid_verdict}}, so it never enters the decision.
@@ -998,6 +1003,48 @@ defend at any price, and this one is nearly free.
 
 **What it costs, stated:** months-in-profit on the frozen block falls from **84.6% to 80.8%** — still clear of
 the ≥80% target, but with 0.8pp of headroom rather than 4.6pp. That is now the thinnest of the five.
+
+## 6e. The five hardest questions, answered with the measurement
+
+Every objection below is one this report invites. Each is answered from an artifact, not from prose, and
+where the answer is "yes, that is a real weakness" it says so.
+
+**1. "A net Sharpe near {{book_sharpe}} is not credible for a real book."** It would not be for a *sleeve*, and no sleeve here
+earns it: the best single sleeve's **deflated Sharpe is {{zoo_dsr}} at N={{zoo_trials}} trials**, and the same selection
+walk-forwarded out-of-sample gives **{{zoo_wf_oos}}**. The book's number comes from *not selecting* — eight premia
+at mean pairwise correlation **{{mean_corr_abs}}**, each applied uniformly across its whole universe. The check that
+matters: **remove the anchor leg and the remaining seven still make Sharpe {{top_removed_sharpe}}**, positive every year. If
+the number were a mining artifact it would collapse there.
+
+**2. "Half the P&L is one leg with a −78% tail."** True, and it is the book's largest stated risk: vol-prem
+is **{{volprem_pnl_share}} of P&L**. Three things bound it — it is sized on the tail rather than on its Sharpe (equal risk,
+never above parity), its own VIX-term-structure gate stands it down while the curve is inverted, and §6c-bis
+prices a wing that would cut the worst day from **−76% to −6%** for ~16% of sold variance. That hedge is
+**not shipped**, because its margin over break-even is 2.2× on a level measured in one calm half-year. The
+honest position is a disclosed tail, not a hedged one.
+
+**3. "A two-year out-of-sample block proves nothing."** At 26 months the standard error of the OOS Sharpe is
+**±0.70**, stated in §5c — {{oos_sharpe}} is {{oos_sharpe}} ± 0.70. The length is a trade: at one year the ≤2-month streak
+target is close to a coin flip, and the crypto legs only list from 2020 so a five-year block leaves one year
+to build on. The wider evidence is the book-level walk-forward, which runs out-of-sample **{{wf_window}} at
+Sharpe {{wf_sharpe}}** and pays for that history in drawdown ({{wf_dd}}).
+
+**4. "It is a crypto book with a hedge bolted on."** Four of eight families are crypto-only, and only trend
+spans both classes — stated in the first screen. But the equity and FX absences are *measured deaths*, not
+gaps: equity BAB's beta ranking sits at the **14th percentile of shuffled rankings** (random does better),
+FX carry nets **+0.39** because the price leg offsets the accrual, and breakout is negative on equities and
+FX under every construction. The book is crypto-heavy because that is where the edge survived costs.
+
+**5. "You miss targets."** Yes, and more than when this section was written. The scored out-of-sample block
+is **{{oos_targets_met}}** — missing on {{oos_miss}} — and the full window is **{{book_targets_met}}**, missing
+on {{book_miss}}. Both misses are the same underlying thing: months that are flat-to-slightly-negative in a
+crypto unwind, clustered rather than scattered (Dec-2021 → Feb-2022 is the run that sets the streak). Neither
+is a knob left untuned. **A streak is a sign property and leverage is a positive scalar**, so the grid shows
+the same streak at *every* level from 1.00× to 2.00× — sizing cannot touch it. Nor can either be de-risked
+away, because a flat month is not a profitable month: §5d measures a classifier aimed at exactly this target
+and it pushes months-in-profit *down*, from {{ml_base_months}} to {{ml_gate_months}}. What would fix them is a
+source that **earns** through a crypto unwind rather than sitting out of it; §6c searched for one and found
+nothing that did not break another target. That is the honest ceiling of this book, not a tuning gap.
 
 ## 7. What did not survive (kept, not hidden)
 

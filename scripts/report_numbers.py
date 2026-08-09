@@ -379,6 +379,12 @@ def build():
         if fx_full:
             out.update(_verdict({**fx_full, "sharpe": s["scorecard_full"]["sharpe"]}, "fixed"))
         out.update(_grid_verdict())
+        # the book-level walk-forward (run_wf_book) — the wider out-of-sample evidence §5c/§6e leans on
+        w = _load("master_book_wf_summary.json").get("headline_wf_oos") or {}
+        if w:
+            out.update({"wf_sharpe": f"{w['sharpe']:.2f}", "wf_dd": _pc(w["max_dd"]),
+                        "wf_window": f"{w['start'][:4]}→{w['end'][:4]}",
+                        "wf_months": _pcu(w["months_in_profit"])})
         out.update(_grid_span())
         # the 2010 flash-crash replay at unlevered risk — the tail the sizing argument turns on
         rb0 = _load("book/risk_budget.json").get("selective_leverage", {}).get("all legs", {})

@@ -33,11 +33,34 @@ def render(tmpl, reg):
     return BANNER.format(name=tmpl.name) + PLACEHOLDER.sub(lambda m: reg[m.group(1)], text)
 
 
+HEADING = re.compile(r"^#{1,4} .+$", re.M)
+
+
+def _guard_dropped_sections(tmpl, out, new):
+    """Refuse to overwrite a section that exists in the generated file but not in the template.
+
+    This is the one way a generated document loses work: someone adds a section to REPORT.md (the
+    obvious place — it is the document) and the next render silently drops it. It has happened twice.
+    A render that would remove a heading now stops and says which one, so the section gets moved into
+    the template instead of vanishing. Deliberate deletions pass `--allow-drop`."""
+    if not out.exists() or "--allow-drop" in sys.argv:
+        return
+    dropped = [h for h in HEADING.findall(out.read_text()) if h not in set(HEADING.findall(new))]
+    if dropped:
+        raise SystemExit(
+            f"{out.name}: rendering would drop {len(dropped)} section(s) that are in the file but not in "
+            f"{tmpl.relative_to(ROOT)}:\n" + "".join(f"    {h}\n" for h in dropped)
+            + "  These were almost certainly added to the generated file by hand. Move them into the\n"
+              "  template (that is the editable copy), then render again. If the removal is deliberate:\n"
+              "    python scripts/render_report.py --allow-drop")
+
+
 def main():
     reg = build()
     check = "--check" in sys.argv
     for tmpl, out in DOCS:
         new = render(tmpl, reg)
+        _guard_dropped_sections(tmpl, out, new)
         if check:
             if (out.read_text() if out.exists() else "") != new:
                 raise SystemExit(f"{out.name} is stale — the artifacts moved since it was rendered.\n"
