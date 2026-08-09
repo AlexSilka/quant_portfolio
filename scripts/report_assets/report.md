@@ -297,10 +297,13 @@ rather than on the boundary. It was set when the realised worst month bound the 
 level that held on both accounting conventions. Two later changes loosened that: the two-segment regime gate and
 the honest trend universe. On the book as it stands the realised worst month allows **{{worst_month_allows}}**,
 and what binds first is the **{{binding_constraint}}** at **{{binding_leverage}}** — so the shipped level is one
-rung below the tightest ceiling, not on it. That is a live decision rather than an oversight: re-cutting the book
-to its current boundary would buy CAGR at the cost of the margin, and the margin is what the earlier sizing was
-paid for. The tail arguments behind that caution are unchanged — the bootstrap puts a worst month past −6% inside
-its 5th percentile at every leverage including 1.00×, and so does the 2010 flash-crash replay.
+rung below the tightest ceiling, not on it. **It stays there, and the reason is the tail rather than the
+scorecard.** Two of the seven constraints are already violated at 1.00×, before any leverage is added: the
+bootstrap puts a worst month past −6% inside its 5th percentile, and the 2010 flash-crash replay does the same.
+Neither improves by spending the headroom the realised metrics appear to leave — both get proportionally worse,
+and the event that produces them is the one no term-structure rule reaches (the curve was in contango the
+session before). Raising the book to its measured ceiling would buy CAGR against exactly that tail, so the
+headroom is not treated as spare risk budget.
 
 *Being explicit about what is measured and what is judgement:* the ceilings above are measured — each is a
 constraint evaluated on the grid. Which rung inside them the book takes is risk appetite, and the scorecard no

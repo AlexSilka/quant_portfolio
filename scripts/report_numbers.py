@@ -15,6 +15,8 @@ hand-written target read alike on the same line.
 import json
 from pathlib import Path
 
+import pandas as pd
+
 R = Path("reports")
 
 
@@ -123,11 +125,26 @@ def build():
             "mc_dd_p5": _pc(bb.get("maxdd_p5", m.get("mc_maxdd_p5", float("nan")))),
             "mc_hit_p5": _pcu(bb.get("hit_p5", m.get("mc_hit_p5", float("nan"))), 0),
             "turnover": f"{s.get('annual_turnover', float('nan')):.0f}×",
+            "volprem_pnl_share": _pcu(s.get("pnl_share", {}).get("volprem", float("nan")), 0),
+            "n_years": str(len(s.get("per_year", {}))),
+            # spelled out for prose ("an eight-family book"); unsigned for "≈ 0.06" style
+            "n_families_word": {6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten"}.get(
+                len(s["families"]), str(len(s["families"]))),
+            "mean_corr_abs": f"{abs(s['mean_correlation']):.2f}",
+            "n_years_positive": str(sum(1 for v in s.get("per_year", {}).values() if v > 0)),
             "turnover_held": f"{s.get('annual_turnover_weights_held', float('nan')):.1f}×",
         })
         if held:
             out.update({"held_sharpe": f"{held['sharpe']:.2f}", "held_dd": _pc(held["max_dd"]),
                         "held_worst_month": _pc(held["worst_month"])})
+        # the two return rates the report quotes side by side: what the fixed $500k earns with P&L taken
+        # out, and the rate the same track compounds at (which is what the risk metrics are measured on)
+        yrs = (pd.Timestamp(s["window"][1]) - pd.Timestamp(s["window"][0])).days / 365.25
+        cap = s.get("sizing_capital_usd") or 1
+        out["return_not_reinvested"] = _pc(fx_full.get("pnl_usd_per_year", 0) / cap)
+        if yrs > 0 and full.get("total_return") is not None:
+            out["return_compounded"] = _pc((1.0 + full["total_return"]) ** (1 / yrs) - 1.0)
+
         # the leverage the book ships at, and the constraint that currently binds it
         rb = _load("book/risk_budget.json")
         if rb.get("leverage"):

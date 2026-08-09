@@ -17,33 +17,36 @@ from pathlib import Path
 from report_numbers import build
 
 ROOT = Path(__file__).resolve().parents[1]
-TMPL = ROOT / "scripts" / "report_assets" / "report.md"
-OUT = ROOT / "REPORT.md"
-BANNER = ("<!-- Generated from scripts/report_assets/report.md by scripts/render_report.py — edit the\n"
+ASSETS = ROOT / "scripts" / "report_assets"
+DOCS = ((ASSETS / "report.md", ROOT / "REPORT.md"), (ASSETS / "readme.md", ROOT / "README.md"))
+BANNER = ("<!-- Generated from scripts/report_assets/{name} by scripts/render_report.py — edit the\n"
           "     template, not this file. Every figure below is resolved from reports/ at render time. -->\n")
 PLACEHOLDER = re.compile(r"\{\{([a-z0-9_]+)\}\}")
 
 
-def render():
-    reg = build()
-    text = TMPL.read_text()
+def render(tmpl, reg):
+    text = tmpl.read_text()
     missing = sorted({m.group(1) for m in PLACEHOLDER.finditer(text)} - set(reg))
     if missing:
-        raise SystemExit(f"unresolved placeholders (add them to report_numbers.build): {', '.join(missing)}")
-    return BANNER + PLACEHOLDER.sub(lambda m: reg[m.group(1)], text)
+        raise SystemExit(f"{tmpl.name}: unresolved placeholders (add them to report_numbers.build): "
+                         f"{', '.join(missing)}")
+    return BANNER.format(name=tmpl.name) + PLACEHOLDER.sub(lambda m: reg[m.group(1)], text)
 
 
 def main():
-    new = render()
-    if "--check" in sys.argv:
-        current = OUT.read_text() if OUT.exists() else ""
-        if current != new:
-            raise SystemExit("REPORT.md is stale — the artifacts moved since it was rendered.\n"
-                             "  fix: python scripts/render_report.py")
-        print("REPORT.md is current with the artifacts")
-        return
-    OUT.write_text(new)
-    print(f"REPORT.md <- {TMPL.relative_to(ROOT)} ({len(PLACEHOLDER.findall(TMPL.read_text()))} figures resolved)")
+    reg = build()
+    check = "--check" in sys.argv
+    for tmpl, out in DOCS:
+        new = render(tmpl, reg)
+        if check:
+            if (out.read_text() if out.exists() else "") != new:
+                raise SystemExit(f"{out.name} is stale — the artifacts moved since it was rendered.\n"
+                                 f"  fix: python scripts/render_report.py")
+            print(f"{out.name} is current with the artifacts")
+            continue
+        out.write_text(new)
+        print(f"{out.name} <- {tmpl.relative_to(ROOT)} "
+              f"({len(PLACEHOLDER.findall(tmpl.read_text()))} figures resolved)")
 
 
 if __name__ == "__main__":

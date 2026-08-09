@@ -616,6 +616,9 @@ def main():
     # drawdown by a cash balance that grew, which flatters max-DD and the worst month.
     net_pnl = float(CAP * master.sum())
     pnl_per_year, simple_return = net_pnl / yrs, float(master.sum() / yrs)
+    # the same track with P&L put back to work — quoted in the sizing note, not as a headline tile: it is
+    # the biggest number on the page and the one the capacity limit says could not have been earned
+    cmp_final = float(CAP * eqf.iloc[-1])
 
     # --- monthly / OOS / cross-asset (2020+) windows ---
     mo = (1.0 + master).resample("ME").prod() - 1.0
@@ -931,7 +934,7 @@ def main():
         f'as each deep-dive publishes it: {perfam_be} &mdash; none of them is cost-fragile. Carry, crisis, '
         f'global-macro and BAB run no cost sweep of their own, so they are not measured on this axis.</p></figure>')
 
-    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, dict(
+    _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharpe, ca_cagr, dict(
         sc=_scorecard(sc), sc_note=sc_note, eq=eq_svg, psleq=psleq_svg, month=month_svg, dd=dd_svg, roll=roll_svg,
         year=year_svg, quarter=quarter_svg, stress=stress_rows, stress_note=stress_note, marg=marg_svg,
         corr=corr_svg, famtbl=fam_rows, famnote=fam_note, famperiods=famperiods, param=_param_card(),
@@ -948,7 +951,7 @@ def _asset(name):
     return (ASSETS / name).read_text()
 
 
-def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr, S):
+def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharpe, ca_cagr, S):
     """Fill report_assets/dashboard.html (page + copy) with computed values, CSS and JS."""
     m = summ["master"]
     fam = ", ".join(sf(f) for f in summ["families"])
@@ -969,6 +972,7 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr,
         report_window=f"{rw[0][:4]}–{rw[1][:4]}",
         cagr=_pc(cagr, 1), net_pnl_m=f"{net_pnl / 1e6:.2f}",
         pnl_per_year_k=f"{pnl_per_year / 1e3:.0f}", simple_return=_pc(simple_return, 1),
+        cmp_final_m=f"{cmp_final / 1e6:.1f}", cmp_pnl_m=f"{(cmp_final - CAP) / 1e6:.1f}",
         sc=S["sc"], sc_note=S["sc_note"], mc_p5=_n(m['mc_p5'], 2), mc_p50=_n(m['mc_p50'], 2), mc_p95=_n(m['mc_p95'], 2),
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),

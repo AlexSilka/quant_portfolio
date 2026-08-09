@@ -1,5 +1,3 @@
-<!-- Generated from scripts/report_assets/readme.md by scripts/render_report.py — edit the
-     template, not this file. Every figure below is resolved from reports/ at render time. -->
 # Cross-Asset Alpha Discovery & Portfolio Assembly (Task A)
 
 Systematic cross-asset (US equities + crypto) alpha research and portfolio assembly, built for honest
@@ -15,22 +13,22 @@ no network).
 
 ## The result in one page
 
-An **eight-family, equal-weight cross-asset book** at a constant **1.15× leverage** (~9.5% annualised vol).
+An **{{n_families_word}}-family, equal-weight cross-asset book** at a constant **{{leverage}} leverage** (~9.5% annualised vol).
 The brief scores its five targets on the **final out-of-sample block**; the 15-year window is shown alongside
 as supporting evidence, not as a second scorecard.
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.73** ✓ | **3.62** ✓ |
-| months in profit ≥ 80% | **80.8%** ✓ | **80.3%** ✓ |
-| max drawdown ≤ 15% | **−4.4%** ✓ | **−7.6%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **2** ✓ |
-| worst single month ≥ −6% | **−2.4%** ✓ | **−5.15%** ✓ |
+| Sharpe, net, 2.5–4.0 | **{{oos_sharpe}}** ✓ | **{{book_sharpe}}** ✓ |
+| months in profit ≥ 80% | **{{oos_months}}** ✓ | **{{book_months}}** ✓ |
+| max drawdown ≤ 15% | **{{oos_dd}}** ✓ | **{{book_dd}}** ✓ |
+| longest losing streak ≤ 2 mo | **{{oos_streak}}** ✓ | **{{book_streak}}** ✓ |
+| worst single month ≥ −6% | **{{oos_worst_month}}** ✓ | **{{book_worst_month_2dp}}** ✓ |
 | | **5 / 5** | **5 / 5** |
 
-On the brief's $500k of sizing capital that is **$2.64M** of P&L, **~$169k/yr**
-(+33.9%/yr not reinvested, +39.7%/yr compounded). Positive in **16 of 16 calendar years**.
-Mean pairwise correlation between families **≈ 0.06**.
+On the brief's {{capital}} of sizing capital that is **{{pnl_usd}}** of P&L, **~{{pnl_usd_per_year}}/yr**
+({{return_not_reinvested}}/yr not reinvested, {{return_compounded}}/yr compounded). Positive in **{{n_years_positive}} of {{n_years}} calendar years**.
+Mean pairwise correlation between families **≈ {{mean_corr_abs}}**.
 
 **The eight sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
 (no per-leg selection), every one on a **survivorship-free / point-in-time** universe:
@@ -52,7 +50,7 @@ book still stands.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
 
-1. **Concentration.** Short-vol is 57% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
+1. **Concentration.** Short-vol is {{volprem_pnl_share}} of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
    flash crash). No term-structure rule reaches that day — the curve was in contango the session before.
 2. **Capacity.** That same leg is a variance-swap *replication*, not an executed option book, and the 18-leg
    construction caps out around low tens of $M before the thin legs stop filling.
@@ -78,15 +76,15 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.62** (5/5), OOS **3.73** (5/5), −7.6% max-DD, 8 families |
-| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised months-in-profit is what binds first, at 1.30× |
-| `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
+| `make master` | the whole portfolio, from scratch | full **Sharpe {{book_sharpe}}** (5/5), OOS **{{oos_sharpe}}** (5/5), {{book_dd}} max-DD, {{n_families}} families |
+| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **{{leverage}}**; {{binding_constraint}} is what binds first, at {{binding_leverage}} |
+| `make cscv` | the overfit / multiple-testing control | **PBO {{cscv_pbo}}**, in-sample-best {{cscv_is_bar}} → OOS {{cscv_oos_bar}} /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
 
 Re-running `make master` then `git diff reports/master_book_summary.json` shows **no change** —
 byte-for-byte reproducibility. The Sharpe is high because the book **selects no single sleeve** (the
-best sleeve's deflated Sharpe ≈ 0.00 at N = 2,129): it stacks eight decorrelated premia (mean ρ ≈ 0.06).
+best sleeve's deflated Sharpe ≈ {{zoo_dsr}} at N = {{zoo_trials}}): it stacks {{n_families_word}} decorrelated premia (mean ρ ≈ {{mean_corr_abs}}).
 Every Sharpe is annualised by actual obs/yr (not a flat 365), and the short-vol leg is net of
 per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
 
@@ -125,11 +123,11 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.62 full / 3.73 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe {{book_sharpe}} full / {{oos_sharpe}} OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
-#    master-book assembly, CSCV, charts, dashboard. Budget ~1 hour: it mines the FULL 2,129-candidate
+#    master-book assembly, CSCV, charts, dashboard. Budget ~1 hour: it mines the FULL {{zoo_trials}}-candidate
 #    grid including 5m/15m, because the trial count is what sets the deflation haircut quoted in the
 #    report — reproducing on the cheap 1h/4h/1d grid would report a smaller N and a weaker penalty.
 #    (The other six family deep-dives are heavy one-offs; rebuild any from its own target, e.g.
