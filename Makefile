@@ -62,12 +62,13 @@ sessions:
 ledger:
 	$(PY) scripts/make_oos_ledger.py
 
-# §13 regenerate all nine required charts as standalone PNGs from the current master-book artifacts.
+# §13 regenerate the required charts (equity, per-sleeve equity, drawdown, monthly heatmap, rolling
+# Sharpe, exposure, turnover, correlation, edge map, survival funnel) from the current artifacts.
 figures:
 	$(PY) scripts/make_figures.py
 
-# Full discovery grid (incl. 5m/15m intraday) — the honest N for the multiple-testing haircut. Slow.
-# `reproduce` mines only the cheap core grid (1h/4h/1d); run this to regenerate the full zoo evidence.
+# Full discovery grid (incl. 5m/15m intraday) — the honest N for the multiple-testing haircut. Slow
+# (~45 min). `reproduce` runs this same grid, so the published N cannot drift from the reproduced one.
 discovery:
 	$(PY) scripts/run_book.py --intraday
 	$(PY) scripts/walk_forward.py

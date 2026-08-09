@@ -115,8 +115,11 @@ per-family write-ups ([docs/](docs/)).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
-#    master-book assembly, CSCV, charts, dashboard. (The other six family deep-dives are heavy one-offs;
-#    rebuild any from its own target, e.g. `make trend carry volprem xs breakout bab`.)
+#    master-book assembly, CSCV, charts, dashboard. Budget ~1 hour: it mines the FULL 2,129-candidate
+#    grid including 5m/15m, because the trial count is what sets the deflation haircut quoted in the
+#    report — reproducing on the cheap 1h/4h/1d grid would report a smaller N and a weaker penalty.
+#    (The other six family deep-dives are heavy one-offs; rebuild any from its own target, e.g.
+#    `make trend carry volprem xs breakout bab`.)
 cp .env.example .env            # paste a Twelve Data key (equities/FX); crypto (Binance) + macro (FRED) need none
 python scripts/smoke_test.py    # optional: proves the data layer end to end (needs the key)
 make reproduce                  # crypto auto-downloads keyless (~10 GB, cached to data/); without a key the
