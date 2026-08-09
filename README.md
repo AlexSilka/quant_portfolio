@@ -45,7 +45,7 @@ edge map + dashboard.
   (drawdown ladder + daily-loss breaker) on top — the
   master book nets **Sharpe 3.62** at **−7.6% max drawdown**, **+33.9%/yr** on $500k, months-in-profit **80.3%**,
   mean pairwise cross-family correlation **≈ 0.06**, positive in all 16 calendar years. It **meets all five
-  targets on both windows** — the frozen out-of-sample block the brief actually scores (2024-07→, Sharpe **3.77**)
+  targets on both windows** — the frozen out-of-sample block the brief actually scores (2024-07→, Sharpe **3.73**)
   and the full 15-year window (Sharpe **3.62**). The surviving edge is crypto-heavy
   and the Sharpe is volprem-anchored (short-vol, ~half the book P&L, on a real tail) — all quantified in [REPORT.md](REPORT.md).
 
@@ -111,7 +111,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.72 full / 3.77 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.62 full / 3.73 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
