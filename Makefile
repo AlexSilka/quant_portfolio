@@ -183,6 +183,7 @@ smoke-math:
 lint:
 	.venv/bin/ruff check .
 	$(PY) scripts/render_report.py --check
+	$(PY) scripts/make_report.py --check
 
 # Rebuild REPORT.md and README.md from scripts/report_assets/ + the measured numbers.
 report:

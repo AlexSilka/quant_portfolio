@@ -1,6 +1,6 @@
 # Vol premium — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS, 5/5 targets on both windows, run at a constant 1.20× — REPORT §4b). Any master-book number quoted below is measured on the **unlevered** stack, or is a snapshot at the time this family was evaluated.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book, and its scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md) — restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry. Any master-book number quoted below is measured on the **unlevered** stack, or is a snapshot at the time this family was evaluated.
 
 **Scope.** Build and honestly evaluate a **short-volatility / variance-risk-premium (VRP)** sleeve —
 the source structurally *orthogonal* to the trend book (short gamma vs long gamma), chosen after
@@ -204,7 +204,7 @@ instrument-level fix — an option wing that caps the tail — cannot be credibl
 hedge needs the live option smile — which turns out to be obtainable free, and is now priced in §4c. A sleeve-level P&L stop and an ex-ante implied-spike
 de-gross were both tested and **do not help** *reactively*: the crashes are too fast to de-risk into once vol is
 already spiking. (A **leading** signal is different — a VIX-term-structure gate fires *before* the
-crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure to close the scorecard to 5/5 on both windows.)
+crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure — the scorecard it reaches is reported there, not restated here.)
 
 **The mandate is on the portfolio, and sizing meets it.** In the canonical master (equal weight, 1/8 to
 volprem), trend's long gamma structurally hedges VRP's vol-spike crashes, so the portfolio lands at

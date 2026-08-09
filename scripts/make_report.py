@@ -11,9 +11,11 @@ hover tooltips and an equity crosshair — no external libraries, CSP-safe. The 
 template, CSS, JS — lives in report_assets/ and is inlined into the single output file at build;
 this module only computes the data and fills the template's placeholders.
 
-    python scripts/make_report.py   ->   reports/dashboard.html
+    python scripts/make_report.py            ->   reports/dashboard.html
+    python scripts/make_report.py --check    fails if the committed page lags the artifacts
 """
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -655,7 +657,7 @@ def main():
     wf_li, mv_li = "", ""
     if wfp.exists():
         w = json.loads(wfp.read_text())
-        h, rng = w["headline_wf_oos"], w["window_cadence_invariance_range"]
+        h = w["headline_wf_oos"]
         # the re-fit-the-weights alternative, on the SAME walk-forward as equal weight (so it is comparable)
         cfg = w.get("configs") or {}
         mv, eq_cfg = cfg.get("meanvar_anchored_Q"), cfg.get(w.get("headline_config"))
@@ -937,7 +939,9 @@ def main():
         timeframe=_timeframe_card(), ops=ops_html,
         edge_map=_family_edge_card(summ, legs),
         feature=_feature_card(), sleevecost=_sleeve_cost_card(), honesty=_honesty_card(), lines=lines))
-    print("dashboard -> reports/dashboard.html\nMAKE REPORT OK")
+    if "--check" not in sys.argv:
+        print("dashboard -> reports/dashboard.html")
+    print("MAKE REPORT OK")
 
 
 ASSETS = Path(__file__).resolve().parent / "report_assets"  # dashboard.html/.css/.js live here
@@ -982,7 +986,16 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharp
         sharpe_ann=f"{m['sharpe']:.2f}",
         ca_sharpe=f"{ca_sharpe:.2f}", ca_cagr=_pc(ca_cagr, 1),
     )
-    (REP / "dashboard.html").write_text(html)
+    out = REP / "dashboard.html"
+    if "--check" in sys.argv:
+        # the same gate REPORT.md has: a page rendered from artifacts that have since moved is a page
+        # quoting numbers nothing in the repo produces, and that must fail a build rather than ship
+        if not out.exists() or out.read_text() != html:
+            raise SystemExit("reports/dashboard.html is stale — the artifacts moved since it was built.\n"
+                             "  fix: python scripts/make_report.py")
+        print("reports/dashboard.html is current with the artifacts")
+        return
+    out.write_text(html)
 
 
 if __name__ == "__main__":

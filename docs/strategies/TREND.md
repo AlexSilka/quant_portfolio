@@ -225,7 +225,7 @@ What survives §5 intact is the *concentration* finding — ten names still beat
 correlated cluster, illiquid tail, 2022-25 regime) are unaffected by how the ten are picked. What does not
 survive is reading "+1.32" as the trend premium: that number includes knowing which coins and which mega-caps
 would win. The shipped leg is the point-in-time one, and REPORT §6d carries the book-level consequence
-(months-in-profit falls to 80.3% full / 80.8% OOS, still 5/5 on both windows).
+(months-in-profit falls; the book's scorecard after the swap is in [REPORT.md](../../REPORT.md), which renders it from the artifacts).
 
 ## 6. Where the return comes from — beta vs timing (the honest core)
 

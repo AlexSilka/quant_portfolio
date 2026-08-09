@@ -29,7 +29,7 @@ execution (same lookback / skip / quantile / rebalance / universe), only the ran
   it **does not lift the book as a separate 9th family** (added @30% it dilutes, 3.77 → 3.48). Its honest
   role — **now shipped** — is a **drop-in upgrade to the crypto x-sect momentum sleeve**
   (`build_xs_book.crypto_spot_xsect`): swapped in as that leg's construction it holds the book's full-window
-  Sharpe (3.77) and **lifts the out-of-sample scorecard to 5/5** (OOS Sharpe 3.28 → 3.61, months 77% → 81%)
+  Sharpe and **lifts the out-of-sample scorecard** (OOS Sharpe 3.28 → 3.61, months 77% → 81% as measured at the time of the swap)
   at the cost of the full-window losing streak (2 → 3). Plus a **crash-hedge on the equity leg**. Not a new
   admitted family — exactly the "highest-certainty modest win, lowest diversification value" H5 predicted.
 - **The thesis was equity; the win is crypto.** On crypto the residual construction is textbook-clean and
