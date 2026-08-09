@@ -1,7 +1,8 @@
 """ML on the on-chain sleeve (H3) — does a model find alpha the linear on-chain books could not?
 
-Two uses, each measured against the non-ML baseline (the linear on-chain VALUE book, +0.40 in-sample /
-−0.64 walk-forward-OOS from run_onchain.py), each leakage-controlled with purged/embargoed expanding CV
+Two uses, each measured against the non-ML baseline (the linear on-chain VALUE book, whose in-sample
+and purged walk-forward-OOS Sharpe are read from run_onchain.py's summary — run that first), each
+leakage-controlled with purged/embargoed expanding CV
 (train strictly before each fold minus an embargo ≥ the forward horizon — no training on the future,
 no target-overlap leak). Reuses the repo's ML harness (`src/sleeves/xsect_ml.py`).
 
@@ -118,15 +119,26 @@ def _ml_book(C, A, feats, fwd_bars, model_factory, topn, classify=False):
     return net, cov
 
 
+def _linear_baseline() -> tuple[float, float]:
+    """(in-sample, purged WF-OOS) Sharpe of the linear on-chain value book, from run_onchain.py's
+    summary. Requires that run first — an ML comparison against a bar nobody measured is worthless."""
+    p = ONCHAIN_DIR / "onchain_summary.json"
+    if not p.exists():
+        raise SystemExit(f"{p} missing — run scripts/onchain/run_onchain.py first (it sets the bar)")
+    xs = json.loads(p.read_text())["cross_section"]
+    return float(xs["headline"]["sharpe"]), float(xs["walk_forward"]["wf_oos"])
+
+
 def run_ml_ranker(C, A, oc_p, S):
     fsets = _feature_sets(C, A, oc_p)
     regm, clfm = _reg_models(), _clf_models()
 
-    # linear baselines (from the non-ML test) — the bar every ML book must clear
-    lin_head, _ = _book(C, A, S["nvm_val"], HEAD_N)          # in-sample +0.40
-    lin_head_oos_ref = -0.64                                  # its purged WF-OOS (run_onchain.py)
+    # linear baselines (from the non-ML test) — the bar every ML book must clear. Read from that
+    # run's artifact rather than pasted in, so the bar can never drift away from the run it names.
+    lin_head, _ = _book(C, A, S["nvm_val"], HEAD_N)
+    lin_is, lin_head_oos_ref = _linear_baseline()
     print(f"\n{'='*84}\nA) ML RANKER — models × feature-sets vs the linear on-chain baseline\n{'='*84}")
-    print(f"  linear on-chain VALUE (nvm_val, top-{HEAD_N}): in-sample +0.40, purged WF-OOS {lin_head_oos_ref:+.2f}")
+    print(f"  linear on-chain VALUE (nvm_val, top-{HEAD_N}): in-sample {lin_is:+.2f}, purged WF-OOS {lin_head_oos_ref:+.2f}")
     print(f"  (every ML Sharpe below is already OUT-OF-SAMPLE — expanding purged CV — so compare to {lin_head_oos_ref:+.2f})\n")
 
     trials, books = [], {}
@@ -206,13 +218,17 @@ def main():
     trials, books, fsets, lin_head = run_ml_ranker(C, A, oc_p, S)
 
     # ── DECISIVE: best ML book — does it beat the linear OOS, and does on-chain beat price? ───────
-    reg_grid = {k: v for k, v in books.items() if k.endswith("_21") and "clf" not in k}
-    best_oc = max(((k, _sh(v)) for k, v in reg_grid.items() if "_onchain_" in k), key=lambda kv: kv[1])
-    best_px = max(((k, _sh(v)) for k, v in reg_grid.items() if "_price_" in k), key=lambda kv: kv[1])
+    # The on-chain side is scored over *every* on-chain-feature book, classifiers included — they
+    # are the same features through the same purged-CV harness, and excluding them would quietly
+    # report a weaker on-chain result than was actually achieved. The asymmetry is stated rather
+    # than hidden: classifiers were run on on-chain features only, so this favours on-chain.
+    grid_21 = {k: v for k, v in books.items() if k.endswith("_21")}
+    best_oc = max(((k, _sh(v)) for k, v in grid_21.items() if "_onchain_" in k), key=lambda kv: kv[1])
+    best_px = max(((k, _sh(v)) for k, v in grid_21.items() if "_price_" in k), key=lambda kv: kv[1])
     best_all = max(((k, _sh(v)) for k, v in books.items()), key=lambda kv: kv[1])
     print(f"\n{'='*84}\nDECISIVE")
-    print(f"  best ML on-chain-features book: {best_oc[0]} {best_oc[1]:+.2f}")
-    print(f"  best ML price-features book:    {best_px[0]} {best_px[1]:+.2f}")
+    print(f"  best ML on-chain-features book: {best_oc[0]} {best_oc[1]:+.2f}  (regression + classifier)")
+    print(f"  best ML price-features book:    {best_px[0]} {best_px[1]:+.2f}  (regression only — no clf arm was run)")
     print(f"  → on-chain features {'BEAT' if best_oc[1] > best_px[1] else 'do NOT beat'} price features "
           f"({best_oc[1]:+.2f} vs {best_px[1]:+.2f})")
 
@@ -249,8 +265,9 @@ def main():
     print(f"  gated  Sharpe {gate['gated_sharpe']:+.2f}  maxDD {gate['gated_maxdd']:+.1%}  "
           f"(in market {gate['frac_in_market']:.0%} of the time)")
 
+    lin_is, lin_oos = _linear_baseline()
     summ = {
-        "linear_baseline": {"in_sample": 0.40, "purged_wf_oos": -0.64},
+        "linear_baseline": {"in_sample": lin_is, "purged_wf_oos": lin_oos},
         "ml_ranker_best_onchain": {"config": best_oc[0], "oos_sharpe": round(best_oc[1], 3)},
         "ml_ranker_best_price": {"config": best_px[0], "oos_sharpe": round(best_px[1], 3)},
         "onchain_beats_price": bool(best_oc[1] > best_px[1]),
@@ -267,7 +284,7 @@ def main():
     _figure(summ, books, imp)
 
     print(f"\n{'='*84}\nVERDICT")
-    print(f"  best ML (OOS) {best_all[1]:+.2f} vs linear OOS −0.64 / in-sample +0.40; "
+    print(f"  best ML (OOS) {best_all[1]:+.2f} vs linear OOS {lin_oos:+.2f} / in-sample {lin_is:+.2f}; "
           f"on-chain {'>' if summ['onchain_beats_price'] else '≤'} price features; "
           f"alpha-over-price t={tstat:+.2f}; on-chain feat share {oc_share:.0%}")
     print("RUN ONCHAIN-ML OK")
@@ -289,7 +306,9 @@ def _figure(summ, books, imp):
     for i, fs in enumerate(fss):
         vals = [summ["all_trials_oos_sharpe"].get(f"{m}_{fs}_21", np.nan) for m in models]
         a.bar(x + (i - 1) * w, vals, w, label=fs)
-    a.axhline(0, color="k", lw=0.6); a.axhline(-0.64, color="r", ls="--", lw=1, label="linear OOS −0.64")
+    lin_oos = summ["linear_baseline"]["purged_wf_oos"]
+    a.axhline(0, color="k", lw=0.6)
+    a.axhline(lin_oos, color="r", ls="--", lw=1, label=f"linear OOS {lin_oos:+.2f}")
     a.set_xticks(x); a.set_xticklabels(models, rotation=20, fontsize=8)
     a.set_title("ML ranker OOS Sharpe: model × feature set (21d)"); a.legend(fontsize=7)
 

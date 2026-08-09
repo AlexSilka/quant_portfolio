@@ -70,6 +70,39 @@ def mvrv_value(mvrv: pd.DataFrame) -> pd.DataFrame:
     return mvrv.replace(0.0, np.nan)
 
 
+def holder_momentum(holders: pd.DataFrame, lb: int = 30, smooth: int = 7) -> pd.DataFrame:
+    """Growth in addresses holding a non-zero balance. Distinct from active-address momentum:
+    holders is a *stock* (who owns), active addresses a *flow* (who moved this week), so this is
+    accumulation breadth rather than usage. Rising holder base → long."""
+    h = _smooth(holders, smooth)
+    return np.log(h / h.shift(lb))
+
+
+def mcap_per_holder(mktcap: pd.DataFrame, holders: pd.DataFrame, smooth: int = 7) -> pd.DataFrame:
+    """Market cap ÷ holder count = price per owner. The value twin of NVM built on the ownership
+    stock instead of the activity flow — a network held by few at a high cap is expensive.
+    Returned as the raw ratio; the driver flips sign (long cheap)."""
+    h = _smooth(holders, smooth)
+    return mktcap / h.replace(0.0, np.nan)
+
+
+def supply_inflation(issuance: pd.DataFrame, supply: pd.DataFrame, lb: int = 90) -> pd.DataFrame:
+    """Annualised token issuance over trailing `lb` days as a fraction of circulating supply — the
+    dilution a holder is paid to absorb. High inflation = structural sell pressure → short; the
+    driver ranks on −inflation. The on-chain analogue of an equity buyback/issuance factor."""
+    iss = issuance.rolling(lb, min_periods=lb // 2).sum()
+    return (iss / supply.replace(0.0, np.nan)) * (365.0 / lb)
+
+
+def fee_yield(fees_ntv: pd.DataFrame, px_usd: pd.DataFrame, mktcap: pd.DataFrame,
+              lb: int = 90) -> pd.DataFrame:
+    """Trailing fee revenue (native units × price) over `lb` days, annualised, ÷ market cap — the
+    crypto earnings yield (inverse P/F). A chain earning more per dollar of cap is cheap → long.
+    Only the 14 names whose fees are free on the community tier carry a column."""
+    rev = (_smooth(fees_ntv, 7) * px_usd).rolling(lb, min_periods=lb // 2).sum() * (365.0 / lb)
+    return rev / mktcap.replace(0.0, np.nan)
+
+
 def net_vs_price_divergence(adr: pd.DataFrame, px: pd.DataFrame, lb: int = 30,
                             smooth: int = 7) -> pd.DataFrame:
     """Address-growth minus price-return over the same window (both cross-sectionally z-scored).
@@ -111,6 +144,28 @@ def stablecoin_ssr_growth(stable_supply: pd.Series, lb: int = 30) -> pd.Series:
     return np.log(s / s.shift(lb))
 
 
+def exchange_netflow_z(flow_in: pd.Series, flow_out: pd.Series, supply_ex: pd.Series,
+                       smooth: int = 7, lb: int = 365) -> pd.Series:
+    """Net coin flow onto exchanges, as a share of the exchange-held balance, z-scored. The classic
+    practitioner read: coins moving *onto* exchanges are being positioned to sell (bearish), coins
+    leaving are moving to cold storage (accumulation). Scaling by exchange supply makes the series
+    comparable across a decade in which exchange balances changed by an order of magnitude.
+
+    High z = heavy inflow = bearish, matching the driver's fade convention (position = −signal)."""
+    net = _smooth(flow_in - flow_out, smooth)
+    return _z(net / supply_ex.replace(0.0, np.nan), lb)
+
+
+def exchange_supply_trend(supply_ex: pd.Series, supply_cur: pd.Series, lb: int = 30) -> pd.Series:
+    """Change over `lb` days in the fraction of circulating supply sitting on exchanges — the
+    *stock* counterpart to net-flow, and far less noisy than a daily difference. A rising exchange
+    share is distribution (bearish); a falling share is the supply squeeze the thesis is about.
+
+    High = share rising = bearish, matching the driver's fade convention."""
+    share = (supply_ex / supply_cur.replace(0.0, np.nan)).rolling(7, min_periods=3).mean()
+    return share - share.shift(lb)
+
+
 # ── ML feature panel (mirror of xsect_ml.rank_features, but the on-chain axis) ─────────────────
 def ml_feature_panel(oc_p: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     """Name-level on-chain features for a learning-to-rank model — every one trailing/rolling so it
@@ -121,7 +176,7 @@ def ml_feature_panel(oc_p: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     `oc_p` holds the aligned wide panels: AdrActCnt, TxCnt, CapMrktCurUSD, CapMVRVCur, PriceUSD, SplyCur."""
     adr, tx = oc_p["AdrActCnt"], oc_p["TxCnt"]
     cap, mvrv, pxu = oc_p["CapMrktCurUSD"], oc_p["CapMVRVCur"], oc_p["PriceUSD"]
-    sply = oc_p.get("SplyCur")
+    sply, hold, iss, fee = oc_p.get("SplyCur"), oc_p.get("AdrBalCnt"), oc_p.get("IssTotNtv"), oc_p.get("FeeTotNtv")
     a7 = _smooth(adr, 7)
     t7 = _smooth(tx, 7)
     f: dict[str, pd.DataFrame] = {}
@@ -138,4 +193,14 @@ def ml_feature_panel(oc_p: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
     f["divergence"] = net_vs_price_divergence(adr, pxu, 30, 7)
     if sply is not None:
         f["supply_growth"] = np.log(sply / sply.shift(90))                            # own-token dilution
+    if hold is not None:
+        h7 = _smooth(hold, 7)
+        f["holder_mom_30"] = np.log(h7 / h7.shift(30))                                # ownership breadth
+        f["holder_mom_90"] = np.log(h7 / h7.shift(90))
+        f["cap_per_holder_log"] = np.log(mcap_per_holder(cap, hold, 7))
+        f["holders_per_active"] = np.log((h7 / a7).replace(0.0, np.nan))              # owners vs users
+    if iss is not None and sply is not None:
+        f["inflation_90"] = supply_inflation(iss, sply, 90)                           # measured dilution
+    if fee is not None:
+        f["fee_yield_90"] = fee_yield(fee, pxu, cap, 90)                              # 14-name coverage
     return f

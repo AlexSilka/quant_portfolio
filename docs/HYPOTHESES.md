@@ -82,28 +82,33 @@ independent lottery effect, not re-labelled low-vol.
 
 ## H3 — On-chain / exchange-flow signals (crypto)  — ❌ TESTED, DEAD (free-data)
 
-> **Verdict — tested end-to-end, dead ([ONCHAIN.md](strategies/ONCHAIN.md), `make onchain`).** The data gate is
-> **half-open**, and that is the result: the high-information metrics the thesis leans on — **exchange
-> net-flows, adjusted transfer value (NVT numerator), fees, miner revenue, realized cap** — are **all
-> pay-walled** (Coin Metrics Pro). What is free is *network-activity & valuation* (active addresses, tx
-> counts, supply, market cap, MVRV) across **37 liquid names** (free-CM ∩ repo panel) + BTC tx-value /
-> miner-revenue from blockchain.com. Run through the full funnel, the best free-data book — on-chain
-> **value** (market cap per active address, "CVALUE"), top-20 — nets **+0.40** in-sample and **fails
-> every OOS gate**: MC-P5 **−0.28**, placebo **80th pctile** (shuffle p95 +0.65 > real), purged
-> walk-forward OOS **−0.64** (in-sample best +0.70), deflated Sharpe 0.22. It is a **static tilt** (0.03
-> turnover/bar, median name never flips side): permanently long old PoW coins (LTC/ETC/BCH/DOGE), short
-> newer tokens (LINK/UNI/SHIB) — market-cap-per-address is a fixed coin-*type* characteristic. **The
-> decisive test — alpha over price momentum + reversal on the identical universe — no signal clears
-> t>2** (value t=1.04; adoption-momentum t=1.91 and it *is* re-labelled price momentum, corr +0.33),
-> exactly the published verdict (Liu-Tsyvinski-Wu JF2022; Cong et al MgmtSci2024: on-chain value ≈ a
-> value factor, adoption ≈ momentum). BTC/ETH timing overlays all **underperform buy-and-hold** (+0.85;
-> best SSR +0.55). Decorrelated (corr-book +0.07) but **drags** it (3.77→2.85). **ML changes nothing**
-> (21-trial ranker — ridge/RF/extra-trees/hist-GBM/LightGBM + classifiers × on-chain/price/both × horizon ×
-> top-N, purged CV): ML on on-chain features fails (best +0.20), the same harness on *price* features works
-> (+1.02, proving the method), and adding on-chain to price *degrades* it — no non-linear on-chain alpha
-> either; meta-gate cuts DD (−23%→−17.7%) but halves Sharpe. **top-50/100 impossible on free data**
-> (SOL/SUI/TON/APT Pro-walled → 37-name ceiling). Excluded; the honest edge is behind paid flow/entity data
-> or in the illiquid small-cap tail the tradable funnel excludes. Spec kept below.
+> **Verdict — tested end-to-end, dead ([ONCHAIN.md](strategies/ONCHAIN.md), `make onchain`).**
+> **Exchange flows are free for BTC/ETH and were tested; they do not work.** An earlier version of this
+> verdict called them pay-walled — wrong, and wrong in the flattering direction: entitlement was inferred
+> from group 403s instead of read from the vendor catalog, and a multi-metric call 403s whole if any one
+> metric is Pro. Two names cannot form a cross-section, so flows are a BTC/ETH timing overlay: the best,
+> BTC exchange-supply-trend long/flat, nets **+0.96** vs buy-and-hold +0.85 — but **rotating the same
+> position path to random dates has a 95th percentile of +1.01**, so none of the four flow overlays beats
+> its own random-timing control, and 7 of 8 HAC predictive regressions show no forecasting power (only
+> BTC net-flow→7d, t=−2.04, which is the chance rate for eight tests). What *is* genuinely Pro-walled is
+> narrow: adjusted transfer value, entity-adjusted supply bands, USD fees (realized cap is recoverable as
+> mktcap÷MVRV). **Four names were also measuring dead ERC-20 shells** (VET/ZIL/QTUM/LRC, zero active
+> addresses on 44-79% of days) — excluding them cuts the universe to **33** and the headline value book
+> from +0.40 to **+0.15** (MC-P5 −0.52, placebo 72nd pctile, deflated 0.07): a third of the old headline
+> was that artifact. **One signal survives the clean-up:** adoption momentum (active-address growth,
+> top-20) nets **+0.73**, MC-P5 **+0.08**, placebo **98th pctile**, WF-OOS **+0.74** with construction
+> held fixed, alpha over price **t=+2.04** — stable across every top-N, unlike `divergence` (+0.80 at
+> N=20 only). It is still **excluded**: post-hoc, deflated 0.50 at the family's 36 trials, **+0.32
+> correlated with price momentum** (a better-built momentum, like H5), and the book does not move
+> (3.828→**3.831** at 15%). The value axis is subsumed exactly as published (Liu-Tsyvinski-Wu JF2022;
+> Cong et al MgmtSci2024); the new axes fail outright — dilution is *negative*, ownership and fee-yield
+> flat. Non-flow BTC/ETH overlays still underperform buy-and-hold (+0.85; best SSR +0.55). **ML changes
+> nothing** (21-trial ranker, purged CV, now with holder/issuance/fee features): on-chain best **+0.32**,
+> the same harness on *price* features **+1.09** (proving the method), adding on-chain to price degrades
+> it. **top-50/100 impossible on free data** (SOL/SUI/TON/APT carry market data only → 33-name ceiling).
+> The remaining honest upgrade paths are paid **entity-level** flow labelling, a wide small-cap panel, or
+> — untested and free — **protocol fundamentals** (fees/revenue/TVL via DefiLlama), which reach exactly
+> the chains Coin Metrics cannot. Spec kept below.
 
 **Thesis.** Exchange net-flows, stablecoin-supply changes, active-address growth and miner flows carry
 information **not present in price** — the one genuinely new information source for crypto. The main
@@ -215,8 +220,9 @@ a momentum premium). Lower diversification value than H1–H3; highest certainty
 Overnight/session ([OVERNIGHT.md](strategies/OVERNIGHT.md)), **calendar seasonality — pre-FOMC drift + turn-of-month
 ([SEASONAL.md](strategies/SEASONAL.md) — H4, real-but-beta / fails the shuffled-calendar placebo)**,
 **skewness/lottery-MAX ([LOTTERY.md](strategies/LOTTERY.md) — H2, inverted in crypto / sub-bar in equity)**,
-**on-chain / network signals ([ONCHAIN.md](strategies/ONCHAIN.md) — H3, free-data dead: a static coin-type tilt,
-no alpha over price, flow metrics pay-walled)**, single-asset mean-reversion, daily cross-sectional reversal,
+**on-chain / network signals ([ONCHAIN.md](strategies/ONCHAIN.md) — H3, free-data dead: value is a static
+coin-type tilt, BTC/ETH exchange flows fail their random-timing control, and the one live signal is
+re-labelled momentum that leaves the book flat)**, single-asset mean-reversion, daily cross-sectional reversal,
 pairs stat-arb, volume-spike ([VOLSPIKE.md](strategies/VOLSPIKE.md)), FX carry, equity dividend carry,
 funding-**momentum** (MACD on funding — already −1.42, the *level* is the carry signal). Trend, breakout,
 cross-sectional momentum, funding carry and short-vol/VRP are already surviving streams — refine, don't
@@ -231,9 +237,11 @@ not independent of low-vol. **H4 (calendar seasonality) is tested — real-but-b
 pre-FOMC drift is significant, t=2.4) but net of cost they are beta-timing that fails the shuffled-calendar
 placebo and drags the book — mapped alongside overnight. **H1 (BAB)** is the live version of the
 retail-mispricing thesis — the leverage-constraint premium, tested separately ([BAB.md](strategies/BAB.md)).
-**H3 (on-chain) is tested — dead on free data ([ONCHAIN.md](strategies/ONCHAIN.md)):** the flow metrics that carry the
-edge are pay-walled, and the free network-activity/valuation axis degenerates to a static coin-type tilt
-with no alpha over price (and the free cross-section caps at 37 names — no top-50/100). **H5 (residual
+**H3 (on-chain) is tested — dead on free data ([ONCHAIN.md](strategies/ONCHAIN.md)):** exchange flows turned out to be
+free for BTC/ETH and were tested — they beat buy-and-hold only by collecting beta, and lose to random
+timing of the same position path; the free valuation axis degenerates to a static coin-type tilt; and the
+one signal that clears the gates, adoption momentum (+0.73, alpha t=+2.04), is +0.32 correlated with
+price momentum and leaves the book at 3.83 either way (free cross-section caps at 33 names — no top-50/100). **H5 (residual
 momentum) is tested — an in-family refinement, not a new source ([RESIDMOM.md](strategies/RESIDMOM.md)):** it beats raw
 momentum on crypto (+0.45 → +0.61, walk-forward incremental +0.25) and halves equity momentum-crash bleed,
 but is ~0.8 correlated with raw momentum (no alpha over it), so it upgrades the existing crypto momentum

@@ -18,14 +18,15 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > (2011 → 2026)** — the short-vol leg timed out of the crashes by its own **VIX-term-structure regime gate**
 > (flat unless **both** curve segments, VIX3M/VIX and VIX/VIX9D, are in contango), sized at a constant **1.15×** (§4b) — with a disclosed
 > **§8 risk overlay** (drawdown ladder + daily-loss breaker) on top —
-> the master book nets **Sharpe 3.72** at **−7.2% max drawdown** — on the brief's **$500k** sizing capital
-> that is **$2.74M** of P&L, **~$176k/yr** — **+35.1%/yr** not reinvested, **+41.5%/yr** compounded (a rate, not a
+> the master book nets **Sharpe 3.68** at **−7.2% max drawdown** — on the brief's **$500k** sizing capital
+> that is **$2.69M** of P&L, **~$173k/yr** — **+34.6%/yr** not reinvested, **+40.6%/yr** compounded (a rate, not a
 > reachable balance: capacity caps the book long before the end of the window) — months-in-profit **81%**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
-> there it clears **all five** (2024-07→: Sharpe **3.77**, months **84.6%**, max-DD **−4.4%**, worst month
-> **−1.9%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
-> second scorecard — the same five also clear (Sharpe **3.72**, months **81.4%**, max-DD **−7.2%**, worst month
-> **−5.7%**, streak **2**).
+> there it clears **all five** (2024-07→: Sharpe **3.76**, months **80.8%**, max-DD **−4.5%**, worst month
+> **−1.8%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
+> second scorecard — the same five also clear (Sharpe **3.68**, months **80.9%**, max-DD **−7.2%**, worst month
+> **−5.2%**, streak **2**). Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
+> price of the honest trend universe — §6d.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 
@@ -41,8 +42,10 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
 **Stated honestly, up front:**
 - **Crypto-heavy.** Breakout and cross-sectional momentum are crypto; carry is crypto funding; only
   trend spans crypto + US equities. US single-name and FX breakout do **not** survive — reported, not hidden.
-- **Honest universes, honest levels.** Each family uses its **survivorship-free** universe (point-in-time
-  top-N by trailing liquidity, delisted names included); the curated-universe versions score higher but
+- **Honest universes, honest levels — now including trend.** Every family uses its **survivorship-free**
+  universe (point-in-time top-N by trailing liquidity, delisted names included), the trend leg included as of
+  §6d: its crypto half was the last hard-coded list of today's majors, and replacing it with a point-in-time
+  top-10 costs the book **0.04 Sharpe** and leaves it 5/5 on both windows; the curated-universe versions score higher but
   are biased. Levels are quoted on the **15-year** window (2011 → 2026); each family joins as it lists,
   averaged over the families live each day. The pre-2020 window runs the long-history legs (trend, vol-premium, cross-sectional equity, crisis, global-macro)
   on **real, liquid ETF / FX / index prices** (SPY / GLD / TLT / EM-FX, back to 2011 — the standard managed-futures
@@ -83,6 +86,14 @@ A complete, reproducible pipeline, every stage runnable:
   **per-feature IC / stability-over-time / redundancy-cluster report** (`scripts/feature_report.py`): 47/82
   clear |IC·t|≥2, only 4 survive a stability+redundancy reduction (27 clusters), and volatility/calendar carry
   no univariate signal — evidence that the edge is in construction, not any single feature.
+  **How many of them each shipped sleeve actually uses is the honest punchline: one to three.** Trend
+  reads one signal (the EMA 50/200 cross); carry one (a 7-bar funding z-score); x-sect one (risk-adjusted
+  momentum); BAB one (rolling beta); crisis-alpha and global-macro blend three TSMOM lookback tranches
+  each (nine horizons); vol-prem three (implied-minus-realised variance, plus the two VIX curve segments
+  that gate it);
+  breakout three (Donchian-55 channel, ATR(3) trail, trend-100 filter) **plus** the only place the wide
+  library is consumed at trade time — its LightGBM confidence gate, which takes the reduced feature set.
+  The 82 features earned their keep as the *search* that located the edge, not as the traded signal.
 - **Discovery + eight family deep-dives** — the search layer (`run_book.py`) tests every
   asset×timeframe×family with *correct per-family construction* and vol-targets each to ~15%; the
   surviving edges are then each developed in a full deep-dive (discovery, ML, walk-forward, robustness,
@@ -132,8 +143,23 @@ A complete, reproducible pipeline, every stage runnable:
 
 ## 3. Method — search everywhere, size by risk
 
-The universe rule is frozen before evaluation. Every (asset × timeframe × family) is run through the
-same harness; each sleeve is vol-targeted and screened on a pre-registered bar (Sharpe > 0.5 and MC
+**The universe rule, written down and frozen before evaluation (§2).** An asset is in a cross-sectional
+sleeve on a given date iff it ranks in the top-N by *trailing 30-day median dollar volume as of the prior
+close* (`pit_eligible`) — a point-in-time mask, so a name that delists simply leaves the eligible set and
+a name that lists joins it, with no survivor's-list hindsight either way. N is 100 for carry, x-sect and
+BAB; BAB then takes the top 20% by beta within it. The single-asset sleeves run the whole liquid core
+(50 mcap-ranked USDT perps with ≥3y history; ~50 large-cap US equities and core ETFs). Vol-prem's 18 Cboe
+underlyings are fixed by *structural* rules stated ex ante — clean OHLC, hedgeable intraday path — not by
+Sharpe; crypto and FX vol are excluded under those rules despite being the higher-Sharpe candidates.
+Crisis-alpha and global-macro run fixed liquid ETF and FX lists.
+
+**The one exception, stated rather than buried: trend runs a curated core-10 crypto list**, not the PIT
+top-N. That list was chosen with knowledge of the sample, so its Sharpe carries a hindsight premium; the
+size of that premium is measured against the point-in-time alternative in the trend deep-dive rather than
+asserted to be small. Every other family's universe is the frozen rule above.
+
+Every (asset × timeframe × family) is then run through the same harness; each sleeve is vol-targeted and
+screened on a pre-registered bar (in-sample Sharpe > 0.5, its own walk-forward track > 0.5, and MC
 5th-pct > 0). The **key construction choice**: trend positions are held **to reversal**, not to a fixed
 barrier — trend edge lives in the fat tail of large moves, so a fixed-horizon exit discards it and
 produces a false null. Holding to reversal is what surfaces the real edge (verified in §5b's surface).
@@ -195,6 +221,15 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
   smaller tail (max-DD along the same path: −24.3% → −16.3% → −10.1% → −6.7%). Removing the anchor
   (vol-premium) still leaves **1.73**. `master_book_marginal.csv` carries
   max-DD and months-in-profit per addition too.
+- **What happens when two legs want the same capital, or opposite sides of the same asset.** Capital is
+  allocated by risk budget, not first-come: each family is vol-targeted to the same 15% and then held at
+  1/8 of book risk, so a loud signal in one family cannot crowd out another — it can only use its own
+  slot harder, and even that is capped at 3×. Opposing positions net at the portfolio level: if trend is
+  long BTC and BAB short it, the book carries the difference and is charged once, never twice for
+  crossing itself. **The honest limitation is that the book combines return series, not positions**, so
+  that netting is a property of the construction rather than an execution step this backtest performs —
+  the legs are dollar- or beta-neutral spreads whose overlaps are small (mean pairwise correlation
+  +0.06), which is why the approximation holds, and a live implementation would net at the order router.
 - **Per-year Sharpe (regime profile):** **positive in all 16 calendar years** 2011–26 — 2011 **+2.1**, 2013 **+4.1**,
   2016 **+2.0**, 2018 **+3.7**, 2020 **+3.6**, 2021 **+5.3**, 2022 **+1.6**, 2024 **+4.0**, 2026 **+0.7**
   (weakest, partial year). No down *year*, but through the **isolated crisis windows the book is negative**
@@ -387,6 +422,32 @@ them sets book risk: the per-leg target decides how the eight legs are balanced 
 also the wrong dial for sizing the book — raising it would re-weight rather than scale, because the trend leg
 already sits on `_scale`'s 3× cap **25% of days** and simply would not scale with it.
 
+## 4c. Risk rules — per family, and at the book (§8)
+
+Risk logic is **specified per family, not applied uniformly**: a leg that adds into an adverse move needs
+different protection from one that rides it. Every leg shares one sizing rule (trailing 60-day vol target
+to 15% annualised, lagged, capped at 3×) because that is what makes the legs combinable at equal risk;
+everything else below differs by family, and the differences are the point.
+
+| family | entry | exit / stop | max holding | max exposure |
+|---|---|---|---|---|
+| **trend** | EMA(50/200) cross, long-biased | **held to reversal** — no time stop, deliberately: the premium lives in the fat right tail a barrier would cut | unbounded by design | 3× leg cap × 1/8 book risk |
+| **breakout** | Donchian-55 break, ML confidence gate | **chandelier ATR(3) trailing stop** + long-trend(100) alignment filter | bounded by the trail | 3× × 1/8 |
+| **carry** | funding z-score (7-bar level), top-100 point-in-time names | none — the premium is a *level*, not a move; the position is re-struck each rebalance | to the next daily rebalance; funding charged at every 8h settlement | dollar-neutral, beta-hedged to BTC; 3× × 1/8 |
+| **vol-prem** | always short variance, 18 Cboe underlyings at equal risk | the **VIX-term-structure gate** — the leg stands down while either curve segment is inverted | one roll | 3× × 1/8, and sized on its −78% tail rather than its Sharpe |
+| **x-sect** | risk-adjusted momentum, top/bottom 30% crypto · 10% equity | none — re-struck at each rebalance | 21 bars (monthly cadence, chosen to keep turnover and cost low) | dollar-neutral; 3× × 1/8 |
+| **BAB** | beta-neutral long low-β / short high-β, top 20% of the top-100 liquid names | none — re-struck at each rebalance | 21 days | beta-neutral by Frazzini-Pedersen leg scaling; 3× × 1/8 |
+| **crisis-alpha** | multi-lookback time-series momentum (10/20/40, 20/40/63, 40/63/120) on liquid ETFs and FX | signal flip | to the flip | 3× × 1/8 |
+| **global-macro** | the same TSMOM tranches on EM FX and commodities | signal flip | to the flip | 3× × 1/8 |
+
+At the book: **gross cap 2.0×** against a shipped constant **1.15×**, net exposure ≈ 0 (every leg is
+dollar- or beta-neutral or a spread), **per-family cap 1.5× the equal weight** (which never binds while
+the weights are equal), a **daily-loss circuit breaker at −4%** that flattens the following day, and a
+**drawdown-responsive ladder** that cuts gross to 0.66 / 0.33 / 0.0 of target at −6% / −9% / −12% and
+restores only after recovery to −4% (hysteresis, so the book cannot oscillate across a trigger). The
+deepest rung is the answer to *when does it stop trading*: at −12% the book is flat and only a recovery
+to −4% turns it back on. All three are causal — they read yesterday's equity, never today's.
+
 ## 5. Validation evidence
 
 - **Discovery multiple-testing (the full 1,279-sleeve zoo):** the placebo (shuffled-signal) arm gives a
@@ -550,7 +611,7 @@ not an assertion.
 Across six structurally distinct families the model **never manufactures out-of-sample alpha that is not already
 in the cross-section**; its honest, repeatable value is drawdown control and entry precision (trend, breakout,
 carry). ML was also run on two *rejected* families and **confirmed the rejection**: on-chain — a 21-trial ranker on
-on-chain features nets **+0.21** while the *identical harness on price features* nets **+1.02** (the method works,
+on-chain features nets **+0.32** while the *identical harness on price features* nets **+1.09** (the method works,
 the data doesn't); and calendar-seasonality — a purged-CV pre-FOMC gate makes SPY *worse* (0.24→0.07, negative OOS
 IC), because removing the beta removes the return. Full per-family model grids and leakage controls:
 [TREND.md §7](docs/strategies/TREND.md), [BREAKOUT.md §6](docs/strategies/BREAKOUT.md),
@@ -790,8 +851,11 @@ crash months while the other seven families stay invested and earning. Reproduce
   universe** (it was weak on 20 mega-caps but is a documented edge with breadth); the meta-label
   confidence gate applied across all sleeves to lift entry precision (already built and demonstrated, §2);
   alternative data (order-flow, funding-basis term structure) for signal not present in price alone. **On-chain was tested and is dead on free data** ([docs/strategies/ONCHAIN.md](docs/strategies/ONCHAIN.md),
-  §7) — the honest on-chain edge is behind paid flow/entity feeds or in the illiquid small-cap tail the
-  tradable funnel excludes, not in the free network-activity metrics.
+  §7) — including the exchange-flow series that turned out to be free for BTC/ETH after all, which beats
+  buy-and-hold only by collecting beta and loses to random timing of its own position path. What is left
+  is paid **entity-level** flow labelling, the illiquid small-cap tail the tradable funnel excludes, or —
+  free and still untested — protocol fundamentals (fees/revenue/TVL) that reach the chains Coin Metrics
+  does not cover.
 
 ## 6b. Structurally distinct sources built to diversify the trend premium
 
@@ -870,6 +934,38 @@ book already clears all five targets on that block, so paying scored Sharpe to b
 *supporting*-window metric that already passes is the wrong trade. Recorded as a measured option, not taken:
 if a future window puts the worst month back on its limit, E at 0.15–0.25 of a slot is the lever with the
 evidence already attached.
+
+## 6d. The last hindsight universe: the trend leg's crypto core (§12)
+
+The report's own standard is that a family trades a **survivorship-free** universe — the x-sect deep-dive's
+headline is that a curated 50-coin list scores **+1.06 against +0.70** honest, and the carry leg deliberately
+ships the *weaker* point-in-time construction (+1.33) over the curated one (+1.47) on that principle. The trend
+leg was the exception: its crypto half traded a hard-coded `CORE10` — BTC, ETH, SOL, BNB, XRP, DOGE, ADA, AVAX,
+LINK, LTC — which is the majors **as they look today**. SOL and AVAX did not list until Sep-2020, so for the
+first half of the window the list describes the future.
+
+Two things were suspect, not one: the leg's *level*, and the deep-dive's "for crypto, fewer instruments is
+better" finding — which could be the same bias in disguise, since a list of today's winners naturally beats a
+broad universe containing what died. `scripts/trend/run_trend_pit_universe.py` prices both by rebuilding the
+crypto half on a **point-in-time top-10 by trailing dollar volume** — the identical membership rule the
+breakout and carry legs already use.
+
+The two universes are materially different: **78 distinct names** are ever in the honest top-10, and today's
+CORE10 hold only **~63% of member-days**.
+
+| | leg Sharpe / CAGR | book (selection window) | book (frozen block) |
+|---|---|---|---|
+| hindsight CORE10 | +1.31 / +11.1% | 3.72 · worst −5.6% · months 80% · **5/5** | 3.77 · months 85% · 5/5 |
+| **PIT top-10 (shipped)** | **+1.13 / +9.2%** | **3.68 · worst −5.2% · months 81% · 5/5** | **3.76 · months 81% · 5/5** |
+
+**The survivorship premium in this leg is ~0.18 Sharpe** — real but far smaller than the x-sect case (−0.36),
+which makes sense: trend is long-only time-series, so it never ranks survivors against each other, and the bias
+enters only through *which* names exist. At book level it costs **0.04 Sharpe** and the worst month actually
+*improves* (−5.7% → −5.2%). It is shipped, because a universe chosen with hindsight is not a level you can
+defend at any price, and this one is nearly free.
+
+**What it costs, stated:** months-in-profit on the frozen block falls from **84.6% to 80.8%** — still clear of
+the ≥80% target, but with 0.8pp of headroom rather than 4.6pp. That is now the thinnest of the five.
 
 ## 7. What did not survive (kept, not hidden)
 
@@ -965,24 +1061,34 @@ evidence already attached.
   −14%) is the BAB leg in the master book (§4); the equity and FX legs are dead — capacity-limited to the
   liquid majors ([docs/strategies/BAB.md](docs/strategies/BAB.md)).
 - **On-chain / network signals (H3)** — the brief's "alternative data" family and the one information
-  source *not* derived from price ([docs/strategies/ONCHAIN.md](docs/strategies/ONCHAIN.md)). **The data gate is the finding:**
-  the high-information metrics (exchange net-flows, adjusted transfer value, fees, miner revenue, realized
-  cap) are **pay-walled**; the free set (Coin Metrics community + blockchain.com) is *network-activity &
-  valuation* only, across **37 liquid names** (top-50/100 impossible — SOL/SUI/TON/APT Pro-walled). Run
-  through the full funnel, the best free-data book — on-chain **value** (market cap per active address),
-  top-20 — nets **+0.40** in-sample and **fails every OOS gate** (MC-P5 −0.28, placebo 80th pctile, purged
-  walk-forward **−0.64**, deflated 0.22). It is a **static coin-type tilt** (0.03 turnover/bar, median name
-  never flips side: permanently long old PoW coins / short newer tokens). **The decisive test — alpha over
-  price momentum + reversal on the identical universe — no signal clears t>2** (value t=1.04; adoption
-  momentum t=1.91 and it *is* re-labelled price momentum, +0.33 corr), exactly the published verdict
-  (Liu-Tsyvinski-Wu JF2022; Cong et al MgmtSci2024). BTC/ETH timing overlays all **underperform buy-and-hold**
-  (+0.85; best stablecoin-SSR +0.55). **ML confirms it** — a 21-trial ranker (ridge/RF/extra-trees/hist-GBM/
-  LightGBM + classifiers × on-chain/price/both features × horizon × top-N, purged CV): ML on on-chain features
-  fails (best +0.20), the same harness on *price* features works (+1.02, so the method is sound), and adding
-  on-chain to price *degrades* it — no non-linear on-chain alpha; the meta-gate cuts DD (−23%→−17.7%) but
-  halves Sharpe. Decorrelated (+0.07) but **drags** the book (3.77→2.85). **Equities/FX have no on-chain
-  analogue** (crypto-only by nature; the nearest analogue is paid flow/positioning data). Excluded; the honest
-  edge is behind paid flow/entity feeds or in the illiquid small-cap tail the tradable funnel excludes.
+  source *not* derived from price ([docs/strategies/ONCHAIN.md](docs/strategies/ONCHAIN.md)). **Two data
+  facts had to be corrected before the verdict could be trusted, both of which had flattered it.** First,
+  exchange net-flows and exchange-held supply are **free** on the Coin Metrics community tier for BTC and
+  ETH — an earlier pass recorded them as pay-walled because it inferred entitlement from group 403s rather
+  than reading the vendor catalog (a multi-metric call 403s whole if any one metric is Pro). Second, four
+  of the 37 names were measuring **dead ERC-20 shells** (VET/ZIL/QTUM/LRC report zero active addresses on
+  44-79% of days), which parks them at the expensive extreme of a per-address value rank on a pure
+  artifact; excluding them leaves **33 names**. What is genuinely Pro-walled is narrow — adjusted transfer
+  value and entity-adjusted supply bands (realized cap is recoverable as mktcap÷MVRV). Top-50/100 remains
+  impossible: SOL/SUI/TON/APT publish market data only, no network metrics.
+
+  On clean data the a-priori headline — on-chain **value** (market cap per active address), top-20 — nets
+  **+0.15** (was +0.40 with the shells) and **fails every OOS gate** (MC-P5 −0.52, placebo 72nd pctile,
+  deflated 0.07). **Exchange flows were then tested as a BTC/ETH timing overlay** (two names cannot form a
+  cross-section): the best, exchange-supply-trend long/flat, nets **+0.96** against buy-and-hold +0.85 —
+  but rotating the *same* position path to random dates gives a 95th percentile of **+1.01**, so none of
+  the four flow overlays beats its own random-timing control, and 7 of 8 HAC predictive regressions find
+  no forecasting power. The flow thesis is now a **tested negative**, not an untested excuse. **One signal
+  does survive:** adoption momentum (active-address growth, top-20) nets **+0.73** with MC-P5 +0.08,
+  placebo 98th pctile, walk-forward OOS +0.74 with construction held fixed, and alpha over price momentum
+  + reversal of **t=+2.04**, stable across every top-N. It is still excluded — post-hoc, deflated 0.50 at
+  the family's 36 trials, **+0.32 correlated with price momentum**, and the book does not move
+  (3.828→**3.831** at a 15% weight). Dilution, ownership and fee-yield factors fail outright. **ML confirms
+  it** — a 21-trial ranker (ridge/RF/extra-trees/hist-GBM/LightGBM + classifiers × on-chain/price/both
+  features × horizon × top-N, purged CV): on-chain features best **+0.32**, the same harness on *price*
+  features **+1.09** (so the method is sound), and adding on-chain to price *degrades* it. **Equities/FX
+  have no on-chain analogue** (crypto-only by nature). Excluded; the remaining honest paths are paid
+  entity-level flow labelling, a wide small-cap panel, or free protocol fundamentals (fees/revenue/TVL).
 - **Residual / idiosyncratic momentum (H5)** — momentum on each name's market-beta *residual*, vol-standardised
   (Blitz-Huij-Martens 2011), the fix for the weak equity leg ([docs/strategies/RESIDMOM.md](docs/strategies/RESIDMOM.md)). **It is a
   better-built momentum, not a new source:** ~0.8 correlated with the raw momentum already in the book and with

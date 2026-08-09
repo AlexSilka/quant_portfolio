@@ -3,13 +3,23 @@
 Two free, no-key sources, each probed live (2026-08) before wiring in:
 
 - **Coin Metrics community API** (`community-api.coinmetrics.io/v4`). Cross-asset daily network
-  metrics. The community tier is a strict subset of the full catalog — most of the catalog 403s
-  at query time. The *free* set actually usable here, confirmed by per-(asset,metric) probing:
-  `PriceUSD, CapMrktCurUSD, AdrActCnt, TxCnt, TxTfrCnt, SplyCur, HashRate, CapMVRVCur`.
-  Pay-walled (so **not** used): exchange net-flows (`Flow*ExNtv`), adjusted transfer value
-  (`TxTfrValAdjUSD`, the NVT numerator), fees, miner revenue, realized cap, 7d/30d active addrs.
-  So H3 here is **network-activity & valuation** on-chain, not exchange-flow on-chain — stated
-  honestly in docs/strategies/ONCHAIN.md.
+  metrics. The community tier is a subset of the full catalog, and *which* subset is published
+  per (asset, metric) by `catalog-v2/asset-metrics` as a `community: true` flag — this loader asks
+  the catalog and fetches exactly what it is told is free. It does **not** infer entitlement from
+  403s: a multi-metric call 403s whole if *any* one metric is Pro, so 403-inference silently
+  blacklists free metrics that shared a call with a paid one.
+
+  Free and used here (32 distinct metrics, breadth varies by asset): activity & valuation on all
+  37 names (`AdrActCnt, TxCnt, TxTfrCnt, AdrBalCnt, SplyCur, CapMrktCurUSD, CapMVRVCur, PriceUSD`),
+  issuance on 35, `BlkCnt` on 16, `FeeTotNtv` on 14, `HashRate` on 8, and — **BTC/ETH only** —
+  exchange flows and exchange-held supply (`FlowInEx*, FlowOutEx*, SplyEx*`).
+
+  Genuinely Pro-walled (catalog reports no free asset): adjusted transfer value (`TxTfrValAdj*`,
+  the NVT numerator), `CapRealUSD`, `FeeTotUSD`, `RevUSD`, `SplyAct1yr`, `AdrBalUSD*Cnt`, `NVTAdj`.
+  Realized cap is recoverable anyway as `CapMrktCurUSD / CapMVRVCur`.
+
+  So the exchange-flow axis is testable on **BTC/ETH as a time series** (2 of 37 names is not a
+  cross-section) — see docs/strategies/ONCHAIN.md.
 
 - **blockchain.com charts** (`api.blockchain.info/charts`). BTC-only, free, full history since 2009.
   Supplies exactly the two series CM pay-walls that a BTC *time-series* test wants:
@@ -34,6 +44,7 @@ from src.config import CACHE_DIR  # noqa: E402
 
 CACHE = CACHE_DIR / "onchain"
 CM_BASE = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
+CM_CATALOG = "https://community-api.coinmetrics.io/v4/catalog-v2/asset-metrics"
 BC_BASE = "https://api.blockchain.info/charts"
 
 # ── universe: Binance symbol (repo price panel) → Coin Metrics asset code ─────────────────────
@@ -50,8 +61,16 @@ UNIVERSE: dict[str, str] = {
     "ZILUSDT": "zil_eth", "BATUSDT": "bat", "1INCHUSDT": "1inch", "YFIUSDT": "yfi", "ZRXUSDT": "zrx",
     "QTUMUSDT": "qtum_eth", "LRCUSDT": "lrc_eth", "KNCUSDT": "knc",
 }
-# Free CM metrics used, and the wide-panel filename each lands in.
-CM_METRICS = ["PriceUSD", "CapMrktCurUSD", "AdrActCnt", "TxCnt", "TxTfrCnt", "SplyCur", "CapMVRVCur"]
+# Metrics wanted, each landing in its own wide panel. This is a *request* list: the catalog decides
+# per asset which of these are free, so a name that lacks one (or is Pro-walled for it) simply
+# contributes no column to that panel instead of blocking its whole fetch.
+CM_METRICS = [
+    "PriceUSD", "CapMrktCurUSD", "AdrActCnt", "TxCnt", "TxTfrCnt", "SplyCur", "CapMVRVCur",
+    "AdrBalCnt",                                          # holders (non-zero balances) — adoption breadth
+    "IssTotNtv", "IssTotUSD",                             # issuance → supply-inflation / dilution
+    "FeeTotNtv", "BlkCnt", "HashRate",                    # network revenue & security (partial breadth)
+    "FlowInExNtv", "FlowOutExNtv", "FlowInExUSD", "FlowOutExUSD", "SplyExNtv", "SplyExUSD",  # BTC/ETH
+]
 STABLES = {"usdt": "usdt", "usdc": "usdc", "dai": "dai", "busd": "busd"}  # SplyCur → aggregate supply
 START = "2019-01-01"
 
@@ -91,22 +110,45 @@ def _cm_get(asset: str, metrics: list[str], start: str, end: str, retries: int =
     return pd.DataFrame()
 
 
-def _cm_asset_all(asset: str) -> pd.DataFrame:
-    """All free CM metrics for one asset. Tries the full set in one call; on a 403 (one metric this
-    asset lacks, e.g. TRX has no MVRV) falls back to fetching each metric alone and keeping what works."""
-    try:
-        return _cm_get(asset, CM_METRICS, START, _today())
-    except PermissionError:
-        cols = {}
-        for m in CM_METRICS:
+def free_metrics(assets: list[str], chunk: int = 8, retries: int = 3) -> dict[str, set[str]]:
+    """Catalog → {asset: set of daily metrics the community tier actually serves}. This is the
+    authoritative entitlement source; asking it is what keeps the loader from mistaking a group
+    403 (one Pro metric poisoning the call) for "all these metrics are paid"."""
+    out: dict[str, set[str]] = {}
+    for i in range(0, len(assets), chunk):
+        part = assets[i:i + chunk]
+        for attempt in range(retries):
             try:
-                d = _cm_get(asset, [m], START, _today())
-                if not d.empty:
-                    cols[m] = d[m]
-            except PermissionError:
-                pass  # this metric is pay-walled for this asset — expected, skip
-            time.sleep(0.05)
-        return pd.DataFrame(cols)
+                r = requests.get(CM_CATALOG, params={"assets": ",".join(part), "page_size": 100}, timeout=60)
+            except requests.RequestException as e:
+                print(f"    ! CM catalog {part} network error ({e}); retry {attempt + 1}/{retries}")
+                time.sleep(1.5 * (attempt + 1)); continue
+            if r.status_code != 200:
+                print(f"    ! CM catalog {part} HTTP {r.status_code} ({r.text[:120]}); retry {attempt + 1}/{retries}")
+                time.sleep(1.0 * (attempt + 1)); continue
+            for e in r.json().get("data", []):
+                out[e["asset"]] = {
+                    m["metric"] for m in e["metrics"]
+                    if any(f["frequency"] == "1d" and f.get("community") for f in m["frequencies"])
+                }
+            break
+        else:
+            print(f"    ! CM catalog {part} exhausted retries — those assets will be skipped")
+        time.sleep(0.25)
+    return out
+
+
+def _cm_asset_all(asset: str, wanted: set[str]) -> pd.DataFrame:
+    """The wanted metrics this asset is entitled to, in one call. `wanted` comes from the catalog,
+    so a 403 here means the catalog and the query endpoint disagree — worth seeing, not swallowing."""
+    ask = [m for m in CM_METRICS if m in wanted]
+    if not ask:
+        print(f"    ! CM {asset} has no free metric among the requested set"); return pd.DataFrame()
+    try:
+        return _cm_get(asset, ask, START, _today())
+    except PermissionError as e:
+        print(f"    ! CM {asset} 403 on catalog-declared-free {ask} ({e}) — entitlement drift, skipping asset")
+        return pd.DataFrame()
 
 
 def _today() -> str:
@@ -141,10 +183,17 @@ def build(force: bool = False) -> None:
     if done.exists() and not force:
         print(f"on-chain cache present ({done}); pass force=True to refresh"); return
 
+    print(f"Coin Metrics: catalog — which of {len(CM_METRICS)} metrics are free per asset…")
+    entitled = free_metrics(list(UNIVERSE.values()))
+    breadth = {m: sum(m in s for s in entitled.values()) for m in CM_METRICS}
+    print("  free breadth: " + ", ".join(f"{m}={n}" for m, n in breadth.items() if n))
+    if any(n == 0 for n in breadth.values()):
+        print("  Pro-walled (0 assets): " + ", ".join(m for m, n in breadth.items() if n == 0))
+
     per_metric: dict[str, dict[str, pd.Series]] = {m: {} for m in CM_METRICS}
-    print(f"Coin Metrics: fetching {len(UNIVERSE)} assets × {len(CM_METRICS)} free metrics…")
+    print(f"Coin Metrics: fetching {len(UNIVERSE)} assets…")
     for i, (sym, code) in enumerate(UNIVERSE.items(), 1):
-        d = _cm_asset_all(code)
+        d = _cm_asset_all(code, entitled.get(code, set()))
         got = list(d.columns)
         for m in got:
             per_metric[m][sym] = d[m]
@@ -178,6 +227,30 @@ def build(force: bool = False) -> None:
         bc_df.to_parquet(CACHE / "btc_blockchain.parquet")
         print(f"  → BTC series: {list(bc_df.columns)}  {bc_df.index.min().date()}..{bc_df.index.max().date()}")
     print("on-chain cache build DONE")
+
+
+DEAD_SHELL_MAX_ZERO_FRAC = 0.20
+
+
+def live_universe(max_zero_frac: float = DEAD_SHELL_MAX_ZERO_FRAC) -> dict[str, str]:
+    """UNIVERSE minus the names whose free on-chain series measures a dead contract instead of a
+    live network. Several coins with their own mainnet (VET, ZIL, QTUM) are only free on Coin
+    Metrics as their bridged **ERC-20 shell**, and holders long ago moved to the native chain — the
+    shell posts zero active addresses on most days. Those rows are not a quiet zero: a day where
+    the shell sees one address makes market-cap-per-address astronomical, so the name lands at the
+    expensive extreme of the value rank on nothing but a data artifact.
+
+    The native codes exist on CM but carry market data only (no free network metrics), so there is
+    no mapping fix — the honest move is to exclude them and say the cross-section is that much
+    narrower."""
+    adr = load("AdrActCnt")
+    zero = (adr == 0).mean()
+    dead = sorted(n for n in adr.columns if zero.get(n, 0.0) > max_zero_frac)
+    if dead:
+        print(f"  on-chain universe: dropping {len(dead)} dead-shell names "
+              f"(>{max_zero_frac:.0%} zero-activity days): "
+              + ", ".join(f"{n} {zero[n]:.0%}" for n in dead))
+    return {s: c for s, c in UNIVERSE.items() if s not in dead}
 
 
 def load(metric: str) -> pd.DataFrame:
