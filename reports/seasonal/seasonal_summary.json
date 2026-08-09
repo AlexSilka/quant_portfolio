@@ -542,10 +542,10 @@
       "top200": 0.293
     },
     "stocks_broad_1d": {
-      "top50": 0.276,
-      "top100": 0.292,
-      "top200": 0.291,
-      "top500": 0.292
+      "top50": 0.335,
+      "top100": 0.242,
+      "top200": 0.188,
+      "top500": 0.196
     }
   },
   "combined": {
@@ -563,18 +563,21 @@
       "vs_buyhold_sharpe": 0.764
     },
     "corr_to_book": {
-      "book": 0.177,
-      "trend_momentum": 0.306,
+      "book": 0.018,
+      "trend_momentum": 0.295,
       "carry": 0.004,
-      "volprem": 0.095,
-      "xs_momentum": 0.03,
-      "breakout": -0.035
+      "volprem": 0.021,
+      "xs_momentum": -0.015,
+      "breakout": -0.035,
+      "crisis": -0.044,
+      "gmacro": -0.095,
+      "bab": 0.041
     },
     "book_lift_by_weight": {
-      "0%": 3.467,
-      "15%": 3.387,
-      "30%": 3.159,
-      "50%": 2.539
+      "0%": 3.607,
+      "15%": 3.596,
+      "30%": 3.417,
+      "50%": 2.749
     }
   }
 }
