@@ -1055,7 +1055,7 @@ the ≥80% target, but with 0.3pp and 0.8pp of headroom against 4.6pp before. Th
 the five, and it is the honest floor: it is what this book's consistency looks like once no universe anywhere is
 chosen in hindsight.
 
-## 6d-bis. Six routes to the missed streak target, all measured, all closed (§12)
+## 6d-bis. Seven routes to the missed streak target, all measured, all closed (§12)
 
 The brief anticipates this case: *"If the targets are not reachable under honest validation, submit your
 best result with the trade-off frontier you found... Do not tune against the final out-of-sample block to
@@ -1073,7 +1073,8 @@ together through the crypto unwind, with the long-gamma legs already in the book
 | **de-risk into the regime** (§5d) | months-in-profit 81% → **68%**, streak → **31** | a flat month is not a profitable month — a classifier aimed at this exact target made it far worse |
 | **re-weight the families** (§6) | **0 of 2,000** random weightings reach 5/5 | months-in-profit only rises by over-weighting short-vol, which breaks the worst month |
 | **add long-gamma** (§6c) | only long-crypto-variance flips it, and only at *full* parity weight | it buys the supporting window by paying the **scored** one (OOS Sharpe 3.39 → 2.85, 5/5 → 4/5) — and it only lists from **2021-03**, nine months before the streak |
-| **add a SHORT trend leg** (`scripts/trend/run_trend_short_leg.py`) | earns in the window (**+1.3%**, two of three months positive) and still fails: months-in-profit 79.6% → **77.2%**, streak unchanged | it is the one candidate with *full* history, so the "only exists where the miss is" objection does not apply — it simply is not big enough. Standalone **−0.17** over fifteen years: it pays for those two months every other month |
+| **trade the trend family SHORT** (`scripts/trend/run_trend_short_leg.py`) | earns in the window (**+1.3%**, two of three months positive) and makes the book **worse**: months-in-profit 79.0% → **76.5%**, streak 3 → **4** | it is the one candidate with *full* history, so the "only exists where the miss is" objection does not apply — it simply is not big enough, and its fifteen-year standalone is **−0.17**: it pays for those two months in every other month |
+| **trade the trend family BOTH ways** (same script) | still loses the window (**−4.5%**); months-in-profit 79.0% → **77.2%**, streak still 3 | the long side outweighs the short, so the leg keeps most of the loss and gives up the long-only edge (standalone +0.92 → +0.84). It does reach 5/5 on the frozen block, but the choice is made on the selection window, where it is worse |
 
 That last row is worth stating plainly, because it is the shape every "fix" takes here: **a lever that
 exists only where the target is missed will always look like it fixes it.** Long crypto variance is a real

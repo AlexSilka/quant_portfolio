@@ -17,9 +17,10 @@ replacing the leg. This asks a different question: whether the short leg, held *
 risk parity, pays for that drag with what it does in the months the rest of the book cannot cover.
 
 Three variants, each on the shipped PIT universe and otherwise the a-priori config:
-  short_only   the pure bear leg — maximum crash payoff, maximum calm-period bleed
+  short_only   the pure bear leg — replaces the long-only trend family entirely
   asym 70/30   full long + 30% short, the deep-dive's own compromise
-  ls           symmetric long-short, for reference
+  ls           symmetric long-short
+  long+short   the family split into two equal-risk sleeves inside its own 1/8 slot
 
 Scored on the selection window with the frozen block as a read-out (§10), on all five targets.
 
@@ -43,7 +44,8 @@ from src.metrics import summarise  # noqa: E402
 OOS = pd.Timestamp(OOS_START).tz_localize(None)
 SELECT_END = pd.Timestamp("2024-06-30")
 STREAK = ("2021-12-01", "2022-02-28")
-MODES = {"short_only": "pure bear leg", "asym": "full long + 30% short", "ls": "symmetric long-short"}
+MODES = {"long_only": "SHIPPED — long only", "short_only": "REPLACED — short only",
+         "ls": "REPLACED — long and short"}
 TARGETS = {"sharpe": (2.5, 4.0), "months_in_profit": (0.80, None), "max_dd": (-0.15, None),
            "longest_losing_streak_mo": (None, 2), "worst_month": (-0.06, None)}
 
@@ -54,7 +56,17 @@ def n_targets(c: dict) -> int:
 
 
 def leg(mode: str) -> pd.Series:
-    """The trend block rebuilt with a different direction mode, same PIT universe and config."""
+    """The trend block rebuilt with a different direction mode, same PIT universe and config.
+
+    Cached to parquet per mode. Rebuilding a direction variant walks ~1,640 equities and ~330 perps and
+    costs minutes; re-scoring one against a different book assembly costs milliseconds. The first run of
+    this script threw the series away and kept only the summary numbers, which made a change of question
+    ("add a ninth leg" -> "replace the family") a full recompute for no reason."""
+    cache = TREND_DIR / f"trend_dir_{mode}.parquet"
+    if cache.exists():
+        s = pd.read_parquet(cache)["ret"]
+        s.index = pd.DatetimeIndex(s.index)
+        return s.dropna()
     spec = {"entry": "ema", "direction": mode, "exit": "reversal"}
     cols = {}
     for tf in P.BLOCK_TFS:
@@ -66,14 +78,21 @@ def leg(mode: str) -> pd.Series:
                 cols[f"{sym}_{tf}"] = r
     for sym, r in P.equity_legs(pit=True, spec=spec).items():
         cols[sym] = r
-    return pd.DataFrame(cols).mean(axis=1).dropna().rename("ret")
+    out = pd.DataFrame(cols).mean(axis=1).dropna().rename("ret")
+    out.to_frame().to_parquet(cache)
+    return out
 
 
-def book_with(extra: pd.Series | None, end=None) -> pd.Series:
+def book_with(trend_leg: pd.Series | None, end=None) -> pd.Series:
+    """The canonical book with the TREND FAMILY rebuilt — eight families throughout.
+
+    A short trend sleeve is not a ninth family: trend is one of the eight, and its direction mode is a
+    property of that family's construction. Adding a short leg alongside the shipped long-only one would
+    dilute every family to 1/9 *and* double-count the long side, which measures nothing."""
     raw = {lab: mb.load(lab, f, c) for lab, f, c in mb.FAMILIES}
     raw = {k: v for k, v in raw.items() if v is not None}
-    if extra is not None:
-        raw["trend_short"] = extra.rename("trend_short")
+    if trend_leg is not None:
+        raw["trend_momentum"] = trend_leg.rename("trend_momentum")
     df = pd.DataFrame({k: mb.rescale(v) for k, v in raw.items()}).sort_index()
     df = df[df.index >= pd.Timestamp(mb.START_REPORT)]
     if end is not None:
@@ -83,7 +102,7 @@ def book_with(extra: pd.Series | None, end=None) -> pd.Series:
 
 
 def main():
-    print("=== a short trend leg as a NINTH family — does it buy back the lost months? ===")
+    print("=== the trend family REBUILT with a short side — eight families throughout ===")
     print("(selection window 2011-01..2024-06; the frozen block is a read-out only)\n")
     base_sel, base_full = book_with(None, SELECT_END), book_with(None)
     bs, bo_ = mb.scorecard(base_sel), mb.scorecard(base_full.loc[OOS:])
