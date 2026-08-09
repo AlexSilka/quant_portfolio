@@ -256,8 +256,8 @@
       }
     },
     "corr_to_book": {
-      "book": 0.064,
-      "trend_momentum": -0.129,
+      "book": 0.06,
+      "trend_momentum": -0.146,
       "carry": 0.019,
       "volprem": 0.028,
       "xs_momentum": 0.029,
@@ -267,10 +267,10 @@
       "bab": 0.066
     },
     "book_lift_by_weight": {
-      "0%": 3.828,
-      "15%": 3.756,
-      "30%": 3.499,
-      "50%": 2.73
+      "0%": 3.753,
+      "15%": 3.685,
+      "30%": 3.437,
+      "50%": 2.684
     },
     "post_hoc_candidate": {
       "signal": "adr_mom30",
@@ -294,10 +294,10 @@
       "status": "post-hoc \u2014 surfaced after the dead-shell fix, not the a-priori pick",
       "corr_to_book": 0.1,
       "book_lift_by_weight": {
-        "0%": 3.828,
-        "15%": 3.831,
-        "30%": 3.674,
-        "50%": 3.071
+        "0%": 3.753,
+        "15%": 3.759,
+        "30%": 3.608,
+        "50%": 3.021
       }
     }
   },

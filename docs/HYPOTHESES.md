@@ -106,9 +106,14 @@ independent lottery effect, not re-labelled low-vol.
 > nothing** (21-trial ranker, purged CV, now with holder/issuance/fee features): on-chain best **+0.32**,
 > the same harness on *price* features **+1.09** (proving the method), adding on-chain to price degrades
 > it. **top-50/100 impossible on free data** (SOL/SUI/TON/APT carry market data only → 33-name ceiling).
-> The remaining honest upgrade paths are paid **entity-level** flow labelling, a wide small-cap panel, or
-> — untested and free — **protocol fundamentals** (fees/revenue/TVL via DefiLlama), which reach exactly
-> the chains Coin Metrics cannot. Spec kept below.
+> **The chains Coin Metrics cannot reach were tested too**, on free DefiLlama fees/revenue/TVL for 28
+> chains (SOL/SUI/TON/APT/SEI/TIA/ARB/OP) with CM market cap as the denominator: **crypto chain-value is
+> inverted** — buying the cash-flow-cheap chains nets **−0.82** with the placebo at the **6th pctile**
+> (real information, reversed sign, as with lottery/MAX). Fee yield ranks BTC permanently expensive and
+> the L2s permanently cheap at 0.014 turnover/bar — a standing tilt, not a valuation that closes. The
+> post-hoc flip (+0.86) survives a BTC-dominance hedge (+0.81) but fails everything else (placebo 94th,
+> deflated 0.54, alpha t=+1.66, all P&L in 2025-26, book 3.777→3.799). The remaining upgrade paths are
+> paid **entity-level** flow labelling and a wide small-cap panel. Spec kept below.
 
 **Thesis.** Exchange net-flows, stablecoin-supply changes, active-address growth and miner flows carry
 information **not present in price** — the one genuinely new information source for crypto. The main
@@ -241,7 +246,9 @@ retail-mispricing thesis — the leverage-constraint premium, tested separately 
 free for BTC/ETH and were tested — they beat buy-and-hold only by collecting beta, and lose to random
 timing of the same position path; the free valuation axis degenerates to a static coin-type tilt; and the
 one signal that clears the gates, adoption momentum (+0.73, alpha t=+2.04), is +0.32 correlated with
-price momentum and leaves the book at 3.83 either way (free cross-section caps at 33 names — no top-50/100). **H5 (residual
+price momentum and leaves the book at 3.83 either way (free cross-section caps at 33 names — no top-50/100).
+The free cash-flow axis (DefiLlama chain fees/revenue/TVL, which reaches SOL/SUI/TON/APT) was built and
+tested as well: crypto **inverts** chain-value, and neither direction lifts the book. **H5 (residual
 momentum) is tested — an in-family refinement, not a new source ([RESIDMOM.md](strategies/RESIDMOM.md)):** it beats raw
 momentum on crypto (+0.45 → +0.61, walk-forward incremental +0.25) and halves equity momentum-crash bleed,
 but is ~0.8 correlated with raw momentum (no alpha over it), so it upgrades the existing crypto momentum

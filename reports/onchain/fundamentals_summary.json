@@ -1,0 +1,184 @@
+{
+  "config": {
+    "chains": 27,
+    "window": "2022-06-22..2026-07-31",
+    "bars": 1501,
+    "rebal": 21,
+    "top_frac": 0.3,
+    "exec_lag": 2,
+    "cost_bps": 6.0,
+    "signal_window_days": 90,
+    "headline_signal": "fee_yield",
+    "min_names_to_start": 10,
+    "ppy": 365,
+    "source": "DefiLlama chain fees/revenue/TVL + Coin Metrics CapMrktEstUSD",
+    "caveat": "DefiLlama backfills protocol adapters \u2014 history is revised, so growth signals read as an upper bound"
+  },
+  "breadth_start_end": [
+    10,
+    26
+  ],
+  "topn_sweep": {
+    "fee_yield": {
+      "10": 0.55,
+      "15": 0.42,
+      "20": -0.14,
+      "all": -0.82
+    },
+    "rev_yield": {
+      "10": 0.03,
+      "15": 0.08,
+      "20": -0.59,
+      "all": -0.62
+    },
+    "tvl_yield": {
+      "10": 0.31,
+      "15": 0.28,
+      "20": -0.19,
+      "all": -0.6
+    },
+    "fee_growth": {
+      "10": 0.06,
+      "15": 0.03,
+      "20": 0.19,
+      "all": -0.29
+    },
+    "tvl_growth": {
+      "10": -0.19,
+      "15": -0.16,
+      "20": 0.39,
+      "all": 0.34
+    },
+    "fee_margin": {
+      "10": 0.16,
+      "15": -0.21,
+      "20": -0.41,
+      "all": -0.72
+    },
+    "value_blend": {
+      "10": 0.38,
+      "15": 0.27,
+      "20": -0.35,
+      "all": -0.97
+    }
+  },
+  "headline": {
+    "signal": "fee_yield",
+    "sharpe": -0.823,
+    "mc_p5": -1.6952183204361455,
+    "mc_p50": -0.8138132421911279,
+    "maxdd": -0.524,
+    "turnover": 0.013,
+    "per_year": {
+      "2022": -0.05,
+      "2023": 0.71,
+      "2024": -0.15,
+      "2025": -1.73,
+      "2026": -3.74
+    }
+  },
+  "placebo": {
+    "real": -0.823,
+    "pctile": 6.0,
+    "mean": -0.026,
+    "p95": 0.805
+  },
+  "walk_forward": {
+    "in_sample_best": 0.424,
+    "wf_oos": 0.155,
+    "n_refits": 6,
+    "n_trials": 14,
+    "deflated_sharpe": 0.0
+  },
+  "cost_sensitivity": {
+    "1x": -0.823,
+    "2x": -0.83,
+    "3x": -0.838
+  },
+  "orthogonalisation_vs_price": {
+    "fee_yield": {
+      "alpha_ann": -0.116,
+      "alpha_t": -1.57,
+      "corr_pmom": -0.17,
+      "corr_prev": 0.14
+    },
+    "rev_yield": {
+      "alpha_ann": -0.09,
+      "alpha_t": -1.23,
+      "corr_pmom": -0.17,
+      "corr_prev": 0.2
+    },
+    "tvl_yield": {
+      "alpha_ann": -0.086,
+      "alpha_t": -1.12,
+      "corr_pmom": -0.12,
+      "corr_prev": 0.07
+    },
+    "fee_growth": {
+      "alpha_ann": -0.034,
+      "alpha_t": -0.45,
+      "corr_pmom": 0.07,
+      "corr_prev": -0.22
+    },
+    "tvl_growth": {
+      "alpha_ann": 0.054,
+      "alpha_t": 0.69,
+      "corr_pmom": 0.15,
+      "corr_prev": -0.19
+    },
+    "fee_margin": {
+      "alpha_ann": -0.117,
+      "alpha_t": -1.5,
+      "corr_pmom": -0.07,
+      "corr_prev": 0.13
+    },
+    "value_blend": {
+      "alpha_ann": -0.14,
+      "alpha_t": -1.94,
+      "corr_pmom": -0.23,
+      "corr_prev": 0.24
+    }
+  },
+  "post_hoc_inversion": {
+    "signal": "-fee_yield",
+    "sharpe": 0.864,
+    "mc_p5": 0.011836095322331212,
+    "placebo_pctile": 94.0,
+    "placebo_p95": 0.899,
+    "wf_oos": 0.334,
+    "n_refits": 6,
+    "deflated_sharpe": 0.54,
+    "alpha_over_price_t": 1.66,
+    "corr_pmom": 0.15,
+    "per_year": {
+      "2022": -0.96,
+      "2023": 0.17,
+      "2024": 0.03,
+      "2025": 2.01,
+      "2026": 2.81
+    },
+    "status": "post-hoc sign flip on a 4-year, 27-chain panel \u2014 reported, not promoted",
+    "corr_to_book": 0.11,
+    "book_lift_by_weight": {
+      "0%": 3.777,
+      "15%": 3.799,
+      "30%": 3.669,
+      "50%": 3.115
+    }
+  },
+  "static_tilt_diagnosis": {
+    "turnover_per_bar": 0.0143,
+    "corr_to_btc_dominance": 0.25,
+    "beta_to_btc_dominance": 0.091,
+    "sharpe_after_hedging_dominance": 0.81
+  },
+  "corr_to_book": {
+    "book": -0.107
+  },
+  "book_lift_by_weight": {
+    "0%": 3.777,
+    "15%": 3.644,
+    "30%": 3.277,
+    "50%": 2.21
+  }
+}

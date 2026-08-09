@@ -113,16 +113,22 @@ def _cm_get(asset: str, metrics: list[str], start: str, end: str, retries: int =
 def free_metrics(assets: list[str], chunk: int = 8, retries: int = 3) -> dict[str, set[str]]:
     """Catalog → {asset: set of daily metrics the community tier actually serves}. This is the
     authoritative entitlement source; asking it is what keeps the loader from mistaking a group
-    403 (one Pro metric poisoning the call) for "all these metrics are paid"."""
+    403 (one Pro metric poisoning the call) for "all these metrics are paid".
+
+    Batched requests fail whole, which is the same trap one level up: one unrecognised asset code
+    (`ton`) returns 400 for its entire chunk and would silently drop the assets that share it. A 400
+    therefore re-asks per asset, so only the unknown code is lost."""
     out: dict[str, set[str]] = {}
-    for i in range(0, len(assets), chunk):
-        part = assets[i:i + chunk]
+
+    def _ask(part: list[str]) -> bool:
         for attempt in range(retries):
             try:
                 r = requests.get(CM_CATALOG, params={"assets": ",".join(part), "page_size": 100}, timeout=60)
             except requests.RequestException as e:
                 print(f"    ! CM catalog {part} network error ({e}); retry {attempt + 1}/{retries}")
                 time.sleep(1.5 * (attempt + 1)); continue
+            if r.status_code == 400:
+                return False               # an unknown code in this batch — caller splits it up
             if r.status_code != 200:
                 print(f"    ! CM catalog {part} HTTP {r.status_code} ({r.text[:120]}); retry {attempt + 1}/{retries}")
                 time.sleep(1.0 * (attempt + 1)); continue
@@ -131,9 +137,17 @@ def free_metrics(assets: list[str], chunk: int = 8, retries: int = 3) -> dict[st
                     m["metric"] for m in e["metrics"]
                     if any(f["frequency"] == "1d" and f.get("community") for f in m["frequencies"])
                 }
-            break
-        else:
-            print(f"    ! CM catalog {part} exhausted retries — those assets will be skipped")
+            return True
+        print(f"    ! CM catalog {part} exhausted retries — those assets will be skipped")
+        return True
+
+    for i in range(0, len(assets), chunk):
+        part = assets[i:i + chunk]
+        if not _ask(part) and len(part) > 1:
+            for a in part:                 # isolate the offender instead of losing its neighbours
+                if not _ask([a]):
+                    print(f"    ! CM catalog: '{a}' is not a recognised asset code — skipped")
+                time.sleep(0.15)
         time.sleep(0.25)
     return out
 

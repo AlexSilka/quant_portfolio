@@ -3,7 +3,7 @@
 > **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS). Any master-book Sharpe quoted below (e.g. a 3.77 "book drag" baseline) is the book *snapshot at the time this family was evaluated*, not the current headline.
 
 **Scope.** H3 from [HYPOTHESES.md](../HYPOTHESES.md): on-chain data (exchange flows, stablecoin supply,
-active-address growth, valuation ratios) carries information **not present in price** — the one
+active-address growth, chain cash flows, valuation ratios) carries information **not present in price** — the one
 genuinely new information source for crypto. The data access is *gated*, so establishing exactly what is
 free is part of the result — and getting that wrong the first time cost this family a correct verdict
 (§1). Entitlement is read from the vendor catalog, a free ingestion loader was built, and the family was run through
@@ -70,6 +70,16 @@ decisive "does on-chain beat price?" test). All numbers net of cost. Figure:
 - **The other BTC/ETH overlays remain worse than holding.** MVRV-z long/flat **+0.07** (long/short −0.99),
   NVT +0.18, Puell −0.49, stablecoin-SSR +0.55, against BTC buy-and-hold +0.85 — and with 2-3 cycles of
   history the whole arm is near-unbacktestable regardless (§5).
+- **The chains Coin Metrics cannot see were tested too, on cash flows instead of addresses (§5b).**
+  DefiLlama gives free daily fees/revenue/TVL for 28 chains — SOL, SUI, TON, APT, SEI, TIA, ARB, OP —
+  and Coin Metrics supplies the market cap, so a real fee yield is computable. **Crypto chain-value is
+  inverted:** buying the chains that look cheap on their own cash flows nets **−0.82**, and the placebo
+  sits at the **6th percentile**, meaning the cross-section is genuinely informative with the sign
+  reversed — the same thing crypto did to the lottery factor. Fee yield ranks Bitcoin permanently
+  expensive and the L2s permanently cheap at 0.014 turnover/bar, so it is a standing structural tilt,
+  not a valuation that closes. The post-hoc flip (+0.86) is not the BTC-dominance trade (hedging that
+  spread leaves +0.81) but fails everything else: placebo 94th < 95th, deflated 0.54, alpha over price
+  t=+1.66, all P&L in the last two years, book lift 3.777 → 3.799. **Excluded.**
 - **Decorrelated (corr to book +0.06) but it drags** (blended Sharpe 3.83 → 2.73 as weight rises).
   Correctly **excluded**. Documented, not traded.
 
@@ -401,6 +411,86 @@ exchange, whale versus retail — and that remains untested here.
 and a tidy −13% max-DD from sitting out risk-off), rests on one structural stablecoin-supply uptrend.
 MVRV long/short (−0.99) is actively destructive — fading "expensive" MVRV shorts the biggest bull legs.
 
+## 5b. Chain fundamentals — the other half of crypto, valued on cash flows
+
+Everything above runs on Coin Metrics' free network data, which covers 33 mostly-legacy coins and has
+**no network metrics at all** for the chains that carry modern activity. That is a real hole in a
+verdict about "on-chain": SOL, SUI, TON, APT, SEI, TIA, ARB and OP are simply absent. **DefiLlama
+fills it** — free, no key, daily **fees, revenue and TVL** per chain, Ethereum back to 2018 — and
+market cap comes from Coin Metrics (`CapMrktEstUSD` is free for 27 of the 28 mapped chains, TON being
+the exception), so these are real valuation ratios rather than raw counts.
+
+This is a different economic axis from anything above: not *how busy* a chain looks, but **what it
+earns**. `src/data/defillama.py`, `src/sleeves/fundamentals.py`, `scripts/onchain/run_fundamentals.py`.
+
+```
+VALUE     fee_yield    annualised fees ÷ market cap      ← HEADLINE (the crypto earnings yield, inverse P/F)
+          rev_yield    annualised revenue ÷ market cap   (the slice that accrues to the token)
+          tvl_yield    TVL ÷ market cap                  (price-to-book)
+GROWTH    fee_growth   trailing-quarter fees vs the quarter before — contains no price at all
+          tvl_growth   capital arriving on the chain
+QUALITY   fee_margin   fees ÷ TVL — what the parked capital actually does
+```
+
+**Two caveats stated before the numbers.** The panel is young and narrow: fees for the modern chains
+begin 2022-2024, so it runs **2022-06 → 2026-07, 27 chains, breadth growing 10 → 26**. And DefiLlama
+*backfills* protocol adapters, so history is revised — growth signals are the most exposed, and a
+positive result here is an upper bound. Tezos is dropped automatically: its fee series stops in
+Jan-2025, and a stalled series held forward becomes a silent constant tilt — the same failure the
+dead ERC-20 shells caused in §1.
+
+**The result is a clean inversion.** Net Sharpe, monthly rebalance:
+
+| signal | N=10 | N=15 | N=20 | all |
+|---|---|---|---|---|
+| **fee_yield (headline)** | +0.55 | +0.42 | −0.14 | **−0.82** |
+| rev_yield | +0.03 | +0.08 | −0.59 | −0.62 |
+| tvl_yield | +0.31 | +0.28 | −0.19 | −0.60 |
+| fee_growth | +0.06 | +0.03 | +0.19 | −0.29 |
+| tvl_growth | −0.19 | −0.16 | +0.39 | +0.34 |
+| fee_margin | +0.16 | −0.21 | −0.41 | −0.72 |
+| value_blend | +0.38 | +0.27 | −0.35 | −0.97 |
+
+Buying the chains that look cheap on their own cash flows **loses money**: the headline nets **−0.82**
+(MC-P5 −1.70, deflated 0.00), and every valuation ratio agrees. Critically the placebo sits at the
+**6th percentile** — the real cross-section is *worse* than 94% of random name-shuffles, which means
+the structure carries genuine information with the sign reversed. This is crypto doing to value what
+it already did to the lottery factor ([LOTTERY.md](LOTTERY.md)): the textbook direction is inverted.
+
+**Why the sign flips is visible in the legs.** Fee yield ranks **Bitcoin permanently expensive** — it
+collects almost nothing in fees against a cap in the trillions — and the high-throughput L2s
+permanently cheap. Mean percentile rank over 2025-26: long ARB (1.00), SOL (0.90), POL (0.90), Sonic
+(0.90), OP (0.84); short BTC (0.05), TIA (0.11), FIL (0.17), LTC (0.18), XLM (0.24). Turnover is
+**0.014/bar** — the legs essentially never move. So this is not a valuation signal that opens and
+closes; it is a standing structural bet on high-fee chains against Bitcoin and the legacy L1s, and
+over 2025-26 that bet was on the wrong side.
+
+**The inversion, measured rather than asserted.** Flipping a sign after seeing the result is post-hoc,
+so the flip goes through the same funnel and stays labelled:
+
+| gate | inverted book (long "expensive" chains) | bar |
+|---|---|---|
+| net Sharpe | **+0.86** | — |
+| MC-P5 | +0.01 | > 0, barely ✅ |
+| placebo | **94th pctile** (p95 +0.90) | > 95th ❌ |
+| walk-forward OOS | +0.33 | > 0 ✅ |
+| deflated Sharpe (N=14) | **0.54** | ~0.9 ❌ |
+| alpha over price mom + reversal | t = +1.66 | > 2 ❌ |
+| per-year | 2022 −0.96 · 2023 +0.17 · 2024 +0.03 · 2025 **+2.01** · 2026 **+2.81** | — |
+| **book lift at 15%** | 3.777 → **3.799** | material ❌ |
+
+The obvious suspicion — that "long expensive chains" is just the BTC-dominance trade — was tested and
+**does not hold**: correlation to the BTC-minus-equal-weight-alts spread is +0.25, and hedging that
+spread out leaves **+0.81 of the +0.86**. (Hedging means removing β×spread. Subtracting the fitted
+intercept as well would zero the mean by construction and "prove" any book is explained by anything.)
+
+So the inversion is not a beta artifact — but it fails on every other count: it does not beat its own
+placebo, its deflated Sharpe is 0.54 against a ~0.9 bar, its alpha over price is t=+1.66, and all of
+the P&L is in the last two years of a panel that only starts in 2022. Trading it would mean trading a
+sign flip discovered after the fact, on 27 chains, four years, and revised data. **Excluded, and the
+value here is the map: crypto chain-value is inverted, the effect is real enough to be measurable, and
+neither direction moves the book.**
+
 ## 6. Cross-asset — why this is crypto-only (the stocks / FX question)
 
 On-chain data is **intrinsically crypto**: it is the public-ledger record of a blockchain. **Equities and
@@ -464,17 +554,19 @@ past that it costs. **Marginal contribution is negative or nil → exclude.**
   wallet, which exchange, whale versus retail (Glassnode / CryptoQuant / Nansen, all paid) — is the part
   of the flow story this test could not reach, since aggregate BTC/ETH net-flow is now shown not to work.
   The documented **price-to-new-address value** premium needs a **wide small-cap** on-chain panel
-  (hundreds of coins), not the liquid-33 cut. A third, cheaper axis is untested rather than rejected:
-  **protocol-level fundamentals** (fees, revenue, TVL) from free sources such as DefiLlama, which cover
-  SOL/SUI/TON/APT — the exact names Coin Metrics cannot reach — and would test crypto *value* on
-  cash-flow multiples rather than address counts.
+  (hundreds of coins), not the liquid-33 cut. The free cash-flow axis is no longer on this list — it
+  was built and tested (§5b) and crypto inverts it. What is left unexplored is **protocol**-level
+  fundamentals below the chain level (per-DEX, per-lender fee splits), which needs a hand-curated
+  token→protocol mapping rather than a new data source.
 
 ## 9. Reproduce
 
 ```bash
 python -m src.data.onchain      # build the free on-chain cache (Coin Metrics community + blockchain.com)
-make onchain                    # scripts/onchain/run_onchain.py    -> reports/onchain/onchain_{summary.json,returns.parquet}
-                                # scripts/onchain/run_onchain_ml.py -> reports/onchain/onchain_ml_{summary.json,returns.parquet}
+make onchain                    # scripts/onchain/run_onchain.py       -> reports/onchain/onchain_{summary.json,returns.parquet}
+                                # scripts/onchain/run_onchain_ml.py    -> reports/onchain/onchain_ml_{summary.json,returns.parquet}
+                                # src.data.defillama                   -> data/cache/fundamentals/
+                                # scripts/onchain/run_fundamentals.py  -> reports/onchain/fundamentals_{summary.json,returns.parquet}
                                 #                              + reports/figures/onchain{,_ml}.png
 ```
 
