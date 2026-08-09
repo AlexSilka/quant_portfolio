@@ -1,0 +1,232 @@
+{
+  "gate NONE (shipped)": {
+    "full": {
+      "sharpe": 0.69,
+      "cagr": 0.058,
+      "max_dd": -0.144,
+      "worst_month": -0.049,
+      "months_in_profit": 0.532,
+      "streak": 5
+    },
+    "oos": {
+      "sharpe": 0.35,
+      "cagr": 0.029,
+      "max_dd": -0.078,
+      "worst_month": -0.04,
+      "months_in_profit": 0.52,
+      "streak": 3
+    }
+  },
+  "gate ALL (a-priori)": {
+    "full": {
+      "sharpe": 1.0,
+      "cagr": 0.022,
+      "max_dd": -0.029,
+      "worst_month": -0.013,
+      "months_in_profit": 0.557,
+      "streak": 4
+    },
+    "oos": {
+      "sharpe": 0.05,
+      "cagr": 0.001,
+      "max_dd": -0.029,
+      "worst_month": -0.013,
+      "months_in_profit": 0.6,
+      "streak": 2
+    }
+  },
+  "gate SELECTED (walk-forward)": {
+    "full": {
+      "sharpe": 0.69,
+      "cagr": 0.043,
+      "max_dd": -0.117,
+      "worst_month": -0.033,
+      "months_in_profit": 0.532,
+      "streak": 5
+    },
+    "oos": {
+      "sharpe": 0.27,
+      "cagr": 0.016,
+      "max_dd": -0.058,
+      "worst_month": -0.027,
+      "months_in_profit": 0.56,
+      "streak": 3
+    }
+  },
+  "gate ORACLE (hindsight, not a result)": {
+    "full": {
+      "sharpe": 0.97,
+      "cagr": 0.065,
+      "max_dd": -0.11,
+      "worst_month": -0.041,
+      "months_in_profit": 0.544,
+      "streak": 5
+    },
+    "oos": {
+      "sharpe": 0.59,
+      "cagr": 0.043,
+      "max_dd": -0.064,
+      "worst_month": -0.029,
+      "months_in_profit": 0.56,
+      "streak": 3
+    }
+  },
+  "per_sleeve": [
+    {
+      "sleeve": "BNBUSDT_4h",
+      "sharpe_raw": 0.96,
+      "sharpe_gated": 0.94,
+      "dd_raw": -0.276,
+      "dd_gated": -0.125
+    },
+    {
+      "sleeve": "BTCUSDT_4h",
+      "sharpe_raw": 0.32,
+      "sharpe_gated": 0.89,
+      "dd_raw": -0.352,
+      "dd_gated": -0.24
+    },
+    {
+      "sleeve": "ADAUSDT_4h",
+      "sharpe_raw": 0.92,
+      "sharpe_gated": 0.8,
+      "dd_raw": -0.182,
+      "dd_gated": -0.205
+    },
+    {
+      "sleeve": "BNBUSDT_1h",
+      "sharpe_raw": 0.23,
+      "sharpe_gated": 0.64,
+      "dd_raw": -0.239,
+      "dd_gated": -0.099
+    },
+    {
+      "sleeve": "DOGEUSDT_1h",
+      "sharpe_raw": 0.89,
+      "sharpe_gated": 0.63,
+      "dd_raw": -0.229,
+      "dd_gated": -0.16
+    },
+    {
+      "sleeve": "LTCUSDT_1h",
+      "sharpe_raw": -0.21,
+      "sharpe_gated": 0.56,
+      "dd_raw": -0.382,
+      "dd_gated": -0.079
+    },
+    {
+      "sleeve": "ETHUSDT_1h",
+      "sharpe_raw": 0.4,
+      "sharpe_gated": 0.53,
+      "dd_raw": -0.261,
+      "dd_gated": -0.127
+    },
+    {
+      "sleeve": "DOGEUSDT_4h",
+      "sharpe_raw": 0.69,
+      "sharpe_gated": 0.44,
+      "dd_raw": -0.235,
+      "dd_gated": -0.205
+    },
+    {
+      "sleeve": "LINKUSDT_4h",
+      "sharpe_raw": 0.12,
+      "sharpe_gated": 0.25,
+      "dd_raw": -0.33,
+      "dd_gated": -0.214
+    },
+    {
+      "sleeve": "SOLUSDT_1h",
+      "sharpe_raw": 0.71,
+      "sharpe_gated": 0.25,
+      "dd_raw": -0.176,
+      "dd_gated": -0.101
+    },
+    {
+      "sleeve": "ADAUSDT_1h",
+      "sharpe_raw": 0.61,
+      "sharpe_gated": 0.22,
+      "dd_raw": -0.276,
+      "dd_gated": -0.116
+    },
+    {
+      "sleeve": "XRPUSDT_4h",
+      "sharpe_raw": -0.15,
+      "sharpe_gated": 0.16,
+      "dd_raw": -0.491,
+      "dd_gated": -0.281
+    },
+    {
+      "sleeve": "AVAXUSDT_1h",
+      "sharpe_raw": 1.02,
+      "sharpe_gated": 0.14,
+      "dd_raw": -0.195,
+      "dd_gated": -0.177
+    },
+    {
+      "sleeve": "ETHUSDT_4h",
+      "sharpe_raw": 0.49,
+      "sharpe_gated": 0.04,
+      "dd_raw": -0.419,
+      "dd_gated": -0.153
+    },
+    {
+      "sleeve": "BTCUSDT_1h",
+      "sharpe_raw": 0.12,
+      "sharpe_gated": 0.03,
+      "dd_raw": -0.25,
+      "dd_gated": -0.161
+    },
+    {
+      "sleeve": "XRPUSDT_1h",
+      "sharpe_raw": 0.17,
+      "sharpe_gated": -0.0,
+      "dd_raw": -0.378,
+      "dd_gated": -0.129
+    },
+    {
+      "sleeve": "LTCUSDT_4h",
+      "sharpe_raw": 0.01,
+      "sharpe_gated": -0.06,
+      "dd_raw": -0.299,
+      "dd_gated": -0.178
+    },
+    {
+      "sleeve": "LINKUSDT_1h",
+      "sharpe_raw": 0.01,
+      "sharpe_gated": -0.12,
+      "dd_raw": -0.331,
+      "dd_gated": -0.114
+    },
+    {
+      "sleeve": "SOLUSDT_4h",
+      "sharpe_raw": 0.43,
+      "sharpe_gated": -0.19,
+      "dd_raw": -0.28,
+      "dd_gated": -0.269
+    },
+    {
+      "sleeve": "AVAXUSDT_4h",
+      "sharpe_raw": 0.27,
+      "sharpe_gated": -0.36,
+      "dd_raw": -0.321,
+      "dd_gated": -0.217
+    },
+    {
+      "sleeve": "ETHUSDT_1d",
+      "sharpe_raw": -0.33,
+      "sharpe_gated": -0.78,
+      "dd_raw": -0.4,
+      "dd_gated": -0.034
+    }
+  ],
+  "walk_forward_avg_gated": 7.48,
+  "oracle_gated": [
+    "BNBUSDT_1h",
+    "BTCUSDT_4h",
+    "ETHUSDT_1h",
+    "LINKUSDT_4h",
+    "LTCUSDT_1h",
+    "XRPUSDT_4h"
+  ]
+}

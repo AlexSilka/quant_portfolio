@@ -26,6 +26,7 @@ risk-budget:
 # the risk-parity assembly (breakout/carry/trend) + uniform gate + magnitude sizing. ~several minutes.
 ml-contribution:
 	$(PY) scripts/run_ml_book_contribution.py
+	$(PY) scripts/trend/run_trend_sleeve_ml.py
 
 # §5d portfolio-level ML: does ML on top of the WHOLE book lift it? (measured — it does not: whole-book
 # gate / soft-exposure / ML-allocation, six engines, honest controls, all five targets.) ~3-4 min.

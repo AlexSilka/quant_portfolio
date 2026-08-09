@@ -637,6 +637,31 @@ That is the deeper reason the short-vol VIX gate works where every ML tactic fai
 book, it moves *one* leg out of a regime the other seven still trade through, so the flat days are not flat
 months.
 
+**Per-SLEEVE, not per-family — the finest cut, and the one where hindsight is measurable.** A family
+average can hide a heterogeneous effect, so the gate is also asked "*which* sleeve", at asset × timeframe
+granularity across the 21 trend sleeves that have enough trades to meta-label
+(`scripts/trend/run_trend_sleeve_ml.py`). In-sample the gate lifts Sharpe on only **6 of 21** sleeves — but it
+cuts drawdown on nearly all of them, and the spread is wide (BTC-4h +0.32 → +0.89; SOL-4h +0.43 → −0.19). So
+the question is real. Four arms, including one that is deliberately **not** a result:
+
+| arm | Sharpe full / OOS | **CAGR full / OOS** | max-DD | worst month | months | streak |
+|---|---|---|---|---|---|---|
+| gate NONE *(shipped)* | +0.69 / **+0.35** | **+6% / +3%** | −14.4% | −4.9% | 53% | 5 |
+| gate ALL (a-priori) | **+1.00** / +0.05 | **+2% / +0%** | −2.9% | −1.3% | 56% | 4 |
+| gate SELECTED (walk-forward) | +0.69 / +0.27 | +4% / +2% | −11.7% | −3.3% | 53% | 5 |
+| *gate ORACLE (hindsight — a ceiling, not a result)* | *+0.97 / +0.59* | *+6% / +4%* | *−11.0%* | *−4.1%* | *54%* | *5* |
+
+- **Selecting sleeves honestly does not beat selecting none.** The walk-forward arm — a sleeve is gated for the
+  next year only if gating beat its own baseline strictly before that date — lands **OOS +0.27 against the
+  ungated +0.35**, and on less return. It gates 7.5 of 21 sleeves on average, and the churn costs more than
+  the picking earns.
+- **The oracle proves the effect is real *and* unharvestable.** Choosing the same sleeves with full-sample
+  hindsight does lift OOS to **+0.59**; the honest walk-forward gets **+0.27**. That gap is the hindsight
+  premium, and quoting the oracle as a result is precisely the error this arm exists to price.
+- **Gate-ALL is the return-blindness trap in its purest form:** Sharpe rises 0.69 → 1.00 while CAGR falls
+  **6% → 2%** and OOS Sharpe collapses to +0.05. It is not making money more efficiently; it is barely
+  trading.
+
 **Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
 the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence
 gate to all eight legs a-priori, hard-gating either **loses** OOS Sharpe (logistic 3.77→3.53) or gains
