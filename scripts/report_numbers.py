@@ -204,6 +204,66 @@ def _grid_verdict():
                                 + ", ".join(f"{lev:.2f}×" for lev in misses)}
 
 
+LEG_SWAP = (("baseline (shipped)", "baseline", None, True),
+            ("breakout raw (no ML)", "breakout", "book_raw", False),
+            ("breakout + ML *(shipped)*", "breakout", "book_ml", False),
+            ("trend raw", "trend", "book_raw", False),
+            ("trend + LightGBM gate", "trend", "book_lgbm_gate", False),
+            ("trend + RF gate", "trend", "book_rf_gate", False),
+            ("carry + timing overlay", "carry", "book_gated", False))
+
+
+def _leg_swap_table():
+    """§5d's leg-swap table, emitted from run_ml_book_contribution's own json — seven rows of seven
+    figures that used to be transcribed, and that all move together whenever the book does."""
+    d = _load("book/ml_book_contribution.json")
+    if not d:
+        return {}
+    out = ["| book, leg swapped | Sharpe full / OOS | **CAGR full / OOS** | max-DD | worst month | months | streak |",
+           "|---|---|---|---|---|---|---|"]
+    for label, fam, key, bold in LEG_SWAP:
+        rec = d.get(fam) if key is None else (d.get(fam) or {}).get(key)
+        if not rec:
+            continue
+        b = (lambda x: f"**{x}**") if bold else (lambda x: x)
+        out.append("| " + " | ".join([
+            b(label), b(f"{_n(rec['sharpe_full'])} / {_n(rec['sharpe_oos'])}"),
+            f"**{_pcu(rec['cagr_full'])} / {_pcu(rec['cagr_oos'])}**" if bold
+            else f"{_pcu(rec['cagr_full'])} / {_pcu(rec['cagr_oos'])}",
+            b(_pc(rec["dd_full"])), b(_pc(rec["worst_full"])),
+            b(_pcu(rec["months_full"], 0)), b(str(int(rec["streak_full"])))]) + " |")
+    return {"leg_swap_table": "\n".join(out)} if len(out) > 2 else {}
+
+
+def _grid_ranges():
+    """How each metric moves across the leverage grid — the claims §4b makes about what scales and what
+    does not, read off the grid instead of transcribed row by row."""
+    import csv
+    p = R / "book" / "risk_budget_grid.csv"
+    if not p.exists():
+        return {}
+    rows = sorted(((float(r["leverage"]), r) for r in csv.DictReader(p.open())
+                   if r["limits"] == "book_equity"), key=lambda t: t[0])
+    if not rows:
+        return {}
+    lo, hi = rows[0][1], rows[-1][1]
+    lo_lev, hi_lev = rows[0][0], rows[-1][0]
+    oos = [float(r["oos_sharpe"]) for _, r in rows]
+    return {
+        "grid_span": f"{lo_lev:.2f}× to {hi_lev:.2f}×",
+        "grid_oos_sharpe_range": f"[{min(oos):.2f}, {max(oos):.2f}]",
+        "grid_oos_streak": (str(int(lo["oos_streak"])) if len({r["oos_streak"] for _, r in rows}) == 1
+                            else f"{min(int(r['oos_streak']) for _, r in rows)}–"
+                                 f"{max(int(r['oos_streak']) for _, r in rows)}"),
+        "grid_dd_path": f"{_pc(float(lo['oos_max_dd']))} → {_pc(float(hi['oos_max_dd']))}",
+        "grid_worst_month_path": f"{_pc(float(lo['oos_worst_month']))} → {_pc(float(hi['oos_worst_month']))}",
+        "grid_cagr_path": f"{_pcu(float(lo['oos_cagr']))} → {_pcu(float(hi['oos_cagr']))}",
+        "grid_full_streak": (str(int(lo["full_streak"])) if len({r["full_streak"] for _, r in rows}) == 1
+                             else f"{min(int(r['full_streak']) for _, r in rows)}–"
+                                  f"{max(int(r['full_streak']) for _, r in rows)}"),
+    }
+
+
 def _grid_span():
     """How much the Sharpe actually moves across the whole leverage grid — the claim §4b makes about it
     being flat, taken from the grid instead of asserted."""
@@ -292,6 +352,7 @@ def build():
         full["months_in_profit"] = m.get("months_in_profit", full["months_in_profit"])
         full["max_dd"] = m.get("max_dd", full["max_dd"])
         full["sharpe"] = m.get("sharpe", full["sharpe"])
+        s_window, OOS_DATE = s["window"], s["oos_start"]
         fx_full, fx_oos = s.get("fixed_size_full", {}), s.get("fixed_size_oos", {})
         bb = (m.get("mc_variants") or {}).get("block_bootstrap") or {}
         held = s.get("scorecard_weights_held", {})
@@ -328,6 +389,7 @@ def build():
             "capital": f"${s.get('sizing_capital_usd', 0) // 1000:,.0f}k",
             "mc_sharpe_p5": _n(m["mc_p5"]), "mc_sharpe_p50": _n(m["mc_p50"]), "mc_sharpe_p95": _n(m["mc_p95"]),
             "mc_dd_p5": _pc(bb.get("maxdd_p5", m.get("mc_maxdd_p5", float("nan")))),
+            "mc_dd_p50": _pc(bb.get("maxdd_p50", m.get("mc_maxdd_p50", float("nan")))),
             "mc_hit_p5": _pcu(bb.get("hit_p5", m.get("mc_hit_p5", float("nan"))), 0),
             "mc_wmonth_p5": _pc(bb.get("wmonth_p5", float("nan"))),
             "turnover": f"{s.get('annual_turnover', float('nan')):.0f}×",
@@ -338,6 +400,8 @@ def build():
                 len(s["families"]), str(len(s["families"]))),
             "mean_corr_abs": f"{abs(s['mean_correlation']):.2f}",
             "n_years_positive": str(sum(1 for v in s.get("per_year", {}).values() if v > 0)),
+            "weakest_year_sharpe": _n(min(s.get("per_year", {"x": 0.0}).values(), key=float), 1),
+            "weakest_year": min(s.get("per_year", {"x": 0.0}), key=lambda k: s["per_year"][k]),
             "turnover_held": f"{s.get('annual_turnover_weights_held', float('nan')):.1f}×",
         })
         if held:
@@ -379,6 +443,17 @@ def build():
         if fx_full:
             out.update(_verdict({**fx_full, "sharpe": s["scorecard_full"]["sharpe"]}, "fixed"))
         out.update(_grid_verdict())
+        # the same a-priori book scored on three reporting windows — §1's "nothing hinges on the window"
+        wr = _load("master_book_wf_summary.json").get("window_robustness") or {}
+        lab = {"full_21y_2005": "full_history", "15y_2011": "window_15y", "10y_2016": "window_10y"}
+        for k, name in lab.items():
+            if k in wr:
+                out[f"{name}_sharpe"] = f"{wr[k]['sharpe']:.2f}"
+                out[f"{name}_months"] = _pcu(wr[k]["months_in_profit"])
+                out[f"{name}_worst_month"] = _pc(wr[k]["worst_month"])
+                out[f"{name}_streak"] = str(wr[k]["longest_losing_streak_mo"])
+                out[f"{name}_dd"] = _pc(wr[k]["max_dd"])
+
         # the book-level walk-forward (run_wf_book) — the wider out-of-sample evidence §5c/§6e leans on
         w = _load("master_book_wf_summary.json").get("headline_wf_oos") or {}
         if w:
@@ -386,6 +461,16 @@ def build():
                         "wf_window": f"{w['start'][:4]}→{w['end'][:4]}",
                         "wf_months": _pcu(w["months_in_profit"])})
         out.update(_grid_span())
+        out.update(_grid_ranges())
+        out.update(_leg_swap_table())
+        # SE of an annualised Sharpe (Lo 2002): sqrt((1 + S²/2)/T) on T independent observations, scaled
+        # by the annualisation — the report leans on it to say what a 2-year block can and cannot show
+        n_obs, sh = oos.get("n_obs"), oos.get("sharpe")
+        if n_obs and sh is not None:
+            ppy = n_obs / max((pd.Timestamp(s_window[1]) - pd.Timestamp(OOS_DATE)).days / 365.25, 1e-9)
+            se = ((1.0 + 0.5 * (sh / ppy ** 0.5) ** 2) / n_obs) ** 0.5 * ppy ** 0.5
+            out["oos_sharpe_se"] = f"±{se:.2f}"
+            out["oos_months_n"] = str(round(n_obs / (ppy / 12)))
         # the 2010 flash-crash replay at unlevered risk — the tail the sizing argument turns on
         rb0 = _load("book/risk_budget.json").get("selective_leverage", {}).get("all legs", {})
         if rb0.get("stress_worst_month") is not None:
