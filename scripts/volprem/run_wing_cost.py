@@ -189,13 +189,36 @@ def main():
     print("  not get relatively dearer at the moment you need it — which is what makes a permanent cap")
     print("  affordable at all. Measured break-even is ~3x the calibration (36%), so the margin is ~2.2x.")
 
+    # --- does the regime scaling actually hold? test it INSIDE the free window rather than assume it.
+    # Jan-Jun 2013 spans VIX 11.3-20.5 (the June taper-tantrum), so the wing's own stress sensitivity is
+    # measurable here — and it is the one number the SKEW extension is extrapolating.
+    vx = pd.read_csv("https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv")
+    vx.columns = [c.strip().lower() for c in vx.columns]
+    vix = pd.Series(pd.to_numeric(vx["close"], errors="coerce").to_numpy(),
+                    index=pd.to_datetime(vx.iloc[:, 0])).dropna()
+    dd = d.assign(dt=pd.to_datetime(d.date))
+    per_day = dd.groupby("dt").wing_frac.mean()
+    v = per_day.index.map(vix)
+    lo, hi = np.nanquantile(v, 0.25), np.nanquantile(v, 0.75)
+    w_lo, w_hi = float(per_day[v < lo].mean()), float(per_day[v > hi].mean())
+    within = w_hi / w_lo
+    print(f"\n  in-window check — the free half-year spans VIX {np.nanmin(v):.1f}-{np.nanmax(v):.1f}:")
+    print(f"    wing at low VIX (<{lo:.1f}) {w_lo:.1%}  ->  at high VIX (>{hi:.1f}) {w_hi:.1%}   ratio x{within:.2f}")
+    print(f"    the SKEW extension independently says x{ratio['full 2005-2026']:.2f} — two free estimates, one from")
+    print("    quotes inside the window and one from a 20-year index, agree.")
+    print("    What neither settles: the free window tops out at VIX ~20 and a real crisis is 40-80, so the")
+    print("    relation is EXTRAPOLATED 4x beyond its measured range. That, not the price level, is what a")
+    print("    paid crisis year would buy — and it is why the capped book stays measured, not shipped.")
+
     VOLPREM_DIR.mkdir(parents=True, exist_ok=True)
     d.to_csv(VOLPREM_DIR / "volprem_wing_cost.csv", index=False)
     (VOLPREM_DIR / "volprem_wing_cost.json").write_text(json.dumps({
         "source": "historicaldata.net free 2013 archive (Jan-Jun), full chain with bid/ask",
         "sessions": int(d.date.nunique()), "chain_days": int(len(d)), "var_cap": VAR_CAP,
         "mean_wing_share_of_variance": round(share, 4),
-        "through_cycle_wing_share": round(thru, 4), "skew_regime_ratio": {k: round(v, 3) for k, v in ratio.items()},
+        "through_cycle_wing_share": round(thru, 4),
+        "in_window_stress_ratio": round(within, 3),
+        "in_window_vix_range": [round(float(np.nanmin(v)), 1), round(float(np.nanmax(v)), 1)], "skew_regime_ratio": {k: round(v, 3) for k, v in ratio.items()},
         "per_leg": {k: {"days": int(v["days"]), "iv_atm": round(float(v["iv_atm"]), 4),
                         "wing_share": round(float(v["wing_share"]), 4)} for k, v in g.iterrows()},
     }, indent=2))

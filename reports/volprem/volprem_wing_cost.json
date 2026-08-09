@@ -5,6 +5,11 @@
   "var_cap": 2.5,
   "mean_wing_share_of_variance": 0.1195,
   "through_cycle_wing_share": 0.1619,
+  "in_window_stress_ratio": 1.296,
+  "in_window_vix_range": [
+    11.3,
+    20.5
+  ],
   "skew_regime_ratio": {
     "2008 GFC": 0.737,
     "2020 COVID": 1.204,

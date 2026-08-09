@@ -258,13 +258,21 @@ unchanged):
 The −78% one-day annihilation becomes a bounded −44% grind: **worst day −76.4% → −6.4%, skew −26 → −0.8**.
 That is the single largest risk reduction available anywhere in this project.
 
+**The regime scaling is validated inside the free window, not assumed.** Jan–Jun 2013 spans VIX 11.3–20.5
+(the June taper-tantrum), so the wing's own stress sensitivity is measurable from the quotes themselves:
+**10.3% at low VIX → 13.4% at high VIX, ×1.30** — against the ×1.35 the SKEW index says independently over
+20 years. Two free estimates, one from quotes inside the window and one from a two-decade index, agree.
+Per-leg correlations are weak and mixed (SPY −0.05, QQQ +0.32, GLD −0.26), so read ×1.30 as a coarse
+bucket average rather than a per-leg predictor.
+
 **What would break it, stated:** the whole result rests on the wing costing ~16% of sold variance.
 Measured break-even is **~3× that (36%)** — at 2× the leg still returns +4.3 but on a −64% drawdown, and
 at 3× it is worthless. So the margin is ~2.2×, which is thinner than every other cost sensitivity in this
 project (the book breaks even at 5×, the sleeve's vega spread at 22×). The 12% level is measured on five
 deep legs in one calm half-year and extended by an index proxy rather than by quotes; buying a single
-crisis year of chains (~$99) would settle it directly, and that is now a justified purchase rather than a
-speculative one. **Until then this is not shipped** — the deliverable stays the naked book with its
+crisis year of chains (~$99) would settle **one specific thing** — not the price level, which is now measured
+twice, but whether the stress relation holds *outside* its measured range: the free window tops out near
+VIX 20 and a real crisis is 40–80, so ×1.30 is extrapolated four-fold. **Until then this is not shipped** — the deliverable stays the naked book with its
 disclosed −78% tail, because a headline resting on a 2.2× margin from a proxy is not a headline.
 
 ## 5. Honest limits & ceiling
