@@ -1,0 +1,41 @@
+{
+  "source": "historicaldata.net free 2013 archive (Jan-Jun), full chain with bid/ask",
+  "sessions": 124,
+  "chain_days": 615,
+  "var_cap": 2.5,
+  "mean_wing_share_of_variance": 0.1195,
+  "through_cycle_wing_share": 0.1619,
+  "skew_regime_ratio": {
+    "2008 GFC": 0.737,
+    "2020 COVID": 1.204,
+    "2018 Q4": 1.06,
+    "full 2005-2026": 1.354
+  },
+  "per_leg": {
+    "GLD": {
+      "days": 124,
+      "iv_atm": 0.1813,
+      "wing_share": 0.1606
+    },
+    "IWM": {
+      "days": 124,
+      "iv_atm": 0.1755,
+      "wing_share": 0.046
+    },
+    "QQQ": {
+      "days": 120,
+      "iv_atm": 0.1471,
+      "wing_share": 0.0623
+    },
+    "SPY": {
+      "days": 124,
+      "iv_atm": 0.1372,
+      "wing_share": 0.0647
+    },
+    "TLT": {
+      "days": 123,
+      "iv_atm": 0.1346,
+      "wing_share": 0.2634
+    }
+  }
+}

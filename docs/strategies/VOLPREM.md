@@ -201,7 +201,7 @@ The naked book's **−78%** standalone drawdown does not fit a 15% portfolio DD 
 instrument-level fix — an option wing that caps the tail — cannot be credibly priced from free data**
 (`scripts/volprem/run_vol_premium_deploy.py`): leave the cap unpaid and vol-targeting inflates a fake Sharpe
 (15+); price it off the trailing realised tail and it over-/mis-charges into ruin (−100%). A real tail
-hedge needs the live option smile — paid data. A sleeve-level P&L stop and an ex-ante implied-spike
+hedge needs the live option smile — which turns out to be obtainable free, and is now priced in §4c. A sleeve-level P&L stop and an ex-ante implied-spike
 de-gross were both tested and **do not help** *reactively*: the crashes are too fast to de-risk into once vol is
 already spiking. (A **leading** signal is different — a VIX-term-structure gate fires *before* the
 crash, §5 below and [REPORT.md](../../REPORT.md) §5d/§6, and times the book's exposure to close the scorecard to 5/5 on both windows.)
@@ -213,6 +213,59 @@ showed (**≈ −6%**). VRP is deployable at ≈ its risk-parity share, no tight
 should if anything sit **below** parity (a per-family tilt), not above. The trustworthy claim is the
 drawdown behaviour, not the Sharpe; the offset it leans on is structural (a vol spike is a big move
 trend rides) but not guaranteed in a whipsaw regime.
+
+## 4c. What the tail hedge actually costs — priced from real quotes, for free
+
+§4b says the instrument-level fix cannot be credibly priced from free data. **That was wrong, and this
+section retracts it.** The obstacle was never the price of data; it was that nobody here had ever looked
+at an option quote. historicaldata.net publishes **Jan–Jun 2013 free**, full chain with bid/ask, greeks
+and IV on 3,800 underlyings — enough to price the wing directly (`scripts/volprem/run_wing_cost.py`).
+
+**Method: the wing's price *is* a truncation of the variance strip.** A variance swap's fair strike is
+the model-free integral over the whole OTM strip (the VIX construction). Capping the swap at
+`var_cap · K²` means, in replication terms, giving up the far tail of that strip — so the cost is simply
+
+    wing = K²(full strip) − K²(strip truncated below the crash strikes)
+
+Both sides come from the same quoted chain, so this is a market price, not a model. Measured over 615
+chain-days on the book's five deep legs:
+
+| leg | ATM implied vol | wing cost, share of sold variance | 90th pct |
+|---|---|---|---|
+| IWM | 17.6% | **4.6%** | 9.7% |
+| QQQ | 14.7% | 6.2% | 11.8% |
+| SPY | 13.7% | 6.5% | 11.9% |
+| GLD | 18.1% | 16.1% | 37.9% |
+| TLT | 13.5% | 26.3% | 71.8% |
+| **mean** | — | **12.0%** | — |
+
+**Through the cycle it is ~16%, and — the load-bearing surprise — it does *not* spike when you need it.**
+2013 is calm, so the level is scaled by Cboe's **SKEW** index (free, 1990+), which measures exactly the
+tail strip's weight relative to the at-the-money one: ×1.35 over 2005–2026, ×1.20 through COVID, and
+**×0.74 through the 2008 GFC** — *below* the calibration. In a crash at-the-money variance explodes
+faster than the tail strip, so tail protection gets relatively *cheaper* at the moment it pays. That is
+what makes a permanently-held cap affordable at all.
+
+**The result, with the wing paid at the through-cycle 16.2%** (book of 18, VIX-gated, everything else
+unchanged):
+
+| construction | Sharpe | max-DD | worst day | skew | months+ |
+|---|---|---|---|---|---|
+| naked (shipped today) | +4.42 | **−77.6%** | **−76.4%** | −26.3 | 89% |
+| capped 2.5×, wing **unpaid** — the known trap | +10.74 | −36.4% | −7.1% | −0.9 | 93% |
+| **capped 2.5×, wing paid through-cycle** | **+6.89** | **−43.9%** | **−6.4%** | **−0.8** | 90% |
+
+The −78% one-day annihilation becomes a bounded −44% grind: **worst day −76.4% → −6.4%, skew −26 → −0.8**.
+That is the single largest risk reduction available anywhere in this project.
+
+**What would break it, stated:** the whole result rests on the wing costing ~16% of sold variance.
+Measured break-even is **~3× that (36%)** — at 2× the leg still returns +4.3 but on a −64% drawdown, and
+at 3× it is worthless. So the margin is ~2.2×, which is thinner than every other cost sensitivity in this
+project (the book breaks even at 5×, the sleeve's vega spread at 22×). The 12% level is measured on five
+deep legs in one calm half-year and extended by an index proxy rather than by quotes; buying a single
+crisis year of chains (~$99) would settle it directly, and that is now a justified purchase rather than a
+speculative one. **Until then this is not shipped** — the deliverable stays the naked book with its
+disclosed −78% tail, because a headline resting on a 2.2× margin from a proxy is not a headline.
 
 ## 5. Honest limits & ceiling
 

@@ -50,7 +50,7 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
                    k_rich: float = 1.0, timed: bool = True, var_cap: float = 2.5,
                    restrike_days: int = 7, vega_cost_volpts: float = 0.75, wing_markup: float = 0.0,
                    spike_degross: float = 0.0, exec_lag: int = 2,
-                   gate: pd.Series | None = None) -> pd.DataFrame:
+                   gate: pd.Series | None = None, wing_cost_frac: float = 0.0) -> pd.DataFrame:
     """Daily capped-variance-swap P&L for a short-vol book on one asset (variance units).
 
     timed=False is the always-short non-ML baseline; timed=True shorts only when implied is rich
@@ -104,9 +104,14 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
     Kvar = Kx ** 2                                            # strike variance (annualised)
 
     charge = np.minimum(r2, var_cap * Kvar)                  # capped realised-variance charge
+    # A capped swap is the full strip MINUS its crash tail, so the honest way to pay for the cap is to
+    # sell the truncated strike rather than to bolt a modelled premium onto the full one. `wing_cost_frac`
+    # is that truncation, measured from real quotes in run_wing_cost.py (12% of sold variance at
+    # var_cap=2.5 across the deep legs) — so the short collects (1-frac)*K² and never pays past the cap.
+    Kvar_sold = (1.0 - wing_cost_frac) * Kvar
     # long-variance payoff is (realised - strike); side = -1 flips it to the short's (strike - realised),
     # which profits in calm (realised < strike) and loses in a spike -> the true short-vol sign.
-    gross = sidex * (charge - Kvar)
+    gross = sidex * (charge - Kvar_sold)
 
     # --- costs: vega spread when the strike rolls or the side flips (dVar ~ 2*K*dVol) ---
     roll = (Kx != Kx.shift(1)) | (sidex != sidex.shift(1))
