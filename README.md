@@ -24,9 +24,15 @@ as supporting evidence, not as a second scorecard.
 | Sharpe, net, 2.5–4.0 | **3.63** ✓ | **3.63** ✓ |
 | months in profit ≥ 80% | **80.8%** ✓ | **80.9%** ✓ |
 | max drawdown ≤ 15% | **−4.7%** ✓ | **−7.4%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✓ |
-| worst single month ≥ −6% | **−2.0%** ✓ | **−4.09%** ✓ |
-| | **5 / 5** | **5 / 5** |
+| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✗ |
+| worst single month ≥ −6% | **−2.0%** ✓ | **−4.1%** ✓ |
+| | **5 / 5** | **4 / 5** |
+
+The one miss is the full window's three-month losing streak — Dec-2021 −2.5%, Jan-2022 −0.8%,
+Feb-2022 −1.7%, three months comfortably negative rather than a rounding artifact. It appeared when the
+equity panel was corrected to stop carrying foreign companies behind dead US tickers; the substituted
+prices had been filling one of those months in. Nothing was re-tuned to win it back, and the leverage
+grid shows nothing could be — scaling every return leaves the sign of a month exactly where it was.
 
 On the brief's $500k of sizing capital that is **$2.69M** of P&L, **~$172k/yr**
 (+34.5%/yr not reinvested, +40.5%/yr compounded). Positive in **16 of 16 calendar years**.
@@ -42,12 +48,12 @@ Mean pairwise correlation between families **≈ 0.06**.
 | [trend](docs/strategies/TREND.md) | price trend, the only family spanning both asset classes | +0.89 | 7% |
 | [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 6% |
 | [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 6% |
-| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.72 | 6% |
+| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 7% |
 | [carry](docs/strategies/CARRY.md) | perpetual funding: being paid to hold the unpopular side | +1.27 | 5% |
 | [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the other seven bleed | +0.46 | 4% |
 
 The short-vol leg carries its own **VIX-term-structure gate** (flat unless both curve segments are in contango),
-which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine **Sharpe 1.61**
+which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine **Sharpe 1.55**
 book still stands.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
