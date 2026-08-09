@@ -1,0 +1,82 @@
+{
+  "churn": {
+    "1d": {
+      "avg_members": 8.9,
+      "distinct_names_ever": 78,
+      "core10_share_of_member_days": 0.629
+    },
+    "4h": {
+      "avg_members": 9.3,
+      "distinct_names_ever": 65,
+      "core10_share_of_member_days": 0.653
+    }
+  },
+  "hindsight CORE10 (shipped)": {
+    "leg": {
+      "sharpe": 1.31,
+      "cagr": 0.111,
+      "max_dd": -0.11,
+      "worst_month": -0.043,
+      "months_in_profit": 0.597,
+      "streak": 6
+    },
+    "book_selection": {
+      "sharpe": 3.72,
+      "cagr": 0.422,
+      "max_dd": -0.072,
+      "worst_month": -0.056,
+      "months_in_profit": 0.802,
+      "streak": 2
+    },
+    "book_full": {
+      "sharpe": 3.72,
+      "cagr": 0.413,
+      "max_dd": -0.072,
+      "worst_month": -0.056,
+      "months_in_profit": 0.809,
+      "streak": 2
+    },
+    "book_oos": {
+      "sharpe": 3.77,
+      "cagr": 0.358,
+      "max_dd": -0.044,
+      "worst_month": -0.018,
+      "months_in_profit": 0.846,
+      "streak": 2
+    }
+  },
+  "PIT top-10 by trailing volume": {
+    "leg": {
+      "sharpe": 1.13,
+      "cagr": 0.092,
+      "max_dd": -0.127,
+      "worst_month": -0.041,
+      "months_in_profit": 0.597,
+      "streak": 5
+    },
+    "book_selection": {
+      "sharpe": 3.67,
+      "cagr": 0.415,
+      "max_dd": -0.072,
+      "worst_month": -0.052,
+      "months_in_profit": 0.809,
+      "streak": 2
+    },
+    "book_full": {
+      "sharpe": 3.68,
+      "cagr": 0.406,
+      "max_dd": -0.072,
+      "worst_month": -0.052,
+      "months_in_profit": 0.809,
+      "streak": 2
+    },
+    "book_oos": {
+      "sharpe": 3.75,
+      "cagr": 0.351,
+      "max_dd": -0.044,
+      "worst_month": -0.018,
+      "months_in_profit": 0.808,
+      "streak": 2
+    }
+  }
+}

@@ -324,9 +324,10 @@ def _honesty_card():
             f'bias, so the traded book <b>selects nothing</b> and applies theory uniformly across the whole '
             f'universe. The gates themselves are not the problem &mdash; run the same pipeline on shuffled '
             f'signals and only <b>{fdr_s}</b> of candidates get through, so what the funnel admits is '
-            f'mostly not noise; it is choosing the winners among them that does not survive. The funnel '
-            f'screens on in-sample Sharpe then Monte-Carlo: walk-forward is not a gate here, it is the '
-            f'{wf_s} verdict on the whole selection.</p></figure>')
+            f'mostly not noise; it is choosing the winners among them that does not survive. Note what the '
+            f'two walk-forward numbers are asking: as a <i>gate</i> it is applied per candidate above, and '
+            f'sleeves that clear it individually still assemble into a book that walk-forwards to '
+            f'{wf_s} once the <i>selection itself</i> is made out of sample.</p></figure>')
 
 
 # --- §12/§13 edge map, family level: every family we evaluated on ONE consistent scale (its honest
@@ -383,8 +384,11 @@ def _family_edge_card(summ, legs):
          "dollar-neutral 1&ndash;5d top/bottom-30%; crypto &minus;0.49 / equity &minus;0.13 &mdash; cost-killed"),  # run_mr_universe
         ("mean-reversion",    "crypto / equity", "1d / 4h / 1h", -0.86,
          "single-name z-score; 0% of the parameter surface positive &mdash; dead everywhere"),        # §5b walk-forward
-        ("on-chain",          "crypto",          "1d",           _dig("onchain/onchain_summary.json", "cross_section", "walk_forward", "wf_oos"),
-         "no edge over price out-of-sample (free-data ceiling)"),
+        # the headline book, matching every sibling row here. Not walk_forward.wf_oos: that figure is
+        # the *pool's* OOS after it selects a config, and the pool contains adoption momentum, so it
+        # reads positive for a family whose own headline is dead.
+        ("on-chain",          "crypto",          "1d",           _dig("onchain/onchain_summary.json", "cross_section", "headline", "sharpe"),
+         "value is a coin-type tilt; exchange flows lose to random timing"),
         ("volume-spike",      "crypto alts",     "1h",           _pq_sharpe("volspike/volspike_wf_oos.parquet"),
          "small-alt drift killed by cost (walk-forward OOS)"),
         ("pairs / stat-arb",  "equity / crypto", "1d",           -1.18,
@@ -436,6 +440,35 @@ def _family_edge_card(summ, legs):
         'FX / equity / basis, breakout cross-sectional / intraday) &mdash; folded into their family row or the '
         'deep-dives, not omitted.</p></figure>')
 
+
+
+def _sleeve_cost_card():
+    """§9/§12 per sleeve: turnover, cost as a share of gross P&L, and which sleeves are cost-fragile.
+    From scripts/run_book.py (reports/book/zoo_cost_per_sleeve.csv) — the sleeve is the brief's unit
+    (asset × timeframe × family × model), so this is the discovery layer, where every candidate carries
+    its own charged cost. The eight book families' equivalent is their deep-dive cost sweeps."""
+    p = REP / "book" / "zoo_cost_per_sleeve.csv"
+    if not p.exists():
+        return ""
+    d = pd.read_csv(p).sort_values("cost_share_of_gross_pnl", ascending=False)
+    show = pd.concat([d.head(6), d.tail(3)]).drop_duplicates(subset="sleeve")
+    rows = "".join(
+        f"<tr><td>{r.sleeve}</td><td>{r.annual_turnover:,.0f}&times;</td>"
+        f"<td>{r.cost_share_of_gross_pnl:.1%}</td><td>{r.breakeven_cost_mult:,.1f}&times;</td>"
+        f"<td>{'<b>fragile</b>' if r.cost_fragile else 'no'}</td></tr>" for r in show.itertuples())
+    n_frag = int(d.cost_fragile.sum())
+    return (
+        '<figure class="card s6"><figcaption>Cost per sleeve (§9/§12) &mdash; turnover, cost as a share '
+        'of gross P&amp;L, and which sleeves are cost-fragile</figcaption>'
+        '<table><tr><th>sleeve</th><th>annual turnover</th><th>cost / gross P&amp;L</th>'
+        f'<th>break-even</th><th>cost-fragile</th></tr>{rows}</table>'
+        f'<p class="valline">Worst six and best three of the <b>{len(d)}</b> sleeves that cleared the '
+        f'acceptance gates; the median sleeve pays <b>{d.cost_share_of_gross_pnl.median():.1%}</b> of its '
+        f'gross P&amp;L in cost and <b>{n_frag}</b> of them are cost-fragile (gross P&amp;L less than 3&times; '
+        f'the cost, so a modest cost error flips them). Every number is the cost already charged inside '
+        f'that sleeve&rsquo;s own net returns &mdash; commission, half-spread, &radic;-impact and, on crypto, '
+        f'funding at every settlement. Full table in <code>reports/book/zoo_cost_per_sleeve.csv</code>.</p>'
+        '</figure>')
 
 
 def _feature_card():
@@ -516,67 +549,27 @@ def _timeframe_card():
         'have no intraday cell; the full 17-family roster is the edge map above. Raw first-pass numbers.</p></figure>')
 
 
-# --- §9/§13: the return-only master series carry no positions, so recover the book's leverage,
-# turnover and cost sensitivity by mirroring run_master_book's assembly (each family vol-targeted to
-# 15% on a trailing 60d estimate, x3 cap, equal risk over the families live that day) on the blocks. ---
-BLOCKS = [("trend", "trend/trend_block_returns.parquet", "ret"), ("carry", "carry/carry_breadth_headline.parquet", "ret"),
-          # volprem must be the GATED series the book trades (the raw `ret` column also sits in that file)
-          ("vol-prem", "volprem/volprem_book.parquet", "ret_gated"), ("x-sect", "xs/xs_book.parquet", "ret"),
-          ("breakout", "breakout/bo_combined_portfolio.parquet", "ret"), ("crisis", "book/crisis_sleeve.parquet", "ret"),
-          ("gmacro", "book/gmacro_sleeve.parquet", "ret"), ("BAB", "bab/bab_book_c25.parquet", "ret")]
+# --- §9/§13 book operations. The weights are NOT re-derived here: run_master_book publishes the exact
+# per-leg weight matrix its own return series implies, and everything below reads that one file. The
+# dashboard used to mirror the assembly instead, which is how it ended up plotting seven of the eight
+# families and the ungated vol-prem series. ---
 COST_BPS = 8.0    # blended round-trip cost applied to book turnover for the §9 sweep; each family is
                   # already net of its own itemised costs (per-family break-evens live in the deep-dives)
 
 
-def _leverage(net, target=0.15):
-    return (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
-
-
 def _book_ops(master):
-    """Book gross exposure + turnover, reconstructed the way run_master_book assembles the families
-    (each family vol-targeted, equal risk across the families it holds).
-
-    Two turnover series, because the mixed 252/365 calendar makes them differ by ~15x. A family whose
-    market is shut today (equities/Cboe at a weekend) still HOLDS its position — it is not liquidated
-    and re-bought on Monday. `turn` measures that book: weights held through each family's calendar
-    gaps, so only genuine rebalancing and entry/exit count, and it is the honest §11 turnover.
-    `turn_charged` renormalises across only the families that print each day, which counts every
-    weekend as a full round-trip of the equity/vol legs; it overstates trading by ~15x, and the §9
-    cost sweep is deliberately charged on it so the stress is conservative rather than flattering."""
-    lev = {}
-    for lab, f, col in BLOCKS:
-        p = REP / f
-        if not p.exists():
-            continue
-        s = pd.read_parquet(p)
-        s = (s[col] if col in s.columns else s.iloc[:, 0]).dropna()
-        s.index = pd.to_datetime(s.index)
-        if s.index.tz is not None:
-            s.index = s.index.tz_localize(None)
-        lev[lab] = _leverage(s)
-    if not lev:
-        return None, None, 0.0, None, 0.0
-    L = pd.DataFrame(lev).reindex(master.index)
-
-    def _weights(lv):
-        live = lv > 0
-        return lv.where(live).div(live.sum(axis=1).replace(0, np.nan), axis=0)   # equal risk x leverage
-
-    held = L.copy()
-    for c in held.columns:                             # hold each family flat through its calendar gaps
-        s = L[c].where(L[c] > 0)
-        span = (held.index >= s.first_valid_index()) & (held.index <= s.last_valid_index())
-        held.loc[span, c] = s.ffill()[span]
-    w, w_charged = _weights(held), _weights(L)
+    """Book exposure and turnover from the weight matrix the book publishes — the same weights its own
+    return series is built from, so nothing here re-derives the assembly. The annual figures (and the
+    counterfactual with every leg held through its market's closures) come from the book's summary for
+    the same reason: one place computes them, everything else quotes."""
+    p = REP / "master_book_weights.parquet"
+    if not p.exists():
+        return None, None
+    w = pd.read_parquet(p).reindex(master.index)
+    turn = w.fillna(0.0).diff().abs().sum(axis=1)
     gross = w.abs().sum(axis=1)
-    gross = gross[gross > 1e-9]                        # drop warm-up/edge days with no live leverage yet
-    def _turn(ww):
-        t = ww.fillna(0.0).diff().abs().sum(axis=1)
-        return t, (float(t.reindex(master.index).mean() * PPY) if t.notna().any() else 0.0)
-    turn, ann = _turn(w)
-    turn_charged, ann_charged = _turn(w_charged)
-    return (gross.dropna(), turn.reindex(gross.index).dropna(), ann,
-            turn_charged.reindex(gross.index).dropna(), ann_charged)
+    gross = gross[gross > 1e-9].dropna()               # drop warm-up days with no live leg yet
+    return gross, turn.reindex(gross.index).dropna()
 
 
 def _cost_levels(master, turn):
@@ -633,8 +626,11 @@ def main():
     ca_cagr = float(eca.iloc[-1] ** (1 / yca) - 1) if yca > 0 else 0.0
 
     # --- §9/§13: book leverage, turnover and cost sensitivity, recovered from the family blocks ---
-    gross, turn, ann_turn, turn_charged, ann_charged = _book_ops(master)
-    cost_levels, breakeven = _cost_levels(master, turn_charged)
+    gross, turn = _book_ops(master)
+    ann_turn = summ.get("annual_turnover", 0.0)
+    ann_turn_held = summ.get("annual_turnover_weights_held", 0.0)
+    sc_held = summ.get("scorecard_weights_held", {})
+    cost_levels, breakeven = _cost_levels(master, turn)
 
     # --- §11 scorecard — judged on the FINAL OOS BLOCK (the brief scores targets there); the full window
     #     (now the 15y 2011+ book) sits in the note as the larger-sample estimate ---
@@ -907,20 +903,25 @@ def main():
         f'peak {gross.max():.2f}&times;), reconstructed from the family blocks &mdash; it rises when the legs&rsquo; '
         f'own volatility falls and their vol targeting levers up.{lim_txt}</p></figure>'
         f'<figure class="card"><figcaption>Book rebalancing turnover over time (§13) &middot; '
-        f'{ann_turn:.1f}&times; round-trip/yr</figcaption>{expt_svg}'
-        f'<p class="valline">Weights held through each family&rsquo;s calendar gaps: a leg whose market is shut '
-        f'(equities and the Cboe complex at a weekend) holds its position rather than being liquidated and '
-        f'bought back. Renormalising across only the legs that print each day instead reads '
-        f'<b>{ann_charged:.0f}&times;</b> &mdash; ~{ann_charged / max(ann_turn, 1e-9):.0f}&times; the trading the '
-        f'book does, and an artefact of the mixed 252/365 calendar rather than turnover. This is the '
-        f'book&rsquo;s own rebalancing only; each family&rsquo;s instrument turnover is charged inside its own '
-        f'net returns and reported in its deep-dive.</p>{tl_note}</figure>'
+        f'{ann_turn:.0f}&times; round-trip/yr</figcaption>{expt_svg}'
+        f'<p class="valline"><b>Most of that is the calendar, not conviction &mdash; and it is the one place '
+        f'the construction leaves money on the table.</b> The book equal-weights the legs that <i>print</i> '
+        f'each day, so when the equity and Cboe markets shut for a weekend the three crypto legs are '
+        f're-weighted up to carry it and traded back down on Monday. Hold every started leg through its own '
+        f'market&rsquo;s closures instead and the same eight families turn over <b>{ann_turn_held:.1f}&times;</b> '
+        f'&mdash; {ann_turn / max(ann_turn_held, 1e-9):.0f}&times; less'
+        + (f' &mdash; for Sharpe {sc_held["sharpe"]:+.2f}, max-DD {_pc(sc_held["max_dd"])} and worst month '
+           f'{_pc(sc_held["worst_month"])}, i.e. no worse on any target' if sc_held else '')
+        + f'. The shipped convention is what every figure on this page measures and charges; the cheaper one '
+        f'is a stated, measured improvement to make deliberately, not a number claimed here. This is the '
+        f'assembly layer only &mdash; each family&rsquo;s instrument turnover is charged inside its own net '
+        f'returns and reported in its deep-dive.</p>{tl_note}</figure>'
         f'<figure class="card"><figcaption>Cost sensitivity (§9) &mdash; {be_txt}</figcaption>'
         f'<table><tr><th>cost level</th><th>Sharpe</th><th>max DD</th><th>CAGR</th></tr>{cost_rows}</table>'
-        f'<p class="valline">Charged on the conservative basis deliberately: the {ann_charged:.0f}&times;/yr '
-        f'renormalisation turnover at a blended {COST_BPS:.0f}bps round-trip, re-charged at '
-        f'1&times;/2&times;/3&times; &mdash; about {ann_charged * COST_BPS / 1e4:.0%} of capital a year at 1&times;, '
-        f'on top of the itemised costs already inside every family&rsquo;s returns. Per-family cost robustness, '
+        f'<p class="valline">The book&rsquo;s {ann_turn:.0f}&times;/yr rebalancing turnover at a blended '
+        f'{COST_BPS:.0f}bps round-trip &mdash; about {ann_turn * COST_BPS / 1e4:.0%} of capital a year at '
+        f'1&times; &mdash; re-charged at 1&times;/2&times;/3&times; on top of the itemised costs already inside '
+        f'every family&rsquo;s returns. Per-family cost robustness, '
         f'as each deep-dive publishes it: {perfam_be} &mdash; none of them is cost-fragile. Carry, crisis, '
         f'global-macro and BAB run no cost sweep of their own, so they are not measured on this axis.</p></figure>')
 
@@ -930,7 +931,7 @@ def main():
         corr=corr_svg, famtbl=fam_rows, famnote=fam_note, famperiods=famperiods, param=_param_card(),
         timeframe=_timeframe_card(), ops=ops_html,
         edge_map=_family_edge_card(summ, legs),
-        feature=_feature_card(), honesty=_honesty_card(), lines=lines))
+        feature=_feature_card(), sleevecost=_sleeve_cost_card(), honesty=_honesty_card(), lines=lines))
     print("dashboard -> reports/dashboard.html\nMAKE REPORT OK")
 
 
@@ -971,7 +972,7 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, ca_sharpe, ca_cagr,
         eq=S["eq"], psleq=S["psleq"], month=S["month"], dd=S["dd"], roll=S["roll"],
         year=S["year"], quarter=S["quarter"], stress=S["stress"], stress_note=S["stress_note"], marg=S["marg"],
         corr=S["corr"], famtbl=S["famtbl"], famnote=S["famnote"], ops=S["ops"], edge_map=S["edge_map"],
-        feature=S["feature"], famperiods=S["famperiods"], param=S["param"], timeframe=S["timeframe"], honesty=S["honesty"], fam=fam,
+        feature=S["feature"], sleevecost=S["sleevecost"], famperiods=S["famperiods"], param=S["param"], timeframe=S["timeframe"], honesty=S["honesty"], fam=fam,
         sharpe_ann=f"{m['sharpe']:.2f}",
         ca_sharpe=f"{ca_sharpe:.2f}", ca_cagr=_pc(ca_cagr, 1),
     )

@@ -1,74 +1,45 @@
 {
-  "trend_block_sharpe": 1.312,
+  "trend_block_sharpe": 1.146,
   "families": [
-    "trend",
-    "carry",
-    "volprem",
-    "xs_momentum",
-    "breakout"
+    "trend"
   ],
   "window": [
-    "2021-03-28",
-    "2026-07-31"
+    "2012-01-03",
+    "2026-08-04"
   ],
-  "master_new_trend": {
-    "sharpe": 2.258,
-    "max_dd": -0.0709,
-    "months_in_profit": 0.6,
-    "total_return": 1.683,
-    "mc_p5": 1.52412562386491,
-    "mc_p50": 2.26931150731919
+  "master_trend": {
+    "sharpe": 1.088,
+    "max_dd": -0.276,
+    "months_in_profit": 0.585,
+    "total_return": 8.536,
+    "mc_p5": 0.6558317586057303,
+    "mc_p50": 1.084382406804173
   },
-  "master_old_trend": {
-    "sharpe": 2.057,
-    "max_dd": -0.0997,
-    "months_in_profit": 0.723,
-    "total_return": 1.874,
-    "mc_p5": 1.323704242093917,
-    "mc_p50": 2.055790020310227
-  },
-  "delta_sharpe": 0.201,
-  "trend_corr_to_others": {
-    "carry": -0.08,
-    "volprem": 0.04,
-    "xs_momentum": -0.11,
-    "breakout": -0.07
-  },
-  "trend_mean_corr": -0.055,
-  "master_without_trend_sharpe": 1.98,
+  "trend_corr_to_others": {},
+  "trend_mean_corr": NaN,
+  "master_without_trend_sharpe": 0.0,
   "marginal": [
     {
       "n": 1,
-      "added": "carry",
-      "sharpe": 1.853
-    },
-    {
-      "n": 2,
-      "added": "breakout",
-      "sharpe": 1.989
-    },
-    {
-      "n": 3,
       "added": "trend",
-      "sharpe": 2.319
-    },
-    {
-      "n": 4,
-      "added": "volprem",
-      "sharpe": 2.3
-    },
-    {
-      "n": 5,
-      "added": "xs_momentum",
-      "sharpe": 2.258
+      "sharpe": 1.088
     }
   ],
   "per_year": {
-    "2021": 4.63,
-    "2022": 0.54,
-    "2023": 2.6,
-    "2024": 1.78,
-    "2025": 2.6,
-    "2026": 1.42
+    "2012": 0.37,
+    "2013": 2.45,
+    "2014": 0.48,
+    "2015": 0.61,
+    "2016": 0.92,
+    "2017": 3.18,
+    "2018": -0.01,
+    "2019": 1.67,
+    "2020": 1.42,
+    "2021": 1.95,
+    "2022": -2.59,
+    "2023": 2.14,
+    "2024": 1.42,
+    "2025": 0.08,
+    "2026": 0.7
   }
 }

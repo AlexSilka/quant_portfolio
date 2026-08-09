@@ -15,6 +15,7 @@ import json
 import numpy as np
 import pandas as pd
 
+import scripts.trend.run_trend_pit_universe as P  # noqa: E402
 import scripts.trend.trend_common as T  # noqa: E402
 from scripts.trend.run_trend_book import sh  # noqa: E402
 from src.metrics import summarise  # noqa: E402
@@ -22,6 +23,7 @@ from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 PPY = 365
 R = T.bo.REPORTS
+# kept only as the hindsight A/B arm run_trend_pit_universe.py scores the honest universe against
 CORE10 = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
           "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "LINKUSDT", "LTCUSDT"]
 BLOCK_TFS = ["1d", "4h"]                         # 1h dropped (§ timeframe finding)
@@ -36,17 +38,24 @@ OTHERS = [
 
 
 def build_trend_block() -> pd.Series:
-    """Core-10 crypto (1d+4h) + 10 equity (1d), EMA long-only, equal-risk daily returns."""
+    """Point-in-time top-10 crypto (1d+4h) + 10 equity (1d), EMA long-only, equal-risk daily returns.
+
+    The crypto universe is chosen by TRAILING dollar volume at each bar, not by a hard-coded list of
+    today's majors. A fixed CORE10 is picked with hindsight, and hindsight is the one bias this project
+    corrects everywhere else — the x-sect leg's headline finding is that a curated list scores +1.06
+    against +0.70 honest, and the carry leg deliberately ships the weaker survivorship-free build. Trend
+    was the last exception. Measured cost of removing it (`run_trend_pit_universe.py`): leg Sharpe
+    +1.31 -> +1.13, book 3.72 -> 3.67 on the selection window, still 5/5 on both windows, and the worst
+    month actually improves. 78 distinct names are ever in the honest top-10; today's CORE10 hold only
+    ~63% of member-days, so the two universes are materially different."""
     spec = {"entry": "ema", "direction": "long_only", "exit": "reversal"}
     cols = {}
-    for sym in CORE10:
-        for tf in BLOCK_TFS:
-            px = T.load_crypto_long(sym, tf)
-            if px is None:
-                continue
-            _, r = T.eval_spec(px, spec, tf, T.CRYPTO_TF[tf], T.CC,
-                               fund=T.bo.safe_funding(sym), adv=T.crypto_adv(px))
-            if r.std(ddof=1) > 0:
+    for tf in BLOCK_TFS:
+        rets, vol = P.pool(tf)          # not `R` — that name is the reports Path at module scope
+        mem = P.pit_members(vol, P.TOP_N, P.LOOKBACK_D)
+        for sym in rets.columns:
+            r = rets[sym].where(mem[sym].reindex(rets.index).fillna(False))
+            if r.notna().sum() > 60 and r.std(ddof=1) > 0:
                 cols[f"{sym}_{tf}"] = r
     for sym in T.EQ_CORE:
         px = T.load_equity(sym)
@@ -55,7 +64,7 @@ def build_trend_block() -> pd.Series:
         adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
         _, r = T.eval_spec(px, spec, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
         if r.std(ddof=1) > 0:
-            cols[f"{sym}_1d_eq"] = r
+            cols[f"{sym}_1d_eq"] = P._naive(r)      # crypto legs come back tz-naive; align the calendar
     block = pd.DataFrame(cols).mean(axis=1).dropna().rename("ret")
     block.to_frame().to_parquet(R / "trend" / "trend_block_returns.parquet")
     return block
