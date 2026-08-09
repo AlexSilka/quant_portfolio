@@ -63,7 +63,7 @@ def _naive(s):
     return s.groupby(level=0).last().sort_index()
 
 
-def pool(tf: str):
+def pool(tf: str, spec: dict | None = None):
     """Every crypto perp with usable history at `tf`: per-name trend returns + its dollar-volume."""
     rets, vol = {}, {}
     for sym in symbols_with_tf(tf):
@@ -73,7 +73,7 @@ def pool(tf: str):
         if px is None or "quote_volume" not in px or px["close"].notna().sum() < 250:
             continue
         try:
-            _, r = T.eval_spec(px, SPEC, tf, T.CRYPTO_TF[tf], T.CC,
+            _, r = T.eval_spec(px, spec or SPEC, tf, T.CRYPTO_TF[tf], T.CC,
                                fund=bo.safe_funding(sym), adv=T.crypto_adv(px))
         except Exception as e:                                   # a broken name must be visible
             print(f"    SKIP {sym} {tf}: {str(e)[:60]}")
@@ -100,7 +100,7 @@ EQ_TOP_N = 7                            # same count the hand-picked single-name
 MIN_EQ_DAYS = 500
 
 
-def equity_legs(pit: bool) -> dict:
+def equity_legs(pit: bool, spec: dict | None = None) -> dict:
     """The equity half. `pit=False` reproduces the shipped hand-picked EQ_CORE; `pit=True` keeps the
     index ETFs (no selection possible) and replaces the seven single names with a point-in-time top-7 by
     trailing dollar volume out of the full local panel.
@@ -114,7 +114,7 @@ def equity_legs(pit: bool) -> dict:
         if px is None:
             continue
         adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
-        _, r = T.eval_spec(px, SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
+        _, r = T.eval_spec(px, spec or SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
         if r.std(ddof=1) > 0:
             cols[f"{sym}_1d_eq"] = _naive(r)
     if not pit:
@@ -134,7 +134,7 @@ def equity_legs(pit: bool) -> dict:
             continue
         adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
         try:
-            _, r = T.eval_spec(px, SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
+            _, r = T.eval_spec(px, spec or SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
         except Exception:
             continue
         if r.std(ddof=1) > 0:

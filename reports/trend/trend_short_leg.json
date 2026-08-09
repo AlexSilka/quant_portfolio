@@ -1,0 +1,88 @@
+{
+  "baseline": {
+    "selection": {
+      "sharpe": 3.62,
+      "max_dd": -0.0742,
+      "months_in_profit": 0.7963,
+      "worst_month": -0.0441,
+      "longest_losing_streak_mo": 3,
+      "total_return": 104.709,
+      "n_obs": 4516
+    },
+    "oos": {
+      "sharpe": 3.39,
+      "max_dd": -0.0509,
+      "months_in_profit": 0.7692,
+      "worst_month": -0.0204,
+      "longest_losing_streak_mo": 2,
+      "total_return": 0.766,
+      "n_obs": 766
+    }
+  },
+  "short_only": {
+    "standalone_sharpe": -0.17,
+    "streak_window": 0.0132,
+    "selection": {
+      "sharpe": 3.46,
+      "max_dd": -0.0621,
+      "months_in_profit": 0.7716,
+      "worst_month": -0.0389,
+      "longest_losing_streak_mo": 3,
+      "total_return": 51.161,
+      "n_obs": 4824
+    },
+    "oos": {
+      "sharpe": 3.28,
+      "max_dd": -0.0417,
+      "months_in_profit": 0.8077,
+      "worst_month": -0.0214,
+      "longest_losing_streak_mo": 2,
+      "total_return": 0.674,
+      "n_obs": 766
+    }
+  },
+  "asym": {
+    "standalone_sharpe": 0.95,
+    "streak_window": -0.054,
+    "selection": {
+      "sharpe": 3.34,
+      "max_dd": -0.0724,
+      "months_in_profit": 0.7778,
+      "worst_month": -0.0448,
+      "longest_losing_streak_mo": 3,
+      "total_return": 71.835,
+      "n_obs": 4824
+    },
+    "oos": {
+      "sharpe": 3.21,
+      "max_dd": -0.0541,
+      "months_in_profit": 0.7692,
+      "worst_month": -0.0233,
+      "longest_losing_streak_mo": 2,
+      "total_return": 0.703,
+      "n_obs": 766
+    }
+  },
+  "ls": {
+    "standalone_sharpe": 0.84,
+    "streak_window": -0.0447,
+    "selection": {
+      "sharpe": 3.31,
+      "max_dd": -0.0721,
+      "months_in_profit": 0.7716,
+      "worst_month": -0.0414,
+      "longest_losing_streak_mo": 3,
+      "total_return": 70.103,
+      "n_obs": 4824
+    },
+    "oos": {
+      "sharpe": 3.2,
+      "max_dd": -0.051,
+      "months_in_profit": 0.8077,
+      "worst_month": -0.0244,
+      "longest_losing_streak_mo": 1,
+      "total_return": 0.719,
+      "n_obs": 766
+    }
+  }
+}
