@@ -825,6 +825,52 @@ master book (§4). Cross-sectional **reversal**, stat-arb **pairs**, the **calen
 **overnight** and **pre-FOMC/turn-of-month**, H4) and **skewness/lottery (MAX)** families were tested for this
 role and rejected (§7, all real-but-beta or negative).
 
+## 6c. The search for a second long-gamma source (§12)
+
+§5d's iron law — de-grossing turns a losing month into a flat one, and a flat month is still not a
+profitable month — means the only way to buy months-in-profit is to **own something that pays while the
+short-gamma legs bleed**. Two such legs are already in (crisis-alpha, global-macro); both are trend, so
+both need a crash to last long enough to trend into. `scripts/run_longgamma_search.py` searches for a third
+that is convex a different way, scoring each as a 9th equal-risk family through the canonical assembler on
+the **selection window** (pre-OOS), with the frozen block as a read-out only.
+
+| candidate | standalone Sharpe / skew | COVID crash | yen unwind 2024 | as a full 9th family |
+|---|---|---|---|---|
+| A term-structure-timed long VIX | +0.29 / **+5.3** | **+84%** | +1% | 3/5 — months 79%, streak 3 |
+| B vol-timed haven basket (gold/duration/JPY) | +0.19 / +1.0 | +19% | +20% | 3/5 — months 80%, streak 3 |
+| C **long** crypto variance | +0.64 / **+14.9** | — (2021+) | +22% | 5/5 but −0.17 Sharpe, no gain |
+| D long correlation (long index var, short single-name var) | **−3.58** / −7.6 | +11% | +6% | **0/5** — it is short the *expensive* leg |
+| E long variance, only while the curve is inverted | +0.64 / **+29.3** | **+224%** | **+141%** | 3/5 — worst month −7.8% |
+
+**C is the one genuinely new source found**, and it is the mirror of a result the volprem deep-dive already
+owns: under the honest OHLC realised leg crypto short-vol is *negative* (BTC −0.41) because the intraday
+path is unhedgeable for a short — so the **long** side of that same swap is a paid long-gamma leg, skew
+**+14.9**. **D is dead on arrival** and worth stating: long-correlation sounds like crisis alpha but it is
+structurally short the single-name variance premium, which is the richest premium in the whole vol complex.
+
+**At full parity every candidate fails, and they fail the same way** — the hedge is handed an earner's risk
+budget and pays for it every calm month. That is a sizing error, not a verdict on the source, so the size is
+swept (share of one equal-risk slot):
+
+| E, share of one slot | selection window: Sharpe / CAGR / worst month / months | frozen block: Sharpe / CAGR |
+|---|---|---|
+| 0 (shipped) | +3.72 / +42.4% / **−5.70%** / 81% | **+3.77** / +36% |
+| 0.15 | +3.76 / +41.9% / **−4.80%** / 82% | +3.44 / +40% |
+| 0.25 | +3.75 / +41.7% / **−3.90%** / 82% | +2.88 / +43% |
+| 0.40 | +3.71 / +41.3% / −3.90% / 82% | +2.26 / +47% |
+
+On the selection window this is a real improvement on the *binding* axis: the worst month gains **1.9pp of
+headroom** (−5.70% → −3.90%) and months-in-profit ticks up, for ~0.7pp of CAGR. The mechanism is visible in
+the months it fixes — Oct-2018 −5.74% → −3.58%, Aug-2015 −3.65% → −2.22%.
+
+**It is not shipped, and the reason is the one the brief fixes.** §11 scores the targets on the frozen block,
+and there the hedge costs Sharpe monotonically (**3.77 → 3.44 at the smallest size tested, → 2.88 at 0.25**)
+while raising CAGR — it added volatility across a block that contained no crash big enough to pay for it. The
+book already clears all five targets on that block, so paying scored Sharpe to buy headroom on a
+*supporting*-window metric that already passes is the wrong trade. Recorded as a measured option, not taken:
+if a future window puts the worst month back on its limit, E at 0.15–0.25 of a slot is the lever with the
+evidence already attached.
+
 ## 7. What did not survive (kept, not hidden)
 
 - **Naive single-name mean-reversion** and **naive large-cap cross-sectional momentum** (a curated 20-name

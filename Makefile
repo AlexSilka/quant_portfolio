@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -32,6 +32,10 @@ ml-contribution:
 # gate / soft-exposure / ML-allocation, six engines, honest controls, all five targets.) ~3-4 min.
 ml-portfolio:
 	$(PY) scripts/run_ml_portfolio_overlay.py
+
+# §6c search for a 9th family: a second long-gamma source, incl. the size sweep a hedge needs.
+longgamma:
+	$(PY) scripts/run_longgamma_search.py
 
 # §6 probability of backtest overfitting (CSCV) on the full 1,279-sleeve trial set.
 cscv:

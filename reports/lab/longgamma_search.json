@@ -1,0 +1,435 @@
+{
+  "baseline": {
+    "selection": {
+      "sharpe": 3.72,
+      "cagr": 0.424,
+      "max_dd": -0.072,
+      "worst_month": -0.057,
+      "months_in_profit": 0.809,
+      "streak": 2,
+      "skew": -0.2
+    },
+    "full": {
+      "sharpe": 3.72,
+      "cagr": 0.414,
+      "max_dd": -0.072,
+      "worst_month": -0.057,
+      "months_in_profit": 0.814,
+      "streak": 2,
+      "skew": -0.2
+    },
+    "oos": {
+      "sharpe": 3.77,
+      "cagr": 0.358,
+      "max_dd": -0.044,
+      "worst_month": -0.018,
+      "months_in_profit": 0.846,
+      "streak": 2,
+      "skew": 0.3
+    }
+  },
+  "A convexity (existing)": {
+    "standalone": {
+      "sharpe": 0.29,
+      "cagr": 0.038,
+      "max_dd": -0.295,
+      "worst_month": -0.082,
+      "months_in_profit": 0.133,
+      "streak": 28,
+      "skew": 5.3
+    },
+    "crisis": {
+      "2011 Aug selloff": 0.476,
+      "2015 China": 0.3,
+      "2018 volmageddon": 0.181,
+      "2018 Q4": 0.027,
+      "COVID crash": 0.84,
+      "2022 bear": -0.035,
+      "yen unwind 2024": 0.008
+    },
+    "span": [
+      "2011-01-04",
+      "2026-08-05"
+    ],
+    "book_selection": {
+      "sharpe": 3.65,
+      "cagr": 0.37,
+      "max_dd": -0.068,
+      "worst_month": -0.048,
+      "months_in_profit": 0.802,
+      "streak": 2,
+      "skew": -0.0
+    },
+    "book_full": {
+      "sharpe": 3.59,
+      "cagr": 0.368,
+      "max_dd": -0.068,
+      "worst_month": -0.048,
+      "months_in_profit": 0.809,
+      "streak": 2,
+      "skew": 1.0
+    },
+    "book_oos": {
+      "sharpe": 3.26,
+      "cagr": 0.356,
+      "max_dd": -0.039,
+      "worst_month": -0.016,
+      "months_in_profit": 0.846,
+      "streak": 2,
+      "skew": 6.2
+    }
+  },
+  "B defensive (existing)": {
+    "standalone": {
+      "sharpe": 0.19,
+      "cagr": 0.017,
+      "max_dd": -0.55,
+      "worst_month": -0.122,
+      "months_in_profit": 0.492,
+      "streak": 16,
+      "skew": 1.0
+    },
+    "crisis": {
+      "2011 Aug selloff": 0.118,
+      "2015 China": 0.041,
+      "2018 volmageddon": -0.059,
+      "2018 Q4": 0.137,
+      "COVID crash": 0.185,
+      "2022 bear": -0.262,
+      "yen unwind 2024": 0.2
+    },
+    "span": [
+      "2005-03-02",
+      "2026-08-05"
+    ],
+    "book_selection": {
+      "sharpe": 3.66,
+      "cagr": 0.37,
+      "max_dd": -0.067,
+      "worst_month": -0.055,
+      "months_in_profit": 0.809,
+      "streak": 3,
+      "skew": -0.1
+    },
+    "book_full": {
+      "sharpe": 3.7,
+      "cagr": 0.368,
+      "max_dd": -0.067,
+      "worst_month": -0.055,
+      "months_in_profit": 0.819,
+      "streak": 3,
+      "skew": -0.1
+    },
+    "book_oos": {
+      "sharpe": 4.05,
+      "cagr": 0.353,
+      "max_dd": -0.047,
+      "worst_month": -0.023,
+      "months_in_profit": 0.885,
+      "streak": 2,
+      "skew": 0.3
+    }
+  },
+  "C long crypto variance": {
+    "standalone": {
+      "sharpe": 0.64,
+      "cagr": 0.187,
+      "max_dd": -0.464,
+      "worst_month": -0.164,
+      "months_in_profit": 0.446,
+      "streak": 5,
+      "skew": 14.9
+    },
+    "crisis": {
+      "2022 bear": -0.143,
+      "yen unwind 2024": 0.217
+    },
+    "span": [
+      "2021-03-28",
+      "2026-07-31"
+    ],
+    "book_selection": {
+      "sharpe": 3.57,
+      "cagr": 0.374,
+      "max_dd": -0.074,
+      "worst_month": -0.053,
+      "months_in_profit": 0.802,
+      "streak": 2,
+      "skew": 1.0
+    },
+    "book_full": {
+      "sharpe": 3.52,
+      "cagr": 0.368,
+      "max_dd": -0.074,
+      "worst_month": -0.053,
+      "months_in_profit": 0.803,
+      "streak": 3,
+      "skew": 1.3
+    },
+    "book_oos": {
+      "sharpe": 3.26,
+      "cagr": 0.336,
+      "max_dd": -0.047,
+      "worst_month": -0.024,
+      "months_in_profit": 0.808,
+      "streak": 3,
+      "skew": 3.2
+    }
+  },
+  "D long correlation": {
+    "standalone": {
+      "sharpe": -3.58,
+      "cagr": -0.644,
+      "max_dd": -1.0,
+      "worst_month": -0.53,
+      "months_in_profit": 0.197,
+      "streak": 17,
+      "skew": -7.6
+    },
+    "crisis": {
+      "2011 Aug selloff": 0.081,
+      "2015 China": 0.091,
+      "2018 volmageddon": -0.011,
+      "2018 Q4": 0.057,
+      "COVID crash": 0.113,
+      "2022 bear": -0.341,
+      "yen unwind 2024": 0.064
+    },
+    "span": [
+      "2011-01-18",
+      "2026-08-04"
+    ],
+    "book_selection": {
+      "sharpe": 2.19,
+      "cagr": 0.216,
+      "max_dd": -0.128,
+      "worst_month": -0.082,
+      "months_in_profit": 0.698,
+      "streak": 2,
+      "skew": -2.1
+    },
+    "book_full": {
+      "sharpe": 2.1,
+      "cagr": 0.207,
+      "max_dd": -0.128,
+      "worst_month": -0.082,
+      "months_in_profit": 0.686,
+      "streak": 3,
+      "skew": -2.6
+    },
+    "book_oos": {
+      "sharpe": 1.56,
+      "cagr": 0.154,
+      "max_dd": -0.088,
+      "worst_month": -0.032,
+      "months_in_profit": 0.615,
+      "streak": 3,
+      "skew": -5.6
+    }
+  },
+  "E curve-timed long vol": {
+    "standalone": {
+      "sharpe": 0.64,
+      "cagr": 0.249,
+      "max_dd": -0.375,
+      "worst_month": -0.252,
+      "months_in_profit": 0.143,
+      "streak": 59,
+      "skew": 29.3
+    },
+    "crisis": {
+      "2011 Aug selloff": 0.758,
+      "2015 China": 1.494,
+      "2018 volmageddon": 0.521,
+      "2018 Q4": 0.678,
+      "COVID crash": 2.239,
+      "2022 bear": -0.057,
+      "yen unwind 2024": 1.406
+    },
+    "span": [
+      "2005-02-17",
+      "2026-08-04"
+    ],
+    "book_selection": {
+      "sharpe": 3.21,
+      "cagr": 0.388,
+      "max_dd": -0.096,
+      "worst_month": -0.055,
+      "months_in_profit": 0.802,
+      "streak": 2,
+      "skew": 2.3
+    },
+    "book_full": {
+      "sharpe": 2.11,
+      "cagr": 0.411,
+      "max_dd": -0.096,
+      "worst_month": -0.055,
+      "months_in_profit": 0.809,
+      "streak": 2,
+      "skew": 37.1
+    },
+    "book_oos": {
+      "sharpe": 1.34,
+      "cagr": 0.567,
+      "max_dd": -0.069,
+      "worst_month": -0.042,
+      "months_in_profit": 0.846,
+      "streak": 2,
+      "skew": 25.4
+    }
+  },
+  "size_sweep": {
+    "A convexity (existing)": {
+      "0.10": {
+        "sharpe": 3.73,
+        "cagr": 0.418,
+        "max_dd": -0.071,
+        "worst_month": -0.056,
+        "months_in_profit": 0.815,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.25": {
+        "sharpe": 3.73,
+        "cagr": 0.409,
+        "max_dd": -0.07,
+        "worst_month": -0.054,
+        "months_in_profit": 0.815,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.50": {
+        "sharpe": 3.72,
+        "cagr": 0.396,
+        "max_dd": -0.068,
+        "worst_month": -0.052,
+        "months_in_profit": 0.809,
+        "streak": 2,
+        "skew": -0.1
+      },
+      "1.00": {
+        "sharpe": 3.65,
+        "cagr": 0.37,
+        "max_dd": -0.068,
+        "worst_month": -0.048,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": -0.0
+      }
+    },
+    "B defensive (existing)": {
+      "0.10": {
+        "sharpe": 3.72,
+        "cagr": 0.417,
+        "max_dd": -0.071,
+        "worst_month": -0.057,
+        "months_in_profit": 0.815,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.25": {
+        "sharpe": 3.72,
+        "cagr": 0.408,
+        "max_dd": -0.07,
+        "worst_month": -0.057,
+        "months_in_profit": 0.809,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.50": {
+        "sharpe": 3.71,
+        "cagr": 0.394,
+        "max_dd": -0.069,
+        "worst_month": -0.056,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "1.00": {
+        "sharpe": 3.66,
+        "cagr": 0.37,
+        "max_dd": -0.067,
+        "worst_month": -0.055,
+        "months_in_profit": 0.809,
+        "streak": 3,
+        "skew": -0.1
+      }
+    },
+    "C long crypto variance": {
+      "0.10": {
+        "sharpe": 3.73,
+        "cagr": 0.418,
+        "max_dd": -0.071,
+        "worst_month": -0.057,
+        "months_in_profit": 0.809,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.25": {
+        "sharpe": 3.72,
+        "cagr": 0.41,
+        "max_dd": -0.07,
+        "worst_month": -0.056,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.50": {
+        "sharpe": 3.7,
+        "cagr": 0.398,
+        "max_dd": -0.069,
+        "worst_month": -0.055,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": 0.0
+      },
+      "1.00": {
+        "sharpe": 3.57,
+        "cagr": 0.374,
+        "max_dd": -0.074,
+        "worst_month": -0.053,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": 1.0
+      }
+    },
+    "E curve-timed long vol": {
+      "0.10": {
+        "sharpe": 3.75,
+        "cagr": 0.421,
+        "max_dd": -0.071,
+        "worst_month": -0.052,
+        "months_in_profit": 0.815,
+        "streak": 2,
+        "skew": -0.2
+      },
+      "0.25": {
+        "sharpe": 3.75,
+        "cagr": 0.417,
+        "max_dd": -0.07,
+        "worst_month": -0.039,
+        "months_in_profit": 0.821,
+        "streak": 2,
+        "skew": -0.1
+      },
+      "0.50": {
+        "sharpe": 3.66,
+        "cagr": 0.41,
+        "max_dd": -0.068,
+        "worst_month": -0.041,
+        "months_in_profit": 0.815,
+        "streak": 2,
+        "skew": 0.3
+      },
+      "1.00": {
+        "sharpe": 3.21,
+        "cagr": 0.388,
+        "max_dd": -0.096,
+        "worst_month": -0.055,
+        "months_in_profit": 0.802,
+        "streak": 2,
+        "skew": 2.3
+      }
+    }
+  }
+}
