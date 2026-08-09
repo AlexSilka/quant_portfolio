@@ -94,6 +94,7 @@ volprem:
 	$(PY) scripts/volprem/run_vol_premium_book.py
 	$(PY) scripts/volprem/run_vol_premium_tf.py
 	$(PY) scripts/volprem/run_vol_premium_deploy.py
+	$(PY) scripts/volprem/run_vol_premium_gates.py
 
 # Trend deep-dive -> publishes reports/trend/trend_block_returns.parquet. See docs/TREND.md.
 trend:

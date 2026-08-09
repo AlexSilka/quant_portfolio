@@ -49,7 +49,8 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
                    rv_lookback: int = 30, ppy: int = PPY,
                    k_rich: float = 1.0, timed: bool = True, var_cap: float = 2.5,
                    restrike_days: int = 7, vega_cost_volpts: float = 0.75, wing_markup: float = 0.0,
-                   spike_degross: float = 0.0, exec_lag: int = 2) -> pd.DataFrame:
+                   spike_degross: float = 0.0, exec_lag: int = 2,
+                   gate: pd.Series | None = None) -> pd.DataFrame:
     """Daily capped-variance-swap P&L for a short-vol book on one asset (variance units).
 
     timed=False is the always-short non-ML baseline; timed=True shorts only when implied is rich
@@ -85,6 +86,13 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
         spike = dv / dv.rolling(20, min_periods=5).mean()
         side = side * np.minimum(1.0, spike_degross / spike).fillna(1.0)
 
+    # --- regime gate (exposure multiplier in [0,1], decided at t): applied to the SIDE, not to the
+    # finished P&L, so switching the leg off and back on pays the vega spread through the same cost
+    # model as any other roll. Gating the return series instead would make the timing look free.
+    if gate is not None:
+        g = pd.Series(gate).reindex(close.index).ffill().fillna(1.0).clip(0.0, 1.0)
+        side = side * g
+
     # --- strike: re-struck every `restrike_days`, held between rolls (turnover control) ---
     K = pd.Series(np.nan, index=close.index)
     K.iloc[::restrike_days] = dv.iloc[::restrike_days]
@@ -102,7 +110,10 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
 
     # --- costs: vega spread when the strike rolls or the side flips (dVar ~ 2*K*dVol) ---
     roll = (Kx != Kx.shift(1)) | (sidex != sidex.shift(1))
-    turnover = roll.astype(float) * sidex.abs()
+    # charge the LARGER of the two sides of the roll, so unwinding to flat costs the spread as much as
+    # putting the position on. (With the always-short baseline |side| is constant, so this is identical
+    # to charging |sidex|; it only bites once a gate takes exposure to zero and back.)
+    turnover = roll.astype(float) * np.maximum(sidex.abs(), sidex.abs().shift(1).fillna(0.0))
     cost = turnover * 2.0 * Kx.clip(lower=1e-6) * (vega_cost_volpts / 100.0)
 
     # --- tail-wing premium: pay wing_markup x the trailing tail the cap protects (self-scales with cap) ---
