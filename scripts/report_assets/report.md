@@ -22,10 +22,12 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **ei
 > that is **$2.69M** of P&L, **~$173k/yr** — **+34.6%/yr** not reinvested, **+40.6%/yr** compounded (a rate, not a
 > reachable balance: capacity caps the book long before the end of the window) — months-in-profit **81%**, **positive in all 16 calendar years**, families essentially
 > **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
-> there it clears **all five** (2024-07→: Sharpe **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month
+> there it clears **{{oos_targets}}** (2024-07→: Sharpe **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month
 > **{{oos_worst_month}}**, streak **{{oos_streak}}**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
-> second scorecard — the same five also clear (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD **{{book_dd}}**, worst month
-> **{{book_worst_month}}**, streak **{{book_streak}}**). Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
+> second scorecard — it scores **{{book_targets}}** (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD **{{book_dd}}**, worst month
+> **{{book_worst_month}}**, streak **{{book_streak}}**): the losing-month streak runs to three in Dec-2021→Feb-2022,
+> which surfaced once the equity panel stopped carrying foreign companies behind dead US tickers (§3a). Four of
+> the five full-window figures improved with that correction; this one got worse, and it is reported as it fell. Months-in-profit is the thin one on both windows now (0.8pp of headroom OOS), the
 > price of the honest trend universe — §6d.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
@@ -45,7 +47,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
 - **Honest universes, honest levels — now including trend.** Every family uses its **survivorship-free**
   universe (point-in-time top-N by trailing liquidity, delisted names included), the trend leg included as of
   §6d: its crypto half was the last hard-coded list of today's majors, and replacing it with a point-in-time
-  top-10 costs the book **0.04 Sharpe** and leaves it 5/5 on both windows; the curated-universe versions score higher but
+  top-10 costs the book **0.04 Sharpe**; the curated-universe versions score higher but
   are biased. Levels are quoted on the **15-year** window (2011 → 2026); each family joins as it lists,
   averaged over the families live each day. The pre-2020 window runs the long-history legs (trend, vol-premium, cross-sectional equity, crisis, global-macro)
   on **real, liquid ETF / FX / index prices** (SPY / GLD / TLT / EM-FX, back to 2011 — the standard managed-futures
@@ -54,7 +56,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
   on the early window.
 - **Robust, not fitted.** The portfolio is robust because the families are decorrelated — measured
   (block-bootstrap MC-P5 **+3.22**), not asserted — and **positive in all 16 calendar years** 2011–26 (weakest +0.7).
-  Against the task scorecard, the book **meets all five targets on both windows** — the final out-of-sample block
+  Against the task scorecard, the book scores **{{oos_targets}} out-of-sample and {{book_targets}} on the full window** — the final out-of-sample block
   (2024-07→, the window the brief scores: Sharpe **{{oos_sharpe}}**, months-in-profit **{{oos_months}}**, max-DD {{oos_dd}}, worst month
   {{oos_worst_month}}, streak {{oos_streak}}) and the **full 15-year window** (Sharpe **{{book_sharpe}}**, months-in-profit **{{book_months}}**, max-DD {{book_dd}},
   worst month {{book_worst_month}}, streak {{book_streak}}). Months-in-profit ≥80%, the worst month and the ≤2-month streak hold
@@ -183,8 +185,8 @@ a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.6
 restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a
 per-family weight cap (1.5× the 1/8 equal weight; never binds). The drawdown ladder is ~neutral on this benign-tail
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
-cluster the losing months, holding the book at **Sharpe {{book_sharpe}}** and closing the scorecard to **5/5 on both
-windows** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
+cluster the losing months, holding the book at **Sharpe {{book_sharpe}}** and closing the scorecard to
+**{{oos_targets}} out-of-sample, {{book_targets}} on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
 pairwise cross-family correlation is ≈ 0.06** — the corr-to-book column is naturally higher since each family
 is part of the book. **The decorrelation is stable out-of-sample** (§7.2: first-half 0.08 / second-half 0.06 /
 OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
@@ -214,7 +216,7 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
   **{{book_months}}**, worst month **{{book_worst_month}}**, streak **{{book_streak}}mo** — **5 of 5 on the 15-year window**;
   block-bootstrap MC **[Sharpe P5 +3.22, P50 +3.74, P95 +4.23; max-DD P5 −12.3%, P50 −8.5%]**; mean
   pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe {{oos_sharpe}}, months-in-profit
-  {{oos_months}}, max-DD {{oos_dd}}, worst {{oos_worst_month}}, streak {{oos_streak}}mo — all five clear (5 of 5).**
+  {{oos_months}}, max-DD {{oos_dd}}, worst {{oos_worst_month}}, streak {{oos_streak}}mo — {{oos_targets}}.**
   Per-family P&L share: **volprem 55%**, trend 10%, gmacro 8%, x-sect 6%, breakout 6%, BAB 6%, carry 5%,
   crisis 4% — volprem-dominated, stated not hidden.
 - **Four-scheme Monte Carlo** (§10, all with P5/P50/P95 of Sharpe, max-DD *and* monthly hit): block bootstrap
@@ -250,7 +252,7 @@ it plainly leaves risk on the table. The size of a book is a *stated budget*, th
 best row of a scorecard, so this is settled in that order: state the budget, take the level the mandate allows,
 then check the scorecard didn't break. `make risk-budget` (`scripts/run_risk_budget.py` →
 `reports/book/risk_budget.json`, `risk_budget_grid.csv`) runs constant leverage **1.00–2.00× in 0.05 steps**
-through the canonical assembler and scores all five targets on both windows, plus two readings of the tail
+through the canonical assembler and scores the five targets on both windows, plus two readings of the tail
 *beyond* the one realised path:
 
 > **What "leverage" means here, concretely.** It is a multiplier on **position size**, not an exchange setting and
@@ -307,8 +309,10 @@ headroom is not treated as spare risk budget.
 
 *Being explicit about what is measured and what is judgement:* the ceilings above are measured — each is a
 constraint evaluated on the grid. Which rung inside them the book takes is risk appetite, and the scorecard no
-longer decides it for us: on the current book 5/5 holds across the whole span from 1.00× to {{worst_month_allows}},
-so the grid is a plateau again rather than a single passing point. The shipped {{leverage}} is a choice made
+longer decides it for us: the full-window score is {{book_targets}} across the whole usable span, because the
+target it misses is the losing-month **streak**, and leverage cannot change the sign of a month — scaling every
+return by 1.15 or 1.45 leaves Dec-2021→Feb-2022 exactly as negative as it was. The grid is a plateau rather than
+a single passing point, and the scorecard no longer picks a rung. The shipped {{leverage}} is a choice made
 inside that plateau, on the tail evidence rather than on the scorecard — which is the honest way to describe it.
 The frozen OOS block scores 5/5 everywhere on the grid and never enters the decision.
 
@@ -503,7 +507,7 @@ The brief asks for **two distinct things**, and the book has both:
 
 - **A final out-of-sample block, held to the end and run exactly once** (§10/§11) — `OOS_START=2024-07-01`,
   the last ~2 years, never inspected until the end. **§11 scores the targets on this block and nothing else**,
-  so it is the deliverable's scorecard (Sharpe **3.77**, all five targets); the 15-year window is reported
+  so it is the deliverable's scorecard (Sharpe **{{oos_sharpe}}**, {{oos_targets}}); the 15-year window is reported
   alongside it because §10 asks for per-year/per-quarter metrics and §12 for a ceiling assessment — it is
   supporting evidence, never a second scorecard.
 - **A rolling & anchored walk-forward with periodic re-fitting** (§10) at the portfolio level

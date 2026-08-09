@@ -163,6 +163,9 @@ def main():
 
     # diversification: stack the x-sect book on the existing trend book
     trend = pd.read_parquet(TREND_DIR / "trend_block_returns.parquet")["ret"]
+    trend.index = pd.to_datetime(trend.index)          # the trend family writes this tz-naive;
+    if trend.index.tz is None:                         # the book index is UTC, and concat of the
+        trend.index = trend.index.tz_localize("UTC")   # two raises rather than aligning
     both = pd.concat([trend.rename("trend"), xbook.rename("xsect")], axis=1).dropna()
     combo = both.mean(axis=1)
     st, sx, sc = (summarise(both["trend"], 365), summarise(both["xsect"], 365), summarise(combo, 365))

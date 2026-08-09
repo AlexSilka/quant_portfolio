@@ -76,7 +76,7 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe {{book_sharpe}}** (5/5), OOS **{{oos_sharpe}}** (5/5), {{book_dd}} max-DD, {{n_families}} families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe {{book_sharpe}}** ({{book_targets}}), OOS **{{oos_sharpe}}** ({{oos_targets}}), {{book_dd}} max-DD, {{n_families}} families |
 | `make risk-budget` | how much leverage the book can carry (§4b) | shipped **{{leverage}}**; {{binding_constraint}} is what binds first, at {{binding_leverage}} |
 | `make cscv` | the overfit / multiple-testing control | **PBO {{cscv_pbo}}**, in-sample-best {{cscv_is_bar}} → OOS {{cscv_oos_bar}} /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |

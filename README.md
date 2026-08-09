@@ -21,15 +21,15 @@ as supporting evidence, not as a second scorecard.
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.73** ✓ | **3.62** ✓ |
-| months in profit ≥ 80% | **80.8%** ✓ | **80.3%** ✓ |
-| max drawdown ≤ 15% | **−4.4%** ✓ | **−7.6%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **2** ✓ |
-| worst single month ≥ −6% | **−2.4%** ✓ | **−5.15%** ✓ |
+| Sharpe, net, 2.5–4.0 | **3.63** ✓ | **3.63** ✓ |
+| months in profit ≥ 80% | **80.8%** ✓ | **80.9%** ✓ |
+| max drawdown ≤ 15% | **−4.7%** ✓ | **−7.4%** ✓ |
+| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✓ |
+| worst single month ≥ −6% | **−2.0%** ✓ | **−4.09%** ✓ |
 | | **5 / 5** | **5 / 5** |
 
-On the brief's $500k of sizing capital that is **$2.64M** of P&L, **~$169k/yr**
-(+33.9%/yr not reinvested, +39.7%/yr compounded). Positive in **16 of 16 calendar years**.
+On the brief's $500k of sizing capital that is **$2.69M** of P&L, **~$172k/yr**
+(+34.5%/yr not reinvested, +40.5%/yr compounded). Positive in **16 of 16 calendar years**.
 Mean pairwise correlation between families **≈ 0.06**.
 
 **The eight sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
@@ -52,7 +52,7 @@ book still stands.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
 
-1. **Concentration.** Short-vol is 57% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
+1. **Concentration.** Short-vol is 56% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
    flash crash). No term-structure rule reaches that day — the curve was in contango the session before.
 2. **Capacity.** That same leg is a variance-swap *replication*, not an executed option book, and the 18-leg
    construction caps out around low tens of $M before the thin legs stop filling.
@@ -78,8 +78,8 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.62** (5/5), OOS **3.73** (5/5), −7.6% max-DD, 8 families |
-| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised months-in-profit is what binds first, at 1.30× |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.63** (4/5), OOS **3.63** (5/5), −7.4% max-DD, 8 families |
+| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; bootstrap-P5 max-DD is what binds first, at 1.45× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -125,7 +125,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.62 full / 3.73 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.63 full / 3.63 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

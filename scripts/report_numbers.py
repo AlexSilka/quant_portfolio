@@ -193,6 +193,13 @@ def _grid_span():
     return {"grid_sharpe_range": f"{max(sh):.2f} → {min(sh):.2f}"} if sh else {}
 
 
+def _targets_hit(sc: dict) -> int:
+    """How many of the brief's five scorecard targets a window clears. Counted here rather than
+    written into the prose, because the prose is what goes stale when the book moves."""
+    return int(sum([sc["sharpe"] >= 1.5, sc["max_dd"] >= -0.15, sc["months_in_profit"] >= 0.80,
+                    sc["worst_month"] >= -0.06, sc["longest_losing_streak_mo"] <= 2]))
+
+
 def build():
     """The registry: {placeholder name -> rendered string}. Missing artifacts drop their keys rather
     than resolving to a guess, so render_report fails loudly instead of publishing a blank."""
@@ -224,6 +231,8 @@ def build():
             "book_worst_month": _pc(full["worst_month"]),
             "book_worst_month_2dp": _pc(full["worst_month"], 2),
             "book_streak": str(full["longest_losing_streak_mo"]),
+            "book_targets": f"{_targets_hit(full)}/5",
+            "oos_targets": f"{_targets_hit(oos)}/5",
             "oos_sharpe": f"{oos['sharpe']:.2f}",
             "oos_months": _pcu(oos["months_in_profit"]),
             "oos_months_round": _pcu(oos["months_in_profit"], 0),
