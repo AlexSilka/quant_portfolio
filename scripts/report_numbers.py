@@ -114,6 +114,7 @@ def _gate_table():
             b(r["targets"])]) + " |")
         key = "gate_on" if shipped else ("gate_off" if name == "none (ungated)" else None)
         if key:
+            vals[f"{key}_targets"] = r["targets"]
             vals.update({f"{key}_sharpe": f"{float(r['sharpe']):.2f}",
                          f"{key}_oos_sharpe": f"{float(r['oos_sharpe']):.2f}",
                          f"{key}_months": _pcu(float(r["months_pos"])),
@@ -182,6 +183,27 @@ def _ml_overlay():
     }
 
 
+def _grid_verdict():
+    """How the OOS block scores across the leverage grid — the claim §4b makes about it never setting the
+    choice. Phrased from the grid so "at every leverage" cannot outlive being true."""
+    import csv
+    p = R / "book" / "risk_budget_grid.csv"
+    if not p.exists():
+        return {}
+    rows = [(float(r["leverage"]), int(r["oos_targets"])) for r in csv.DictReader(p.open())
+            if r["limits"] == "book_equity"]
+    if not rows:
+        return {}
+    best = max(t for _, t in rows)
+    holds = [lev for lev, t in rows if t == best]
+    if len(holds) == len(rows):
+        return {"oos_grid_verdict": f"scores {best}/5 at every leverage on the grid"}
+    misses = sorted(lev for lev, t in rows if t != best)
+    return {"oos_grid_verdict": f"scores {best}/5 at {len(holds)} of the grid's {len(rows)} rungs, dropping "
+                                f"to {min(t for _, t in rows)}/5 only at "
+                                + ", ".join(f"{lev:.2f}×" for lev in misses)}
+
+
 def _grid_span():
     """How much the Sharpe actually moves across the whole leverage grid — the claim §4b makes about it
     being flat, taken from the grid instead of asserted."""
@@ -228,6 +250,27 @@ def _family_costs():
             "n_family_cost_fragile": str(len(frag)),
             "family_cost_fragile_names": ", ".join(frag) if frag else "none",
             "family_cost_worst": rows[0][0], "family_cost_worst_share": _pcu(rows[0][1])}
+
+
+# §11's five targets, as tests rather than prose — so "meets all five" is a computed verdict and cannot
+# survive the metric that made it true moving underneath it.
+TARGETS = (("Sharpe", lambda d: 2.5 <= d["sharpe"] <= 4.0, "Sharpe outside the 2.5–4.0 band"),
+           ("months in profit", lambda d: d["months_in_profit"] >= 0.80, "months-in-profit under 80%"),
+           ("max drawdown", lambda d: d["max_dd"] >= -0.15, "a drawdown past −15%"),
+           ("losing streak", lambda d: d["longest_losing_streak_mo"] <= 2,
+            "a {longest_losing_streak_mo:.0f}-month losing streak against ≤2"),
+           ("worst month", lambda d: d["worst_month"] >= -0.06, "a worst month past −6%"))
+
+
+def _verdict(sc, prefix):
+    passed = [name for name, test, _ in TARGETS if test(sc)]
+    missed = [why.format(**sc) for name, test, why in TARGETS if not test(sc)]
+    word = {5: "all five", 4: "four of the five", 3: "three of the five",
+            2: "two of the five", 1: "one of the five", 0: "none of the five"}[len(passed)]
+    return {f"{prefix}_targets_met": f"{len(passed)} of 5",
+            f"{prefix}_targets_word": word,
+            f"{prefix}_miss": (" and ".join(missed) if missed else "nothing"),
+            f"{prefix}_miss_short": (missed[0] if missed else "")}
 
 
 def build():
@@ -329,6 +372,13 @@ def build():
             out["constraint_table"] = "\n".join(rows)
 
         out["leverage_table"] = _leverage_table(out.get("leverage"))
+        out.update(_verdict(s["scorecard_full"], "book"))
+        out.update(_verdict(oos, "oos"))
+        # the same full window read on the brief's fixed-$500k convention — Sharpe is scale-free, so it
+        # carries over; the point of the sentence that uses this is whether the verdict survives the switch
+        if fx_full:
+            out.update(_verdict({**fx_full, "sharpe": s["scorecard_full"]["sharpe"]}, "fixed"))
+        out.update(_grid_verdict())
         out.update(_grid_span())
         # the 2010 flash-crash replay at unlevered risk — the tail the sizing argument turns on
         rb0 = _load("book/risk_budget.json").get("selective_leverage", {}).get("all legs", {})
