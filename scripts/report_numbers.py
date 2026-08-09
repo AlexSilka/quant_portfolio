@@ -70,6 +70,129 @@ def _leverage_table(shipped):
     return "\n".join(out)
 
 
+def _marginal(marg):
+    """The §7 marginal-contribution curve, as the report narrates it: the anchor it starts from, the book
+    it lands on, and the drawdown the additions buy. Sourced from the same rows the chart plots."""
+    if not marg:
+        return {}
+    rows = sorted(marg, key=lambda r: r["n"])
+    first, last = rows[0], rows[-1]
+    return {
+        "marginal_first_sharpe": f"{first['sharpe']:.2f}",
+        "marginal_last_sharpe": f"{last['sharpe']:.2f}",
+        "marginal_first_dd": _pc(first["max_dd"]),
+        "marginal_last_dd": _pc(last["max_dd"]),
+        "marginal_first_months": _pcu(first["months_in_profit"]),
+        "marginal_last_months": _pcu(last["months_in_profit"]),
+        # the path the report quotes as "the tail the diversifiers buy"
+        "marginal_dd_path": " → ".join(_pc(r["max_dd"]) for r in rows[-4:]),
+        "marginal_chain": " → ".join(f"{r['sharpe']:.2f}" for r in rows),
+    }
+
+
+def _gate_table():
+    """The §5c gate A/B, emitted from run_vol_premium_gates' own CSV: the shipped two-segment rule against
+    the ungated leg and the rejected variants, on the same book."""
+    import csv
+    p = R / "volprem" / "volprem_gates_book.csv"
+    if not p.exists():
+        return {}
+    rows = list(csv.DictReader(p.open()))
+    label = {"none (ungated)": "ungated", "SHIPPED VIX3M/VIX>=1": "long segment only (the previous rule)",
+             "fast VIX/VIX9D>=1": "fast segment only", "both segments": "**both segments (shipped)**",
+             "both + re-entry 5d": "both + re-entry 5d"}
+    out = ["| volprem leg | Sharpe | max-DD | worst month | months | streak | targets |",
+           "|---|---|---|---|---|---|---|"]
+    vals = {}
+    for r in rows:
+        name = r["volprem leg"]
+        shipped = name == "both segments"
+        b = (lambda x: f"**{x}**") if shipped else (lambda x: x)
+        out.append("| " + " | ".join([
+            label.get(name, name), b(f"{float(r['sharpe']):.2f}"), b(_pc(float(r["max_dd"]))),
+            b(_pc(float(r["worst_month"]))), b(_pcu(float(r["months_pos"]))), b(r["streak_mo"]),
+            b(r["targets"])]) + " |")
+        key = "gate_on" if shipped else ("gate_off" if name == "none (ungated)" else None)
+        if key:
+            vals.update({f"{key}_sharpe": f"{float(r['sharpe']):.2f}",
+                         f"{key}_oos_sharpe": f"{float(r['oos_sharpe']):.2f}",
+                         f"{key}_months": _pcu(float(r["months_pos"])),
+                         f"{key}_worst_month": _pc(float(r["worst_month"])),
+                         f"{key}_dd": _pc(float(r["max_dd"])),
+                         f"{key}_streak": r["streak_mo"]})
+    vals["gate_table"] = "\n".join(out)
+    vals["gate_table"] = vals["gate_table"].replace(
+        "| volprem leg |", "| volprem leg, book scored 2011-01 → 2024-06 |", 1)
+    return vals
+
+
+def _selective_leverage():
+    """§4b's "then don't lever the aggressive leg" A/B: all eight legs at the shipped level against the
+    vol-matched alternative that holds vol-prem at 1.00× and gives the risk to the other seven. From
+    run_risk_budget's own json, so the table cannot drift from the experiment."""
+    sl = _load("book/risk_budget.json").get("selective_leverage") or {}
+    a, b = sl.get("all legs"), sl.get("ex-volprem")
+    if not (a and b):
+        return {}
+
+    def col(d, key, fmt):
+        return fmt(d[key]) if key in d else fmt(d["full"][key])
+    lev_b = next(iter(b["leverage"].values()))
+    rows = [f"| | all eight legs {next(iter(a['leverage'].values())):.2f}× | "
+            f"seven legs {lev_b:.2f}×, vol-prem 1.00× |", "|---|---|---|"]
+    for lab, key, fmt in (("Sharpe (full / OOS)", None, None), ("CAGR", "cagr", _pc),
+                          ("max-DD", "max_dd", _pc), ("worst month", "worst_month", _pc),
+                          ("months-in-profit", "months_in_profit", _pcu)):
+        if key is None:
+            rows.append(f"| {lab} | **{a['full']['sharpe']:.2f} / {a['oos']['sharpe']:.2f}** | "
+                        f"{b['full']['sharpe']:.2f} / {b['oos']['sharpe']:.2f} |")
+            continue
+        rows.append(f"| {lab} | **{fmt(a['full'][key])}** | {fmt(b['full'][key])} |")
+    rows.append(f"| targets, full window | **{a['full']['targets']}/5** | {b['full']['targets']}/5 |")
+    rows.append(f"| 2010-event DD / month | {_pc(a['stress_max_dd'])} / {_pc(a['stress_worst_month'])} | "
+                f"{_pc(b['stress_max_dd'])} / {_pc(b['stress_worst_month'])} |")
+    return {"selective_leverage_table": "\n".join(rows)}
+
+
+def _ml_overlay():
+    """§5d's whole-book ML arms, from run_ml_portfolio_overlay's own json: the base book and the range the
+    six gate engines land in. Quoted as a range because the point of the section is that no engine escapes
+    it, not that any one of them is interesting."""
+    d = _load("book/ml_portfolio_overlay.json")
+    base, arms = d.get("base (no overlay)"), [v for k, v in d.items() if k.startswith("A gate")]
+    if not (base and arms):
+        return {}
+
+    def rng(key, fmt):
+        lo, hi = min(a["full"][key] for a in arms), max(a["full"][key] for a in arms)
+        return fmt(lo) if abs(hi - lo) < 1e-9 else f"{fmt(lo)}–{fmt(hi)}"
+    return {
+        "ml_base_sharpe": f"{base['full']['sharpe']:.2f}",
+        "ml_base_months": _pcu(base["full"]["months_in_profit"]),
+        "ml_base_cagr": _pcu(base["full"]["cagr"], 0),
+        "ml_base_growth": f"{base['full']['growth_x']:.0f}×",
+        "ml_gate_sharpe": rng("sharpe", lambda v: f"{v:.2f}"),
+        "ml_gate_months": rng("months_in_profit", lambda v: f"{v * 100:.0f}") + "%",
+        "ml_gate_cagr": rng("cagr", lambda v: f"{v * 100:.0f}") + "%",
+        "ml_gate_growth": rng("growth_x", lambda v: f"{v:.0f}") + "×",
+        "ml_gate_targets": rng("targets", lambda v: f"{int(v)}/5"),
+        **({"ml_random_gate": f"{d['random_gate_full_sharpe']['min']:.2f}–"
+                              f"{d['random_gate_full_sharpe']['max']:.2f}"}
+           if isinstance(d.get("random_gate_full_sharpe"), dict) else {}),
+    }
+
+
+def _grid_span():
+    """How much the Sharpe actually moves across the whole leverage grid — the claim §4b makes about it
+    being flat, taken from the grid instead of asserted."""
+    import csv
+    p = R / "book" / "risk_budget_grid.csv"
+    if not p.exists():
+        return {}
+    sh = [float(r["full_sharpe"]) for r in csv.DictReader(p.open()) if r["limits"] == "book_equity"]
+    return {"grid_sharpe_range": f"{max(sh):.2f} → {min(sh):.2f}"} if sh else {}
+
+
 def build():
     """The registry: {placeholder name -> rendered string}. Missing artifacts drop their keys rather
     than resolving to a guess, so render_report fails loudly instead of publishing a blank."""
@@ -124,6 +247,7 @@ def build():
             "mc_sharpe_p5": _n(m["mc_p5"]), "mc_sharpe_p50": _n(m["mc_p50"]), "mc_sharpe_p95": _n(m["mc_p95"]),
             "mc_dd_p5": _pc(bb.get("maxdd_p5", m.get("mc_maxdd_p5", float("nan")))),
             "mc_hit_p5": _pcu(bb.get("hit_p5", m.get("mc_hit_p5", float("nan"))), 0),
+            "mc_wmonth_p5": _pc(bb.get("wmonth_p5", float("nan"))),
             "turnover": f"{s.get('annual_turnover', float('nan')):.0f}×",
             "volprem_pnl_share": _pcu(s.get("pnl_share", {}).get("volprem", float("nan")), 0),
             "n_years": str(len(s.get("per_year", {}))),
@@ -166,6 +290,15 @@ def build():
             out["constraint_table"] = "\n".join(rows)
 
         out["leverage_table"] = _leverage_table(out.get("leverage"))
+        out.update(_grid_span())
+        # the 2010 flash-crash replay at unlevered risk — the tail the sizing argument turns on
+        rb0 = _load("book/risk_budget.json").get("selective_leverage", {}).get("all legs", {})
+        if rb0.get("stress_worst_month") is not None:
+            out["stress_worst_month_1x"] = _pc(rb0["stress_worst_month"])
+        out.update(_marginal(s.get("marginal") or []))
+        out.update(_gate_table())
+        out.update(_selective_leverage())
+        out.update(_ml_overlay())
 
         cl = _load("master_book_cost_levels.json")
         for lv in cl.get("levels", []):
