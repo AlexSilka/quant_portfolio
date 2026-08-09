@@ -1,4 +1,4 @@
-.PHONY: setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -53,6 +53,12 @@ wf:
 # §4 per-feature IC / stability-over-time / redundancy-cluster analysis + the stated reduction.
 features:
 	$(PY) scripts/feature_report.py
+
+# Panel integrity: is each cached series still being published, or merely still being returned?
+# Reports stale series, interior gaps, frozen tapes and scale outliers — the four shapes behind the
+# 2026-08-10 data defects. Reports only; screens live next to the results they change.
+integrity:
+	$(PY) -m src.data.integrity --verbose
 
 # §3 equity NYSE session/half-day integrity check via pandas_market_calendars.
 sessions:
