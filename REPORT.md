@@ -1017,8 +1017,13 @@ the ≥80% target, but with 0.8pp of headroom rather than 4.6pp. That is now the
   and 30 crypto perps (`scripts/meanrev/run_mr_universe.py`). Walk-forward OOS net of costs: **equities −0.13**
   (DD −46%), **crypto −0.49** (DD −39%). Both **beat their shuffled-signal placebos** (−0.74, −2.50),
   so a faint reversal signal is real — but turnover × cost eats it and it nets negative, the same
-  failure mode as single-asset MR. Not a viable family here at the daily horizon; the intraday horizon
-  is data-blocked (no Twelve Data key). It is **not** a cheap decorrelated source — the honest next
+  failure mode as single-asset MR. Not a viable family here at the daily horizon — **and, measured, not at
+  the intraday one either.** (An earlier draft called intraday "data-blocked (no Twelve Data key)"; the key
+  is present on a Pro plan and the test exists, `scripts/meanrev/run_mr_intraday.py`. Run on 20 large-cap
+  US names, walk-forward and net of costs: at **1h** the equal-weight single-asset basket nets **−0.03**
+  (10 of 20 names positive) and intraday cross-sectional reversal **−0.14** at −32% drawdown; at **15m**
+  both collapse — basket **−1.43**, cross-sectional **−1.97** at −88%. Reversion gets *worse* as the bar
+  shrinks, which is the turnover×cost failure mode again, sharper. The claim was stale, not true.) It is **not** a cheap decorrelated source — the honest next
   source is one structurally orthogonal to the trend book (short-vol / volatility risk premium).
 - **Pairs stat-arb basket** (cointegration selected on a formation window, traded OOS): **equities
   +0.05** (121/780 pairs), **crypto 1d −1.18** (192/435 pairs). Crypto cointegration is largely
