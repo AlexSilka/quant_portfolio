@@ -565,6 +565,27 @@ harness (equal-weight core-10; trend held crypto-only); it lines up with the dee
 **+0.69** here ≈ **+0.67** there), so read the raw→ML *delta* within each table, not the standalone level.
 Reproduce: `make ml-contribution` (`scripts/run_ml_book_contribution.py` → `reports/book/ml_book_contribution.json`):
 
+**Sharpe alone would have mis-scored this, so return is measured too.** Every leg is vol-targeted, so an ML
+gate that halves time-in-market can leave Sharpe *and* drawdown flat while cutting the money the book makes —
+Sharpe is a ratio and cannot see it. `run_ml_book_contribution.py` now records **CAGR on both windows**
+alongside the five targets, and the column changes how two rows read:
+
+| book, leg swapped | Sharpe full / OOS | **CAGR full / OOS** | max-DD | worst month | months | streak |
+|---|---|---|---|---|---|---|
+| **baseline (shipped)** | +3.73 / +3.77 | **+35.4% / +30.5%** | −6.6% | −5.3% | 81% | 2 |
+| breakout raw (no ML) | +3.73 / **+3.88** | +35.4% / **+31.7%** | −6.6% | −5.3% | 82% | 2 |
+| breakout + ML *(shipped)* | +3.73 / +3.77 | +35.4% / +30.5% | −6.6% | −5.3% | 81% | 2 |
+| trend raw | +3.61 / +3.48 | +35.6% / +29.8% | −7.0% | −4.5% | 79% | 2 |
+| trend + LightGBM gate | +3.66 / +3.60 | +35.0% / **+28.2%** | −7.0% | −4.5% | 79% | 2 |
+| trend + RF gate | +3.66 / **+3.74** | +34.6% / **+28.4%** | −7.0% | −4.5% | 79% | 2 |
+| carry + timing overlay | +3.70 / +3.77 | +35.0% / +30.5% | −6.6% | −5.3% | 81% | 2 |
+
+**Every ML lever costs return, including the ones whose Sharpe improves.** The trend RF gate reads as the
+biggest Sharpe win on the block (+3.48 → +3.74) while *losing* 1.4pp of OOS CAGR: it cuts risk faster than
+return, which flatters the ratio and shrinks the P&L. On the brief's $500k that 1.4pp is ~$7k/yr paid for a
+ratio. This is the sharpest single argument for keeping the book's ML footprint to the one leg where the gate
+also lifts OOS *return* — and it is only visible because return is now in the table.
+
 | ML lever | leg standalone (raw → ML) | book OOS Sharpe | book OOS months-in-profit | on the binding axis |
 |---|---|---|---|---|
 | **Breakout** meta-gate *(shipped)* | +0.68 → +1.06 (DD −10.8%→−3.7%) | 3.88 → 3.77 | 88% → 85% | ≈flat — small give-back, still clears |
@@ -583,6 +604,35 @@ or close the structural months-in-profit / streak gap — the short-gamma legs c
 global-macro long-gamma legs (already in the book) address that. The **carry** overlay's +1.21→+1.52 standalone
 lift, by contrast, is construction-specific: it does not reproduce on the honest carry leg (+1.33→+1.04) and is
 flat-to-slightly-positive on the book.
+
+**Forecasting the risk side instead of the direction — two further tactics, both measured, both rejected.**
+Arms A–C all predict a *first* moment (P(book up), family forward return), and direction is the lowest-signal
+quantity on this book — the §11 scorecard does not even ask for it. So two arms aim at what actually binds
+(`run_ml_portfolio_overlay.py`, arms **D** and **E**), each against a leverage-matched flat control:
+
+| arm | what it forecasts | Sharpe full / OOS | CAGR full / OOS | max-DD | months | streak | targets |
+|---|---|---|---|---|---|---|---|
+| **flat control (1.04×)** | nothing | **+3.73 / +3.77** | **+37% / +32%** | **−6.7%** | 81% / 85% | 2 | 5/5 |
+| D vol-target, Ridge | forward 21d realised vol | +3.67 / +3.69 | +36% / +32% | −7.6% | 80% / 81% | 2 | 5/5 |
+| D vol-target, LightGBM | forward 21d realised vol | +3.70 / +3.73 | +36% / +35% | −7.2% | 81% / 85% | 2 | 5/5 |
+| D trailing-vol target, **no ML** | — (60d trailing) | +3.61 / +3.61 | +38% / +37% | −8.2% | 80% / 85% | 2 | 5/5 |
+| E bad-month gate, logistic | P(next 21d in bottom decile) | +3.52 / +3.77 | +29% / +30% | −6.6% | **68%** / 85% | **31** | **3/5** |
+| E bad-month gate, LightGBM | P(next 21d in bottom decile) | +3.48 / +3.70 | +28% / +30% | −6.6% | **68%** / 85% | **31** | **3/5** |
+
+- **D fails against its own control, and so does its non-ML sibling.** A second layer of volatility management
+  adds nothing because the legs are *already* vol-targeted individually — the forecast is re-forecasting a
+  quantity the construction has already neutralised, and pays for it in drawdown (−6.7% flat → −7.6% ML).
+  Note the trailing-vol version is worse still, so this is not "the model was too weak": the tactic is empty.
+- **E fails in an instructive way.** Aiming the classifier straight at the binding metric makes that metric
+  *worse*: months-in-profit collapses 81% → 68% and the losing streak explodes to **31 months**. The reason is
+  mechanical and general — **de-grossing to flat produces a zero month, and a zero month is not a profitable
+  month**. A model that correctly sits out bad stretches still destroys months-in-profit and manufactures an
+  enormous streak. Months-in-profit cannot be bought by *avoiding* anything; it can only be bought by owning
+  something that pays while the rest bleeds, which is what the crisis / global-macro long-gamma legs do.
+
+That is the deeper reason the short-vol VIX gate works where every ML tactic fails: it does not de-gross the
+book, it moves *one* leg out of a regime the other seven still trade through, so the flat days are not flat
+months.
 
 **Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
 the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence

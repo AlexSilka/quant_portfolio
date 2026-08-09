@@ -60,11 +60,22 @@ def assemble(overrides=None):
     df = df[df.notna().sum(axis=1) >= 2]
     ew = df.mean(axis=1, skipna=True).rename("ret")
     managed = risk_overlay(ew)[0]
-    return {"full": scorecard(managed), "oos": scorecard(managed[managed.index >= OOS])}
+    return {"full": scorecard(managed), "oos": scorecard(managed[managed.index >= OOS]),
+            "cagr_full": _cagr(managed), "cagr_oos": _cagr(managed[managed.index >= OOS])}
+
+
+def _cagr(s):
+    """Compounded return. Sharpe cannot see this: every leg is vol-targeted, so a gate that halves
+    time-in-market can leave Sharpe and drawdown flat while cutting the money the book actually makes.
+    Return is therefore reported next to the five targets, not instead of them."""
+    s = s.dropna()
+    yrs = (s.index[-1] - s.index[0]).days / 365.25
+    return round(float((1 + s).prod() ** (1 / yrs) - 1), 3) if yrs > 0 else 0.0
 
 
 def _card(r):
     return {"sharpe_full": r["full"]["sharpe"], "sharpe_oos": r["oos"]["sharpe"],
+            "cagr_full": r["cagr_full"], "cagr_oos": r["cagr_oos"],
             "months_full": r["full"]["months_in_profit"], "months_oos": r["oos"]["months_in_profit"],
             "worst_full": r["full"]["worst_month"], "dd_full": r["full"]["max_dd"],
             "streak_full": r["full"]["longest_losing_streak_mo"]}

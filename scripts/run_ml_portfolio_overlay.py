@@ -197,6 +197,33 @@ def main():
     out["random_gate_full_sharpe"] = {"min": round(min(rs), 2), "mean": round(float(np.mean(rs)), 2), "max": round(max(rs), 2)}
     print(f"  {'random gate (20-draw)':32s} FULL Sharpe min {min(rs):+.2f} mean {np.mean(rs):+.2f} max {max(rs):+.2f}")
 
+    # ── D/E: predict what actually BINDS, not the direction ──────────────────────────────────────
+    # A/B/C all forecast a FIRST moment (P(book up), family forward return). Direction is the lowest-
+    # signal thing on this book and the scorecard does not even ask for it: what binds is the worst
+    # month and the ≤2-month streak. So two arms that forecast the risk side instead.
+    print("\nD volatility targeting — forecast forward 21d realised vol, size inversely (constant risk):")
+    y_vol = ew.shift(-1).rolling(H).std().shift(-(H - 1)) * np.sqrt(PPY)     # forward realised vol
+    tgt_vol = float(ew.std() * np.sqrt(PPY))                                # hold the book's own vol
+    for k in ["ridge", "lgbm"]:
+        vhat = walk_forward(X, y_vol, _reg(k)).reindex(ew.index)
+        exp = (tgt_vol / vhat.clip(lower=1e-4)).clip(0, 1.5)
+        measure(ew, exp, f"D voltarget:{k}", out)
+        lev = float(exp.fillna(1.0).mean())                                 # leverage-matched control
+        measure(ew, pd.Series(lev, index=ew.index), f"D control: flat {lev:.2f}x", out)
+    # the non-ML sibling: the same idea with a trailing estimate instead of a forecast. If ML's value
+    # is real it has to beat THIS, not the unmanaged base — otherwise the model is decorating a moving
+    # average (Moreira-Muir volatility management).
+    trail = (tgt_vol / (ew.rolling(60).std() * np.sqrt(PPY)).shift(1).clip(lower=1e-4)).clip(0, 1.5)
+    measure(ew, trail, "D baseline: trailing-vol target (no ML)", out)
+
+    print("\nE bad-month classifier — P(next 21d in the bottom decile); de-gross only that regime:")
+    fwd = ew.shift(-1).rolling(H).sum().shift(-(H - 1))
+    y_bad = (fwd < fwd.quantile(0.10)).astype(int)      # label uses a full-sample cut; the FIT is walk-
+    for k in ["logit", "lgbm"]:                         # forward and embargoed, so no fold sees its own future
+        p_bad = walk_forward(X, y_bad, _clf(k)).reindex(ew.index)
+        for thr in (0.30, 0.50):
+            measure(ew, (p_bad < thr).astype(float).fillna(1.0), f"E badmonth:{k}@{thr}", out)
+
     print("\nC ML allocation — predict family fwd returns, softmax-tilt weights (vs equal 1/N):")
     for k in ["ridge", "hgb", "lgbm"]:
         preds = {}
