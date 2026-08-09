@@ -558,7 +558,7 @@ months to mean anything:
 
 At one year a ≤2-month streak target is close to a coin flip and one bad quarter breaks months-in-profit. Going
 longer is bounded from the other side: the crypto legs list only from 2020, so a 5-year block would leave a
-single year of live crypto history for construction. **The honest caveat that comes with the choice: at 26
+single year of live crypto history for construction. **The honest caveat that comes with the choice: at {{oos_months_n}}
 months the standard error of the OOS Sharpe is {{oos_sharpe_se}}, so {{oos_sharpe}} is {{oos_sharpe}} {{oos_sharpe_se}}**, and the block is a benign
 stretch — its only real stress is the Aug-2024 yen-carry unwind (book −1.0%), while Apr-2025 was *positive*
 (+1.0%). The boundary is not re-cut now that results are known: moving it after the fact is window-shopping,
@@ -1035,6 +1035,38 @@ So the honest position is the brief's own: **the streak is a property of this bo
 untuned.** It is short-gamma and crypto-heavy, and a sustained crypto unwind takes three months off it.
 
 
+## 6d-ter. Dropping a leg reaches 5/5 — and is still the wrong trade (§12)
+
+The leave-one-out is run on all five targets, not just Sharpe, and on the **selection window** with the
+frozen block as a read-out. One removal reaches the full scorecard:
+
+| book | selection window (2011-01 → 2024-06) | frozen block (read-out) |
+|---|---|---|
+| all eight *(shipped)* | 3/5 — Sharpe 3.58, months 79.3%, streak 3 | 4/5 — months 76.9% |
+| **drop trend** | **5/5** — Sharpe 3.65, months **83.3%**, streak **2**, worst −4.9% | **5/5** — Sharpe 3.33, months 80.8% |
+| drop x-sect | 4/5 — streak 3 | 4/5 |
+| drop carry | 4/5 — streak 3 | 4/5 |
+| drop BAB | 4/5 — streak 3 | 5/5 |
+| drop vol-prem | 1/5 — Sharpe 1.59, months 61.7%, streak 9 | 3/5 |
+
+It survives the test that matters — the choice is recoverable from data ending before the block. So the
+honest statement is not "this does not work". It is **"this works, and it should still not be taken"**,
+for two reasons the scorecard cannot see:
+
+- **It is chosen by the target.** Nothing about the trend leg says *drop me* on its own merits: its
+  standalone Sharpe (0.89) sits between x-sect (0.85) and global-macro (0.93), and dropping either of
+  those does *not* reach 5/5. What makes trend the one that works is its correlation to the rest during
+  the specific months that miss — which is a property of this window, not of the strategy.
+- **It costs the one thing the scorecard does not score.** Trend is the **only family that spans both
+  asset classes**; four of the remaining seven are crypto-only and the rest are vol/macro overlays.
+  Removing it turns "eight structurally distinct families across US equities and crypto" into a crypto
+  book with overlays — and the answer to "is this just a crypto book?" stops being *trend* and starts
+  being nothing.
+
+Trading the deliverable's only cross-asset leg for one point on a five-point scorecard is exactly the
+optimisation the brief warns against, one step removed: the block was not used to choose, but the
+*target* was. The frontier point is recorded because it is real; the book keeps all eight.
+
 ## 6e. The five hardest questions, answered with the measurement
 
 Every objection below is one this report invites. Each is answered from an artifact, not from prose, and
@@ -1054,7 +1086,7 @@ prices a wing that would cut the worst day from **−76% to −6%** for ~16% of 
 **not shipped**, because its margin over break-even is 2.2× on a level measured in one calm half-year. The
 honest position is a disclosed tail, not a hedged one.
 
-**3. "A two-year out-of-sample block proves nothing."** At 26 months the standard error of the OOS Sharpe is
+**3. "A two-year out-of-sample block proves nothing."** At {{oos_months_n}} months the standard error of the OOS Sharpe is
 **±0.70**, stated in §5c — {{oos_sharpe}} is {{oos_sharpe}} ± 0.70. The length is a trade: at one year the ≤2-month streak
 target is close to a coin flip, and the crypto legs only list from 2020 so a five-year block leaves one year
 to build on. The wider evidence is the book-level walk-forward, which runs out-of-sample **{{wf_window}} at

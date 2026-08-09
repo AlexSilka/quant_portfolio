@@ -592,7 +592,7 @@ months to mean anything:
 
 At one year a ≤2-month streak target is close to a coin flip and one bad quarter breaks months-in-profit. Going
 longer is bounded from the other side: the crypto legs list only from 2020, so a 5-year block would leave a
-single year of live crypto history for construction. **The honest caveat that comes with the choice: at 26
+single year of live crypto history for construction. **The honest caveat that comes with the choice: at 25
 months the standard error of the OOS Sharpe is ±0.70, so 3.39 is 3.39 ±0.70**, and the block is a benign
 stretch — its only real stress is the Aug-2024 yen-carry unwind (book −1.0%), while Apr-2025 was *positive*
 (+1.0%). The boundary is not re-cut now that results are known: moving it after the fact is window-shopping,
@@ -677,13 +677,13 @@ alongside the five targets, and the column changes how two rows read:
 
 | book, leg swapped | Sharpe full / OOS | **CAGR full / OOS** | max-DD | worst month | months | streak |
 |---|---|---|---|---|---|---|
-| **baseline (shipped)** | **+3.73 / +3.77** | **35.4% / 30.5%** | **−6.6%** | **−5.3%** | **81%** | **2** |
-| breakout raw (no ML) | +3.73 / +3.88 | 35.4% / 31.7% | −6.6% | −5.3% | 82% | 2 |
-| breakout + ML *(shipped)* | +3.73 / +3.77 | 35.4% / 30.5% | −6.6% | −5.3% | 81% | 2 |
-| trend raw | +3.61 / +3.48 | 35.6% / 29.8% | −7.0% | −4.5% | 79% | 2 |
-| trend + LightGBM gate | +3.66 / +3.60 | 35.0% / 28.2% | −7.0% | −4.5% | 79% | 2 |
-| trend + RF gate | +3.66 / +3.74 | 34.6% / 28.4% | −7.0% | −4.5% | 79% | 2 |
-| carry + timing overlay | +3.70 / +3.77 | 35.0% / 30.5% | −6.6% | −5.3% | 81% | 2 |
+| **baseline (shipped)** | **+3.60 / +3.39** | **34.2% / 26.7%** | **−6.5%** | **−3.8%** | **79%** | **3** |
+| breakout raw (no ML) | +3.61 / +3.49 | 34.3% / 27.8% | −6.5% | −3.9% | 80% | 3 |
+| breakout + ML *(shipped)* | +3.60 / +3.39 | 34.2% / 26.7% | −6.5% | −3.8% | 79% | 3 |
+| trend raw | +3.56 / +3.13 | 35.9% / 26.6% | −6.9% | −4.2% | 82% | 2 |
+| trend + LightGBM gate | +3.61 / +3.22 | 35.3% / 25.1% | −6.9% | −3.8% | 83% | 2 |
+| trend + RF gate | +3.61 / +3.35 | 34.9% / 25.3% | −6.9% | −3.6% | 84% | 2 |
+| carry + timing overlay | +3.58 / +3.39 | 33.9% / 26.6% | −6.5% | −3.8% | 81% | 3 |
 
 **Every ML lever costs return, including the ones whose Sharpe improves.** The trend RF gate reads as the
 biggest Sharpe win on the block (+3.48 → +3.74) while *losing* 1.4pp of OOS CAGR: it cuts risk faster than
@@ -1135,7 +1135,7 @@ prices a wing that would cut the worst day from **−76% to −6%** for ~16% of 
 **not shipped**, because its margin over break-even is 2.2× on a level measured in one calm half-year. The
 honest position is a disclosed tail, not a hedged one.
 
-**3. "A two-year out-of-sample block proves nothing."** At 26 months the standard error of the OOS Sharpe is
+**3. "A two-year out-of-sample block proves nothing."** At 25 months the standard error of the OOS Sharpe is
 **±0.70**, stated in §5c — 3.39 is 3.39 ± 0.70. The length is a trade: at one year the ≤2-month streak
 target is close to a coin flip, and the crypto legs only list from 2020 so a five-year block leaves one year
 to build on. The wider evidence is the book-level walk-forward, which runs out-of-sample **2006→2026 at
