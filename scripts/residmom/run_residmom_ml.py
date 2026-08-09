@@ -29,7 +29,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegresso
 from sklearn.linear_model import LogisticRegression, Ridge  # noqa: E402
 import lightgbm as lgb  # noqa: E402
 
-from src.config import CACHE_DIR, REPORTS_DIR, SEED  # noqa: E402
+from src.config import CACHE_DIR, RESIDMOM_DIR, SEED  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
 from src.sleeves.xsect import idio_mom, resid_mom, top_n_liquid, vol_target, xs_backtest  # noqa: E402
@@ -37,7 +37,7 @@ from src.sleeves.xsect_ml import (expanding_predict, predictions_to_panel,  # no
                                   rank_features, regime_features, stack_xy)
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
-CACHE, OUT = CACHE_DIR / "xs", REPORTS_DIR
+CACHE, OUT = CACHE_DIR / "xs", RESIDMOM_DIR   # the family's own folder, not reports/ root
 SEED, HOLD_D = SEED, 21
 
 # a-priori residual rule per asset (the H5 winner) — the baseline ML must beat, and the residual

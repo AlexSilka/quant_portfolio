@@ -74,7 +74,7 @@ positive every year — so it is not one premium alone; the diversifiers buy rob
   **worst month**: at **−4.1%** against **−6%** it clears on both accounting conventions (fixed-$500k reads
   **−5.85%**), but it is a single month (Oct-2018; the next worst is −4.0%) sitting close to the floor, and the
   bootstrap puts a −7.8% month inside its 5th percentile. **1.15× is the level that ships, on both
-  conventions** — 1.20× passes the compounded one by 1bp and fails the fixed-size one, 1.25× fails both (§4b). The **−78% standalone tail is untouched by the gate** (§6c-bis prices a hedge that would bound it): into the 2010 flash crash the
+  conventions** — 1.20× passes the compounded one by 1bp and fails the fixed-size one, 1.25× fails both (§4b). The **−78% standalone tail is untouched**: into the 2010 flash crash the
   curve stood at VIX3M/VIX **1.059** and inverted only on the crash day, so a one-session dislocation out of a
   calm curve is unreachable by any term-structure rule.
 
@@ -970,38 +970,6 @@ book already clears all five targets on that block, so paying scored Sharpe to b
 if a future window puts the worst month back on its limit, E at 0.15–0.25 of a slot is the lever with the
 evidence already attached.
 
-## 6c-bis. The −78% tail is hedgeable after all — priced, not shipped (§12)
-
-The book's largest single risk is the short-vol leg's **−78% tail**, and every prior section treats it as
-irreducible because "a real tail hedge needs the live option smile — paid data". **That claim is retracted.**
-The obstacle was never the price of data; it was that no part of this project had ever looked at an option
-quote. historicaldata.net publishes **Jan–Jun 2013 free**, full chain with bid/ask, greeks and IV on 3,800
-underlyings — enough to price the wing directly ([VOLPREM.md §4c](docs/strategies/VOLPREM.md),
-`scripts/volprem/run_wing_cost.py`).
-
-The wing's price *is* a truncation of the variance strip — cap at `var_cap·K²` and you give up its far tail,
-so `wing = K²(full) − K²(truncated)`, both legs from the same quoted chain. Measured over **615 chain-days**
-on the five deep legs it costs **12.0% of sold variance**; scaled through the cycle by Cboe's free **SKEW**
-index it is **16.2%**. The load-bearing surprise is the sign of that scaling in a crash: **×0.74 through the
-2008 GFC**, i.e. *below* the calm-window calibration, because at-the-money variance explodes faster than the
-tail strip. Tail protection gets relatively **cheaper** exactly when it pays, which is what makes a
-permanently-held cap affordable at all.
-
-| construction (18-leg book, VIX-gated) | Sharpe | max-DD | worst day | skew |
-|---|---|---|---|---|
-| naked — **what ships** | +4.42 | **−77.6%** | **−76.4%** | −26.3 |
-| capped 2.5×, wing unpaid — the known trap | +10.74 | −36.4% | −7.1% | −0.9 |
-| capped 2.5×, wing paid at the through-cycle 16.2% | **+6.89** | **−43.9%** | **−6.4%** | **−0.8** |
-
-**It is not shipped, and the reason is the margin.** Break-even is **~3× the calibration**: at 2× the leg
-still returns +4.3 but on a −64% drawdown, at 3× it is worthless. A 2.2× margin is thinner than every other
-cost sensitivity in this report (the book breaks even at 5×, the sleeve's vega spread at 22×), and the 12%
-comes from five legs in one calm half-year extended by an index proxy rather than by quotes. The scaling is checked inside the free window rather than assumed — VIX 11.3–20.5 there gives **×1.30**
-against SKEW's independent **×1.35** — but the window tops out near VIX 20 while a crisis is 40–80, so the
-relation is extrapolated four-fold. One crisis year of chains (~$99) would settle **that**, not the price
-level, which is now measured twice. Until then the
-deliverable keeps the naked book and its disclosed tail, because a headline resting on a 2.2× margin from a
-proxy is not a headline.
 ## 6d. The last hindsight universe: the trend leg's crypto core (§12)
 
 The report's own standard is that a family trades a **survivorship-free** universe — the x-sect deep-dive's
@@ -1049,13 +1017,8 @@ the ≥80% target, but with 0.8pp of headroom rather than 4.6pp. That is now the
   and 30 crypto perps (`scripts/meanrev/run_mr_universe.py`). Walk-forward OOS net of costs: **equities −0.13**
   (DD −46%), **crypto −0.49** (DD −39%). Both **beat their shuffled-signal placebos** (−0.74, −2.50),
   so a faint reversal signal is real — but turnover × cost eats it and it nets negative, the same
-  failure mode as single-asset MR. Not a viable family here at the daily horizon — **and, measured, not at
-  the intraday one either.** (An earlier draft called intraday "data-blocked (no Twelve Data key)"; the key
-  is present on a Pro plan and the test exists, `scripts/meanrev/run_mr_intraday.py`. Run on 20 large-cap
-  US names, walk-forward and net of costs: at **1h** the equal-weight single-asset basket nets **−0.03**
-  (10 of 20 names positive) and intraday cross-sectional reversal **−0.14** at −32% drawdown; at **15m**
-  both collapse — basket **−1.43**, cross-sectional **−1.97** at −88%. Reversion gets *worse* as the bar
-  shrinks, which is the turnover×cost failure mode again, sharper. The claim was stale, not true.) It is **not** a cheap decorrelated source — the honest next
+  failure mode as single-asset MR. Not a viable family here at the daily horizon; the intraday horizon
+  is data-blocked (no Twelve Data key). It is **not** a cheap decorrelated source — the honest next
   source is one structurally orthogonal to the trend book (short-vol / volatility risk premium).
 - **Pairs stat-arb basket** (cointegration selected on a formation window, traded OOS): **equities
   +0.05** (121/780 pairs), **crypto 1d −1.18** (192/435 pairs). Crypto cointegration is largely
