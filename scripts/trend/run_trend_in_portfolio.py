@@ -23,10 +23,8 @@ from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 PPY = 365
 R = T.bo.REPORTS
-# kept only as the hindsight A/B arm run_trend_pit_universe.py scores the honest universe against
-CORE10 = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
-          "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "LINKUSDT", "LTCUSDT"]
-BLOCK_TFS = ["1d", "4h"]                         # 1h dropped (§ timeframe finding)
+# the universe rule (and the hindsight arm it is scored against) lives in run_trend_pit_universe
+BLOCK_TFS = P.BLOCK_TFS
 
 # the OTHER families' honest published headlines (same as run_master_book.FAMILIES, minus trend)
 OTHERS = [
@@ -38,7 +36,7 @@ OTHERS = [
 
 
 def build_trend_block() -> pd.Series:
-    """Point-in-time top-10 crypto (1d+4h) + 10 equity (1d), EMA long-only, equal-risk daily returns.
+    """Point-in-time crypto (1d+4h) + index ETFs & point-in-time single names (1d), EMA long-only.
 
     The crypto universe is chosen by TRAILING dollar volume at each bar, not by a hard-coded list of
     today's majors. A fixed CORE10 is picked with hindsight, and hindsight is the one bias this project
@@ -57,14 +55,7 @@ def build_trend_block() -> pd.Series:
             r = rets[sym].where(mem[sym].reindex(rets.index).fillna(False))
             if r.notna().sum() > 60 and r.std(ddof=1) > 0:
                 cols[f"{sym}_{tf}"] = r
-    for sym in T.EQ_CORE:
-        px = T.load_equity(sym)
-        if px is None:
-            continue
-        adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
-        _, r = T.eval_spec(px, spec, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
-        if r.std(ddof=1) > 0:
-            cols[f"{sym}_1d_eq"] = P._naive(r)      # crypto legs come back tz-naive; align the calendar
+    cols |= P.equity_legs(pit=True)      # index ETFs (a-priori) + a point-in-time top-7 by liquidity
     block = pd.DataFrame(cols).mean(axis=1).dropna().rename("ret")
     block.to_frame().to_parquet(R / "trend" / "trend_block_returns.parquet")
     return block

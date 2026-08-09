@@ -32,9 +32,8 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.run_master_book as mb  # noqa: E402
 import scripts.trend.trend_common as T  # noqa: E402
-from scripts.trend.run_trend_in_portfolio import BLOCK_TFS, CORE10  # noqa: E402
 from src import bo_common as bo  # noqa: E402
-from src.config import OOS_START, TREND_DIR  # noqa: E402
+from src.config import OOS_START, RAW_DIR, TREND_DIR  # noqa: E402
 from scripts.breakout.run_bo_xs_big import symbols_with_tf  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 
@@ -44,7 +43,13 @@ SELECT_END = pd.Timestamp("2024-06-30")
 TOP_N = 10                      # same count the shipped leg uses, so only the SELECTION RULE changes
 LOOKBACK_D = 63                 # trailing window for the liquidity rank — the breakout leg's choice
 SPEC = {"entry": "ema", "direction": "long_only", "exit": "reversal"}
+BLOCK_TFS = ["1d", "4h"]        # the trend block's crypto timeframes (1h dropped, §timeframe finding)
+# the hindsight arm the honest universe is scored against — kept here, where the A/B lives, so the
+# shipped builder imports its universe rule from one place instead of carrying a list of its own
+CORE10 = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
+          "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "LINKUSDT", "LTCUSDT"]
 NONCRYPTO = {"BTCDOM", "DEFI", "BLUEBIRD"}
+RAW_EQ = RAW_DIR / "equity_td"
 FLOOR = pd.Timestamp("2017-01-01")   # Binance's own start; anything earlier is a corrupt timestamp
 
 
@@ -90,9 +95,21 @@ def pit_members(vol: pd.DataFrame, n: int, win: int) -> pd.DataFrame:
     return tv.rank(axis=1, ascending=False) <= n
 
 
-def equity_legs() -> dict:
+INDEX_ETFS = ["SPY", "QQQ", "IWM"]      # indices are a-priori: they always existed, nothing was picked
+EQ_TOP_N = 7                            # same count the hand-picked single-name half used
+MIN_EQ_DAYS = 500
+
+
+def equity_legs(pit: bool) -> dict:
+    """The equity half. `pit=False` reproduces the shipped hand-picked EQ_CORE; `pit=True` keeps the
+    index ETFs (no selection possible) and replaces the seven single names with a point-in-time top-7 by
+    trailing dollar volume out of the full local panel.
+
+    The single-name half is the sharper version of the same bug the crypto core had: NVDA and META are in
+    the list, and META did not IPO until May-2012 — a long-only trend sleeve handed the era's best large
+    cap by hindsight is not a measurement of trend."""
     cols = {}
-    for sym in T.EQ_CORE:
+    for sym in INDEX_ETFS if pit else T.EQ_CORE:
         px = T.load_equity(sym)
         if px is None:
             continue
@@ -100,6 +117,37 @@ def equity_legs() -> dict:
         _, r = T.eval_spec(px, SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
         if r.std(ddof=1) > 0:
             cols[f"{sym}_1d_eq"] = _naive(r)
+    if not pit:
+        return cols
+
+    rets, vol = {}, {}
+    for f in sorted((RAW_EQ).glob("*_1d.parquet")):
+        sym = f.name[:-len("_1d.parquet")]
+        if sym in INDEX_ETFS:
+            continue
+        # read the BROAD panel directly: trend_common.load_equity points at data/raw/equity, the
+        # 113-name deep-history store the hand-picked core lives in. Selecting a point-in-time universe
+        # out of that store would just be re-picking from an already-curated shortlist.
+        px = pd.read_parquet(f)
+        px = px[px.index >= pd.Timestamp("2012-01-01", tz="UTC")]
+        if "volume" not in px or px["close"].notna().sum() < MIN_EQ_DAYS:
+            continue
+        adv = (px["close"] * px["volume"]).rolling(20).median().shift(1)
+        try:
+            _, r = T.eval_spec(px, SPEC, "1d", T.EQUITY_TF["1d"], T.EC, fund=None, adv=adv, ppy_daily=252)
+        except Exception:
+            continue
+        if r.std(ddof=1) > 0:
+            rets[sym], vol[sym] = _naive(r), _naive(px["close"] * px["volume"])
+    R = pd.DataFrame(rets).sort_index()
+    V = pd.DataFrame(vol).reindex(R.index)
+    mem = pit_members(V, EQ_TOP_N, LOOKBACK_D)
+    ever = int((mem.sum() > 0).sum())
+    print(f"  equity: pool {R.shape[1]} names, PIT top-{EQ_TOP_N}: {ever} distinct ever a member, "
+          f"avg {mem.sum(axis=1).mean():.1f} live; the hand-picked seven hold "
+          f"{mem[[c for c in T.EQ_CORE if c in mem.columns]].sum().sum() / max(mem.sum().sum(), 1):.0%} of member-days")
+    for sym in R.columns:
+        cols[f"{sym}_1d_eq"] = R[sym].where(mem[sym].reindex(R.index).fillna(False))
     return cols
 
 
@@ -136,9 +184,9 @@ def book_with(trend_leg: pd.Series, end=None) -> pd.Series:
 
 
 def main():
-    print("=== trend leg: hindsight CORE10 vs a point-in-time top-10 universe ===\n")
-    eq = equity_legs()
-    hind, pit, churn = dict(eq), dict(eq), {}
+    print("=== trend leg: hindsight lists vs point-in-time universes, crypto AND equity ===\n")
+    eq_hind, eq_pit = equity_legs(pit=False), equity_legs(pit=True)
+    hind, pit, churn = dict(eq_hind), dict(eq_pit), {}
     for tf in BLOCK_TFS:
         R, V = pool(tf)
         print(f"  {tf}: pool {R.shape[1]} perps, {R.index.min().date()}..{R.index.max().date()}")
@@ -155,8 +203,11 @@ def main():
               f"avg {churn[tf]['avg_members']:.1f} live; today's CORE10 hold "
               f"{churn[tf]['core10_share_of_member_days']:.0%} of member-days")
 
-    legs = {"hindsight CORE10 (shipped)": pd.DataFrame(hind).mean(axis=1).dropna().rename("ret"),
-            f"PIT top-{TOP_N} by trailing volume": pd.DataFrame(pit).mean(axis=1).dropna().rename("ret")}
+    legs = {"hindsight lists (crypto+equity)": pd.DataFrame(hind).mean(axis=1).dropna().rename("ret"),
+            "PIT crypto only (previous ship)": pd.DataFrame({**eq_hind, **{k: v for k, v in pit.items()
+                                                                          if not k.endswith("_1d_eq")}}
+                                                           ).mean(axis=1).dropna().rename("ret"),
+            "PIT crypto + PIT equity": pd.DataFrame(pit).mean(axis=1).dropna().rename("ret")}
 
     out = {"churn": churn}
     print("\nleg standalone:")
