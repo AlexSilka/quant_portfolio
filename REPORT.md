@@ -806,10 +806,10 @@ instead helps on no honest reading of the five targets (causal walk-forward, qua
 judged on Sharpe / CAGR / max-DD / worst-month / months-in-profit / streak, full + OOS). **(A) A whole-book regime
 gate** — logistic / RF / ExtraTrees / HistGB / LightGBM / MLP predicting P(book up next 21d) — flattens 14–26% of
 months, and a flat month is a non-profit month, so it *worsens the binding targets*: months-in-profit
-**80.3% → 66–68%**, Sharpe **3.63 → 3.16–3.43**, CAGR
-**34% → 24–28%** on the full window (compounding **96× →
-30–49×** the starting capital), taking the book from **5/5 to 3/5**; the marginal OOS uptick is short-block
-OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.00–3.41
+**80.8% → 66–68%**, Sharpe **3.65 → 3.41–3.50**, CAGR
+**35% → 26–29%** on the full window (compounding **105× →
+36–52×** the starting capital), taking the book from **5/5 to 3/5**; the marginal OOS uptick is short-block
+OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.03–3.43
 full — the ML adds no timing beyond de-risking). **(B) Soft exposure** (scale gross by the probability, cap 1.5×) is
 just leverage — CAGR rises to **50–52%** but max-DD **−9.9/−10.0%** and worst-month **−7.6/−7.7%** break the
 worst-month target. **The leverage-matched control settles that** (the arm without which "ML raised the return" is
