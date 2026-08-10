@@ -327,6 +327,14 @@
     "gmacro": 0.929710735734962,
     "bab": 1.2860527832897575
   },
+  "corr_to_book": {
+    "volprem": 0.475,
+    "xs_momentum": 0.393,
+    "breakout": 0.532,
+    "crisis": 0.626,
+    "gmacro": 0.563,
+    "bab": 0.504
+  },
   "mean_correlation": 0.06731374804377495,
   "correlation_stability": {
     "first_half_mean": 0.07,

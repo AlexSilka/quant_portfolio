@@ -33,6 +33,18 @@ def _n(v, dp=2):
     return f"{v:+.{dp}f}".replace("-", "−")
 
 
+def _word(n):
+    """Small counts spelled out, so prose reads as prose ("all six legs") and still tracks the artifact."""
+    return {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
+            9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}.get(n, str(n))
+
+
+def _ordinal(n):
+    """"fourth-highest", not "four-highest" — a rank is a different word from a count."""
+    return {1: "highest", 2: "second-highest", 3: "third-highest", 4: "fourth-highest",
+            5: "fifth-highest", 6: "sixth-highest", 7: "seventh-highest", 8: "eighth-highest"}.get(n, f"{n}th-highest")
+
+
 def _load(path):
     p = R / path
     return json.loads(p.read_text()) if p.exists() else {}
@@ -128,9 +140,10 @@ def _gate_table():
 
 
 def _selective_leverage():
-    """§4b's "then don't lever the aggressive leg" A/B: all eight legs at the shipped level against the
-    vol-matched alternative that holds vol-prem at 1.00× and gives the risk to the other seven. From
-    run_risk_budget's own json, so the table cannot drift from the experiment."""
+    """§4b's "then don't lever the aggressive leg" A/B: every leg at the shipped level against the
+    vol-matched alternative that holds vol-prem at 1.00× and gives the risk to the others. From
+    run_risk_budget's own json — including the leg counts, so neither the table nor the prose around it
+    can go on naming a book composition the experiment no longer ran."""
     sl = _load("book/risk_budget.json").get("selective_leverage") or {}
     a, b = sl.get("all legs"), sl.get("ex-volprem")
     if not (a and b):
@@ -139,8 +152,8 @@ def _selective_leverage():
     def col(d, key, fmt):
         return fmt(d[key]) if key in d else fmt(d["full"][key])
     lev_b = next(iter(b["leverage"].values()))
-    rows = [f"| | all eight legs {next(iter(a['leverage'].values())):.2f}× | "
-            f"seven legs {lev_b:.2f}×, vol-prem 1.00× |", "|---|---|---|"]
+    rows = [f"| | all {_word(len(a['leverage']))} legs {next(iter(a['leverage'].values())):.2f}× | "
+            f"{_word(len(b['leverage']))} legs {lev_b:.2f}×, vol-prem 1.00× |", "|---|---|---|"]
     for lab, key, fmt in (("Sharpe (full / OOS)", None, None), ("CAGR", "cagr", _pc),
                           ("max-DD", "max_dd", _pc), ("worst month", "worst_month", _pc),
                           ("months-in-profit", "months_in_profit", _pcu)):
@@ -152,7 +165,14 @@ def _selective_leverage():
     rows.append(f"| targets, full window | **{a['full']['targets']}/5** | {b['full']['targets']}/5 |")
     rows.append(f"| 2010-event DD / month | {_pc(a['stress_max_dd'])} / {_pc(a['stress_worst_month'])} | "
                 f"{_pc(b['stress_max_dd'])} / {_pc(b['stress_worst_month'])} |")
-    return {"selective_leverage_table": "\n".join(rows)}
+    return {"selective_leverage_table": "\n".join(rows),
+            "selective_others_word": _word(len(b["leverage"])),
+            "selective_stress_month": _pc(b["stress_worst_month"]),
+            "selective_d_sharpe": f"{a['full']['sharpe'] - b['full']['sharpe']:.2f}",
+            "selective_d_cagr": f"{100 * (a['full']['cagr'] - b['full']['cagr']):.1f}pp",
+            "selective_d_months":
+                f"{100 * (a['full']['months_in_profit'] - b['full']['months_in_profit']):.1f}pp",
+            "selective_targets": f"{b['full']['targets']}/5"}
 
 
 def _ml_overlay():
@@ -322,6 +342,234 @@ TARGETS = (("Sharpe", lambda d: 2.5 <= d["sharpe"] <= 4.0, "Sharpe outside the 2
            ("worst month", lambda d: d["worst_month"] >= -0.06, "a worst month past −6%"))
 
 
+#: What each family is paid for, and where its deep-dive lives. Prose per family, numbers from the run —
+#: so the README's source table lists exactly the legs the book assembled, in P&L order, and a family
+#: entering or leaving the book cannot leave a stale row behind.
+FAMILY_BLURB = {
+    "volprem": ("[short-vol / VRP](docs/strategies/VOLPREM.md)",
+                "selling insurance against volatility across 18 Cboe underlyings"),
+    "gmacro": ("[global-macro](scripts/run_gmacro.py)",
+               "trend on EM FX + commodities — asset classes no other family trades"),
+    "trend": ("[trend](docs/strategies/TREND.md)", "price trend, the only family spanning both asset classes"),
+    "bab": ("[BAB / low-vol](docs/strategies/BAB.md)",
+            "the leverage-constraint premium: long low-beta, short high-beta"),
+    "breakout": ("[breakout](docs/strategies/BREAKOUT.md)",
+                 "channel breakouts held on a trailing stop, ML-gated on fast bars"),
+    "xs_momentum": ("[x-sect momentum](docs/strategies/XSECT.md)", "relative strength, market-neutral"),
+    "carry": ("[carry](docs/strategies/CARRY.md)",
+              "perpetual funding: being paid to hold the unpopular side"),
+    "crisis": ("[crisis-alpha](scripts/run_crisis.py)",
+               "long-gamma managed futures — it pays when the others bleed"),
+}
+
+
+def _family_sources(s):
+    """The README's one-page source table, emitted from the run's own family list."""
+    share, sharpe = s.get("pnl_share", {}), s.get("standalone_sharpe", {})
+    pretty = {"xs_momentum": "x-sect", "bab": "BAB", "gmacro": "gmacro", "trend_momentum": "trend"}
+    ranked = sorted(share, key=lambda f: -share[f])
+    line = ", ".join(f"**{pretty.get(f, f)} {_pcu(share[f], 0)}**" if i == 0 else
+                     f"{pretty.get(f, f)} {_pcu(share[f], 0)}" for i, f in enumerate(ranked))
+    fams = [f for f in sorted(s["families"], key=lambda f: -share.get(f, 0)) if f in FAMILY_BLURB]
+    rows = ["| family | what it earns on | Sharpe | share of P&L |", "|---|---|---|---|"]
+    for i, f in enumerate(fams):
+        name, what = FAMILY_BLURB[f]
+        pc = _pcu(share.get(f, float("nan")), 0)
+        rows.append(f"| {name} | {what} | {_n(sharpe.get(f, float('nan')))} | "
+                    f"{'**' + pc + '**' if i == 0 else pc} |")
+    # §4's family table: the traded legs with their standalone Sharpe and correlation to the book they
+    # are part of. Same source, so the two tables cannot disagree about which families the book holds.
+    desc = {"volprem": "short-vol / VRP across 18 Cboe underlyings (incl. gold-miners), 2005+ ([docs/strategies/VOLPREM.md](docs/strategies/VOLPREM.md))",
+            "breakout": "crypto trend+ML / PIT top-30 x-sect ([docs/strategies/BREAKOUT.md](docs/strategies/BREAKOUT.md))",
+            "bab": "beta-neutral top-25 crypto, betting-against-beta ([docs/strategies/BAB.md](docs/strategies/BAB.md))",
+            "gmacro": "EM-FX + commodities TSMOM (`scripts/run_gmacro.py`)",
+            "xs_momentum": "crypto residual (idio) + equity, top-100 liquid ([docs/strategies/XSECT.md](docs/strategies/XSECT.md))",
+            "crisis": "multi-asset managed-futures trend (`scripts/run_crisis.py`)"}
+    label = {"volprem": "vol-premium", "xs_momentum": "x-sect momentum", "bab": "BAB / low-vol",
+             "gmacro": "global-macro", "crisis": "crisis-alpha", "breakout": "breakout"}
+    ctb = s.get("corr_to_book", {})
+    brows = ["| family | honest series | standalone Sharpe | corr to book |", "|---|---|---|---|"]
+    for f in sorted(s["families"], key=lambda f: -sharpe.get(f, 0)):
+        brows.append(f"| **{label.get(f, f)}** | {desc.get(f, '')} | {sharpe.get(f, float('nan')):.2f} | "
+                     f"{_n(ctb.get(f, float('nan')))} |")
+    return {"family_source_table": "\n".join(rows), "pnl_share_line": line,
+            "book_family_table": "\n".join(brows)}
+
+
+def _risk_budget_extras():
+    """The §4b numbers that live in run_risk_budget's json rather than in its grid CSV: the unlevered
+    stack's own volatility, the shipped book's, the flash-crash day, and the rung above the shipped one.
+
+    The last of these is what the section now argues from — "the worst month breaks immediately" is only
+    honest if the number quoted is the next rung the grid actually holds, not a remembered one."""
+    import csv
+    d = _load("book/risk_budget.json")
+    if not d:
+        return {}
+    out = {}
+    if "stack_vol" in d:
+        out["stack_vol"] = _pcu(d["stack_vol"]["full"])
+    if "book_vol" in d:
+        out["book_vol"] = _pcu(d["book_vol"])
+    ev = d.get("event") or {}
+    if "leg_day_loss_at_book_weight" in ev:
+        out["event_leg_at_weight"] = _pc(ev["leg_day_loss_at_book_weight"])
+        out["event_book_day"] = _pc(ev["book_day_loss_unlevered"])
+        out["event_quarters"] = _word(len(ev.get("replayed_into_quarters", [])))
+    shipped = d.get("leverage")
+    p = R / "book" / "risk_budget_grid.csv"
+    if shipped and p.exists():
+        rows = sorted(({round(float(r["leverage"]), 2): r for r in csv.DictReader(p.open())
+                        if r["limits"] == "book_equity"}).items())
+        nxt = next((r for lev, r in rows if lev > round(float(shipped), 2) + 1e-9), None)
+        if nxt:
+            out["worst_month_next_rung"] = _pc(float(nxt["full_worst_month"]))
+            out["next_rung"] = f"{float(nxt['leverage']):.2f}×"
+    return out
+
+
+def _cap_binding():
+    """The per-leg vol target is not a scalar, and §4b now says so with the measurement rather than with a
+    remembered leg name: which legs sit on `_scale`'s 3× cap, how often, and what raising the target by the
+    shipped leverage actually produces — a different book on the days the cap binds, not a bigger one.
+
+    Which legs exist in 2005 is measured here too, for the same reason: the sentence naming them used to be
+    typed, and it went on naming a leg the book had dropped."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import run_master_book as mb
+    pretty = {"trend_momentum": "trend", "xs_momentum": "x-sect", "bab": "BAB", "gmacro": "global-macro",
+              "volprem": "vol-premium", "crisis": "crisis", "breakout": "breakout", "carry": "carry"}
+    legs = {lab: v for lab, f, c in mb.FAMILIES if (v := mb.load(lab, f, c)) is not None}
+    if not legs:
+        return {}
+    share = {k: float((mb._scale(v.dropna(), mb.VOL_TARGET_ANNUAL) >= 3.0 - 1e-12).mean())
+             for k, v in legs.items()}
+    top = sorted(share, key=lambda k: -share[k])[:2]
+
+    def stack(target):
+        df = pd.DataFrame({k: mb.rescale(v, target) for k, v in legs.items()}).sort_index()
+        df = df[df.index >= pd.Timestamp(mb.START_REPORT)]
+        return df[df.notna().sum(axis=1) >= 2].mean(axis=1, skipna=True).dropna()
+
+    lev = mb.BOOK_LEVERAGE
+    base, alt = stack(mb.VOL_TARGET_ANNUAL), stack(mb.VOL_TARGET_ANNUAL * lev)
+    differ = int((alt - lev * base).abs().gt(1e-4).sum())
+    card = mb.scorecard(mb.risk_overlay(alt, leverage=1.0)[0])
+    early = [k for k, v in legs.items() if (v.dropna().index < pd.Timestamp("2006-01-01")).any()]
+    # the two accounting conventions at the shipped rung and the one above — the sentence built on these
+    # used to be typed, and it had the two conventions the wrong way round after the book moved
+    import run_risk_budget as RB
+    ew = RB.assemble()[0].mean(axis=1, skipna=True).dropna()
+    conv = {}
+    for tag, L in (("shipped", lev), ("next", round(lev + 0.05, 2)), ("next2", round(lev + 0.10, 2))):
+        b = mb.risk_overlay(ew, leverage=L)[0]
+        conv[tag] = (mb.scorecard(b)["worst_month"], mb.fixed_size_scorecard(b)["worst_month"])
+
+    # which month actually sets the floor, and the one behind it — the sentence about "a single month
+    # sitting close to the floor" named Oct-2018 long after the book's worst month had moved to Apr-2020
+    _b = mb.risk_overlay(ew, leverage=lev)[0]
+    _mo = ((1 + _b).resample("ME").prod() - 1).nsmallest(2)
+    worst_when = _mo.index[0].strftime("%b-%Y")
+    worst_next = _pc(_mo.iloc[1])
+    _q = ((1 + _b).resample("QE").prod() - 1).nsmallest(1)
+    worst_q = f"Q{_q.index[0].quarter}-{_q.index[0].year}"
+
+    def verdict(t):
+        c, f = conv[t]
+        both = (c >= -0.06, f >= -0.06)
+        if all(both):
+            return "clears both"
+        if not any(both):
+            return "fails both"
+        which = "compounded" if both[0] else "fixed-size"
+        other = "fixed-size" if both[0] else "compounded"
+        gap = abs((c if both[0] else f) + 0.06), abs((f if both[0] else c) + 0.06)
+        return (f"clears the {which} one by {gap[0] * 1e4:.0f}bp and fails the {other} one by "
+                f"{gap[1] * 1e4:.0f}bp")
+    return {"cap_leg_names": " and ".join(pretty.get(k, k) for k in top),
+            "cap_leg_share": f"at most {_pcu(max(share.values()), 1)}",
+            "cap_days_differ": f"{differ} of {len(base):,} days",
+            "cap_alt_dd": _pc(card["max_dd"]), "cap_alt_worst": _pc(card["worst_month"]),
+            "early_legs_word": _word(len(early)),
+            "early_legs": ", ".join(pretty.get(k, k) for k in early),
+            "worst_month_when": worst_when, "worst_month_next": worst_next,
+            "worst_quarter_when": worst_q,
+            "conv_shipped": verdict("shipped"), "conv_next": verdict("next"),
+            "conv_next2": verdict("next2"),
+            "next2_rung": f"{lev + 0.10:.2f}×",
+            "fixed_worst_month_shipped": _pc(conv["shipped"][1], 2)}
+
+
+def _composition():
+    """§6d-ter's composition search, from run_composition_search's own json.
+
+    This is the one section where the denominator matters more than the winner, so the counts are read
+    from the artifact rather than typed: how many configurations were tried, how many cleared both
+    windows, and what the shipped one gave up. A hand-written "37" would go on reading right the day a
+    ninth family made it 46."""
+    d = _load("book/composition_search.json")
+    if not d:
+        return {}
+    cfg, base = d["configurations"], d["configurations"]["all eight"]
+    ship = cfg[d["shipped"]]
+    pretty = {"trend_momentum": "trend", "xs_momentum": "x-sect", "bab": "BAB", "gmacro": "global-macro",
+              "crisis": "crisis", "breakout": "breakout", "carry": "carry", "volprem": "vol-premium"}
+
+    def name(label):
+        return " + ".join(pretty.get(x, x) for x in cfg[label]["dropped"]) or "all eight"
+
+    def cell(r, win):
+        # the Sharpe is printed on every row, so a row that fails the *corridor* says which side it fell
+        # off rather than repeating the number in a miss list
+        sh = r[win]["sharpe"]
+        m = [x for x in r[f"misses_{win}"] if not x.startswith("Sharpe")]
+        edge = " (under 2.5)" if sh < 2.5 else (" (over 4.0)" if sh > 4.0 else "")
+        got = f"**{r['targets_' + win]}/5**" if r["targets_" + win] == 5 else f"{r['targets_' + win]}/5"
+        return (f"{got} — Sharpe {sh:.2f}{edge}" + (f", {', '.join(m)}" if m else "")).replace("-", "−")
+
+    # the rows the section argues over: the baseline, every single removal that changes a verdict, and
+    # both survivors — the other pairs are counted, not listed, and the table says so
+    shown = ["all eight"] + [k for k in cfg if len(cfg[k]["dropped"]) == 1] + list(d["passing"])
+    rows = ["| configuration | full window | frozen block |", "|---|---|---|"]
+    for k in dict.fromkeys(shown):
+        lab = ("**drop " + name(k) + "** *(shipped)*" if k == d["shipped"] else
+               "all eight" if not cfg[k]["dropped"] else "drop " + name(k))
+        rows.append(f"| {lab} | {cell(cfg[k], 'full')} | {cell(cfg[k], 'oos')} |")
+    rest = d["n_configurations"] - len(dict.fromkeys(shown))
+    rows.append(f"| *({rest} further pairs)* | — | fail at least one |")
+
+    solo = d["standalone_sharpe"]
+    ranked = sorted(solo, key=lambda k: -solo[k])
+    return {
+        "comp_table": "\n".join(rows),
+        "comp_n_configs": str(d["n_configurations"]),
+        "comp_n_configs_word": _word(d["n_configurations"]),
+        "comp_n_passing_word": _word(len(d["passing"])),
+        "comp_n_passing_word_cap": _word(len(d["passing"])).capitalize(),
+        "comp_passing": " and ".join(sorted((name(k) for k in d["passing"]), key=len)),
+        "comp_base_targets_full": f"{base['targets_full']}/5",
+        "comp_base_targets_oos": f"{base['targets_oos']}/5",
+        "comp_base_miss_full": ", ".join(base["misses_full"]),
+        "comp_base_miss_oos": ", ".join(base["misses_oos"]),
+        "comp_base_sharpe_full": f"{base['full']['sharpe']:.2f}",
+        "comp_base_sharpe_oos": f"{base['oos']['sharpe']:.2f}",
+        "comp_ship_sharpe_full": f"{ship['full']['sharpe']:.2f}",
+        "comp_ship_sharpe_oos": f"{ship['oos']['sharpe']:.2f}",
+        "comp_cost_sharpe_oos": _n(d["cost_of_passing"]["sharpe_oos"]),
+        "comp_share_before": _pcu(d["cost_of_passing"]["volprem_pnl_share"][0], 0),
+        "comp_share_after": _pcu(d["cost_of_passing"]["volprem_pnl_share"][1], 0),
+        "comp_trend_solo": f"{solo['trend_momentum']:.2f}",
+        "comp_carry_solo": f"{solo['carry']:.2f}",
+        "comp_carry_rank": _ordinal(ranked.index("carry") + 1),
+        "comp_trend_neighbours": " and ".join(
+            f"{pretty.get(k, k)} ({solo[k]:.2f})" for k in
+            (ranked[ranked.index("trend_momentum") - 1], ranked[ranked.index("trend_momentum") + 1])),
+        "comp_drop_trend_months_oos": _pcu(cfg["drop trend_momentum"]["oos"]["months_in_profit"]),
+        "comp_ship_months_oos": _pcu(ship["oos"]["months_in_profit"]),
+    }
+
+
 def _verdict(sc, prefix):
     passed = [name for name, test, _ in TARGETS if test(sc)]
     missed = [why.format(**sc) for name, test, why in TARGETS if not test(sc)]
@@ -395,9 +643,18 @@ def build():
             "turnover": f"{s.get('annual_turnover', float('nan')):.0f}×",
             "volprem_pnl_share": _pcu(s.get("pnl_share", {}).get("volprem", float("nan")), 0),
             "n_years": str(len(s.get("per_year", {}))),
-            # spelled out for prose ("an eight-family book"); unsigned for "≈ 0.06" style
-            "n_families_word": {6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten"}.get(
-                len(s["families"]), str(len(s["families"]))),
+            # the per-year line was a typed list of nine years and every one of them had drifted; it is
+            # the whole series now, so it cannot be partly stale
+            "per_year_line": " · ".join(f"{y} **{v:+.1f}**" for y, v in
+                                        sorted(s.get("per_year", {}).items())),
+            # spelled out for prose ("a six-family book"); unsigned for "≈ 0.06" style
+            "n_families_word": _word(len(s["families"])),
+            "n_families_word_cap": _word(len(s["families"])).capitalize(),
+            "n_families_less_one_word": _word(len(s["families"]) - 1),
+            # the standalone spread of everything except the anchor — "the other five families run 0.4-1.4"
+            "solo_range_ex_anchor": (lambda v: f"{min(v):.1f}–{max(v):.1f}")(
+                [x for k, x in s["standalone_sharpe"].items()
+                 if k != max(s["standalone_sharpe"], key=s["standalone_sharpe"].get)]),
             "mean_corr_abs": f"{abs(s['mean_correlation']):.2f}",
             "n_years_positive": str(sum(1 for v in s.get("per_year", {}).values() if v > 0)),
             "weakest_year_sharpe": _n(min(s.get("per_year", {"x": 0.0}).values(), key=float), 1),
@@ -478,6 +735,10 @@ def build():
         out.update(_marginal(s.get("marginal") or []))
         out.update(_gate_table())
         out.update(_selective_leverage())
+        out.update(_family_sources(s))
+        out.update(_composition())
+        out.update(_risk_budget_extras())
+        out.update(_cap_binding())
         out.update(_ml_overlay())
         out.update(_family_costs())
 

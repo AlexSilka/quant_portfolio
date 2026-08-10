@@ -765,21 +765,25 @@ def main():
                         f"<td>{_pc((1 + w).prod() - 1)}</td><td>{_pc(_mdd(w))}</td></tr>")
     # These five windows are the ones the brief names, and the book's own deepest drawdown is in none of
     # them — so locate it and say what drove it, rather than letting the reader read the table's worst row
-    # as the worst episode (Q4 2018 and the real trough happen to print the same -7.2%).
     _e = (1.0 + master).cumprod()
     _dd = _e / _e.cummax() - 1.0
     trough = _dd.idxmin()
     peak = _e[:trough].idxmax()
     ep = legs.loc[peak:trough].sum().sort_values()
     worst_legs = ", ".join(f"{sf(k)} {_pc(v)}" for k, v in ep.head(2).items())
+    q4_18 = _mdd(master[(master.index >= pd.Timestamp("2018-10-01")) & (master.index <= pd.Timestamp("2018-12-31"))])
+    # "the same depth" was once literally true (both −7.2%) and was written as a fixed claim. It is a
+    # measurement, so it is measured: the two only read as one failure mode when the numbers agree.
+    same = abs(q4_18 - m["max_dd"]) < 0.005
     stress_note = (
         f'<p class="valline">The book&rsquo;s deepest drawdown of the whole window is in <b>none of these '
         f'five</b>: it is {_pc(m["max_dd"])} over {peak.date()}&rarr;{trough.date()}, driven by the '
         f'managed-futures legs ({worst_legs}) reversing together while the short-vol leg was up. Q4 2018 '
-        f'prints the same {_pc(_mdd(master[(master.index >= pd.Timestamp("2018-10-01")) & (master.index <= pd.Timestamp("2018-12-31"))]))} '
-        f'inside its own window for an unrelated reason &mdash; a trend reversal plus a vol spike &mdash; and '
-        f'it is the quarter that sets the worst month ({_pc(mo.min())}). Two different failure modes at the '
-        f'same depth; the diversification is what keeps either from going further.</p>')
+        f'{"prints the same" if same else "gives up"} {_pc(q4_18)} inside its own window for an unrelated '
+        f'reason &mdash; a trend reversal plus a vol spike &mdash; and it is the quarter that sets the worst '
+        f'month ({_pc(mo.min())}). Two different failure modes'
+        f'{" at the same depth" if same else ""}; the diversification is what keeps either from going '
+        f'further.</p>')
 
     # --- marginal-contribution curve + table: Sharpe, max-DD and months-in-profit as families join (§7) ---
     labels = [sf(a) for a in marg["added"]]
@@ -897,7 +901,7 @@ def main():
             worst = max(shares, key=lambda k: shares[k]["cost_share_of_gross_pnl"])
             fam_cost_txt = (
                 f' Measured per family by re-running each construction with its cost model switched off: '
-                f'the eight legs pay between '
+                f'the {len(shares)} legs pay between '
                 f'{min(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} and '
                 f'{max(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} of gross P&amp;L in cost, '
                 + (f'and <b>{len(frag)} is cost-fragile ({", ".join(frag)}, break-even '
@@ -910,8 +914,8 @@ def main():
                f'{rl["leverage"]:.2f}&times; against a {rl["gross_cap"]:.1f}&times; cap, net exposure ~0.'
                if rl.get("leverage") and rl.get("gross_cap") else "")
     ops_html = (
-        f'<figure class="card"><figcaption>Family exposure over time (§13) &mdash; sum of the eight '
-        f'risk-parity weights &times; their vol-target leverage</figcaption>{expg_svg}'
+        f'<figure class="card"><figcaption>Family exposure over time (§13) &mdash; sum of the '
+        f'{len(fams)} risk-parity weights &times; their vol-target leverage</figcaption>{expg_svg}'
         f'<p class="valline">This is the notional the sleeves add up to (mean {gross.mean():.2f}&times; capital, '
         f'peak {gross.max():.2f}&times;), reconstructed from the family blocks &mdash; it rises when the legs&rsquo; '
         f'own volatility falls and their vol targeting levers up.{lim_txt}</p></figure>'
@@ -938,6 +942,7 @@ def main():
         corr=corr_svg, famtbl=fam_rows, famnote=fam_note, famperiods=famperiods, param=_param_card(),
         timeframe=_timeframe_card(), ops=ops_html,
         edge_map=_family_edge_card(summ, legs),
+        listing=_listing_sentence(summ, legs),
         feature=_feature_card(), sleevecost=_sleeve_cost_card(), honesty=_honesty_card(), lines=lines))
     if "--check" not in sys.argv:
         print("dashboard -> reports/dashboard.html")
@@ -949,6 +954,30 @@ ASSETS = Path(__file__).resolve().parent / "report_assets"  # dashboard.html/.cs
 
 def _asset(name):
     return (ASSETS / name).read_text()
+
+
+def _listing_sentence(summ, legs):
+    """"Who is live when", built from the legs rather than typed.
+
+    This sentence used to name trend and carry by hand. When the book stopped trading them the page went
+    on telling the reader that trend joins in 2012 — which is the same class of error as a stale Sharpe,
+    only harder to notice because it reads like background."""
+    starts = {}
+    for f in summ["families"]:
+        s = legs.get(f)
+        if s is not None and len(s.dropna()):
+            starts.setdefault(s.dropna().index.min().year, []).append(sf(f))
+    if not starts:
+        return ""
+    first = min(starts)
+    parts = [f"{first} runs on {_and(starts[first])}"]
+    for y in sorted(starts)[1:]:
+        parts.append(f"{_and(starts[y])} join{'s' if len(starts[y]) == 1 else ''} in {y}")
+    return ", ".join(parts)
+
+
+def _and(names):
+    return names[0] if len(names) == 1 else " and ".join([", ".join(names[:-1]), names[-1]])
 
 
 def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharpe, ca_cagr, S):
@@ -976,7 +1005,8 @@ def _write(summ, cagr, net_pnl, pnl_per_year, simple_return, cmp_final, ca_sharp
         sc=S["sc"], sc_note=S["sc_note"], mc_p5=_n(m['mc_p5'], 2), mc_p50=_n(m['mc_p50'], 2), mc_p95=_n(m['mc_p95'], 2),
         mc_maxdd_p5=_mcp("maxdd_p5", True), mc_maxdd_p50=_mcp("maxdd_p50", True), mc_maxdd_p95=_mcp("maxdd_p95", True),
         mc_hit_p5=_mcp("hit_p5"), mc_hit_p50=_mcp("hit_p50"), mc_hit_p95=_mcp("hit_p95"),
-        mean_corr=_n(summ['mean_correlation'], 2), n_families=nf,
+        mean_corr=_n(summ['mean_correlation'], 2), n_families=nf, n_families_less_one=nf - 1,
+        listing=S["listing"],
         top_family=sf(tr["family"]), top_removed=_n(tr['sharpe'], 2),
         vp_pnl=f"{summ.get('pnl_share', {}).get('volprem', float('nan')):.0%}", fam_w=f"1/{nf}",
         eq=S["eq"], psleq=S["psleq"], month=S["month"], dd=S["dd"], roll=S["roll"],

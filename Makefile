@@ -1,4 +1,4 @@
-.PHONY: integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -8,14 +8,19 @@ setup:
 	.venv/bin/pip install -e ".[dev]"
 	@echo "macOS: if lightgbm fails to load, run: brew install libomp"
 
-# One-command headline: discovery -> ML overlay -> MASTER portfolio (risk-parity over the eight
+# One-command headline: discovery -> ML overlay -> MASTER portfolio (risk-parity over the traded
 # families' committed honest series) -> dashboard. Rebuild a family's series with its target below.
 reproduce:
 	$(PY) scripts/run_all.py
 
-# Assemble the master book from the eight families' published series (the canonical portfolio).
+# Assemble the master book from the traded families' published series (the canonical portfolio).
 master:
 	$(PY) scripts/run_master_book.py
+
+# §6d-ter why the book trades six families and not eight: every single- and double-removal of the eight
+# validated families, all five targets on both windows. Publishes the denominator, not just the winner.
+composition:
+	$(PY) scripts/run_composition_search.py
 
 # §8 how much leverage the book can carry: constant-leverage grid 1.0-2.0x through the canonical
 # assembler, both §8 limit conventions, bootstrap tail + the 2010 systemic event the window excludes.

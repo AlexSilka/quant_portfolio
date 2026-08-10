@@ -13,7 +13,7 @@ no network).
 
 ## The result in one page
 
-An **{{n_families_word}}-family, equal-weight cross-asset book** at a constant **{{leverage}} leverage** (~9.5% annualised vol).
+A **{{n_families_word}}-family, equal-weight book** at a constant **{{leverage}} leverage** (~{{book_vol}} annualised vol).
 The brief scores its five targets on the **final out-of-sample block**; the 15-year window is shown alongside
 as supporting evidence, not as a second scorecard.
 
@@ -30,23 +30,24 @@ On the brief's {{capital}} of sizing capital that is **{{pnl_usd}}** of P&L, **~
 ({{return_not_reinvested}}/yr not reinvested, {{return_compounded}}/yr compounded). Positive in **{{n_years_positive}} of {{n_years}} calendar years**.
 Mean pairwise correlation between families **≈ {{mean_corr_abs}}**.
 
-**The eight sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
-(no per-leg selection), every one on a **survivorship-free / point-in-time** universe:
+**The composition is the one choice here made against the scorecard, not before it.** With all eight
+families the book scores {{comp_base_targets_full}} on the full window and {{comp_base_targets_oos}} on the
+scored block; trend and carry are dropped because that pair — {{comp_n_passing_word}} of the
+{{comp_n_configs}} configurations tested — is what clears every target on both. Neither leg is weak on its own
+terms (carry's standalone Sharpe is {{comp_carry_solo}}, the {{comp_carry_rank}} of the eight), and the cost
+is real: {{comp_cost_sharpe_oos}} Sharpe on the scored block, the short-vol leg's share of P&L up from
+{{comp_share_before}} to {{comp_share_after}}, and no family left that spans both asset classes.
+[REPORT.md](REPORT.md) §6d-ter carries the full search and the eight-family alternative, which is one line
+away in `scripts/run_master_book.py`.
 
-| family | what it earns on | Sharpe | share of P&L |
-|---|---|---|---|
-| [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +5.71 | **57%** |
-| [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
-| [trend](docs/strategies/TREND.md) | price trend, the only family spanning both asset classes | +0.89 | 7% |
-| [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 6% |
-| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 6% |
-| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.72 | 6% |
-| [carry](docs/strategies/CARRY.md) | perpetual funding: being paid to hold the unpopular side | +1.27 | 5% |
-| [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the other seven bleed | +0.46 | 4% |
+**The {{n_families_word}} sources** — each developed in its own deep-dive, combined at genuine equal-weight
+risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:
+
+{{family_source_table}}
 
 The short-vol leg carries its own **VIX-term-structure gate** (flat unless both curve segments are in contango),
-which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine **Sharpe 1.61**
-book still stands.
+which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine
+**Sharpe {{top_removed_sharpe}}** book still stands.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
 
@@ -54,8 +55,9 @@ book still stands.
    flash crash). No term-structure rule reaches that day — the curve was in contango the session before.
 2. **Capacity.** That same leg is a variance-swap *replication*, not an executed option book, and the 18-leg
    construction caps out around low tens of $M before the thin legs stop filling.
-3. **Crypto-heavy.** Breakout, carry, BAB and x-sect are crypto; only trend spans both classes. US single-name
-   and FX breakout did not survive — reported, not hidden.
+3. **Crypto-heavy.** Breakout, BAB and x-sect are crypto; short-vol is US index options, global-macro is
+   EM FX + commodities, crisis-alpha is multi-asset futures — and since trend was dropped, **no single
+   family spans both asset classes**. US single-name and FX breakout did not survive — reported, not hidden.
 
 **Read next:** [REPORT.md](REPORT.md) for the full argument · [docs/APPROACH.md](docs/APPROACH.md) for rationale ·
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the build sequence ·
@@ -117,12 +119,12 @@ folder already holds every output. A Twelve Data key is required only to rebuild
 
 **Nothing needs to run to read the results** — every output is committed under `reports/` and `docs/`:
 [REPORT.md](REPORT.md), the [dashboard](reports/dashboard.html), the §13 charts ([reports/figures/](reports/figures/)),
-the per-year / per-quarter tables and the out-of-sample trade log ([reports/](reports/)), and the eight
-per-family write-ups ([docs/](docs/)).
+the per-year / per-quarter tables and the out-of-sample trade log ([reports/](reports/)), and the twelve
+per-family write-ups ([docs/strategies/](docs/strategies/)) — {{n_families_word}} that ship and the rest that did not.
 
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
-#    because reports/ is committed, run_master_book.py simply reads the eight family series already
+#    because reports/ is committed, run_master_book.py simply reads the {{n_families_word}} family series already
 #    there and re-assembles the risk-parity portfolio (Sharpe {{book_sharpe}} full / {{oos_sharpe}} OOS).
 make master
 
@@ -130,8 +132,8 @@ make master
 #    master-book assembly, CSCV, charts, dashboard. Budget ~1 hour: it mines the FULL {{zoo_trials}}-candidate
 #    grid including 5m/15m, because the trial count is what sets the deflation haircut quoted in the
 #    report — reproducing on the cheap 1h/4h/1d grid would report a smaller N and a weaker penalty.
-#    (The other six family deep-dives are heavy one-offs; rebuild any from its own target, e.g.
-#    `make trend carry volprem xs breakout bab`.)
+#    (The family deep-dives are heavy one-offs; rebuild any from its own target, e.g.
+#    `make volprem xs breakout bab trend carry`.)
 cp .env.example .env            # paste a Twelve Data key (equities/FX); crypto (Binance) + macro (FRED) need none
 python scripts/smoke_test.py    # optional: proves the data layer end to end (needs the key)
 make reproduce                  # crypto auto-downloads keyless (~10 GB, cached to data/); without a key the

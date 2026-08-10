@@ -75,7 +75,7 @@ FAMILIES = [
     # §6d-ter states rather than hides. Nothing about either leg says drop me on its own merits.
     #
     # What the SIX-family book gives up, and the report says so in §6d-ter: trend was the ONLY family
-    # spanning both asset classes, and carry was the third-highest standalone of the eight (1.27).
+    # spanning both asset classes, and carry was the fourth-highest standalone of the eight (1.22).
     # Three of the six that remain are crypto-only and the rest are vol/macro overlays, so "cross-asset"
     # now rests on vol-prem's US underlyings and global-macro's EM-FX rather than on a leg that trades
     # both. Cost on the scored block: Sharpe 3.32 -> 3.07.
@@ -357,6 +357,10 @@ def main():
     _notop = df[[c for c in df.columns if c != top]].mean(axis=1, skipna=True)
     notop = summarise(_notop, ppy_of(_notop))["sharpe_ann"]
     mean_corr = float(corr.values[np.triu_indices_from(corr.values, 1)].mean())
+    # each leg against the book it is part of — the §4 family table's second column. Published rather than
+    # transcribed, because that table used to be typed and went on listing legs the book no longer trades.
+    _ew = df.mean(axis=1, skipna=True)
+    corr_to_book = {c: round(float(df[c].corr(_ew)), 3) for c in df.columns}
     # §7.2 correlation STABILITY — the same matrix on two halves of the window. "Diversification that exists
     # only in-sample is not diversification": if the decorrelation is real it must persist out-of-sample.
     tri = np.triu_indices_from(corr.values, 1)
@@ -413,7 +417,8 @@ def main():
         "fixed_size_full": fx_full, "fixed_size_oos": fx_oos, "sizing_capital_usd": CAPITAL_USD,
         "gross_premium_full": sc_raw_full, "gross_premium_oos": sc_raw_oos,
         "without_breakout": mw, "per_year": per_year, "per_quarter": per_period(managed, "Q"),
-        "standalone_sharpe": solo, "mean_correlation": mean_corr, "correlation_stability": corr_stab,
+        "standalone_sharpe": solo, "corr_to_book": corr_to_book,
+        "mean_correlation": mean_corr, "correlation_stability": corr_stab,
         # §11 turnover, round-trip x capital per year. `weights_held` is the same book with every started
         # leg holding a weight through the days its own market is shut, instead of the book renormalising
         # onto whoever is open; the gap between the two is what the shipped convention costs in trading,
