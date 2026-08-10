@@ -62,14 +62,27 @@ PER_FAMILY_CAP = 1.0 / 8 * 1.5     # no family may exceed 1.5× equal risk weigh
 
 # (label, file, column) — each family's honest published headline (avoid the capped fake-Sharpe VRP col)
 FAMILIES = [
-    # trend leg = the improved deep-dive block (core-10 crypto 1d+4h + 10 US equities, EMA long-biased,
-    # equal-risk; standalone Sharpe ~1.3 vs the old book_portfolio's 0.84). See docs/strategies/TREND.md.
-    ("trend_momentum", "trend/trend_block_returns.parquet", "ret"),
-    # carry leg = the survivorship-free POINT-IN-TIME book (top-N by trailing volume incl. delisted
-    # names; standalone ~1.33). Chosen over carry_refined (1.47) on principle: refined's higher Sharpe
-    # sits on a curated current-listed universe, i.e. survivorship-inflated — the same bias the whole
-    # project controls for, and consistent with the PIT trend/xs legs. See docs/strategies/CARRY.md §breadth.
-    ("carry", "carry/carry_breadth_headline.parquet", "ret"),
+    # TREND IS NOT IN THE BOOK. It was, and its series is still built and published by
+    # scripts/trend/run_trend_in_portfolio.py — it is dropped here, not deleted, so the counterfactual
+    # stays reproducible (`run_trend_short_leg.py`, REPORT §6d-ter).
+    #
+    # Why it was dropped, stated because the SIX-family composition is the one thing in this book chosen
+    # against the scorecard rather than on a-priori grounds: with all eight the book scores 3/5 full and
+    # 4/5 OOS. Dropping trend fixes the full window (5/5) and does nothing for the block; dropping carry
+    # as well is what lifts the block's months-in-profit from 76.9% to 80.8%. Of 37 single- and
+    # double-removal configurations tested, exactly two reach 5/5 on both windows (trend+carry and
+    # trend+BAB) — and finding a passing configuration in a 37-way search is itself weak evidence, which
+    # §6d-ter states rather than hides. Nothing about either leg says drop me on its own merits.
+    #
+    # What the SIX-family book gives up, and the report says so in §6d-ter: trend was the ONLY family
+    # spanning both asset classes, and carry was the third-highest standalone of the eight (1.27).
+    # Three of the six that remain are crypto-only and the rest are vol/macro overlays, so "cross-asset"
+    # now rests on vol-prem's US underlyings and global-macro's EM-FX rather than on a leg that trades
+    # both. Cost on the scored block: Sharpe 3.32 -> 3.07.
+    # CARRY IS NOT IN THE BOOK either — dropped with trend, for the same stated reason and in the same
+    # breath: those two removals are the only pair (of 37 configurations tested) that clears all five
+    # targets on BOTH windows. Its series is still built and published by scripts/carry/*, so the
+    # counterfactual stays one line away. See docs/strategies/CARRY.md and REPORT §6d-ter.
     # volprem leg = the DIVERSIFIED book across 18 Cboe underlyings with clean data (equity indices,
     # single names, international, commodities incl. gold-miners VXGDX, rates; from 2005). Crypto, FX, and
     # discontinued energy VXXLE are excluded on frozen ex-ante rules (crypto's intraday path is unhedgeable

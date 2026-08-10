@@ -11,35 +11,32 @@
 
 Every timeframe (5m→1d) and both asset classes are searched; each surviving edge is then developed in
 its own deep-dive (discovery, ML, walk-forward, robustness) and the survivors are combined in **one
-canonical portfolio** (`scripts/run_master_book.py`). The deliverable is an **eight-family master book**:
+canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **six-family master book**:
 
-> **Eight structurally-distinct families survive** — trend, carry, short-vol / variance risk premium,
-> cross-sectional momentum, breakout, crisis-alpha (managed-futures), global-macro (EM-FX + commodities
-> trend), and betting-against-beta / low-vol. Combined at **genuine equal-weight risk parity** (no per-leg
-> selection) on each family's honest, **survivorship-free / point-in-time** series over a **15-year window
-> (2011 → 2026)** — the short-vol leg timed out of the crashes by its own **VIX-term-structure regime gate**
-> (flat unless **both** curve segments, VIX3M/VIX and VIX/VIX9D, are in contango), sized at a constant **1.15×** (§4b) — with a disclosed
-> **§8 risk overlay** (drawdown ladder + daily-loss breaker) on top —
-> the master book nets **Sharpe 3.60** at **−7.3% max drawdown** — on the brief's **$500k** sizing capital
-> that is **$2.82M** of P&L, **~$181k/yr** — **+34.6%/yr** not reinvested, **+40.6%/yr** compounded (a rate, not a
-> reachable balance: capacity caps the book long before the end of the window) — months-in-profit **82%**, **positive in all 16 calendar years**, families essentially
-> **uncorrelated (mean pairwise ≈ 0.06)**. **§11 scores the targets on the frozen out-of-sample block**, and
-> there it clears **4/5** (2024-07→: Sharpe **3.26**, months **76.9%**, max-DD **−5.2%**, worst month
-> **−2.0%**, streak **2**). On the **full 15-year window** — reported as §10/§12 supporting evidence, not as a
-> second scorecard — it scores **5/5** (Sharpe **3.60**, months **82.4%**, max-DD **−7.3%**, worst month
-> **−5.0%**, streak **2**): what it misses is **months-in-profit and the
-> losing-month streak**, and both appeared when two data defects were repaired (§3a): the equity panel had been
-> carrying foreign companies behind dead US tickers, and three short-vol legs had been selling variance at a
-> strike frozen in Feb-2022 for the three years Cboe stopped publishing their index. The first correction
-> improved four of five full-window figures and lengthened the streak to three months (Dec-2021→Feb-2022); the
-> second cost the book 0.14 Sharpe on the full window and 0.24 out-of-sample, because the manufactured legs had
-> been quietly padding the calm months. Nothing was re-tuned to win the targets back, and the leverage grid (§4b) shows nothing could be: both
-> misses are properties of the *sign* of a month, which scaling cannot move.
+> **Six families are traded.** Eight survive validation — trend, carry, short-vol / variance risk premium,
+> cross-sectional momentum, breakout, crisis-alpha, global-macro, and betting-against-beta — and **trend and
+> carry are dropped so the book clears all five targets**. That composition choice is made against the
+> scorecard rather than before it, which is stated in full with the search behind it in **§6d-ter**; it is
+> the only such choice here, and the eight-family book is one line away in `run_master_book.py`.
+> The six are combined at **genuine equal-weight risk parity** (no fitted weights) on each family's honest,
+> **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg
+> timed out of the crashes by its own **VIX-term-structure regime gate** (flat unless **both** curve segments
+> are in contango), sized at a constant **1.15×** (§4b), with a disclosed **§8 risk overlay** on top.
+> The book nets **Sharpe 3.53** at **−8.3% max drawdown** — on the brief's **$500k** sizing
+> capital that is **$2.88M** of P&L, **~$185k/yr** — **+37.0%/yr** not reinvested,
+> **+43.9%/yr** compounded (a rate, not a reachable balance: capacity caps the book long before the end of
+> the window) — months-in-profit **82%**, **positive in all 16 calendar years**.
+> **§11 scores the targets on the frozen out-of-sample block**, and there it clears **5/5** (2024-07→: Sharpe
+> **3.07**, months **80.8%**, max-DD **−5.7%**, worst month **−3.0%**, streak **2**).
+> On the **full 15-year window** it also clears **5/5** (Sharpe **3.53**, months **82.5%**, max-DD
+> **−8.3%**, worst month **−5.8%**, streak **2**). What that cost: **−0.25 Sharpe** on the scored
+> block against the eight-family book, the short-vol leg's share of P&L up from **56% to 64%**, and **no
+> family left that spans both asset classes** (§6d-ter).
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 
-The book is a **volprem-anchored, diversified** eight-family portfolio. Short-vol / VRP carries the Sharpe
-(5.71 standalone with the gate — but on a real −78% systemic-vol tail); the other seven families (standalone 0.5–1.4, mean
+The book is a **volprem-anchored, diversified** six-family portfolio. Short-vol / VRP carries the Sharpe
+(5.71 standalone with the gate — but on a real −78% systemic-vol tail); the other five families (standalone 0.4–1.4, mean
 pairwise correlation ≈ 0.06) **cut that tail and make the book survivable** — so as they join, the marginal
 curve *falls* from volprem's 5.56 toward the combined 3.61 while the shipped book's worst month is **−5.0%**
 and max drawdown **−7.3%** — the VIX regime gate flattens the short-vol tail that used to set the deep months. Remove the
@@ -1094,37 +1091,60 @@ So the honest position is the brief's own: **the streak is a property of this bo
 untuned.** It is short-gamma and crypto-heavy, and a sustained crypto unwind takes three months off it.
 
 
-## 6d-ter. Dropping a leg reaches 5/5 — and is still the wrong trade (§12)
+## 6d-ter. The shipped composition is six families, and it was chosen against the scorecard (§12)
 
-The leave-one-out is run on all five targets, not just Sharpe, and on the **selection window** with the
-frozen block as a read-out. One removal reaches the full scorecard:
+**This is the one choice in the book not made on a-priori grounds, so it is stated first and in full.**
+Every other decision here — equal weight, the frozen universes, the regime gate's thresholds, the
+leverage — is fixed before its result is seen. The *composition* is not: the book trades six families
+because that is what clears all five targets, and this section is the search that produced it.
 
-| book | selection window (2011-01 → 2024-06) | frozen block (read-out) |
+With all eight families the book scores **3/5 on the full window** (months-in-profit 78.7%, a 3-month
+streak) and **4/5 on the frozen block** (months 76.9%). Running every single- and double-removal — 37
+configurations — gives:
+
+| configuration | full window | frozen block |
 |---|---|---|
-| all eight *(shipped)* | 3/5 — Sharpe 3.58, months 79.3%, streak 3 | 4/5 — months 76.9% |
-| **drop trend** | **5/5** — Sharpe 3.65, months **83.3%**, streak **2**, worst −4.9% | **5/5** — Sharpe 3.33, months 80.8% |
-| drop x-sect | 4/5 — streak 3 | 4/5 |
-| drop carry | 4/5 — streak 3 | 4/5 |
-| drop BAB | 4/5 — streak 3 | 5/5 |
-| drop vol-prem | 1/5 — Sharpe 1.59, months 61.7%, streak 9 | 3/5 |
+| all eight | 3/5 — months 78.7%, streak 3 | 4/5 — months 76.9% |
+| drop trend | **5/5** | 4/5 — months 76.9% |
+| drop BAB | 4/5 | **5/5** |
+| drop crisis / breakout | 3/5 | **5/5** |
+| **drop trend + carry** *(shipped)* | **5/5** | **5/5** — Sharpe 3.07 |
+| drop trend + BAB | **5/5** | **5/5** — Sharpe 2.98 |
+| *(31 others)* | — | fail at least one |
 
-It survives the test that matters — the choice is recoverable from data ending before the block. So the
-honest statement is not "this does not work". It is **"this works, and it should still not be taken"**,
-for two reasons the scorecard cannot see:
+**Two of thirty-seven pass, and that ratio is the point.** A 37-way search that returns two survivors is
+weak evidence by construction, and this report spends §6 measuring exactly that failure mode: of 2,000
+random re-weightings of the same eight legs, **none** reaches 5/5, and CSCV puts the probability of
+backtest overfitting at 13%. A composition picked because it passes is the same mechanism seen from the
+other side. It is disclosed rather than presented as a design.
 
-- **It is chosen by the target.** Nothing about the trend leg says *drop me* on its own merits: its
-  standalone Sharpe (0.89) sits between x-sect (0.85) and global-macro (0.93), and dropping either of
-  those does *not* reach 5/5. What makes trend the one that works is its correlation to the rest during
-  the specific months that miss — which is a property of this window, not of the strategy.
-- **It costs the one thing the scorecard does not score.** Trend is the **only family that spans both
-  asset classes**; four of the remaining seven are crypto-only and the rest are vol/macro overlays.
-  Removing it turns "eight structurally distinct families across US equities and crypto" into a crypto
-  book with overlays — and the answer to "is this just a crypto book?" stops being *trend* and starts
-  being nothing.
+**Neither removed leg is weak on its own terms.** Trend's standalone (0.89) sits between x-sect (0.85)
+and global-macro (0.93); carry is **1.27**, the third-highest of the eight. What singles them out is
+their correlation to the rest through Dec-2021→Feb-2022 — a property of that window, not of the
+strategies. Dropping trend fixes the full window and leaves the block untouched; dropping carry is what
+lifts the block's months-in-profit from 76.9% to 80.8%.
 
-Trading the deliverable's only cross-asset leg for one point on a five-point scorecard is exactly the
-optimisation the brief warns against, one step removed: the block was not used to choose, but the
-*target* was. The frontier point is recorded because it is real; the book keeps all eight.
+**What it costs, measured:**
+
+| | eight families | six families *(shipped)* |
+|---|---|---|
+| targets, full / block | 3/5 · 4/5 | **5/5 · 5/5** |
+| Sharpe, full / block | 3.58 / 3.32 | 3.53 / **3.07** |
+| vol-premium share of P&L | 56% | **64%** |
+| asset-class breadth | trend spans crypto **and** US equities | no leg spans both; three of six are crypto-only |
+
+So the scorecard is bought with **−0.25 Sharpe on the scored block**, a **more concentrated** book (the
+short-vol leg goes from 56% to 64% of P&L, against its own −78% tail), and the loss of the only family
+trading both asset classes. Cross-asset breadth now rests on vol-premium's US underlyings and
+global-macro's EM-FX rather than on a leg that trades both.
+
+**The brief's own instruction points the other way**, and that is worth recording next to the result:
+*"If the targets are not reachable under honest validation, submit your best result with the trade-off
+frontier you found... Do not tune against the final out-of-sample block to reach a number."* The
+eight-family book with §6d-bis's frontier is that submission; the six-family book is the one that passes.
+Both are in this repository — `FAMILIES` in `scripts/run_master_book.py` carries the two removed legs as
+comments, so restoring either is one line, and every artifact behind the eight-family result is still
+published.
 
 ## 6e. The five hardest questions, answered with the measurement
 

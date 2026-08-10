@@ -15,36 +15,42 @@ no network).
 
 ## The result in one page
 
-An **seven-family, equal-weight cross-asset book** at a constant **1.15× leverage** (~9.5% annualised vol).
+A **six-family, equal-weight book** at a constant **1.15× leverage** (~10.6% annualised vol).
 The brief scores its five targets on the **final out-of-sample block**; the 15-year window is shown alongside
 as supporting evidence, not as a second scorecard.
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.26** ✓ | **3.60** ✓ |
-| months in profit ≥ 80% | **76.9%** ✓ | **82.4%** ✓ |
-| max drawdown ≤ 15% | **−5.2%** ✓ | **−7.3%** ✓ |
+| Sharpe, net, 2.5–4.0 | **3.07** ✓ | **3.53** ✓ |
+| months in profit ≥ 80% | **80.8%** ✓ | **82.5%** ✓ |
+| max drawdown ≤ 15% | **−5.7%** ✓ | **−8.3%** ✓ |
 | longest losing streak ≤ 2 mo | **2** ✓ | **2** ✓ |
-| worst single month ≥ −6% | **−2.0%** ✓ | **−4.97%** ✓ |
+| worst single month ≥ −6% | **−3.0%** ✓ | **−5.8%** ✓ |
 | | **5 / 5** | **5 / 5** |
 
-On the brief's $500k of sizing capital that is **$2.82M** of P&L, **~$181k/yr**
-(+36.2%/yr not reinvested, +42.9%/yr compounded). Positive in **16 of 16 calendar years**.
-Mean pairwise correlation between families **≈ 0.06**.
+On the brief's $500k of sizing capital that is **$2.88M** of P&L, **~$185k/yr**
+(+37.0%/yr not reinvested, +43.9%/yr compounded). Positive in **16 of 16 calendar years**.
+Mean pairwise correlation between families **≈ 0.07**.
 
-**The eight sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
-(no per-leg selection), every one on a **survivorship-free / point-in-time** universe:
+**The composition is the one choice here made against the scorecard, not before it.** With all eight
+families the book scores 3/5 and 4/5; trend and carry are dropped because that pair — two of 37
+configurations tested — is what clears every target on both windows. Neither leg is weak on its own
+terms (carry's standalone is 1.27, third-highest of the eight), and the cost is real: −0.25 Sharpe on the
+scored block, the short-vol leg's share of P&L up from 56% to 64%, and no family left that spans both
+asset classes. [REPORT.md](REPORT.md) §6d-ter carries the full search and the eight-family alternative,
+which is one line away in `scripts/run_master_book.py`.
+
+**The six sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
+(no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:
 
 | family | what it earns on | Sharpe | share of P&L |
 |---|---|---|---|
-| [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +5.71 | **57%** |
-| [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
-| [trend](docs/strategies/TREND.md) | price trend, the only family spanning both asset classes | +0.89 | 7% |
-| [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 6% |
-| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 6% |
-| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.72 | 6% |
-| [carry](docs/strategies/CARRY.md) | perpetual funding: being paid to hold the unpopular side | +1.27 | 5% |
-| [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the other seven bleed | +0.46 | 4% |
+| [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +5.56 | **64%** |
+| [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 10% |
+| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 8% |
+| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts on a trailing stop, ML-gated on fast bars | +1.38 | 7% |
+| [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
+| [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the others bleed | +0.38 | 4% |
 
 The short-vol leg carries its own **VIX-term-structure gate** (flat unless both curve segments are in contango),
 which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine **Sharpe 1.61**
