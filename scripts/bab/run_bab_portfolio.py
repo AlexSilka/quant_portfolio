@@ -72,8 +72,10 @@ def main():
     bab100.rename("ret").to_frame().to_parquet(BAB_DIR / "bab_book.parquet")
     bab25.rename("ret").to_frame().to_parquet(BAB_DIR / "bab_book_c25.parquet")
 
-    # common window: all five legs + BAB present
-    legs5 = ["trend_momentum", "carry", "volprem", "xs_momentum", "breakout"]
+    # common window: every non-BAB leg the book actually trades, plus BAB. This was a typed list naming
+    # trend and carry, dropped from the book, so it asked master_book_legs.parquet for columns that are
+    # not there and died on a KeyError — the same stale-list failure the assembler's consumers had.
+    legs5 = [c for c in L.columns if c != "bab"]
     idx = L[legs5].dropna().index.intersection(bab25.index)
     L, b25, b100 = L.reindex(idx), bab25.reindex(idx), bab100.reindex(idx)
     print(f"common window: {idx.min().date()}..{idx.max().date()}  ({len(idx)} bars)")

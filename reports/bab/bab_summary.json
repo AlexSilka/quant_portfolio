@@ -82,21 +82,19 @@
       "beta_on_vol_alpha_t": 1.96
     },
     "corr_to_book": {
-      "book": 0.369,
-      "trend_momentum": 0.385,
-      "carry": 0.048,
-      "volprem": 0.099,
+      "book": 0.299,
+      "volprem": 0.117,
       "xs_momentum": -0.079,
-      "breakout": 0.067,
+      "breakout": 0.068,
       "crisis": 0.059,
       "gmacro": 0.003,
       "bab": 0.609
     },
     "book_lift_by_weight": {
-      "0%": 3.761,
-      "15%": 3.616,
-      "30%": 3.34,
-      "50%": 2.739
+      "0%": 4.023,
+      "15%": 3.901,
+      "30%": 3.628,
+      "50%": 2.974
     },
     "beta_neutral_sharpe_BTC_market": 0.492
   },
@@ -193,21 +191,19 @@
       "beta_on_vol_alpha_t": 1.6
     },
     "corr_to_book": {
-      "book": 0.081,
-      "trend_momentum": 0.219,
-      "carry": 0.063,
-      "volprem": 0.07,
+      "book": -0.003,
+      "volprem": 0.066,
       "xs_momentum": 0.042,
-      "breakout": 0.006,
+      "breakout": 0.007,
       "crisis": -0.035,
       "gmacro": -0.056,
       "bab": 0.015
     },
     "book_lift_by_weight": {
-      "0%": 3.299,
-      "15%": 3.254,
-      "30%": 3.058,
-      "50%": 2.441
+      "0%": 4.361,
+      "15%": 4.349,
+      "30%": 4.13,
+      "50%": 3.299
     }
   }
 }
