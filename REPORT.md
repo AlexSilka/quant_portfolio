@@ -135,8 +135,8 @@ A complete, reproducible pipeline, every stage runnable:
   **per-family baseline-vs-ML table is §5d.**
 - **Backtest** — bar-close→execution delay (no same-bar fill), liquidity-aware costs (commission +
   half-spread + √-impact, never flat), funding charged at every 8h settlement. **Cost sensitivity (§9):**
-  the book re-charged at **1×/2×/3×** the rebalancing cost it is charged nets Sharpe **+4.51 /
-  +3.73 / +2.94** (max-DD −7.7% / −9.5% / −11.3%),
+  the book re-charged at **1×/2×/3×** the rebalancing cost it is charged nets Sharpe **+4.40 /
+  +3.62 / +2.83** (max-DD −7.7% / −9.5% / −11.4%),
   **break-even at ≈7×**; that charge is deliberately conservative — it counts the mixed 252/365
   calendar's weekend renormalisation as trading, so it bills ~112× round-trip a year against the
   ~15.9× the book actually rebalances. **Per family, cost as a share of gross P&L**, each measured

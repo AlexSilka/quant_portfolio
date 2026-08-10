@@ -57,11 +57,11 @@ one on a **survivorship-free / point-in-time** universe:
 {{family_source_table}}
 
 The short-vol leg carries **two regime gates**, ANDed, and they are what hold the worst month and the losing
-streak. Every sleeve gates on its **own** implied vol against its own three-month level — the contango test
-the VIX gate uses, applied to the curve the sleeve actually trades. On top of that the **VIX term structure**
-(flat unless both curve segments are in contango) gates the thirteen **equity** sleeves, whose volatility is
-the factor the VIX measures; the five that sell gold, silver, gold-miner, oil and duration variance are left
-out of it, because the VIX is not a read on their market. Remove the leg entirely and a genuine
+streak. They cover different failures. The shared one is the **VIX term structure** (flat unless both curve
+segments are in contango), applied to all eighteen sleeves — not as a forecast of what gold's volatility will
+do, but as a read on *systemic* stress, when the sleeves fall together whatever they sell. The second is per
+sleeve: the same contango test on the sleeve's **own** implied vol, which is what catches a vol event one
+market has on its own and the VIX never sees. Remove the leg entirely and a genuine
 **Sharpe {{top_removed_sharpe}}** book still stands.
 
 **One disclosure §14 asks for.** That second gate was added after a stall *inside* the scored block was

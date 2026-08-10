@@ -15,11 +15,14 @@ asserted to reproduce `volprem_book.parquet:ret_gated` exactly):
   own         per-sleeve own curve only, NO shared gate
   vix_eq      own curve + shared VIX on the 5 index sleeves
   vix_us      own curve + shared VIX on index + US single names (10)
-  vix_equity  own curve + shared VIX on all 13 equity sleeves     (SHIPPED)
-  both        own curve + shared VIX on all 18, incl. metals/oil/duration
+  vix_equity  own curve + shared VIX on all 13 equity sleeves
+  both        own curve + shared VIX on all 18, incl. metals/oil/duration  (SHIPPED)
 
 The middle four walk the shared gate's reach out class by class, which is the question the ladder was
-built for: the VIX is the volatility of the S&P 500, so how far from equity does it stay informative?
+built for: the VIX is the volatility of the S&P 500, so how far from equity does it stay useful? The
+answer is all the way, and not because it forecasts metals vol — it does not. It is a systemic-stress
+read: on the leg's ten worst sessions the full-reach gate stands the leg down in 7, the equity-only
+reach in 3, and no shared gate at all in none. Narrowing it trades that cover for unscored return.
 
 Judged on the whole metric set, not Sharpe: Sharpe is blind to the money a gate costs, because every leg
 is vol-targeted — halving time-in-market can leave the ratio flat while cutting compounded return. So CAGR,
@@ -44,8 +47,8 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import own_curve_gate, short_vol_gate  # noqa: E402
 
 from .run_gate_coverage import book_of  # noqa: E402
-from .run_vol_premium_book import (PPY_BOOK, UNIVERSE, VIX_GATE_CLASSES, gated_leg,  # noqa: E402
-                                   implied, naive_dt, underlying_bars)
+from .run_vol_premium_book import (PPY_BOOK, UNIVERSE, gated_leg, implied,  # noqa: E402
+                                   naive_dt, underlying_bars)
 
 WINDOW = "2011-01-01"       # the master book's reporting window; also where VIX9D starts, so the shared
                             # gate is only a live signal from here (before it abstains and every arm agrees)
@@ -176,9 +179,10 @@ def main() -> None:
         print(f"  {arm:10s} built ({len(legs[arm])} sleeves, shared gate on "
               f"{sum(cls in reach for *_, cls, _ in UNIVERSE)}/{len(UNIVERSE)})")
 
-    # Whichever arm carries the SHIPPED reach must BE the published series, or this whole ablation is
-    # measuring something else. Resolved from VIX_GATE_CLASSES so the check follows what actually ships.
-    shipped = next(a for a, (reach, own) in ARMS.items() if own and reach == set(VIX_GATE_CLASSES))
+    # The arm carrying the shipped rule must BE the published series, or this whole ablation is measuring
+    # something else. `both` is that arm — the shared gate over every sleeve, plus each own curve — and
+    # this check is what catches it if the shipped reach ever moves without this ladder being re-run.
+    shipped = "both"
     published = pd.read_parquet(VOLPREM_DIR / "volprem_book.parquet")["ret_gated"].dropna()
     pix = pd.DatetimeIndex(published.index)
     published.index = (pix.tz_convert("UTC").tz_localize(None) if pix.tz is not None else pix).normalize()

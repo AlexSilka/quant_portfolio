@@ -2,9 +2,10 @@
 
 The short-vol crash that clusters the leg's losing months is preceded by the VIX curve inverting: when
 a near-dated VIX sits above a longer-dated one (*backwardation*), a vol shock is under way and short-vol
-bleeds. This gate flattens exposure in that regime and holds it in contango, on the sleeves whose vol is
-the factor it measures — the equity ones. The sleeves selling metals, oil and duration variance run on
-`own_curve_gate` alone, because the VIX is not a read on their market. It is part of the
+bleeds. This gate flattens the leg's exposure in that regime and holds it in contango — every sleeve of
+it, metals and oil and duration included, not because the VIX forecasts their volatility (it does not)
+but because an inverted VIX curve is a read on SYSTEMIC stress, and in that state the sleeves fall
+together whatever they sell. It is part of the
 volprem strategy's own signal — run_vol_premium_book.py publishes the gated series as `ret_gated`, and the
 master book simply consumes that. It is NOT a portfolio overlay like the book's drawdown ladder / daily-loss
 breaker (those react to whole-book state); this reacts to one leg's own regime.
@@ -79,15 +80,15 @@ def own_curve_gate(implied: pd.Series, index, lookback: int = OWN_CURVE_LOOKBACK
                    threshold: float = 1.0) -> pd.Series:
     """The same contango test as `short_vol_gate`, for a sleeve that has no far-dated index of its own.
 
-    `short_vol_gate` reads the VIX curve, which is the volatility of the S&P 500 — but only five of the
-    book's eighteen sleeves sell equity-index variance. The other thirteen sell it on gold, silver,
-    gold-miners, oil, duration, EM ETFs and single names, and the five that sell metals, oil and
-    duration have NO volatility visible in the VIX at all. Gating them on it is a coverage hole rather
-    than a calibration one: it stays open however the VIX thresholds are set. In 2026 it opened all the
-    way — the VIX averaged 19.0 with 93% of days in contango while silver's realised volatility went
-    32% -> 73%, so a VIX-only gate never stood the metals sleeves down and they sold variance the whole
-    way. This gate closes that hole for every sleeve; the shared one is now pointed only at the equity
-    sleeves it can read (`run_vol_premium_book.VIX_GATE_CLASSES`).
+    `short_vol_gate` reads the VIX curve, which is the volatility of the S&P 500. That makes it a good
+    read on a SYSTEMIC shock, which is why it gates all eighteen sleeves — but it is blind to a vol
+    event that one market has on its own. Thirteen of the sleeves sell variance on gold, silver,
+    gold-miners, oil, duration, EM ETFs and single names, and an idiosyncratic repricing in any of them
+    leaves the VIX flat. That is a coverage hole rather than a calibration one: it stays open however
+    the VIX thresholds are set. In 2026 it opened all the way — the VIX averaged 19.0 with 93% of days
+    in contango while silver's realised volatility went 32% -> 73%, so the shared gate never stood the
+    metals sleeves down and they sold variance the whole way. This gate is what closes that, per sleeve;
+    the two are ANDed and cover different failures.
 
     Cboe publishes no GVZ3M/OVX3M, so the far leg is proxied by the sleeve's OWN trailing mean implied
     vol: `mean(iv, lookback) / iv >= threshold` is "spot vol sits below its own three-month level", the
