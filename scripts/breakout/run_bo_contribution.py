@@ -14,39 +14,31 @@ re-scaled to a common ~15% vol on trailing (lagged) vol so combining is risk-par
 import json
 import warnings
 
-import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
+import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy
 from src.config import BREAKOUT_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 PPY = 365
-R = bo.BREAKOUT
+R = bo.REPORTS          # the family series live under reports/<family>/, not under this family's own
+                        # sub-book — joining BREAKOUT with them looked for reports/breakout/trend/...
 
 # (label, file, column) — the SAME canonical honest series as scripts/run_master_book.py (kept in
 # sync so this breakout-local diagnostic matches the master book; run_master_book is the source of truth)
-FAMILIES = [
-    ("trend_momentum", "trend/trend_block_returns.parquet", "ret"),
-    ("carry", "carry_breadth_headline.parquet", "ret"),
-    ("volprem", "volprem_returns.parquet", "VRP_baseline_alwaysshort"),
-    ("xs_momentum", "xs/xs_book.parquet", "ret"),
-    ("breakout", "bo_combined_portfolio.parquet", "ret"),
-]
+# Imported, not copied. The pasted list said it was "kept in sync" with run_master_book and was not:
+# it named trend and carry, dropped from the book, and had never heard of crisis, global-macro or BAB.
+FAMILIES = list(mb.FAMILIES)
 
 
-def load(label, file, col):
-    df = pd.read_parquet(R / file)
-    s = df[col] if col in df.columns else df.iloc[:, 0]
-    return s.dropna().rename(label)
-
-
-def rescale(net, target=0.15):
-    scale = (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
-    return (net * scale)
+# load / rescale are the assembler's own. The local copies dropped the timezone normalisation it does,
+# so the moment this stopped reading only breakout-family files it could not join a tz-aware leg to a
+# tz-naive one — a copy diverges by what it forgets, not only by what it changes.
+load, rescale = mb.load, mb.rescale
 
 
 def port(rets_df):
