@@ -18,6 +18,7 @@ import pandas as pd
 import scripts.trend.run_trend_pit_universe as P  # noqa: E402
 import scripts.trend.trend_common as T  # noqa: E402
 from scripts.trend.run_trend_book import sh  # noqa: E402
+import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth
 from src.metrics import summarise  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
@@ -26,13 +27,12 @@ R = T.bo.REPORTS
 # the universe rule (and the hindsight arm it is scored against) lives in run_trend_pit_universe
 BLOCK_TFS = P.BLOCK_TFS
 
-# the OTHER families' honest published headlines (same as run_master_book.FAMILIES, minus trend)
-OTHERS = [
-    ("carry", "carry_refined.parquet", "ret"),
-    ("volprem", "volprem_returns.parquet", "VRP_baseline_alwaysshort"),
-    ("xs_momentum", "all_returns.parquet", "CRYPTO50_1d_cross_sectional"),
-    ("breakout", "bo_combined_portfolio.parquet", "ret"),
-]
+# The OTHER families, imported from the assembler rather than copied. The copy that stood here said it
+# was "the same as run_master_book.FAMILIES, minus trend" and was four ways from it: it still named
+# carry, had never heard of crisis, global-macro or BAB, used paths from before reports/ grew its
+# per-family subfolders, and read volprem's UNGATED column — so the book this script compared a trend
+# leg against was neither the shipped composition nor the shipped short-vol construction.
+OTHERS = [(lab, f, c) for lab, f, c in mb.FAMILIES if lab != "trend_momentum"]
 
 
 def build_trend_block() -> pd.Series:
@@ -62,12 +62,10 @@ def build_trend_block() -> pd.Series:
 
 
 def load(file, col, label):
-    p = R / file
-    if not p.exists():
-        return None
-    df = pd.read_parquet(p)
-    s = df[col] if col in df.columns else df.iloc[:, 0]
-    return s.dropna().rename(label)
+    """The assembler's own loader, argument order adapted. The local copy that stood here skipped its
+    timezone normalisation, which does not matter while a script reads only its own family and breaks
+    the moment it reads another's — exactly how run_bo_contribution failed once its paths were fixed."""
+    return mb.load(label, file, col)
 
 
 def rescale(net, target=0.15):
