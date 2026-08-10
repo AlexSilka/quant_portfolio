@@ -1,7 +1,8 @@
 """Self-contained interactive dashboard for THE master book (scripts/run_master_book.py).
 
-Renders the canonical portfolio — risk-parity over the eight surviving strategy families (trend,
-carry, short-vol/VRP, cross-sectional momentum, breakout, crisis-alpha, global-macro, betting-against-beta) — from the master_book* artifacts:
+Renders the canonical portfolio — risk-parity over the shipped strategy families, whose composition is
+read from run_master_book rather than named here (currently short-vol/VRP, cross-sectional momentum,
+breakout, crisis-alpha, global-macro, betting-against-beta) — from the master_book* artifacts:
 master_book_summary.json (headline Sharpe/DD/MC + per-year/quarter), master_book.parquet (the
 equity curve), master_book_legs.parquet (per-family series -> standalone Sharpe/DD, correlation to
 the book, and the book-without-family delta), master_book_correlation.csv and master_book_marginal.csv.
@@ -441,7 +442,7 @@ def _sleeve_cost_card():
     """§9/§12 per sleeve: turnover, cost as a share of gross P&L, and which sleeves are cost-fragile.
     From scripts/run_book.py (reports/book/zoo_cost_per_sleeve.csv) — the sleeve is the brief's unit
     (asset × timeframe × family × model), so this is the discovery layer, where every candidate carries
-    its own charged cost. The eight book families' equivalent is their deep-dive cost sweeps."""
+    its own charged cost. The book families' equivalent is their deep-dive cost sweeps."""
     p = REP / "book" / "zoo_cost_per_sleeve.csv"
     if not p.exists():
         return ""
@@ -801,10 +802,10 @@ def main():
                   f'{last.months_in_profit:.0%}); what the additions buy is the <b>tail</b> '
                   f'({_pc(first.max_dd)}&rarr;{_pc(last.max_dd)}). That trade is the point: vol-prem alone sits '
                   f'outside the 2.5&ndash;4.0 Sharpe band and fails the &le;15% drawdown target. On the '
-                  f'drawdown axis the curve has <b>not</b> flattened by the eighth family &mdash; the last '
+                  f'drawdown axis the curve has <b>not</b> flattened by the last family &mdash; the final '
                   f'three additions still cut '
                   f'{_pc(marg.iloc[-3].max_dd)}&rarr;{_pc(marg.iloc[-2].max_dd)}&rarr;{_pc(last.max_dd)} '
-                  f'&mdash; which is why none is dropped. (Equal-weight mean of the legs, so the eighth point '
+                  f'&mdash; which is why none is dropped. (Equal-weight mean of the legs, so the final point '
                   f'reads {_n(last.sharpe)} against the deliverable book&rsquo;s {_n(m["sharpe"])}, which '
                   f'also carries the drawdown ladder and the daily-loss breaker.)</p>')
 
