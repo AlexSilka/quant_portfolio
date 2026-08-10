@@ -21,7 +21,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import RAW_DIR  # noqa: E402
+from src.config import RAW_DIR
+from src.log import get_logger
+
+log = get_logger(__name__)  # noqa: E402
 
 _BASE = "https://api.twelvedata.com/time_series"
 _DIV = "https://api.twelvedata.com/dividends"
@@ -151,10 +154,24 @@ def load_dividends(symbol: str, start: str = "2010-01-01", end: str | None = Non
     """
     if end is None:
         end = pd.Timestamp.now().strftime("%Y-%m-%d")
-    cpath = Path(cache_dir) / "twelvedata" / f"{symbol.replace('/', '-')}_div.parquet"
+    base = Path(cache_dir) / "twelvedata" / f"{symbol.replace('/', '-')}_div"
+    cpath, mpath = base.with_suffix(".parquet"), base.parent / (base.name + "_covered.json")
     have = pd.read_parquet(cpath)["amount"] if cpath.exists() else pd.Series(dtype=float, name="amount")
+    # How far back this symbol has ALREADY been walked. Without it an absence is indistinguishable from
+    # an unfetched range, so a name that pays no dividends at all — ADBE, AMZN, TSLA — re-walked its
+    # entire history on every single run, ~3 requests each, and got the same empty answer every time.
+    # Measured over the 69 cached symbols: 17 were permanent misses, ~51 wasted requests per run, which
+    # is what exhausted the key and made unrelated studies die on a rate-limit mid-audit.
+    covered = None
+    if mpath.exists():
+        try:
+            covered = pd.Timestamp(json.loads(mpath.read_text())["covered_from"], tz="UTC")
+        except Exception:                            # a corrupt marker must re-fetch, never crash
+            log.warning("twelvedata: unreadable dividend coverage marker for %s, refetching", symbol)
+    if covered is not None and covered <= pd.Timestamp(start, tz="UTC"):
+        return have                                  # already walked this far: empty IS the answer
     if len(have) and have.index.min() <= pd.Timestamp(start, tz="UTC") + pd.Timedelta(days=370):
-        return have                                  # cache already reaches the requested start
+        return have                                  # cache reaches the requested start (pre-marker caches)
     parts, cur = [have], pd.Timestamp(end, tz="UTC")
     floor = pd.Timestamp(start, tz="UTC")
     while cur > floor:
@@ -167,4 +184,8 @@ def load_dividends(symbol: str, start: str = "2010-01-01", end: str | None = Non
     s = s[~s.index.duplicated(keep="last")].sort_index().rename("amount")
     cpath.parent.mkdir(parents=True, exist_ok=True)
     s.to_frame().to_parquet(cpath)
+    # Written only after the walk completes. A RateLimited mid-walk propagates instead of reaching here,
+    # so a partial history is never recorded as complete.
+    prev = covered if covered is not None else pd.Timestamp(start, tz="UTC")
+    mpath.write_text(json.dumps({"covered_from": str(min(prev, pd.Timestamp(start, tz="UTC")).date())}))
     return s
