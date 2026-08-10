@@ -134,9 +134,7 @@ def card(s: pd.Series, ppy: float | None = None) -> dict:
             "skew": round(float(s.skew()), 1)}
 
 
-def n_targets(c: dict) -> int:
-    return sum([2.5 <= c["sharpe"] <= 4.0, c["months_in_profit"] >= 0.80, c["max_dd"] >= -0.15,
-                c["worst_month"] >= -0.06, c["streak"] <= 2])
+from scripts.run_master_book import n_targets  # noqa: E402  the five targets live in one place
 
 
 def book_with(extra: pd.Series | None, end: pd.Timestamp | None, w: float = 1.0) -> pd.Series:

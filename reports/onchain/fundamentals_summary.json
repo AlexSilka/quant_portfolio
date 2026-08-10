@@ -158,12 +158,73 @@
       "2026": 2.81
     },
     "status": "post-hoc sign flip on a 4-year, 27-chain panel \u2014 reported, not promoted",
-    "corr_to_book": 0.11,
+    "corr_to_book": 0.142,
     "book_lift_by_weight": {
-      "0%": 3.777,
-      "15%": 3.799,
-      "30%": 3.669,
-      "50%": 3.115
+      "window": "2022-06-22..2026-07-31",
+      "0%": {
+        "sharpe": 3.74,
+        "max_dd": -0.0571,
+        "months_in_profit": 0.8,
+        "worst_month": -0.0396,
+        "longest_losing_streak_mo": 2,
+        "total_return": 3.272,
+        "n_obs": 1501,
+        "targets": 5
+      },
+      "15%": {
+        "sharpe": 3.74,
+        "max_dd": -0.0505,
+        "months_in_profit": 0.76,
+        "worst_month": -0.0355,
+        "longest_losing_streak_mo": 2,
+        "total_return": 2.62,
+        "n_obs": 1501,
+        "targets": 4,
+        "control": {
+          "sharpe": 3.83,
+          "max_dd": -0.0489,
+          "worst_month": -0.0328,
+          "months_in_profit": 0.78,
+          "targets_median": 4.0
+        },
+        "beats_control_targets": false
+      },
+      "30%": {
+        "sharpe": 3.6,
+        "max_dd": -0.0453,
+        "months_in_profit": 0.72,
+        "worst_month": -0.0313,
+        "longest_losing_streak_mo": 2,
+        "total_return": 2.064,
+        "n_obs": 1501,
+        "targets": 4,
+        "control": {
+          "sharpe": 3.77,
+          "max_dd": -0.0432,
+          "worst_month": -0.0275,
+          "months_in_profit": 0.8,
+          "targets_median": 5.0
+        },
+        "beats_control_targets": false
+      },
+      "50%": {
+        "sharpe": 3.05,
+        "max_dd": -0.059,
+        "months_in_profit": 0.74,
+        "worst_month": -0.0282,
+        "longest_losing_streak_mo": 2,
+        "total_return": 1.447,
+        "n_obs": 1501,
+        "targets": 4,
+        "control": {
+          "sharpe": 3.245,
+          "max_dd": -0.0447,
+          "worst_month": -0.0242,
+          "months_in_profit": 0.8,
+          "targets_median": 4.0
+        },
+        "beats_control_targets": false
+      }
     }
   },
   "static_tilt_diagnosis": {
@@ -173,12 +234,73 @@
     "sharpe_after_hedging_dominance": 0.81
   },
   "corr_to_book": {
-    "book": -0.107
+    "book": -0.156
   },
   "book_lift_by_weight": {
-    "0%": 3.777,
-    "15%": 3.644,
-    "30%": 3.277,
-    "50%": 2.21
+    "window": "2022-06-22..2026-07-31",
+    "0%": {
+      "sharpe": 3.74,
+      "max_dd": -0.0571,
+      "months_in_profit": 0.8,
+      "worst_month": -0.0396,
+      "longest_losing_streak_mo": 2,
+      "total_return": 3.272,
+      "n_obs": 1501,
+      "targets": 5
+    },
+    "15%": {
+      "sharpe": 3.64,
+      "max_dd": -0.0495,
+      "months_in_profit": 0.78,
+      "worst_month": -0.0328,
+      "longest_losing_streak_mo": 3,
+      "total_return": 2.282,
+      "n_obs": 1501,
+      "targets": 3,
+      "control": {
+        "sharpe": 3.54,
+        "max_dd": -0.0519,
+        "worst_month": -0.0352,
+        "months_in_profit": 0.78,
+        "targets_median": 4.0
+      },
+      "beats_control_targets": false
+    },
+    "30%": {
+      "sharpe": 3.31,
+      "max_dd": -0.0515,
+      "months_in_profit": 0.74,
+      "worst_month": -0.026,
+      "longest_losing_streak_mo": 3,
+      "total_return": 1.517,
+      "n_obs": 1501,
+      "targets": 3,
+      "control": {
+        "sharpe": 3.12,
+        "max_dd": -0.0553,
+        "worst_month": -0.0317,
+        "months_in_profit": 0.74,
+        "targets_median": 4.0
+      },
+      "beats_control_targets": false
+    },
+    "50%": {
+      "sharpe": 2.25,
+      "max_dd": -0.0846,
+      "months_in_profit": 0.62,
+      "worst_month": -0.0284,
+      "longest_losing_streak_mo": 6,
+      "total_return": 0.761,
+      "n_obs": 1501,
+      "targets": 2,
+      "control": {
+        "sharpe": 2.07,
+        "max_dd": -0.0707,
+        "worst_month": -0.0358,
+        "months_in_profit": 0.66,
+        "targets_median": 2.0
+      },
+      "beats_control_targets": false
+    }
   }
 }

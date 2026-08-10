@@ -37,6 +37,7 @@ from src.data import onchain as oc  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import onchain as sig  # noqa: E402
 from src.sleeves.xsect import mom, top_n_liquid, vol_target, xs_backtest  # noqa: E402
+from scripts import run_master_book as mb  # noqa: E402  (scorecard + the five targets)
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 REP = REPORTS_DIR
@@ -356,19 +357,18 @@ def run_cross_section():
         for c in bs.columns:
             corr[c] = round(float(h.reindex(common).corr(bs[c].reindex(common))), 3)
         bk = bp.reindex(common).dropna()
-        hm = h.reindex(bk.index).fillna(0.0); hm = hm * (bk.std() / hm.std())
-        lift = {f"{int(w*100)}%": round(_sh_ann((1 - w) * bk + w * hm), 3) for w in (0.0, 0.15, 0.3, 0.5)}
+        # Every scored target, not just Sharpe. Sharpe has never been what binds this book — the worst
+        # month and the losing-month streak are — so a Sharpe-only lift asks the wrong question of an
+        # addition and would call a leg that fixes the binding axis "nothing".
+        lift = mb.book_lift(h, bk)
         print(f"\n  corr to master book {corr.get('book')}  (legs: "
               f"{ {k: corr[k] for k in list(corr) if k != 'book'} })")
-        print(f"  book-lift by on-chain weight: {lift}")
-        # the post-hoc candidate gets the same question — a signal only earns a slot if it lifts
+        _print_lift(f"book-lift, {HEAD_SIG}", lift)
         a2 = alt.copy(); a2.index = a2.index.tz_localize(None)
-        am = a2.reindex(bk.index).fillna(0.0); am = am * (bk.std() / am.std())
         alt_summ["corr_to_book"] = round(float(a2.reindex(common).corr(bp.reindex(common))), 3)
-        alt_summ["book_lift_by_weight"] = {f"{int(w*100)}%": round(_sh_ann((1 - w) * bk + w * am), 3)
-                                           for w in (0.0, 0.15, 0.3, 0.5)}
-        print(f"  {ALT}: corr to book {alt_summ['corr_to_book']}  "
-              f"book-lift {alt_summ['book_lift_by_weight']}")
+        alt_summ["book_lift_by_weight"] = mb.book_lift(a2, bk)
+        print(f"  {ALT}: corr to book {alt_summ['corr_to_book']}")
+        _print_lift(f"book-lift, {ALT}", alt_summ["book_lift_by_weight"])
 
     summ = {
         "config": {"universe_names": NAMES, "window": span, "smooth": SMOOTH, "rebal": REBAL,
@@ -392,6 +392,24 @@ def run_cross_section():
     books = {"onchain_headline": head, "onchain_adr_mom": alt,
              "onchain_pmom_ctrl": b_pmom, "onchain_prev_ctrl": b_prev}
     return summ, books
+
+
+def _print_lift(label, lift):
+    """One row per weight, every target the book is scored on. The window is printed because the blend
+    can only run where both series exist — on-chain starts 2020, so the 0% row is the book restricted to
+    that overlap and will not match the headline scorecard measured over 2011-2026."""
+    print(f"  {label} (overlap window {lift['window']}; the 0% row is the book on THAT window):")
+    print(f"    {'w':>5} {'Sharpe':>7} {'maxDD':>7} {'worst mo':>9} {'months+':>8} {'streak':>7} {'targets':>8}")
+    for w, c in lift.items():
+        if w == "window":
+            continue
+        ctl = c.get("control")
+        tail = ("" if not ctl else
+                f"   | rotated control: Sh {ctl['sharpe']:+.2f} DD {ctl['max_dd']:+.1%} "
+                f"worst {ctl['worst_month']:+.2%} mo {ctl['months_in_profit']:.0%} "
+                f"targets {ctl['targets_median']:.1f}/5")
+        print(f"    {w:>5} {c['sharpe']:>+7.2f} {c['max_dd']:>+7.1%} {c['worst_month']:>+9.2%} "
+              f"{c['months_in_profit']:>8.0%} {c['longest_losing_streak_mo']:>7d} {c['targets']:>7d}/5{tail}")
 
 
 def _sh_ann(x):

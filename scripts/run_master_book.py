@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from src.config import BOOK_LEVERAGE, CAPITAL_USD, OOS_START, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import BOOK_LEVERAGE, CAPITAL_USD, OOS_START, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
@@ -210,6 +210,64 @@ def scorecard(s, ppy=None):
             "worst_month": round(float(mo.min()) if len(mo) else 0.0, 4),
             "longest_losing_streak_mo": int(mx), "total_return": round(ss["total_return"], 3),
             "n_obs": int(len(s))}
+
+
+# The brief's five scored targets, in one place. They were written out twice with different Sharpe
+# rules — a 2.5-4.0 band in the long-gamma search and a bare >=1.5 in the report resolver — which is one
+# copy too many for a rule that decides whether the deliverable passes. The band is the brief's: a book
+# far ABOVE 4.0 is not passing, it is a sign the risk was mis-stated.
+TARGETS = {"sharpe": (2.5, 4.0), "max_dd": -0.15, "months_in_profit": 0.80,
+           "worst_month": -0.06, "longest_losing_streak_mo": 2}
+
+
+def n_targets(c: dict) -> int:
+    """How many of the five a scorecard clears. Accepts either key spelling for the streak, since the
+    lab scripts carry it as `streak` and `scorecard()` as `longest_losing_streak_mo`."""
+    lo, hi = TARGETS["sharpe"]
+    streak = c.get("longest_losing_streak_mo", c.get("streak"))
+    return int(sum([lo <= c["sharpe"] <= hi,
+                    c["max_dd"] >= TARGETS["max_dd"],
+                    c["months_in_profit"] >= TARGETS["months_in_profit"],
+                    c["worst_month"] >= TARGETS["worst_month"],
+                    streak <= TARGETS["longest_losing_streak_mo"]]))
+
+
+def book_lift(sleeve, book, weights=(0.0, 0.15, 0.30, 0.50), n_control=40):
+    """What adding `sleeve` to `book` does to EVERY scored target, not just Sharpe.
+
+    Judging an addition on Sharpe alone asks the wrong question of this book: Sharpe has never been the
+    binding constraint — the worst month and the losing-month streak are. A leg can leave Sharpe flat
+    and still earn its slot by lifting months-in-profit or cutting the worst month, and the Sharpe-only
+    reading would call that nothing. The sleeve is vol-matched to the book before blending so the weight
+    means risk share, not notional."""
+    common = book.dropna().index.intersection(sleeve.dropna().index)
+    b = book.reindex(common).dropna()
+    s = sleeve.reindex(b.index).fillna(0.0)
+    s = s * (b.std() / s.std()) if s.std() > 0 else s
+    out = {"window": f"{b.index.min().date()}..{b.index.max().date()}"}
+    rng = np.random.default_rng(SEED)
+    for w in weights:
+        card = scorecard((1.0 - w) * b + w * s)
+        card["targets"] = n_targets(card)
+        # Diluting a book with ANY weakly-correlated series cuts its drawdown and worst month and costs
+        # Sharpe — that is arithmetic, not a sleeve earning its slot. The control keeps the sleeve's own
+        # path exactly (rotation preserves vol, skew and autocorrelation) and destroys only its alignment
+        # with the book, so what survives the comparison is the alignment, which is the whole claim.
+        if w > 0 and n_control:
+            draws = []
+            arr = s.to_numpy()
+            for k in rng.integers(1, len(arr) - 1, size=n_control):
+                rot = pd.Series(np.roll(arr, int(k)), index=s.index)
+                c = scorecard((1.0 - w) * b + w * rot)
+                c["targets"] = n_targets(c)
+                draws.append(c)
+            card["control"] = {
+                k: round(float(np.median([d[k] for d in draws])), 4)
+                for k in ("sharpe", "max_dd", "worst_month", "months_in_profit")}
+            card["control"]["targets_median"] = float(np.median([d["targets"] for d in draws]))
+            card["beats_control_targets"] = bool(card["targets"] > card["control"]["targets_median"])
+        out[f"{int(w * 100)}%"] = card
+    return out
 
 
 def risk_overlay(raw, leverage=1.0, limits="book_equity"):

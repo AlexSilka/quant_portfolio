@@ -256,21 +256,80 @@
       }
     },
     "corr_to_book": {
-      "book": 0.06,
-      "trend_momentum": -0.146,
-      "carry": 0.019,
-      "volprem": 0.028,
-      "xs_momentum": 0.029,
+      "book": 0.101,
+      "volprem": 0.016,
+      "xs_momentum": 0.02,
       "breakout": 0.122,
       "crisis": 0.006,
       "gmacro": 0.039,
       "bab": 0.066
     },
     "book_lift_by_weight": {
-      "0%": 3.753,
-      "15%": 3.685,
-      "30%": 3.437,
-      "50%": 2.684
+      "window": "2020-01-01..2026-07-31",
+      "0%": {
+        "sharpe": 3.71,
+        "max_dd": -0.0826,
+        "months_in_profit": 0.8101,
+        "worst_month": -0.0576,
+        "longest_losing_streak_mo": 2,
+        "total_return": 10.858,
+        "n_obs": 2404,
+        "targets": 5
+      },
+      "15%": {
+        "sharpe": 3.61,
+        "max_dd": -0.0771,
+        "months_in_profit": 0.8101,
+        "worst_month": -0.0497,
+        "longest_losing_streak_mo": 2,
+        "total_return": 7.336,
+        "n_obs": 2404,
+        "targets": 5,
+        "control": {
+          "sharpe": 3.68,
+          "max_dd": -0.0741,
+          "worst_month": -0.0492,
+          "months_in_profit": 0.7975,
+          "targets_median": 4.0
+        },
+        "beats_control_targets": true
+      },
+      "30%": {
+        "sharpe": 3.35,
+        "max_dd": -0.073,
+        "months_in_profit": 0.8354,
+        "worst_month": -0.0418,
+        "longest_losing_streak_mo": 2,
+        "total_return": 4.844,
+        "n_obs": 2404,
+        "targets": 5,
+        "control": {
+          "sharpe": 3.48,
+          "max_dd": -0.0651,
+          "worst_month": -0.0427,
+          "months_in_profit": 0.7975,
+          "targets_median": 4.0
+        },
+        "beats_control_targets": true
+      },
+      "50%": {
+        "sharpe": 2.6,
+        "max_dd": -0.0975,
+        "months_in_profit": 0.7595,
+        "worst_month": -0.0323,
+        "longest_losing_streak_mo": 2,
+        "total_return": 2.623,
+        "n_obs": 2404,
+        "targets": 4,
+        "control": {
+          "sharpe": 2.73,
+          "max_dd": -0.084,
+          "worst_month": -0.0453,
+          "months_in_profit": 0.7531,
+          "targets_median": 3.0
+        },
+        "beats_control_targets": true
+      }
     },
     "post_hoc_candidate": {
       "signal": "adr_mom30",
@@ -292,12 +351,73 @@
         "2026": -1.78
       },
       "status": "post-hoc \u2014 surfaced after the dead-shell fix, not the a-priori pick",
-      "corr_to_book": 0.1,
+      "corr_to_book": 0.125,
       "book_lift_by_weight": {
-        "0%": 3.753,
-        "15%": 3.759,
-        "30%": 3.608,
-        "50%": 3.021
+        "window": "2020-01-01..2026-07-31",
+        "0%": {
+          "sharpe": 3.71,
+          "max_dd": -0.0826,
+          "months_in_profit": 0.8101,
+          "worst_month": -0.0576,
+          "longest_losing_streak_mo": 2,
+          "total_return": 10.858,
+          "n_obs": 2404,
+          "targets": 5
+        },
+        "15%": {
+          "sharpe": 3.7,
+          "max_dd": -0.0683,
+          "months_in_profit": 0.7722,
+          "worst_month": -0.0451,
+          "longest_losing_streak_mo": 2,
+          "total_return": 7.834,
+          "n_obs": 2404,
+          "targets": 4,
+          "control": {
+            "sharpe": 3.78,
+            "max_dd": -0.0693,
+            "worst_month": -0.0487,
+            "months_in_profit": 0.8101,
+            "targets_median": 5.0
+          },
+          "beats_control_targets": false
+        },
+        "30%": {
+          "sharpe": 3.54,
+          "max_dd": -0.0545,
+          "months_in_profit": 0.7722,
+          "worst_month": -0.0369,
+          "longest_losing_streak_mo": 2,
+          "total_return": 5.563,
+          "n_obs": 2404,
+          "targets": 4,
+          "control": {
+            "sharpe": 3.7,
+            "max_dd": -0.0624,
+            "worst_month": -0.0406,
+            "months_in_profit": 0.8101,
+            "targets_median": 5.0
+          },
+          "beats_control_targets": false
+        },
+        "50%": {
+          "sharpe": 2.95,
+          "max_dd": -0.0531,
+          "months_in_profit": 0.7848,
+          "worst_month": -0.0352,
+          "longest_losing_streak_mo": 2,
+          "total_return": 3.397,
+          "n_obs": 2404,
+          "targets": 4,
+          "control": {
+            "sharpe": 3.13,
+            "max_dd": -0.0608,
+            "worst_month": -0.0331,
+            "months_in_profit": 0.7848,
+            "targets_median": 4.0
+          },
+          "beats_control_targets": false
+        }
       }
     }
   },

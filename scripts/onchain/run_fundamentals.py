@@ -37,6 +37,7 @@ from src.data import defillama as dl  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import fundamentals as fu  # noqa: E402
 from src.sleeves.xsect import mom, top_n_liquid, vol_target, xs_backtest  # noqa: E402
+from scripts import run_master_book as mb  # noqa: E402  (scorecard + the five targets)
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 REP = REPORTS_DIR
@@ -67,6 +68,22 @@ def _load():
     C, A = C[keep], A[keep]
     P = {m: dl.load(m).reindex(index=C.index, columns=keep) for m in ("fees", "revenue", "tvl", "mcap")}
     return C, A, P
+
+
+def _print_lift(label, lift):
+    """Every target the book is scored on, per weight, beside a rotated control of the same sleeve."""
+    print(f"  {label} (overlap window {lift['window']}; the 0% row is the book on THAT window):")
+    print(f"    {'w':>5} {'Sharpe':>7} {'maxDD':>7} {'worst mo':>9} {'months+':>8} {'streak':>7} {'targets':>8}")
+    for w, c in lift.items():
+        if w == "window":
+            continue
+        ctl = c.get("control")
+        tail = ("" if not ctl else
+                f"   | rotated control: Sh {ctl['sharpe']:+.2f} DD {ctl['max_dd']:+.1%} "
+                f"worst {ctl['worst_month']:+.2%} mo {ctl['months_in_profit']:.0%} "
+                f"targets {ctl['targets_median']:.1f}/5")
+        print(f"    {w:>5} {c['sharpe']:>+7.2f} {c['max_dd']:>+7.1%} {c['worst_month']:>+9.2%} "
+              f"{c['months_in_profit']:>8.0%} {c['longest_losing_streak_mo']:>7d} {c['targets']:>7d}/5{tail}")
 
 
 def _sh(net):
@@ -294,16 +311,16 @@ def main():
         common = h.dropna().index.intersection(bp.dropna().index)
         corr["book"] = round(float(h.reindex(common).corr(bp.reindex(common))), 3)
         bk = bp.reindex(common).dropna()
-        hm = h.reindex(bk.index).fillna(0.0); hm = hm * (bk.std() / hm.std())
-        lift = {f"{int(w*100)}%": round(_sh((1 - w) * bk + w * hm), 3) for w in (0.0, 0.15, 0.3, 0.5)}
-        print(f"\n  corr to master book {corr['book']}   book-lift by weight: {lift}")
+        # Every scored target, each against a rotated control: diluting the book with any weakly
+        # correlated series improves its tail on arithmetic alone, so only what beats the control counts.
+        lift = mb.book_lift(h, bk)
+        print(f"\n  corr to master book {corr['book']}")
+        _print_lift(f"book-lift, {HEAD_SIG}", lift)
         iv = inv.copy(); iv.index = iv.index.tz_localize(None)
-        im = iv.reindex(bk.index).fillna(0.0); im = im * (bk.std() / im.std())
         inv_summ["corr_to_book"] = round(float(iv.reindex(common).corr(bp.reindex(common))), 3)
-        inv_summ["book_lift_by_weight"] = {f"{int(w*100)}%": round(_sh((1 - w) * bk + w * im), 3)
-                                           for w in (0.0, 0.15, 0.3, 0.5)}
-        print(f"  inversion: corr to book {inv_summ['corr_to_book']}   "
-              f"book-lift {inv_summ['book_lift_by_weight']}")
+        inv_summ["book_lift_by_weight"] = mb.book_lift(iv, bk)
+        print(f"  inversion: corr to book {inv_summ['corr_to_book']}")
+        _print_lift("book-lift, post-hoc inversion", inv_summ["book_lift_by_weight"])
     else:
         print(f"\n  ! {bp_path} missing — run the master book first for the lift test")
 

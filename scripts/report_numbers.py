@@ -296,10 +296,12 @@ def _grid_span():
 
 
 def _targets_hit(sc: dict) -> int:
-    """How many of the brief's five scorecard targets a window clears. Counted here rather than
-    written into the prose, because the prose is what goes stale when the book moves."""
-    return int(sum([sc["sharpe"] >= 1.5, sc["max_dd"] >= -0.15, sc["months_in_profit"] >= 0.80,
-                    sc["worst_month"] >= -0.06, sc["longest_losing_streak_mo"] <= 2]))
+    """How many of the brief's five scorecard targets a window clears — counted, never written into the
+    prose, because the prose is what goes stale when the book moves. The thresholds come from
+    run_master_book so this cannot drift from the rule the book itself is scored by; the version that
+    used to live here scored Sharpe as >=1.5 instead of the brief's 2.5-4.0 band."""
+    from run_master_book import n_targets
+    return n_targets(sc)
 
 
 def _family_costs():

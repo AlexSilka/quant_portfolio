@@ -59,8 +59,13 @@ decisive "does on-chain beat price?" test). All numbers net of cost. Figure:
   at the family's true 36-trial count is **0.50**, and it is **+0.32 correlated with price momentum** —
   a better-built momentum, in the same sense residual momentum was ([RESIDMOM.md](RESIDMOM.md)).
 - **And it still does not earn a slot: the book does not move.** Correlation to the deliverable book
-  +0.10, blended Sharpe 3.828 → **3.831** at a 15% weight, falling to 3.674 at 30%. A signal that is real
-  and adds nothing to the portfolio is a documented finding, not a sleeve.
+  +0.13, and on the **full scorecard** — not Sharpe alone, which was never what binds this book — a 15%
+  weight reads Sharpe 3.71 → 3.70, max-DD −8.3% → **−6.8%**, worst month −5.76% → **−4.51%**,
+  months-in-profit 81% → **77%**: **5/5 → 4/5**. The tail improvement is real arithmetic and it is not
+  the signal's doing. Rotating the same sleeve to random dates — identical vol, skew and
+  autocorrelation, alignment destroyed — gives Sharpe 3.78, max-DD −6.9%, worst month −4.87%, months
+  **81%** and keeps **5/5**. The control beats the real thing on every axis, so what looks like a tail
+  hedge is dilution, and the signal's actual timing costs four points of months-in-profit.
 - **ML changes nothing — no non-linear on-chain alpha either (§4b).** A 21-trial ML ranker ({ridge, RF,
   extra-trees, hist-GBM, LightGBM} + classifiers × {on-chain / price / both} features × {5,21,63}d horizons ×
   top-N, all purged-CV OOS), now including holders, issuance and fee-yield features: ML on **on-chain**
@@ -79,7 +84,8 @@ decisive "does on-chain beat price?" test). All numbers net of cost. Figure:
   expensive and the L2s permanently cheap at 0.014 turnover/bar, so it is a standing structural tilt,
   not a valuation that closes. The post-hoc flip (+0.86) is not the BTC-dominance trade (hedging that
   spread leaves +0.81) but fails everything else: placebo 94th < 95th, deflated 0.54, alpha over price
-  t=+1.66, all P&L in the last two years, book lift 3.777 → 3.799. **Excluded.**
+  t=+1.66, all P&L in the last two years, and on the full scorecard a 30% weight scores 4/5 against its
+  rotated control's 5/5 — same dilution, same verdict. **Excluded.**
 - **Decorrelated (corr to book +0.06) but it drags** (blended Sharpe 3.83 → 2.73 as weight rises).
   Correctly **excluded**. Documented, not traded.
 
@@ -236,7 +242,7 @@ family that clears the repo's robustness gates:
 | alpha over price mom + reversal | **t = +2.04** | > 2 ✅ |
 | deflated Sharpe at the family's 36 trials | **0.50** | ~0.9 ❌ |
 | per-year | 2020 +0.47 · 2021 +0.76 · 2022 +0.99 · 2023 +0.35 · 2024 **+1.92** · 2025 +1.27 · 2026 −1.78 | 6 of 7 positive |
-| **book lift at 15% weight** | **3.828 → 3.831** | material ❌ |
+| **book at 15% weight (full scorecard)** | Sharpe 3.71→3.70, DD −8.3%→−6.8%, worst −5.76%→−4.51%, months 81%→77% — **5/5 → 4/5**, and its rotated control keeps 5/5 | ❌ |
 
 Three things keep this a finding rather than a sleeve. **It is post-hoc** — it became interesting only
 after the dead-shell fix, and the walk-forward is scored with the construction held fixed precisely so
@@ -493,7 +499,7 @@ so the flip goes through the same funnel and stays labelled:
 | deflated Sharpe (N=14) | **0.54** | ~0.9 ❌ |
 | alpha over price mom + reversal | t = +1.66 | > 2 ❌ |
 | per-year | 2022 −0.96 · 2023 +0.17 · 2024 +0.03 · 2025 **+2.01** · 2026 **+2.81** | — |
-| **book lift at 15%** | 3.777 → **3.799** | material ❌ |
+| **book at 15% (full scorecard)** | 4/5, against a rotated control that also scores 4/5 | ❌ |
 
 The obvious suspicion — that "long expensive chains" is just the BTC-dominance trade — was tested and
 **does not hold**: correlation to the BTC-minus-equal-weight-alts spread is +0.25, and hedging that
@@ -532,8 +538,10 @@ The cross-asset breadth H3 was hoped to add is therefore structurally unavailabl
 
 | on-chain weight | 0% | 15% | 30% | 50% |
 |---|---|---|---|---|
-| blended Sharpe — value headline | 3.828 | 3.756 | 3.499 | 2.730 |
-| blended Sharpe — adoption momentum | 3.828 | **3.831** | 3.674 | 3.071 |
+| blended Sharpe — value headline | 3.71 | 3.61 | 3.35 | 2.60 |
+| blended Sharpe — adoption momentum | 3.71 | 3.70 | 3.54 | 2.95 |
+| targets met — adoption momentum | 5/5 | **4/5** | 4/5 | 4/5 |
+| targets met — its rotated control | 5/5 | **5/5** | 5/5 | 4/5 |
 
 The value book monotonically lowers the blend. Adoption momentum, the one signal with real
 out-of-sample behaviour, is **flat**: +0.003 Sharpe at a 15% weight is indistinguishable from zero, and
