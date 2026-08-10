@@ -1,4 +1,6 @@
 const tip=document.getElementById('tip');
+// mirrors _money() in scripts/make_report.py so hover and axis read the same units
+const money=v=>{const a=Math.abs(v);return a>=1e12?'$'+(v/1e12).toFixed(2)+'T':a>=1e9?'$'+(v/1e9).toFixed(2)+'B':a>=1e6?'$'+(v/1e6).toFixed(2)+'M':a>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v.toFixed(0);};
 function mtip(html,x,y){tip.innerHTML=html;tip.style.opacity=1;tip.style.left=(x+15)+'px';tip.style.top=(y+15)+'px';}
 document.querySelectorAll('[data-tip]').forEach(e=>{
   e.addEventListener('mousemove',ev=>mtip(e.getAttribute('data-tip'),ev.clientX,ev.clientY));
@@ -16,6 +18,6 @@ for(const key in LINES){
     dot.setAttribute('cx',px);dot.setAttribute('cy',py);dot.style.opacity=1;
     cross.setAttribute('x1',px);cross.setAttribute('x2',px);cross.style.opacity=1;
     const dt=new Date(p[0]).toLocaleDateString('en',{year:'numeric',month:'short',day:'numeric'});
-    mtip('<b>'+dt+'</b><br>'+(m.pct?(p[1]*100).toFixed(1)+'%':p[1].toFixed(2)),ev.clientX,ev.clientY);});
+    mtip('<b>'+dt+'</b><br>'+(m.pct?(p[1]*100).toFixed(1)+'%':m.usd?money(p[1]):p[1].toFixed(2)),ev.clientX,ev.clientY);});
   hit.addEventListener('mouseleave',()=>{tip.style.opacity=0;dot.style.opacity=0;cross.style.opacity=0;});
 }

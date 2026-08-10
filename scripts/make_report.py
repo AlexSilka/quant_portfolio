@@ -100,7 +100,39 @@ def _n(v, dp=2):
 
 
 # ---------- svg builders (w = natural viewBox width in px; capped via max-width) ----------
-def line_svg(key, pts, w, h, log=False, pct=False):
+def _money(v):
+    """Axis/tooltip money: $500k, $3M, $250M — the reader should never multiply anything by hand."""
+    a = abs(v)
+    if a >= 1e12:
+        return f"${v / 1e12:.3g}T"
+    if a >= 1e9:
+        return f"${v / 1e9:.3g}B"
+    if a >= 1e6:
+        return f"${v / 1e6:.3g}M"
+    if a >= 1e3:
+        return f"${v / 1e3:.3g}k"
+    return f"${v:,.0f}"
+
+
+def _log_ticks(lo, hi, nmax=6):
+    """Round gridlines ($1M / $3M / $10M) for a log axis, given natural-log bounds.
+
+    Splitting the padded log range into equal parts labels the axis with whatever the endpoints happen
+    to be ($0.34M, $1.95M, $11.2M, ...), which is unreadable as money. A round ladder is, and the equal
+    spacing between decades is what makes the compounding rate legible as a slope. Returns empty when
+    the span is too narrow for a ladder — the caller falls back to the even split.
+    """
+    # coarsening rungs: 1-2-5, then 1-3, then every decade, then every 2nd/3rd decade. The last rungs
+    # matter — a leg that compounds across eight decades has no decade ladder that fits in six labels.
+    for mantissas, stride in (((1, 2, 5), 1), ((1, 3), 1), ((1,), 1), ((1,), 2), ((1,), 3)):
+        t = sorted(m * 10.0 ** e for e in range(-12, 16) if e % stride == 0 for m in mantissas
+                   if lo <= np.log(m * 10.0 ** e) <= hi)
+        if 2 <= len(t) <= nmax:
+            return t
+    return []
+
+
+def line_svg(key, pts, w, h, log=False, pct=False, usd=False, baseline=None):
     l, r, t, b = 60, 18, 16, 30
     pts = [p for p in pts if np.isfinite(p[1])]  # drop NaN (e.g. holiday gaps) so the path/hover span the full range
     xs = [p[0] for p in pts]
@@ -117,13 +149,20 @@ def line_svg(key, pts, w, h, log=False, pct=False):
         return h - b - (vv - ymin) / (ymax - ymin) * (h - t - b)
 
     p = []
-    for i in range(5):
-        yy = t + (h - t - b) * (1 - i / 4)
-        gv = ymin + (ymax - ymin) * i / 4
-        disp = float(np.exp(gv)) if log else gv
-        lab = f"{disp * 100:.0f}%" if pct else f"{disp:.2f}"
+    ticks = _log_ticks(ymin, ymax) if log else []
+    if not ticks:      # linear axis, or a log span too narrow for a round ladder
+        ticks = [float(np.exp(g)) if log else g for g in (ymin + (ymax - ymin) * i / 4 for i in range(5))]
+    for v in ticks:
+        yy = Y(v)
+        lab = f"{v * 100:.0f}%" if pct else (_money(v) if usd else f"{v:.2f}")
         p.append(f'<line class="gl" x1="{l}" y1="{yy:.1f}" x2="{w - r}" y2="{yy:.1f}"/>')
         p.append(f'<text class="ax" x="{l - 9}" y="{yy + 4:.1f}" text-anchor="end">{lab}</text>')
+    if baseline is not None and ymin <= (np.log(baseline) if log else baseline) <= ymax:
+        # where the money started, so "how much did it grow" is a distance on the chart, not arithmetic
+        p.append(f'<line class="base" x1="{l}" y1="{Y(baseline):.1f}" x2="{w - r}" y2="{Y(baseline):.1f}"/>')
+        # right-hand side: the curve is far away from its own starting level by the end of the window
+        p.append(f'<text class="ax" x="{w - r - 4}" y="{Y(baseline) - 7:.1f}" text-anchor="end">'
+                 f'{_money(baseline) if usd else f"{baseline:.2f}"} start</text>')
     yrs = sorted({pd.Timestamp(x, unit="ms").year for x in xs})
     step = max(1, -(-len(yrs) // max(3, int(w // 135))))  # thin labels to the chart width
     for yr in yrs[::step]:
@@ -137,7 +176,8 @@ def line_svg(key, pts, w, h, log=False, pct=False):
     p.append(f'<circle class="dot" id="{key}-dot" r="4" style="opacity:0"/>')
     p.append(f'<rect id="{key}-hit" x="{l}" y="{t}" width="{w - l - r}" height="{h - t - b}" fill="transparent"/>')
     meta = {"pts": pts, "W": w, "H": h, "l": l, "r": r, "t": t, "b": b,
-            "xmin": xmin, "xmax": xmax, "ymin": float(ymin), "ymax": float(ymax), "log": log, "pct": pct}
+            "xmin": xmin, "xmax": xmax, "ymin": float(ymin), "ymax": float(ymax),
+            "log": log, "pct": pct, "usd": usd}
     return _svg(w, h, "".join(p)), meta
 
 
@@ -173,8 +213,8 @@ def curve_svg(labels, values, w, h, mark=None):
 
 
 def multiline_svg(curves, w, h, bold=None):
-    """Overlay many equity curves (log) — per-family faint + book bold; native <title> hover."""
-    l, r, t, b = 52, 14, 14, 28
+    """Overlay many equity curves in dollars (log) — per-family faint + book bold; native hover."""
+    l, r, t, b = 62, 14, 14, 28
     allx = [pt[0] for _, pts in curves for pt in pts]
     ally = [pt[1] for _, pts in curves for pt in pts]
     xmin, xmax = min(allx), max(allx)
@@ -189,11 +229,11 @@ def multiline_svg(curves, w, h, bold=None):
         return h - b - (np.log(max(v, 1e-6)) - ymin) / (ymax - ymin) * (h - t - b)
 
     p = []
-    for k in range(4):
-        yy = t + (h - t - b) * (1 - k / 3)
+    ticks = _log_ticks(ymin, ymax, nmax=4) or [float(np.exp(ymin + (ymax - ymin) * k / 3)) for k in range(4)]
+    for v in ticks:
+        yy = Y(v)
         p.append(f'<line class="gl" x1="{l}" y1="{yy:.1f}" x2="{w - r}" y2="{yy:.1f}"/>')
-        p.append(f'<text class="ax" x="{l - 8}" y="{yy + 4:.1f}" text-anchor="end">'
-                 f'{np.exp(ymin + (ymax - ymin) * k / 3):.1f}x</text>')
+        p.append(f'<text class="ax" x="{l - 8}" y="{yy + 4:.1f}" text-anchor="end">{_money(v)}</text>')
     for yr in sorted({pd.Timestamp(x, unit="ms").year for x in allx})[::max(1, -(-len({pd.Timestamp(x, unit="ms").year for x in allx}) // 8))]:
         xx = X(pd.Timestamp(str(yr)).value // 10 ** 6)
         if l <= xx <= w - r:
@@ -269,7 +309,10 @@ def _svg(w, h, inner):
 
 
 def _ds(s, n=760):
-    return s.iloc[:: max(1, len(s) // n)]
+    d = s.iloc[:: max(1, len(s) // n)]
+    # keep the last observation whatever the stride lands on: the end of a dollar curve is a headline
+    # figure elsewhere on the page, and a chart that stops days short quotes a different number
+    return d if len(s) == 0 or d.index[-1] == s.index[-1] else pd.concat([d, s.iloc[[-1]]])
 
 
 def _pts(s):
@@ -702,15 +745,20 @@ def main():
         f'</ul></div>')
 
     # --- equity, drawdown, rolling 12m Sharpe ---
-    eq_svg, lines["equity"] = line_svg("equity", _pts(_ds(eqf)), 1120, 320, log=True)
+    # the balance itself, in dollars — a growth multiple would leave the reader multiplying by the
+    # sizing capital to answer the only question the chart is asked ("how much money is that?")
+    eq_svg, lines["equity"] = line_svg("equity", _pts(_ds(CAP * eqf)), 1120, 320,
+                                       log=True, usd=True, baseline=CAP)
     dd_svg, lines["dd"] = line_svg("dd", _pts(_ds(eqf / eqf.cummax() - 1.0)), 548, 240, pct=True)
     rmu, rsd = master.rolling(365, min_periods=180).mean(), master.rolling(365, min_periods=180).std(ddof=1)
     roll = (np.sqrt(365) * rmu / rsd).dropna()
     roll_svg, lines["roll"] = line_svg("roll", _pts(_ds(roll)), 548, 240)
 
     # --- per-family equity curves + book (§13); families are flat until they list ---
-    curves = [(sf(f), _pts(_ds((1 + legs[f].fillna(0.0)).cumprod()))) for f in fams]
-    curves.append(("master book", _pts(_ds(eqf))))
+    # each leg standalone on the same sizing capital — the legs are vol-matched to a common target, so
+    # "$500k in this family alone" is the counterfactual the overlay is actually drawing
+    curves = [(sf(f), _pts(_ds(CAP * (1 + legs[f].fillna(0.0)).cumprod()))) for f in fams]
+    curves.append(("master book", _pts(_ds(CAP * eqf))))
     psleq_svg = multiline_svg(curves, 1120, 300, bold=len(curves) - 1)
 
     # --- monthly return heatmap ---

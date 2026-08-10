@@ -48,6 +48,7 @@ figcaption{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.09em;tex
 .lbl{fill:var(--text);font:600 13px ui-monospace,Menlo,monospace;} .cv{fill:#10233c;font:700 13px ui-monospace,monospace;}
 .line{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round;}
 .area{fill:var(--accent);opacity:.11;stroke:none;} .cross{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:4 4;}
+.base{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:2 5;opacity:.75;}
 .dot{fill:var(--accent);stroke:var(--panel);stroke-width:2;} .pt{fill:var(--accent);stroke:var(--panel);stroke-width:1.5;}
 .pt.mk{fill:var(--warn);stroke:var(--panel);stroke-width:2;}
 .mlline{fill:none;stroke:var(--muted);stroke-width:1;opacity:.32;} .mlline.bold{stroke:var(--accent);stroke-width:2.4;opacity:1;}

@@ -21,8 +21,8 @@ Hover any chart.</p>
 {sc_note}
 <p class="valline gap">Validation (§10) &mdash; Monte-Carlo, block-bootstrap P5/50/95: Sharpe {mc_p5}/{mc_p50}/{mc_p95} &middot; max-DD {mc_maxdd_p5}/{mc_maxdd_p50}/{mc_maxdd_p95} &middot; monthly hit-rate {mc_hit_p5}/{mc_hit_p50}/{mc_hit_p95}. Sharpe and drawdown clear their targets even on the 5th-percentile draw; months-in-profit does not ({mc_hit_p5} against &ge;80%), so that is the target that depends on a kind path rather than on the edge. Mean cross-family correlation {mean_corr}; remove the strongest leg ({top_family}) and the book still runs at Sharpe {top_removed}.</p>
 <div class="grid">
-  <figure class="card s6"><figcaption>Master book equity (growth of capital at constant risk, log &middot; families join as they list &middot; hover for date)</figcaption>{eq}</figure>
-  <figure class="card s6"><figcaption>Per-family equity + master book (log &middot; hover a line)</figcaption>{psleq}</figure>
+  <figure class="card s6"><figcaption>Master book balance &mdash; $500k with P&amp;L reinvested at constant risk (log, so a straight line is a steady compounding rate &middot; families join as they list &middot; hover for date &middot; past ~year 8 the balance is beyond the capacity the cost model charges for, see the sizing note)</figcaption>{eq}</figure>
+  <figure class="card s6"><figcaption>Per-family balance + master book &mdash; the same $500k in each family alone (log &middot; hover a line &middot; the vol-premium leg runs off the top into figures no desk could trade, which is the concentration the sizing note is about)</figcaption>{psleq}</figure>
   <figure class="card s6"><figcaption>Monthly return heatmap (% of capital at each month&rsquo;s start &middot; compounded, like the scorecard)</figcaption>{month}</figure>
   <figure class="card"><figcaption>Drawdown (compounded)</figcaption>{dd}</figure>
   <figure class="card"><figcaption>Rolling 12-month Sharpe</figcaption>{roll}</figure>
