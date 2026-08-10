@@ -151,9 +151,22 @@ PER_FAMILY_CAP = 1.5 / len(FAMILIES)
 # (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
 HEDGE_SLOT = {"crisis": (0.25, 1.5)}
 
+# A name here that no family answers to would silently do nothing — the book would quietly revert to flat
+# weights and every scorecard below would go on looking reasonable. Checked once, against the canonical
+# family list, at import: a typo or a renamed leg fails loudly here instead of in six months' numbers.
+_unknown = set(HEDGE_SLOT) - {lab for lab, _, _ in FAMILIES}
+if _unknown:
+    raise ValueError(f"HEDGE_SLOT names {sorted(_unknown)}, which are not families in FAMILIES "
+                     f"({[lab for lab, _, _ in FAMILIES]}) — the ramp would silently not apply")
+
 
 def slot_weights(df):
-    """Each family's share of an equal-risk slot, per day: 1.0 everywhere except the long-gamma hedge."""
+    """Each family's share of an equal-risk slot, per day: 1.0 everywhere except the long-gamma hedge.
+
+    A hedge family absent from `df` is skipped rather than raised on, because that is the legitimate
+    case: the composition search and the leave-one-out counterfactuals assemble subsets that drop it on
+    purpose. The typo case is caught at import above, against the canonical list, so the two cannot be
+    confused with each other."""
     w = pd.DataFrame(1.0, index=df.index, columns=df.columns)
     for fam, (calm, stressed) in HEDGE_SLOT.items():
         if fam in w.columns:
