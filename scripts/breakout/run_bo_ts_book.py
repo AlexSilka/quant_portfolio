@@ -1,9 +1,11 @@
 """The time-series breakout book, shipped assembly vs the corrected one, on one window.
 
-The shipped book (`run_bo_final.py`) is: frozen core-10, all-perp execution, 1d raw chandelier plus
-4h/1h gated by a meta-label model fitted with purged k-fold on gross labels. Three separate findings
-from this review change it, and this script prices them one at a time so the reader can see which
-part of the delta comes from where:
+The book as it stood BEFORE this review was: frozen core-10, all-perp execution, 1d raw chandelier
+plus 4h/1h gated by a meta-label model fitted with purged k-fold on gross labels. Three separate
+findings change it, and this script prices them one at a time so the reader can see which part of the
+delta comes from where. The venue finding has since SHIPPED — `run_bo_final` fills long-on-spot /
+short-on-perp — so the baseline below is the old book, not the current one; this docstring called it
+"the shipped book" until that stopped being true.
 
   venue   long leg on spot, short leg on perps. A perp long has paid ~23%/yr in funding *conditional
           on the book being long* (it is long exactly when funding is extreme); spot pays none. A

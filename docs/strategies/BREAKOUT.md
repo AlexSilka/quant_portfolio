@@ -605,6 +605,16 @@ holding a crypto sleeve is decorrelation, the higher Sharpe is the wrong thing t
 
 ## 13. The ML gate under a walk-forward
 
+> **Venue basis of every number in this section.** The venue change of [§12](#12-venue-the-funding-bill-and-the-24-years-before-perps-existed)
+> shipped in the leg — `run_bo_final` fills long-on-spot / short-on-perp — but was never propagated to
+> the ML sub-study, which still prices the pre-change **all-perp** fill. So the levels below understate
+> what the shipped leg earns: on the five core names the split fill scores +0.60 / +0.52 / +0.23 / +0.92
+> / +0.63 against all-perp's +0.45 / +0.79 / +0.17 / +0.91 / +0.58 (BTC total return +35% → +52%). The
+> gate VERDICT is unaffected and that is measurable rather than asserted: the two fills correlate
+> **0.9995+** per name, so in a gated-versus-ungated difference on one venue the fill is a common factor
+> that cancels. Re-basing the sub-study is a change to this family's whole ML chain, recorded here with
+> its magnitude rather than made silently.
+
 `run_bo_ml.py` estimates the gate with `purged_kfold`. Purging removes label-overlap leakage; it does
 not remove look-ahead, because each fold trains on its whole complement. Measured on BTC 4h
 (`run_bo_ml_wf.py`), the share of each fold's training events that lie *after* its test window:
