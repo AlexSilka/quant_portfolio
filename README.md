@@ -15,21 +15,21 @@ no network).
 
 ## The result in one page
 
-An **eight-family, equal-weight cross-asset book** at a constant **1.15× leverage** (~9.5% annualised vol).
+An **seven-family, equal-weight cross-asset book** at a constant **1.15× leverage** (~9.5% annualised vol).
 The brief scores its five targets on the **final out-of-sample block**; the 15-year window is shown alongside
 as supporting evidence, not as a second scorecard.
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.39** ✓ | **3.58** ✓ |
-| months in profit ≥ 80% | **76.9%** ✓ | **79.3%** ✓ |
-| max drawdown ≤ 15% | **−5.1%** ✓ | **−7.4%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **3** ✓ |
-| worst single month ≥ −6% | **−2.0%** ✓ | **−4.41%** ✓ |
+| Sharpe, net, 2.5–4.0 | **3.26** ✓ | **3.60** ✓ |
+| months in profit ≥ 80% | **76.9%** ✓ | **82.4%** ✓ |
+| max drawdown ≤ 15% | **−5.2%** ✓ | **−7.3%** ✓ |
+| longest losing streak ≤ 2 mo | **2** ✓ | **2** ✓ |
+| worst single month ≥ −6% | **−2.0%** ✓ | **−4.97%** ✓ |
 | | **5 / 5** | **5 / 5** |
 
-On the brief's $500k of sizing capital that is **$2.65M** of P&L, **~$170k/yr**
-(+34.0%/yr not reinvested, +39.9%/yr compounded). Positive in **16 of 16 calendar years**.
+On the brief's $500k of sizing capital that is **$2.82M** of P&L, **~$181k/yr**
+(+36.2%/yr not reinvested, +42.9%/yr compounded). Positive in **16 of 16 calendar years**.
 Mean pairwise correlation between families **≈ 0.06**.
 
 **The eight sources** — each developed in its own deep-dive, combined at genuine equal-weight risk parity
@@ -52,7 +52,7 @@ book still stands.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
 
-1. **Concentration.** Short-vol is 56% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
+1. **Concentration.** Short-vol is 60% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
    flash crash). No term-structure rule reaches that day — the curve was in contango the session before.
 2. **Capacity.** That same leg is a variance-swap *replication*, not an executed option book, and the 18-leg
    construction caps out around low tens of $M before the thin legs stop filling.
@@ -78,7 +78,7 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.58** (3/5), OOS **3.39** (4/5), −7.4% max-DD, 8 families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.60** (5/5), OOS **3.26** (4/5), −7.3% max-DD, 7 families |
 | `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; 2010-event max-DD is what binds first, at 1.25× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
@@ -86,7 +86,7 @@ no key, offline, seconds each:
 
 Re-running `make master` then `git diff reports/master_book_summary.json` shows **no change** —
 byte-for-byte reproducibility. The Sharpe is high because the book **selects no single sleeve** (the
-best sleeve's deflated Sharpe ≈ 0.00 at N = 2,129): it stacks eight decorrelated premia (mean ρ ≈ 0.06).
+best sleeve's deflated Sharpe ≈ 0.00 at N = 2,129): it stacks seven decorrelated premia (mean ρ ≈ 0.06).
 Every Sharpe is annualised by actual obs/yr (not a flat 365), and the short-vol leg is net of
 per-underlying vega spreads (`reports/volprem/volprem_cost_robustness.csv`).
 
@@ -125,7 +125,7 @@ per-family write-ups ([docs/](docs/)).
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the eight family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.58 full / 3.39 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.60 full / 3.26 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,
