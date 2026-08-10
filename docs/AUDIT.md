@@ -23,6 +23,9 @@ change that reached the caller inside the pipeline and no further.
 | `drop(columns=["carry"])` on a book that dropped carry | `carry/make_carry_figures` | the figure had not been generated since §6d-ter |
 | `PER_FAMILY_CAP = 1.0 / 8 * 1.5` | `run_master_book` | written for an eight-family book, read as 1.13x equal weight against the 1.5x it claimed |
 | the headline checker enforcing a scorecard shape the README stopped using | `check_headline` | the guard against stale claims was itself stale, and failing on five counts that were all its own |
+| relative imports (`from .run_gate_coverage import`) | `run_gate_coverage`, `run_gate_ablation` | the only two files in the repo that cannot run as `python scripts/...`; their own siblings use the package-qualified form |
+| `OTHERS` — "the same as run_master_book.FAMILIES, minus trend" | `trend/run_trend_in_portfolio` | four ways from it: named carry, missed crisis/global-macro/BAB, pre-reorganisation paths, and volprem's UNGATED column — so the trend counterfactual was scored against a book that never existed |
+| the same `drop(columns=["carry"])`, one directory over | `carry/run_carry_portfolio` | second instance of one defect in one family, which is what a copied line looks like after the thing it copied from moves |
 
 ## Two defects about the numbers, not the running
 
@@ -61,6 +64,35 @@ The point of re-running is not only that a script exits 0. Against the committed
   its equity/FX universe is a glob over the data directory (`bo_common.py`), now 1,645 tickers against
   ~400 when those files were written. A glob universe means the study is not reproducible across time
   or machines; the shipped leg is crypto and unaffected.
+
+## The finding that outranks the rest: an input nobody could diff
+
+Six of the book's seven legs reproduce byte-identically. The seventh is the cross-sectional leg, and
+chasing why took the audit somewhere it did not expect to go.
+
+`xs` is built from panels in `data/cache/`, which is git-ignored, and the panel's universe is a **ranked
+cut**: the 300 most liquid of whatever USDT perps happen to be on disk, ranked on **full-sample** median
+volume. Today that binds — 300 selected out of 367 eligible, 67 names displaced. Download more symbols,
+rebuild, and the cut changes *retroactively*, rewriting the leg's whole history.
+
+Rebuilding the panels during this audit moved the leg on **4,612 of 4,869 days** and took the book's
+scored block from **5/5 to 3/5** — Sharpe 3.96 → 4.02, just past the ceiling, and months-in-profit
+80.8% → 76.9%, two months on a 26-month block. No code changed. Nothing was diffable, because the input
+that changed was not tracked anywhere.
+
+Two things follow, and they are different sizes.
+
+The small one is fixed: `build_panels` now writes `reports/xs/<tag>_universe.json` beside each panel —
+selected names, eligible count, whether the cap bound, the thresholds, the per-name liquidity the rank
+used, and an explicit note that the rank is not point-in-time. Tracked, so the next rebuild that moves a
+number shows which names moved with it.
+
+The large one is not, and should not be decided by an audit: a full-sample rank over a growing disk is a
+hindsight universe. The honest fix is for the panel to stop pre-filtering at all and let the strategy's
+own **trailing** liquidity rank — which it already computes — decide. That is a change to the leg.
+
+Also worth stating plainly: the block's 5/5 was resting on this. Two targets crossed on a rebuild that
+involved no decision at all, which says the margin was thinner than the scorecard looked.
 
 ## The pattern
 
