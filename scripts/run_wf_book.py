@@ -3,7 +3,7 @@
 The §11 scorecard is reported on a single FINAL out-of-sample block (OOS_START→, run once). That block is
 deliberately small — the last ~2 years never looked at until the end. This script adds the OTHER §10
 requirement — a *rolling and anchored walk-forward with periodic re-fitting* — at the PORTFOLIO level, over
-ALL available data (the 5 non-crypto legs reach back to 2005–2012, so the master's 2016 window is a reporting
+ALL available data (the non-crypto legs reach back to 2005–2012, so the master's 2016 window is a reporting
 choice, not a data limit; only crypto carry/breakout is stuck at 2020). At each rebalance it fits the leg
 weights on the training window (anchored [start,t] or rolling [t−win,t]) and applies them to the next block
 out-of-sample; concatenating the blocks gives the accumulated walk-forward OOS track (~18y, 2006→2026, incl.
@@ -51,8 +51,8 @@ STRESS = [("2008 GFC", "2007-10-01", "2009-06-30"), ("2018 Volmageddon", "2018-0
 
 def load_full_legs():
     """Full-history vol-scaled legs (2005+): the canonical family series WITHOUT the master's 2016 trailing-
-    window truncation, so the walk-forward can use ALL available data. Crypto legs (carry/breakout) still
-    only exist from 2020; the 5 non-crypto legs reach back to 2005-2012 (volprem/crisis/gmacro from 2005 are
+    window truncation, so the walk-forward can use ALL available data. The crypto legs (breakout, BAB) still
+    only exist from 2020; the others reach back to 2005-2012 (volprem/crisis/gmacro from 2005 are
     reconstructed signals — the tradeable managed-futures/vol products post-date the GFC — so pre-~2019 is a
     strategy-logic backtest, not a live track). Falls back to the 2016+ committed legs if the loaders are
     unavailable."""
@@ -204,8 +204,8 @@ def main():
         "headline_wf_oos": hb, "headline_final_block_oos": hb_oos, "master_window_2016_oos": hb_2016,
         "window_cadence_invariance_range": [min(eq_vals), max(eq_vals)], "configs": rows, "stress": stress,
         "window_robustness": windows,
-        "note": "Book-level walk-forward with periodic allocation re-fit (§10), over ALL available data (2005+ for the 5 "
-                "non-crypto legs; crypto carry/breakout only from 2020). Equal-weight needs no fit, so its walk-forward "
+        "note": "Book-level walk-forward with periodic allocation re-fit (§10), over ALL available data (2005+ for the "
+                "non-crypto legs; the crypto legs only from 2020). Equal-weight needs no fit, so its walk-forward "
                 "equals the full post-burn-in track — the a-priori book is OOS across the whole history, incl. the 2008 "
                 "GFC. The 2y final block (OOS_START) is the separate run-once §11 holdout. Caveat: pre-~2019 crisis/gmacro "
                 "are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",

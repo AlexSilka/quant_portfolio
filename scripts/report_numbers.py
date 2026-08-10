@@ -656,6 +656,10 @@ def build():
                 [x for k, x in s["standalone_sharpe"].items()
                  if k != max(s["standalone_sharpe"], key=s["standalone_sharpe"].get)]),
             "mean_corr_abs": f"{abs(s['mean_correlation']):.2f}",
+            # §7.2's stability line — typed, and every one of its four numbers had drifted
+            "corr_stability": (lambda c: f"first-half {c['first_half_mean']:.2f} / second-half "
+                               f"{c['second_half_mean']:.2f} / OOS-block {c['oos_mean']:.2f}, max pairwise "
+                               f"shift {c['max_pairwise_shift']:.2f}")(s["correlation_stability"]),
             "n_years_positive": str(sum(1 for v in s.get("per_year", {}).values() if v > 0)),
             "weakest_year_sharpe": _n(min(s.get("per_year", {"x": 0.0}).values(), key=float), 1),
             "weakest_year": min(s.get("per_year", {"x": 0.0}), key=lambda k: s["per_year"][k]),
@@ -717,6 +721,16 @@ def build():
             out.update({"wf_sharpe": f"{w['sharpe']:.2f}", "wf_dd": _pc(w["max_dd"]),
                         "wf_window": f"{w['start'][:4]}→{w['end'][:4]}",
                         "wf_months": _pcu(w["months_in_profit"])})
+        wfs = _load("master_book_wf_summary.json")
+        rng = wfs.get("window_cadence_invariance_range")
+        if rng:
+            out["wf_invariance"] = f"[+{rng[0]:.2f}, +{rng[1]:.2f}]"
+            out["wf_invariance_spread"] = f"{rng[1] - rng[0]:.2f}"
+        for lab, key in (("gfc", "2008 GFC"), ("volmageddon", "2018 Volmageddon"), ("covid", "COVID crash")):
+            st = (wfs.get("stress") or {}).get(key)
+            if st:
+                out[f"wf_stress_{lab}"] = _pc(st["max_dd"])
+                out[f"wf_stress_{lab}_legs"] = _word(st["n_legs"])
         out.update(_grid_span())
         out.update(_grid_ranges())
         out.update(_leg_swap_table())

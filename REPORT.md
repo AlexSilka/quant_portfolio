@@ -214,9 +214,10 @@ per-family weight cap (1.5× the 1/6 equal weight; never binds). The drawdown la
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
 cluster the losing months, holding the book at **Sharpe 3.53** and closing the scorecard to
 **5/5 out-of-sample, 5/5 on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
-pairwise cross-family correlation is ≈ 0.06** — the corr-to-book column is naturally higher since each family
-is part of the book. **The decorrelation is stable out-of-sample** (§7.2: first-half 0.08 / second-half 0.06 /
-OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
+pairwise cross-family correlation is ≈ 0.07** — the corr-to-book column is naturally higher since each
+family is part of the book. **The decorrelation is stable out-of-sample** — the same matrix re-measured on two halves of the
+window and on the frozen block reads first-half 0.07 / second-half 0.07 / OOS-block 0.07, max pairwise shift 0.08 — not an
+in-sample artifact.
 
 | family | honest series | standalone Sharpe | corr to book |
 |---|---|---|---|
@@ -249,7 +250,7 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
   **82.4%**, worst month **−5.8%**, streak **2mo** — **5 of 5 on the
   15-year window** (nothing);
   block-bootstrap MC **[Sharpe P5 +3.07, P50 +3.54, P95 +4.00; max-DD P5 −13.5%, P50 −9.4%]**; mean
-  pairwise cross-family correlation **+0.06**. **On the final OOS block: Sharpe 3.07, months-in-profit
+  pairwise cross-family correlation **+0.07**. **On the final OOS block: Sharpe 3.07, months-in-profit
   80.8%, max-DD −5.7%, worst −3.0%, streak 2mo — 5/5.**
   Per-family P&L share: **volprem 64%**, gmacro 10%, x-sect 8%, breakout 7%, BAB 7%, crisis 4% — volprem-dominated, stated not hidden.
 - **Four-scheme Monte Carlo** (§10, all with P5/P50/P95 of Sharpe, max-DD *and* monthly hit): block bootstrap
@@ -573,17 +574,18 @@ The brief asks for **two distinct things**, and the book has both:
   alongside it because §10 asks for per-year/per-quarter metrics and §12 for a ceiling assessment — it is
   supporting evidence, never a second scorecard.
 - **A rolling & anchored walk-forward with periodic re-fitting** (§10) at the portfolio level
-  (`scripts/run_wf_book.py`), over **all available data** — the 5 non-crypto legs reach back to 2005–2012, so
-  the 2016 reporting window is not a data limit; only crypto (carry/breakout) is stuck at 2020. At each
+  (`scripts/run_wf_book.py`), over **all available data** — the non-crypto legs reach back to 2005–2012, so
+  the 2016 reporting window is not a data limit; only the crypto legs are stuck at 2020. At each
   rebalance it fits the leg weights on the training window (anchored `[start,t]` or rolling `[t−2y,t]`) and
   applies them to the next block out-of-sample; concatenating the blocks gives an **accumulated out-of-sample
   track over ~20 years (2006→2026), Sharpe 3.28, max-DD −18.6%** — the book is out-of-sample across nearly the
   whole history, not just the final block. *(That track is measured on the **unlevered** stack; at the shipped
   1.15× its drawdown would be outside the mandate. That is a property of the early, thinly-populated
   window rather than of the shipped book — see §4b, "the full available history".)* It is **invariant to the choice**: anchored vs rolling, quarterly vs
-  annual re-fit all land Sharpe in **[+3.28, +3.45]** (spread 0.17). **Crisis-window stress** on this long
-  track: through the **2008 GFC** the book draws down only **−4.5%** (the crisis / managed-futures leg hedges
-  the volprem short-vol tail), −3.2% through 2018 Volmageddon and −2.0% through COVID. *(Caveat: the pre-2020
+  annual re-fit all land Sharpe in **[+3.28, +3.31]** (spread 0.03). **Crisis-window
+  stress** on this long track: through the **2008 GFC** the book draws down only **−4.5%** on the
+  three legs live then (the crisis / managed-futures leg hedges the volprem short-vol tail),
+  −1.7% through 2018 Volmageddon and −0.9% through COVID. *(Caveat: the pre-2020
   crisis/gmacro track runs on **real ETF/FX prices** (SPY/GLD/TLT/EM-FX — the instruments traded and were liquid), so it
   is a strategy-logic backtest, not a live *product* track (the 2008 result is evidence the diversification
   logic works, not a tradeable record); every Sharpe is annualised by the track's actual obs/yr, not a flat 365.)*
@@ -671,11 +673,11 @@ IC), because removing the beta removes the return. Full per-family model grids a
 `reports/{trend,breakout,carry,onchain,xs}/`.
 
 **Does it help the assembled book? (measured — leg-swap through the risk-parity assembly, judged on all five
-targets, not Sharpe alone).** The shipped book already clears every target, so what an ML lever has to do is hold
-the two that have the least room — the **worst month** (−6.0% against −6%) and the **≤2-month streak** — while
-adding something. That is the honest bar, and no lever clears it. Swapping one family's leg
-for its ML variant, book otherwise identical (baseline = shipped gated book, OOS Sharpe **3.07**,
-months-in-profit **85% OOS / 81% full**, streak 2). The **leg-standalone** column is each family's raw Sharpe re-measured inside this swap
+targets, not Sharpe alone).** The book already clears every target, so what an ML lever has to do is hold the
+one with the least room — the **worst month**, at −5.8% against −6% — while adding something.
+That is the honest bar, and no lever clears it. Swapping one family's leg for its ML variant, book otherwise
+identical. **This is one of the A/B tables noted in §4: its baseline is the eight-family book those swaps were
+run against, so read the delta between rows, not the level.** The **leg-standalone** column is each family's raw Sharpe re-measured inside this swap
 harness (equal-weight core-10; trend held crypto-only); it lines up with the deep-dive figure above (trend
 **+0.69** here ≈ **+0.67** there), so read the raw→ML *delta* within each table, not the standalone level.
 Reproduce: `make ml-contribution` (`scripts/run_ml_book_contribution.py` → `reports/book/ml_book_contribution.json`):
@@ -903,7 +905,7 @@ crash months while the other five families stay invested and earning. Reproduce:
   COVID **+0.9% vs −1.4%**. (Remove the crisis family from `run_master_book.FAMILIES` to reproduce.)
 - **Binding constraints:** costs/turnover kill 5m (and most 15m) sleeves; the surviving edge is
   **crypto-heavy** (no family spans both classes since trend was dropped), so the book carries crypto-regime risk (visible as the
-  book's thinnest crypto-era years — 2016 +2.0, 2022 +1.6, 2026 +0.7 partial — positive but well below the
+  book's thinnest years — 2026 at +0.1 — positive but well below the
   full-sample Sharpe); individual-sleeve significance is low — the edge is in the decorrelation.
 - **What would extend it (honest next steps):** cross-sectional momentum on a **broad small/mid-cap
   universe** (it was weak on 20 mega-caps but is a documented edge with breadth); the meta-label
@@ -931,8 +933,8 @@ placebo, walk-forward, correlation to this book):
   but Sharpe overstates — the honest metrics are skew **−18** and a **−78% systemic-vol tail** that
   diversification softens but cannot remove. In a momentum+carry+VRP blend it peaks **1.77 → 1.84 (10%
   weight) → 1.58 (30%)** (`reports/volprem/volprem_marginal.csv`) — a modest lift that reverses past ~10% as
-  its tail dominates. In the master book it sits at equal weight (1/8) and anchors the Sharpe; must be sized
-  with a tail hedge.
+  its tail dominates. In the master book it sits at equal weight (1/6) and anchors the Sharpe; must be
+  sized with a tail hedge.
 
 - **Betting-against-beta / low-vol (BAB)** (beta-neutral, [docs/strategies/BAB.md](docs/strategies/BAB.md)) —
   the leverage-constraint premium: long low-β / short high-β with Frazzini-Pedersen leg-scaling. **Clears the
@@ -942,10 +944,11 @@ placebo, walk-forward, correlation to this book):
   crypto-alive / equity-gone / FX-dead gradient; capacity-limited to the liquid majors.
 
 Together with **trend**, **breakout**, **cross-sectional momentum**, **crisis-alpha**, **global-macro** and
-**betting-against-beta / low-vol**, these give **eight structurally distinct sources**, assembled into the
-master book (§4). Cross-sectional **reversal**, stat-arb **pairs**, the **calendar/session** family (both
-**overnight** and **pre-FOMC/turn-of-month**, H4) and **skewness/lottery (MAX)** families were tested for this
-role and rejected (§7, all real-but-beta or negative).
+**betting-against-beta / low-vol**, these give **eight structurally distinct sources** that survive validation;
+**six of them are traded** (§6d-ter drops trend and carry, and prices what that costs), and
+those six are what §4 assembles. Cross-sectional **reversal**, stat-arb **pairs**, the
+**calendar/session** family (both **overnight** and **pre-FOMC/turn-of-month**, H4) and **skewness/lottery
+(MAX)** families were tested for this role and rejected (§7, all real-but-beta or negative).
 
 ## 6c. The search for a second long-gamma source (§12)
 
@@ -953,8 +956,9 @@ role and rejected (§7, all real-but-beta or negative).
 profitable month — means the only way to buy months-in-profit is to **own something that pays while the
 short-gamma legs bleed**. Two such legs are already in (crisis-alpha, global-macro); both are trend, so
 both need a crash to last long enough to trend into. `scripts/run_longgamma_search.py` searches for a third
-that is convex a different way, scoring each as a 9th equal-risk family through the canonical assembler on
-the **selection window** (pre-OOS), with the frozen block as a read-out only.
+that is convex a different way, scoring each as one more equal-risk family through the canonical assembler on
+the **selection window** (pre-OOS), with the frozen block as a read-out only. *(Run against the eight-family
+book — see the A/B note in §4; the levers and their verdicts are unchanged by the composition.)*
 
 | candidate | standalone Sharpe / skew | COVID crash | yen unwind 2024 | as a full 9th family |
 |---|---|---|---|---|
@@ -1379,6 +1383,13 @@ nothing that did not break another target. That is the honest ceiling of this bo
 
 ```bash
 make setup          # python3.12 venv + pinned deps  (macOS: brew install libomp)
+make master         # the headline, offline from the committed series (~seconds)
+make composition    # §6d-ter: the 37-way composition search behind the six-family book
+make risk-budget    # §4b: the leverage grid, the bootstrap tail and the 2010 event
+make lint           # every figure in this report re-resolved from the artifacts; fails on drift
 make reproduce      # run_book -> make_report ; writes reports/* and the dashboard
 ```
-Fixed seeds throughout; no held-out block was tuned against.
+Fixed seeds throughout; no held-out block was tuned against. **The prose here is a template
+(`scripts/report_assets/report.md`) and every figure in it is a named placeholder resolved from a committed
+artifact by `scripts/report_numbers.py`** — so a number in this report cannot disagree with the run that
+produced it, and `make lint` fails the build if the two drift apart.
