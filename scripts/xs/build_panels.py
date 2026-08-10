@@ -7,6 +7,7 @@ the panel is exactly the tradable universe. Run once; the sweeps read the cache.
 
     python scripts/xs/build_panels.py
 """
+import json
 import sys
 import warnings
 
@@ -15,7 +16,7 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CACHE_DIR, RAW_DIR  # noqa: E402
+from src.config import CACHE_DIR, RAW_DIR, XS_DIR  # noqa: E402
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.log import get_logger  # noqa: E402
@@ -45,6 +46,28 @@ MIN_DAILY_USD = 5e6      # tradable-universe floor on median daily $-volume
 MAX_NAMES = 300          # cap panel width so the big universe stays tractable
 
 
+def _record_universe(tag: str, keep: list, liq: dict) -> None:
+    """Write the selected names to a TRACKED file, beside the git-ignored panel they describe.
+
+    The panel lives in data/cache/, which is git-ignored, so the universe a published result was built
+    on left no record anywhere — and the selection is a ranked cut: `keep` is the MAX_NAMES most liquid
+    of whatever perps happen to be on disk, ranked on FULL-SAMPLE median volume. Download more symbols
+    and the cut changes retroactively, rewriting the leg's whole history. That is how a rebuild during
+    an audit moved the book's scored block by two targets with no code change and nothing to diff.
+
+    This does not fix the selection — a full-sample rank over a growing disk is still a hindsight
+    universe, and the honest fix is for the panel to stop pre-filtering and let the strategy's own
+    TRAILING rank decide. It makes the input visible: the file is committed, so the next rebuild that
+    moves a number shows exactly which names moved with it."""
+    XS_DIR.mkdir(parents=True, exist_ok=True)
+    (XS_DIR / f"{tag}_universe.json").write_text(json.dumps({
+        "selected": keep, "n_selected": len(keep), "n_eligible": len(liq),
+        "capped": len(liq) > MAX_NAMES, "max_names": MAX_NAMES, "min_daily_usd": MIN_DAILY_USD,
+        "rank": "full-sample median daily $-volume (NOT point-in-time)",
+        "median_daily_usd": {s: round(liq[s], 1) for s in keep},
+    }, indent=1))
+
+
 def build_crypto(interval: str) -> None:
     """Assemble the tradable crypto universe at this interval: every USDT perp on disk with
     ≥300 bars and median daily $-volume ≥ $5M, capped at the 300 most liquid — so the
@@ -65,6 +88,7 @@ def build_crypto(interval: str) -> None:
         close[s], advol[s], liq[s] = px["close"], px["quote_volume"], daily_usd
     keep = sorted(liq, key=liq.get, reverse=True)[:MAX_NAMES]
     _dump(f"crypto_{interval}", {s: close[s] for s in keep}, {s: advol[s] for s in keep})
+    _record_universe(f"crypto_{interval}", keep, liq)
 
 
 def build_equity() -> None:
