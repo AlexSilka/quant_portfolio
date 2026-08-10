@@ -1,0 +1,46 @@
+{
+  "raw_sleeve_sharpe": 0.573,
+  "onchain_coverage_names": 33,
+  "panel_names": 300,
+  "n_control_draws": 40,
+  "construction": "equal-weight rank blend, declared a-priori; dose ladder reported whole",
+  "doses": [
+    {
+      "dose": 0.1,
+      "blended_sharpe": 0.626,
+      "vs_raw": 0.053,
+      "control_mean": 0.601,
+      "control_p95": 0.673,
+      "control_pctile": 72.0,
+      "clears_control": false
+    },
+    {
+      "dose": 0.25,
+      "blended_sharpe": 0.516,
+      "vs_raw": -0.057,
+      "control_mean": 0.548,
+      "control_p95": 0.631,
+      "control_pctile": 30.0,
+      "clears_control": false
+    },
+    {
+      "dose": 0.5,
+      "blended_sharpe": 0.485,
+      "vs_raw": -0.088,
+      "control_mean": 0.422,
+      "control_p95": 0.606,
+      "control_pctile": 72.0,
+      "clears_control": false
+    }
+  ],
+  "best_dose": {
+    "dose": 0.1,
+    "blended_sharpe": 0.626,
+    "vs_raw": 0.053,
+    "control_mean": 0.601,
+    "control_p95": 0.673,
+    "control_pctile": 72.0,
+    "clears_control": false
+  },
+  "verdict": "no dose clears its name-shuffled control \u2014 adoption momentum adds nothing to the crypto x-sect sleeve as a component, just as it added nothing as a family"
+}

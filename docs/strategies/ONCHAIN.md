@@ -250,6 +250,22 @@ data for it.
 The correct summary is that free on-chain contains one honest, modest, momentum-shaped signal, and the
 book already owns that premium through cheaper channels.
 
+**And it does not upgrade that channel either** (`scripts/onchain/run_onchain_blend.py`). A signal that
+cannot carry a sleeve can still be worth something *inside* one — residual momentum earned its place that
+way — so `adr_mom30` was rank-blended into the crypto x-sect sleeve's own idiosyncratic-momentum signal,
+on the 33 names with coverage, at three doses declared in advance:
+
+| dose | blended | shuffled-name control (mean / p95) | percentile | |
+|---|---|---|---|---|
+| 0.10 | +0.626 | +0.601 / +0.673 | 72nd | inside the noise |
+| 0.25 | +0.516 | +0.548 / +0.631 | 30th | inside the noise |
+| 0.50 | +0.485 | +0.422 / +0.606 | 72nd | inside the noise |
+
+against a raw sleeve of **+0.573**. Not one dose clears its own control, and the control is what makes the
+table readable: at a 0.10 dose the blend nets **+0.626**, comfortably above the raw sleeve — and so does
+the *shuffled* arm, at **+0.601**. Perturbing the ranks of 33 of 300 names lifts this sleeve on its own.
+Read without the control arm, that cell is a +0.05 upgrade; read with it, there is nothing there.
+
 **Timeframe.** On-chain metrics are **daily aggregates** — there is no free intraday on-chain (and block-
 level counts are daily by nature), so the 5m/1h/4h axis the price sleeves sweep does not exist here. The
 holding-period axis was swept instead (rebal ∈ {1,7,21,63} bars): daily +0.21, weekly +0.16, monthly

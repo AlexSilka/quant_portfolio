@@ -160,6 +160,7 @@ onchain:
 	$(PY) scripts/onchain/run_onchain_ml.py
 	$(PY) -m src.data.defillama
 	$(PY) scripts/onchain/run_fundamentals.py
+	$(PY) scripts/onchain/run_onchain_blend.py
 
 # Breakout deep-dive -> publishes reports/breakout/bo_combined_portfolio.parquet. See docs/BREAKOUT.md.
 breakout:
