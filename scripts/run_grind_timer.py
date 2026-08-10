@@ -70,7 +70,7 @@ def main() -> None:
     df = pd.DataFrame({k: mb.rescale(v) for k, v in raw.items()}).sort_index()
     df = df[df.index >= pd.Timestamp(START)]; df = df[df.notna().sum(axis=1) >= 2]
     mean6 = mb.book_stack(df)
-    canon = mb.regime_overlay(mean6)
+    canon = mb.risk_overlay(mean6, leverage=mb.BOOK_LEVERAGE)[0]
 
     eq = (1 + mean6).cumprod(); dd = eq / eq.cummax() - 1.0
     roll_ret = mean6.rolling(15).sum(); roll_vol = mean6.rolling(15).std() * np.sqrt(PPY)
@@ -90,7 +90,7 @@ def main() -> None:
     for target, book in [("raw", mean6), ("canon", canon)]:
         for name, sig in signals.items():
             for floor in [0.0, 0.3]:
-                b = mb.regime_overlay(derisk(mean6, sig, floor)) if target == "raw" else derisk(canon, sig, floor)
+                b = mb.risk_overlay(derisk(mean6, sig, floor), leverage=mb.BOOK_LEVERAGE)[0] if target == "raw" else derisk(canon, sig, floor)
                 s = scorecard(b); key = f"{target}:{name}:floor{floor}"
                 out["grid"][key] = s
                 out["best_pass"] = max(out["best_pass"], npass(s))

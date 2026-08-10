@@ -1,6 +1,6 @@
 """Candidate book = the 6-family master + the convexity sleeve as a 7th input, scored IDENTICALLY.
 
-Mechanics are the real ones: this imports run_master_book's own load / rescale / regime_overlay / FAMILIES
+Mechanics are the real ones: this imports run_master_book's own load / rescale / book_stack / risk_overlay / FAMILIES
 (read-only) so the assembly is provably the same as the canonical book, only with a 7th family added. The
 question the whole convexity theme exists to answer: does a cheap, term-structure-timed long-gamma overlay
 fix the two failing scorecard gates — K (losing-month streak <=2) and M (months-in-profit >=80%) — WITHOUT
@@ -102,7 +102,7 @@ def assemble(fam_rescaled: dict, sleeve_rescaled: pd.Series | None, rep: str) ->
     df = pd.DataFrame(cols).sort_index()
     df = df[df.index >= pd.Timestamp(START)]
     df = df[df.notna().sum(axis=1) >= 2]
-    return mb.regime_overlay(df.mean(axis=1, skipna=True))
+    return mb.risk_overlay(mb.book_stack(df), leverage=mb.BOOK_LEVERAGE)[0]
 
 
 def main() -> None:
@@ -149,7 +149,7 @@ def main() -> None:
     for _ in range(20):
         wv = pd.Series(rng.uniform(0.75, 1.25, len(cols)), index=cols); wv /= wv.sum()
         num = (df7 * wv).sum(axis=1, skipna=True); den = (df7.notna() * wv).sum(axis=1)
-        draws.append(scorecard(mb.regime_overlay(num / den)))
+        draws.append(scorecard(mb.risk_overlay(num / den, leverage=mb.BOOK_LEVERAGE)[0]))
     Ps = np.array([npass(d) for d in draws]); Ms = np.array([d['months'] for d in draws])
     Ks = np.array([d['streak'] for d in draws]); Ws = np.array([d['worst'] for d in draws])
     out["perturbation"] = {"n": 20, "pass_min": int(Ps.min()), "pass_max": int(Ps.max()),

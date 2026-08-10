@@ -1,124 +1,124 @@
 {
   "baseline": {
-    "S": true,
-    "M": false,
+    "S": false,
+    "M": true,
     "W": true,
     "D": true,
-    "K": false,
-    "sharpe": 3.0542630547787266,
-    "months": 0.7355371900826446,
-    "worst": -0.059697992905716646,
-    "maxdd": -0.06954881993260886,
-    "streak": 3
+    "K": true,
+    "sharpe": 4.674974593442175,
+    "months": 0.8457446808510638,
+    "worst": -0.05074564018062411,
+    "maxdd": -0.07675076255354041,
+    "streak": 2
   },
   "representations": {
     "equal_rp": {
       "S": true,
-      "M": false,
-      "W": true,
+      "M": true,
+      "W": false,
       "D": true,
-      "K": false,
-      "sharpe": 2.8327878842360765,
-      "months": 0.768595041322314,
-      "worst": -0.04640528813900191,
-      "maxdd": -0.09028487243230521,
-      "streak": 3,
+      "K": true,
+      "sharpe": 3.9301253978828044,
+      "months": 0.8297872340425532,
+      "worst": -0.06484845322277999,
+      "maxdd": -0.0802831278901791,
+      "streak": 2,
       "months_flipped_pos": [
-        "2018-02-28",
-        "2020-02-29",
-        "2020-03-31",
-        "2020-04-30",
-        "2020-09-30",
-        "2024-08-31"
+        "2025-04-30",
+        "2026-03-31"
       ],
       "months_resunk_neg": [
         "2016-11-30",
-        "2019-05-31"
+        "2019-08-31",
+        "2021-12-31",
+        "2022-02-28",
+        "2026-04-30"
       ]
     },
     "live_only": {
-      "S": true,
-      "M": false,
-      "W": true,
+      "S": false,
+      "M": true,
+      "W": false,
       "D": true,
-      "K": false,
-      "sharpe": 3.033658148415079,
-      "months": 0.743801652892562,
-      "worst": -0.05364096710390576,
-      "maxdd": -0.09214119471186333,
-      "streak": 3,
+      "K": true,
+      "sharpe": 4.23895607666171,
+      "months": 0.8351063829787234,
+      "worst": -0.07454627378818002,
+      "maxdd": -0.09192745281138037,
+      "streak": 2,
       "months_flipped_pos": [
-        "2020-02-29",
-        "2020-03-31",
-        "2024-08-31"
+        "2025-04-30",
+        "2026-03-31"
       ],
       "months_resunk_neg": [
         "2016-11-30",
-        "2019-05-31"
+        "2021-12-31",
+        "2022-02-28",
+        "2026-04-30"
       ]
     }
   },
   "subwindows": {
     "2018+": {
       "S": true,
-      "M": false,
+      "M": true,
       "W": true,
       "D": true,
-      "K": false,
-      "sharpe": 2.551374658523312,
-      "months": 0.7692307692307693,
-      "worst": -0.04640528813900191,
-      "maxdd": -0.0902848724323062,
-      "streak": 3
+      "K": true,
+      "sharpe": 3.5448399772801045,
+      "months": 0.8173076923076923,
+      "worst": -0.05069376875986786,
+      "maxdd": -0.07777924749731024,
+      "streak": 2
     },
     "2020+": {
       "S": true,
-      "M": false,
+      "M": true,
       "W": true,
       "D": true,
-      "K": false,
-      "sharpe": 3.2487871646301976,
-      "months": 0.775,
-      "worst": -0.03527986303839603,
-      "maxdd": -0.0725448420136845,
-      "streak": 3
+      "K": true,
+      "sharpe": 3.561976155220284,
+      "months": 0.8125,
+      "worst": -0.05069376875986786,
+      "maxdd": -0.07777924749731058,
+      "streak": 2
     }
   },
   "sizing": {
     "cap_1.0": {
-      "S": true,
-      "M": false,
+      "S": false,
+      "M": true,
       "W": true,
       "D": true,
-      "K": false,
-      "sharpe": 2.8632067400945487,
-      "months": 0.7603305785123967,
-      "worst": -0.05132473134496063,
-      "maxdd": -0.07204278411577225,
-      "streak": 3
+      "K": true,
+      "sharpe": 4.36999813772615,
+      "months": 0.8404255319148937,
+      "worst": -0.05069376875986786,
+      "maxdd": -0.0777792474973108,
+      "streak": 2
     },
     "cap_3.0": {
       "S": true,
-      "M": false,
-      "W": true,
+      "M": true,
+      "W": false,
       "D": true,
-      "K": false,
-      "sharpe": 2.8327878842360765,
-      "months": 0.768595041322314,
-      "worst": -0.04640528813900191,
-      "maxdd": -0.09028487243230521,
-      "streak": 3
+      "K": true,
+      "sharpe": 3.9301253978828044,
+      "months": 0.8297872340425532,
+      "worst": -0.06484845322277999,
+      "maxdd": -0.0802831278901791,
+      "streak": 2
     }
   },
   "perturbation": {
     "n": 20,
     "pass_min": 2,
     "pass_max": 3,
-    "M_ge_80_frac": 0.0,
-    "K_le_2_frac": 0.0,
-    "W_ge_neg6_frac": 1.0,
-    "M_median": 0.743801652892562,
+    "M_ge_80_frac": 0.35,
+    "K_le_2_frac": 0.05,
+    "W_ge_neg6_frac": 0.2,
+    "M_median": 0.7978723404255319,
     "K_median": 3.0
   },
-  "verdict": "NO \u2014 convexity overlay does NOT reach robust >=4/5. Best rep 'equal_rp' scores 3/5 (K=FAIL streak=3, M=FAIL 77%). It SECURES W (worst month -6.0%->-4.6%) and flips the marquee crash months, but the binding streaks are multi-week grind bleeds, not vol spikes \u2014 long-gamma is flat or bleeds through them. M nets short of 80% (spike-flips minus whipsaw re-sinks)."
+  "verdict": "NO \u2014 convexity overlay does NOT reach robust >=4/5. Best rep 'equal_rp' scores 4/5 (K=PASS streak=2, M=PASS 83%). It SECURES W (worst month -5.1%->-6.5%) and flips the marquee crash months, but the binding streaks are multi-week grind bleeds, not vol spikes \u2014 long-gamma is flat or bleeds through them. M nets short of 80% (spike-flips minus whipsaw re-sinks)."
 }

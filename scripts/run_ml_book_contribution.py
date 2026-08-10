@@ -26,11 +26,10 @@ from scripts.run_master_book import (  # noqa: E402
     FAMILIES, load, rescale, risk_overlay, scorecard, OOS, START_REPORT, R)
 from src.metrics import summarise  # noqa: E402
 from src import bo_common as bo  # noqa: E402
-from src.backtest.engine import positions_from_events  # noqa: E402
+from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, precompute as bo_precompute, proba_cache, models  # noqa: E402
-from scripts.breakout.run_bo_final import daily_ret_cost  # noqa: E402
 from scripts.trend.run_trend_ml import (  # noqa: E402
     precompute as tr_precompute, proba_cache as tr_proba_cache, gated_book, sized_book)
 from scripts.carry.run_carry_ml import load_panel  # noqa: E402
@@ -100,6 +99,14 @@ def rescale15(net, target=0.15):
 
 
 # ── A. breakout meta-gate, isolated (1d-raw + PIT held fixed; only 4h/1h gated vs ungated) ─────────
+def _daily_ret(px, pos, tf, fund, adv):
+    """Daily returns from a position path — the SAME construction the ungated arm is built with, so
+    the gated-vs-ungated difference is the gate and nothing else (same venue, same cost model)."""
+    posv = vol_target(pos, px["close"], bo.TVOL, bo.CRYPTO_TF[tf])
+    bt = backtest(px["close"], posv, capital=bo.CAP, funding=fund, adv=adv, **bo.CC)
+    return (1 + bt["net_ret"]).resample("D").prod() - 1
+
+
 def breakout_swap():
     sleeves = bo_precompute()
     pc = proba_cache(sleeves, models()["lightgbm"], weighted=True)
@@ -108,7 +115,7 @@ def breakout_swap():
         ung[key] = s["ung"]
         kept = pc[key].index[pc[key].values >= THR]
         pos = positions_from_events(s["px"].index, s["trades"]["side"], s["trades"]["t1"], kept)
-        gat[key] = daily_ret_cost(s["px"], pos, s["tf"], s["fund"], s["adv"])[0]
+        gat[key] = _daily_ret(s["px"], pos, s["tf"], s["fund"], s["adv"])
     oned = {}
     for sym in CORE10:
         px = bo.load_crypto(sym, "1d")
@@ -117,7 +124,7 @@ def breakout_swap():
         side = bl.donchian_side(px["close"], px["high"], px["low"], 55)
         pos = bl.hold_atr_trailing(px["close"], px["high"], px["low"], side, 3.0, 14)
         adv = px["quote_volume"].rolling(20).median().shift(1)
-        oned[f"{sym}_1d"] = daily_ret_cost(px, pos, "1d", bo.safe_funding(sym), adv)[0]
+        oned[f"{sym}_1d"] = _daily_ret(px, pos, "1d", bo.safe_funding(sym), adv)
     raw_ts = pd.DataFrame({**oned, **ung}).mean(axis=1, skipna=True)
     ml_ts = pd.DataFrame({**oned, **gat}).mean(axis=1, skipna=True)
     pit = pd.read_parquet(R / "breakout" / "bo_xs_pit_returns.parquet")[

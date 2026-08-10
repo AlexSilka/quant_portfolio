@@ -1,579 +1,579 @@
 {
   "base (no overlay)": {
     "full": {
-      "sharpe": 3.6,
-      "cagr": 0.342,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.793,
-      "streak": 3,
-      "targets": 3,
-      "growth_x": 98.5,
-      "cagr_per_dd": 5.29
-    },
-    "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 4.39,
+      "cagr": 0.483,
+      "max_dd": -0.066,
+      "worst_month": -0.041,
+      "months_in_profit": 0.846,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
+      "growth_x": 464.8,
+      "cagr_per_dd": 7.36
+    },
+    "oos": {
+      "sharpe": 3.96,
+      "cagr": 0.39,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.85
     },
     "avg_exposure": 1.0
   },
   "A gate:logit": {
     "full": {
-      "sharpe": 3.42,
-      "cagr": 0.28,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.644,
+      "sharpe": 4.23,
+      "cagr": 0.396,
+      "max_dd": -0.066,
+      "worst_month": -0.027,
+      "months_in_profit": 0.718,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 46.8,
-      "cagr_per_dd": 4.32
+      "targets": 2,
+      "growth_x": 180.4,
+      "cagr_per_dd": 6.03
     },
     "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 4.11,
+      "cagr": 0.402,
+      "max_dd": -0.047,
+      "worst_month": -0.011,
+      "months_in_profit": 0.846,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
+      "growth_x": 2.0,
+      "cagr_per_dd": 8.58
     },
-    "avg_exposure": 0.85
+    "avg_exposure": 0.83
   },
   "A gate:rf": {
     "full": {
-      "sharpe": 3.44,
-      "cagr": 0.282,
-      "max_dd": -0.065,
+      "sharpe": 4.1,
+      "cagr": 0.391,
+      "max_dd": -0.066,
       "worst_month": -0.038,
-      "months_in_profit": 0.644,
+      "months_in_profit": 0.718,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 48.3,
-      "cagr_per_dd": 4.37
+      "targets": 2,
+      "growth_x": 170.5,
+      "cagr_per_dd": 5.95
     },
     "oos": {
-      "sharpe": 3.42,
-      "cagr": 0.269,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 4.0,
+      "cagr": 0.393,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.846,
       "streak": 2,
-      "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.06
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.92
     },
-    "avg_exposure": 0.86
+    "avg_exposure": 0.85
   },
   "A gate:et": {
     "full": {
-      "sharpe": 3.44,
-      "cagr": 0.282,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.644,
+      "sharpe": 4.1,
+      "cagr": 0.391,
+      "max_dd": -0.066,
+      "worst_month": -0.041,
+      "months_in_profit": 0.713,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 48.1,
-      "cagr_per_dd": 4.36
+      "targets": 2,
+      "growth_x": 170.9,
+      "cagr_per_dd": 5.96
     },
     "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 3.96,
+      "cagr": 0.39,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
       "streak": 2,
-      "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.85
     },
-    "avg_exposure": 0.86
+    "avg_exposure": 0.85
   },
   "A gate:hgb": {
     "full": {
-      "sharpe": 3.35,
-      "cagr": 0.262,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.649,
+      "sharpe": 4.01,
+      "cagr": 0.37,
+      "max_dd": -0.083,
+      "worst_month": -0.041,
+      "months_in_profit": 0.702,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 37.4,
-      "cagr_per_dd": 4.04
+      "targets": 2,
+      "growth_x": 135.2,
+      "cagr_per_dd": 4.44
     },
     "oos": {
-      "sharpe": 3.4,
-      "cagr": 0.264,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 3.88,
+      "cagr": 0.375,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
       "streak": 2,
-      "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 5.95
+      "targets": 5,
+      "growth_x": 1.9,
+      "cagr_per_dd": 7.56
     },
     "avg_exposure": 0.81
   },
   "A gate:lgbm": {
     "full": {
-      "sharpe": 3.39,
-      "cagr": 0.265,
-      "max_dd": -0.068,
-      "worst_month": -0.038,
-      "months_in_profit": 0.649,
+      "sharpe": 4.01,
+      "cagr": 0.376,
+      "max_dd": -0.066,
+      "worst_month": -0.04,
+      "months_in_profit": 0.702,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 39.0,
-      "cagr_per_dd": 3.89
+      "targets": 2,
+      "growth_x": 144.7,
+      "cagr_per_dd": 5.73
     },
     "oos": {
-      "sharpe": 3.54,
-      "cagr": 0.277,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 3.99,
+      "cagr": 0.388,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
       "streak": 2,
-      "targets": 4,
-      "growth_x": 1.7,
-      "cagr_per_dd": 6.24
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.82
     },
     "avg_exposure": 0.81
   },
   "A gate:mlp": {
     "full": {
-      "sharpe": 3.37,
-      "cagr": 0.256,
-      "max_dd": -0.053,
-      "worst_month": -0.033,
-      "months_in_profit": 0.665,
+      "sharpe": 4.15,
+      "cagr": 0.373,
+      "max_dd": -0.066,
+      "worst_month": -0.035,
+      "months_in_profit": 0.692,
       "streak": 32,
-      "targets": 3,
-      "growth_x": 35.0,
-      "cagr_per_dd": 4.85
+      "targets": 2,
+      "growth_x": 139.2,
+      "cagr_per_dd": 5.68
     },
     "oos": {
-      "sharpe": 3.53,
-      "cagr": 0.271,
-      "max_dd": -0.037,
-      "worst_month": -0.018,
+      "sharpe": 4.01,
+      "cagr": 0.373,
+      "max_dd": -0.063,
+      "worst_month": -0.032,
       "months_in_profit": 0.808,
       "streak": 2,
-      "targets": 5,
-      "growth_x": 1.7,
-      "cagr_per_dd": 7.39
+      "targets": 4,
+      "growth_x": 1.9,
+      "cagr_per_dd": 5.89
     },
     "avg_exposure": 0.75
   },
   "B soft:logit": {
     "full": {
-      "sharpe": 3.65,
-      "cagr": 0.498,
-      "max_dd": -0.084,
-      "worst_month": -0.057,
-      "months_in_profit": 0.782,
+      "sharpe": 4.51,
+      "cagr": 0.732,
+      "max_dd": -0.102,
+      "worst_month": -0.048,
+      "months_in_profit": 0.835,
       "streak": 3,
       "targets": 3,
-      "growth_x": 543.7,
-      "cagr_per_dd": 5.92
+      "growth_x": 5210.5,
+      "cagr_per_dd": 7.14
     },
     "oos": {
-      "sharpe": 3.41,
-      "cagr": 0.418,
-      "max_dd": -0.067,
-      "worst_month": -0.027,
-      "months_in_profit": 0.769,
+      "sharpe": 4.05,
+      "cagr": 0.611,
+      "max_dd": -0.078,
+      "worst_month": -0.022,
+      "months_in_profit": 0.808,
       "streak": 2,
       "targets": 4,
-      "growth_x": 2.1,
-      "cagr_per_dd": 6.22
+      "growth_x": 2.7,
+      "cagr_per_dd": 7.87
     },
-    "avg_exposure": 1.4
+    "avg_exposure": 1.39
   },
-  "B control: flat 1.40x": {
+  "B control: flat 1.39x": {
     "full": {
-      "sharpe": 3.57,
-      "cagr": 0.496,
-      "max_dd": -0.09,
-      "worst_month": -0.054,
-      "months_in_profit": 0.793,
-      "streak": 3,
+      "sharpe": 4.39,
+      "cagr": 0.715,
+      "max_dd": -0.087,
+      "worst_month": -0.061,
+      "months_in_profit": 0.84,
+      "streak": 2,
       "targets": 3,
-      "growth_x": 533.9,
-      "cagr_per_dd": 5.51
+      "growth_x": 4476.6,
+      "cagr_per_dd": 8.18
     },
     "oos": {
-      "sharpe": 3.36,
-      "cagr": 0.386,
-      "max_dd": -0.062,
-      "worst_month": -0.025,
+      "sharpe": 3.96,
+      "cagr": 0.555,
+      "max_dd": -0.075,
+      "worst_month": -0.022,
       "months_in_profit": 0.769,
       "streak": 2,
       "targets": 4,
-      "growth_x": 2.0,
-      "cagr_per_dd": 6.19
+      "growth_x": 2.5,
+      "cagr_per_dd": 7.42
     },
-    "avg_exposure": 1.4
+    "avg_exposure": 1.39
   },
   "B soft:lgbm": {
     "full": {
-      "sharpe": 3.61,
-      "cagr": 0.475,
-      "max_dd": -0.094,
-      "worst_month": -0.057,
-      "months_in_profit": 0.787,
+      "sharpe": 4.39,
+      "cagr": 0.704,
+      "max_dd": -0.114,
+      "worst_month": -0.061,
+      "months_in_profit": 0.819,
       "streak": 3,
-      "targets": 3,
-      "growth_x": 428.4,
-      "cagr_per_dd": 5.06
+      "targets": 2,
+      "growth_x": 4051.6,
+      "cagr_per_dd": 6.18
     },
     "oos": {
-      "sharpe": 3.41,
-      "cagr": 0.405,
-      "max_dd": -0.063,
-      "worst_month": -0.027,
+      "sharpe": 4.0,
+      "cagr": 0.597,
+      "max_dd": -0.084,
+      "worst_month": -0.029,
       "months_in_profit": 0.769,
       "streak": 2,
       "targets": 4,
-      "growth_x": 2.0,
-      "cagr_per_dd": 6.44
+      "growth_x": 2.7,
+      "cagr_per_dd": 7.13
     },
-    "avg_exposure": 1.35
+    "avg_exposure": 1.37
   },
-  "B control: flat 1.35x": {
+  "B control: flat 1.37x": {
     "full": {
-      "sharpe": 3.57,
-      "cagr": 0.474,
-      "max_dd": -0.087,
-      "worst_month": -0.052,
-      "months_in_profit": 0.793,
-      "streak": 3,
+      "sharpe": 4.4,
+      "cagr": 0.705,
+      "max_dd": -0.086,
+      "worst_month": -0.061,
+      "months_in_profit": 0.84,
+      "streak": 2,
       "targets": 3,
-      "growth_x": 421.6,
-      "cagr_per_dd": 5.47
+      "growth_x": 4080.6,
+      "cagr_per_dd": 8.17
     },
     "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.374,
-      "max_dd": -0.06,
-      "worst_month": -0.024,
+      "sharpe": 3.96,
+      "cagr": 0.547,
+      "max_dd": -0.074,
+      "worst_month": -0.022,
       "months_in_profit": 0.769,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.9,
-      "cagr_per_dd": 6.28
+      "growth_x": 2.5,
+      "cagr_per_dd": 7.4
     },
-    "avg_exposure": 1.35
+    "avg_exposure": 1.37
   },
   "constant 0.81": {
     "full": {
-      "sharpe": 3.61,
-      "cagr": 0.27,
-      "max_dd": -0.053,
-      "worst_month": -0.031,
-      "months_in_profit": 0.793,
-      "streak": 3,
-      "targets": 3,
-      "growth_x": 41.6,
-      "cagr_per_dd": 5.14
-    },
-    "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.211,
-      "max_dd": -0.036,
-      "worst_month": -0.014,
-      "months_in_profit": 0.769,
+      "sharpe": 4.4,
+      "cagr": 0.382,
+      "max_dd": -0.055,
+      "worst_month": -0.033,
+      "months_in_profit": 0.846,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.5,
-      "cagr_per_dd": 5.86
-    },
-    "avg_exposure": 0.81
-  },
-  "random_gate_full_sharpe": {
-    "min": 3.0,
-    "mean": 3.18,
-    "max": 3.4
-  },
-  "D voltarget:ridge": {
-    "full": {
-      "sharpe": 3.57,
-      "cagr": 0.357,
-      "max_dd": -0.059,
-      "worst_month": -0.041,
-      "months_in_profit": 0.787,
-      "streak": 3,
-      "targets": 3,
-      "growth_x": 116.2,
-      "cagr_per_dd": 6.09
+      "growth_x": 154.1,
+      "cagr_per_dd": 6.9
     },
     "oos": {
-      "sharpe": 3.29,
-      "cagr": 0.28,
-      "max_dd": -0.048,
-      "worst_month": -0.019,
-      "months_in_profit": 0.769,
-      "streak": 2,
-      "targets": 4,
-      "growth_x": 1.7,
-      "cagr_per_dd": 5.8
-    },
-    "avg_exposure": 1.05
-  },
-  "D control: flat 1.05x": {
-    "full": {
-      "sharpe": 3.6,
-      "cagr": 0.364,
-      "max_dd": -0.068,
-      "worst_month": -0.041,
-      "months_in_profit": 0.793,
-      "streak": 3,
-      "targets": 3,
-      "growth_x": 126.3,
-      "cagr_per_dd": 5.34
-    },
-    "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.283,
-      "max_dd": -0.047,
-      "worst_month": -0.019,
-      "months_in_profit": 0.769,
-      "streak": 2,
-      "targets": 4,
-      "growth_x": 1.7,
-      "cagr_per_dd": 6.05
-    },
-    "avg_exposure": 1.05
-  },
-  "D voltarget:lgbm": {
-    "full": {
-      "sharpe": 3.59,
-      "cagr": 0.36,
-      "max_dd": -0.063,
-      "worst_month": -0.044,
-      "months_in_profit": 0.798,
-      "streak": 3,
-      "targets": 3,
-      "growth_x": 121.1,
-      "cagr_per_dd": 5.75
-    },
-    "oos": {
-      "sharpe": 3.29,
-      "cagr": 0.301,
-      "max_dd": -0.053,
-      "worst_month": -0.026,
-      "months_in_profit": 0.808,
-      "streak": 2,
-      "targets": 5,
-      "growth_x": 1.7,
-      "cagr_per_dd": 5.68
-    },
-    "avg_exposure": 1.05
-  },
-  "D baseline: trailing-vol target (no ML)": {
-    "full": {
-      "sharpe": 3.46,
-      "cagr": 0.364,
-      "max_dd": -0.083,
-      "worst_month": -0.062,
-      "months_in_profit": 0.787,
-      "streak": 3,
-      "targets": 2,
-      "growth_x": 126.1,
-      "cagr_per_dd": 4.38
-    },
-    "oos": {
-      "sharpe": 3.23,
-      "cagr": 0.326,
-      "max_dd": -0.054,
-      "worst_month": -0.027,
+      "sharpe": 3.96,
+      "cagr": 0.308,
+      "max_dd": -0.041,
+      "worst_month": -0.011,
       "months_in_profit": 0.808,
       "streak": 2,
       "targets": 5,
       "growth_x": 1.8,
-      "cagr_per_dd": 6.03
+      "cagr_per_dd": 7.61
     },
-    "avg_exposure": 1.1
+    "avg_exposure": 0.81
   },
-  "E badmonth:logit@0.3": {
+  "random_gate_full_sharpe": {
+    "min": 3.65,
+    "mean": 3.96,
+    "max": 4.16
+  },
+  "D voltarget:ridge": {
     "full": {
-      "sharpe": 3.42,
-      "cagr": 0.281,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.644,
-      "streak": 32,
-      "targets": 3,
-      "growth_x": 47.4,
-      "cagr_per_dd": 4.34
-    },
-    "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 4.43,
+      "cagr": 0.507,
+      "max_dd": -0.072,
+      "worst_month": -0.041,
+      "months_in_profit": 0.83,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
-    },
-    "avg_exposure": 0.86
-  },
-  "E badmonth:logit@0.5": {
-    "full": {
-      "sharpe": 3.44,
-      "cagr": 0.282,
-      "max_dd": -0.065,
-      "worst_month": -0.038,
-      "months_in_profit": 0.644,
-      "streak": 32,
-      "targets": 3,
-      "growth_x": 48.1,
-      "cagr_per_dd": 4.36
+      "growth_x": 598.7,
+      "cagr_per_dd": 7.05
     },
     "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 4.0,
+      "cagr": 0.424,
+      "max_dd": -0.048,
+      "worst_month": -0.011,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.1,
+      "cagr_per_dd": 8.91
+    },
+    "avg_exposure": 1.04
+  },
+  "D control: flat 1.04x": {
+    "full": {
+      "sharpe": 4.4,
+      "cagr": 0.507,
+      "max_dd": -0.068,
+      "worst_month": -0.042,
+      "months_in_profit": 0.846,
       "streak": 2,
       "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
-    },
-    "avg_exposure": 0.86
-  },
-  "E badmonth:lgbm@0.3": {
-    "full": {
-      "sharpe": 3.33,
-      "cagr": 0.262,
-      "max_dd": -0.065,
-      "worst_month": -0.033,
-      "months_in_profit": 0.654,
-      "streak": 31,
-      "targets": 3,
-      "growth_x": 37.6,
-      "cagr_per_dd": 4.02
+      "growth_x": 600.0,
+      "cagr_per_dd": 7.43
     },
     "oos": {
-      "sharpe": 3.45,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
+      "sharpe": 3.96,
+      "cagr": 0.409,
+      "max_dd": -0.052,
+      "worst_month": -0.015,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.91
+    },
+    "avg_exposure": 1.04
+  },
+  "D voltarget:lgbm": {
+    "full": {
+      "sharpe": 4.39,
+      "cagr": 0.5,
+      "max_dd": -0.067,
+      "worst_month": -0.048,
+      "months_in_profit": 0.83,
+      "streak": 2,
+      "targets": 4,
+      "growth_x": 552.9,
+      "cagr_per_dd": 7.48
+    },
+    "oos": {
+      "sharpe": 3.97,
+      "cagr": 0.433,
+      "max_dd": -0.052,
+      "worst_month": -0.015,
       "months_in_profit": 0.846,
       "streak": 2,
       "targets": 5,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.01
+      "growth_x": 2.1,
+      "cagr_per_dd": 8.26
+    },
+    "avg_exposure": 1.04
+  },
+  "D baseline: trailing-vol target (no ML)": {
+    "full": {
+      "sharpe": 4.24,
+      "cagr": 0.518,
+      "max_dd": -0.079,
+      "worst_month": -0.068,
+      "months_in_profit": 0.825,
+      "streak": 2,
+      "targets": 3,
+      "growth_x": 665.6,
+      "cagr_per_dd": 6.56
+    },
+    "oos": {
+      "sharpe": 3.74,
+      "cagr": 0.445,
+      "max_dd": -0.066,
+      "worst_month": -0.016,
+      "months_in_profit": 0.731,
+      "streak": 2,
+      "targets": 4,
+      "growth_x": 2.2,
+      "cagr_per_dd": 6.79
+    },
+    "avg_exposure": 1.09
+  },
+  "E badmonth:logit@0.3": {
+    "full": {
+      "sharpe": 4.17,
+      "cagr": 0.39,
+      "max_dd": -0.066,
+      "worst_month": -0.027,
+      "months_in_profit": 0.718,
+      "streak": 32,
+      "targets": 2,
+      "growth_x": 168.9,
+      "cagr_per_dd": 5.94
+    },
+    "oos": {
+      "sharpe": 3.96,
+      "cagr": 0.39,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.85
+    },
+    "avg_exposure": 0.84
+  },
+  "E badmonth:logit@0.5": {
+    "full": {
+      "sharpe": 4.21,
+      "cagr": 0.397,
+      "max_dd": -0.066,
+      "worst_month": -0.027,
+      "months_in_profit": 0.718,
+      "streak": 32,
+      "targets": 2,
+      "growth_x": 182.3,
+      "cagr_per_dd": 6.04
+    },
+    "oos": {
+      "sharpe": 3.96,
+      "cagr": 0.39,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.85
+    },
+    "avg_exposure": 0.84
+  },
+  "E badmonth:lgbm@0.3": {
+    "full": {
+      "sharpe": 4.05,
+      "cagr": 0.379,
+      "max_dd": -0.066,
+      "worst_month": -0.041,
+      "months_in_profit": 0.692,
+      "streak": 32,
+      "targets": 2,
+      "growth_x": 149.5,
+      "cagr_per_dd": 5.78
+    },
+    "oos": {
+      "sharpe": 3.99,
+      "cagr": 0.389,
+      "max_dd": -0.047,
+      "worst_month": -0.011,
+      "months_in_profit": 0.808,
+      "streak": 2,
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 8.23
     },
     "avg_exposure": 0.8
   },
   "E badmonth:lgbm@0.5": {
     "full": {
-      "sharpe": 3.39,
-      "cagr": 0.276,
-      "max_dd": -0.068,
-      "worst_month": -0.038,
-      "months_in_profit": 0.649,
-      "streak": 31,
-      "targets": 3,
-      "growth_x": 44.6,
-      "cagr_per_dd": 4.05
+      "sharpe": 4.06,
+      "cagr": 0.385,
+      "max_dd": -0.066,
+      "worst_month": -0.041,
+      "months_in_profit": 0.697,
+      "streak": 32,
+      "targets": 2,
+      "growth_x": 159.7,
+      "cagr_per_dd": 5.86
     },
     "oos": {
-      "sharpe": 3.39,
-      "cagr": 0.267,
-      "max_dd": -0.044,
-      "worst_month": -0.018,
-      "months_in_profit": 0.769,
+      "sharpe": 3.99,
+      "cagr": 0.392,
+      "max_dd": -0.05,
+      "worst_month": -0.014,
+      "months_in_profit": 0.808,
       "streak": 2,
-      "targets": 4,
-      "growth_x": 1.6,
-      "cagr_per_dd": 6.0
+      "targets": 5,
+      "growth_x": 2.0,
+      "cagr_per_dd": 7.9
     },
     "avg_exposure": 0.84
   },
   "C alloc:ridge": {
     "full": {
-      "sharpe": 1.19,
-      "cagr": 0.096,
-      "max_dd": -0.135,
-      "worst_month": -0.047,
-      "months_in_profit": 0.41,
-      "streak": 46,
-      "targets": 2,
-      "growth_x": 4.2,
-      "cagr_per_dd": 0.71
+      "sharpe": 1.23,
+      "cagr": 0.115,
+      "max_dd": -0.112,
+      "worst_month": -0.076,
+      "months_in_profit": 0.415,
+      "streak": 47,
+      "targets": 1,
+      "growth_x": 5.5,
+      "cagr_per_dd": 1.03
     },
     "oos": {
-      "sharpe": 2.39,
-      "cagr": 0.233,
-      "max_dd": -0.063,
-      "worst_month": -0.022,
-      "months_in_profit": 0.692,
+      "sharpe": 1.83,
+      "cagr": 0.195,
+      "max_dd": -0.076,
+      "worst_month": -0.025,
+      "months_in_profit": 0.731,
       "streak": 2,
       "targets": 3,
-      "growth_x": 1.6,
-      "cagr_per_dd": 3.68
+      "growth_x": 1.5,
+      "cagr_per_dd": 2.55
     }
   },
   "C alloc:hgb": {
     "full": {
-      "sharpe": 1.06,
-      "cagr": 0.083,
-      "max_dd": -0.125,
-      "worst_month": -0.051,
-      "months_in_profit": 0.394,
-      "streak": 46,
-      "targets": 2,
-      "growth_x": 3.4,
-      "cagr_per_dd": 0.66
+      "sharpe": 0.98,
+      "cagr": 0.089,
+      "max_dd": -0.115,
+      "worst_month": -0.079,
+      "months_in_profit": 0.41,
+      "streak": 47,
+      "targets": 1,
+      "growth_x": 3.8,
+      "cagr_per_dd": 0.77
     },
     "oos": {
-      "sharpe": 1.98,
-      "cagr": 0.178,
-      "max_dd": -0.048,
-      "worst_month": -0.025,
-      "months_in_profit": 0.615,
-      "streak": 3,
-      "targets": 2,
+      "sharpe": 1.54,
+      "cagr": 0.165,
+      "max_dd": -0.074,
+      "worst_month": -0.051,
+      "months_in_profit": 0.769,
+      "streak": 2,
+      "targets": 3,
       "growth_x": 1.4,
-      "cagr_per_dd": 3.7
+      "cagr_per_dd": 2.23
     }
   },
   "C alloc:lgbm": {
     "full": {
-      "sharpe": 1.1,
-      "cagr": 0.086,
-      "max_dd": -0.128,
-      "worst_month": -0.05,
-      "months_in_profit": 0.404,
-      "streak": 46,
-      "targets": 2,
-      "growth_x": 3.6,
-      "cagr_per_dd": 0.67
+      "sharpe": 0.92,
+      "cagr": 0.082,
+      "max_dd": -0.117,
+      "worst_month": -0.077,
+      "months_in_profit": 0.42,
+      "streak": 47,
+      "targets": 1,
+      "growth_x": 3.4,
+      "cagr_per_dd": 0.7
     },
     "oos": {
-      "sharpe": 2.04,
-      "cagr": 0.182,
-      "max_dd": -0.047,
-      "worst_month": -0.025,
-      "months_in_profit": 0.654,
-      "streak": 3,
-      "targets": 2,
+      "sharpe": 1.58,
+      "cagr": 0.167,
+      "max_dd": -0.069,
+      "worst_month": -0.049,
+      "months_in_profit": 0.769,
+      "streak": 2,
+      "targets": 3,
       "growth_x": 1.4,
-      "cagr_per_dd": 3.85
+      "cagr_per_dd": 2.44
     }
   }
 }

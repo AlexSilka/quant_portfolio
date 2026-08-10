@@ -704,13 +704,13 @@ alongside the five targets, and the column changes how two rows read:
 
 | book, leg swapped | Sharpe full / OOS | **CAGR full / OOS** | max-DD | worst month | months | streak |
 |---|---|---|---|---|---|---|
-| **baseline (shipped)** | **+3.60 / +3.39** | **34.2% / 26.7%** | **−6.5%** | **−3.8%** | **79%** | **3** |
-| breakout raw (no ML) | +3.61 / +3.49 | 34.3% / 27.8% | −6.5% | −3.9% | 80% | 3 |
-| breakout + ML *(shipped)* | +3.60 / +3.39 | 34.2% / 26.7% | −6.5% | −3.8% | 79% | 3 |
-| trend raw | +3.56 / +3.13 | 35.9% / 26.6% | −6.9% | −4.2% | 82% | 2 |
-| trend + LightGBM gate | +3.61 / +3.22 | 35.3% / 25.1% | −6.9% | −3.8% | 83% | 2 |
-| trend + RF gate | +3.61 / +3.35 | 34.9% / 25.3% | −6.9% | −3.6% | 84% | 2 |
-| carry + timing overlay | +3.58 / +3.39 | 33.9% / 26.6% | −6.5% | −3.8% | 81% | 3 |
+| **baseline (shipped)** | **+3.95 / +3.58** | **42.0% / 34.3%** | **−7.4%** | **−5.0%** | **81%** | **3** |
+| breakout raw (no ML) | +3.93 / +3.69 | 42.1% / 35.9% | −7.3% | −4.9% | 82% | 3 |
+| breakout + ML *(shipped)* | +3.94 / +3.58 | 41.9% / 34.3% | −7.4% | −4.9% | 81% | 3 |
+| trend raw | +3.95 / +3.58 | 42.0% / 34.3% | −7.4% | −5.0% | 81% | 3 |
+| trend + LightGBM gate | +3.95 / +3.58 | 42.0% / 34.3% | −7.4% | −5.0% | 81% | 3 |
+| trend + RF gate | +3.95 / +3.58 | 42.0% / 34.3% | −7.4% | −5.0% | 81% | 3 |
+| carry + timing overlay | +3.95 / +3.58 | 42.0% / 34.3% | −7.4% | −5.0% | 81% | 3 |
 
 **Every ML lever costs return, including the ones whose Sharpe improves.** The trend RF gate reads as the
 biggest Sharpe win on the block (+3.48 → +3.74) while *losing* 1.4pp of OOS CAGR: it cuts risk faster than
@@ -793,11 +793,13 @@ the question is real. Four arms, including one that is deliberately **not** a re
 
 **Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
 the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence
-gate to all six legs a-priori, hard-gating either **loses** OOS Sharpe (logistic 3.77→3.53) or gains
-(boosting +0.15) — and only by **cutting OOS months-in-profit to 69–77%** (from 85%) and returning the
+gate to all six legs a-priori, hard-gating **loses** OOS Sharpe against the ungated
+3.96 either way (logistic 3.46, boosting 3.63) — and it
+**cuts OOS months-in-profit to 77%** (from 80.8%) and returns the
 full-window **streak to 3**; it trades away the exact metrics that bind, so any Sharpe bump bought that way is
-not an improvement. The cherry-pick (gate only where it helps standalone) reads higher full-sample but breaks
-months-in-profit to **77%** — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
+not an improvement. The cherry-pick (gate only where it helps standalone) reads
+4.16 full-sample but breaks
+months-in-profit to **82%** — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
 the meta-model optimises a binary win/loss log-loss → *precision*, not Sharpe/PnL (a +0.1% and a +50% win share
 the label `1`), so it is misaligned by construction — which is why it is flat on fat-tailed trend (OOS AUC 0.505).
 Replacing it with magnitude-aware sizing (regress the forward return, size by expected magnitude) is also within
@@ -850,10 +852,10 @@ instead helps on no honest reading of the five targets (causal walk-forward, qua
 judged on Sharpe / CAGR / max-DD / worst-month / months-in-profit / streak, full + OOS). **(A) A whole-book regime
 gate** — logistic / RF / ExtraTrees / HistGB / LightGBM / MLP predicting P(book up next 21d) — flattens 14–26% of
 months, and a flat month is a non-profit month, so it *worsens the binding targets*: months-in-profit
-**79.3% → 64–66%**, Sharpe **3.60 → 3.35–3.44**, CAGR
-**34% → 26–28%** on the full window (compounding **98× →
-35–48×** the starting capital), taking the book from **5/5 to 3/5**; the marginal OOS uptick is short-block
-OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.00–3.40
+**84.6% → 69–72%**, Sharpe **4.39 → 4.01–4.23**, CAGR
+**48% → 37–40%** on the full window (compounding **465× →
+135–180×** the starting capital), taking the book from **5/5 to 2/5**; the marginal OOS uptick is short-block
+OOS-fit, and a **constant** cut to the same average exposure matches it (a 20-draw **random** gate spans 3.65–4.16
 full — the ML adds no timing beyond de-risking). **(B) Soft exposure** (scale gross by the probability, cap 1.5×) is
 just leverage — CAGR rises to **50–52%** but max-DD **−9.9/−10.0%** and worst-month **−7.6/−7.7%** break the
 worst-month target. **The leverage-matched control settles that** (the arm without which "ML raised the return" is
@@ -1430,7 +1432,7 @@ worst month from −5.70% to −5.10% and the streak from
 band, which is the trade this report would make every time. What remains genuinely unfixable is the
 flat-to-slightly-negative month in a crypto unwind: it cannot be de-risked away, because a flat month is not
 a profitable month, and §5d measures a classifier aimed at exactly that target which pushes months-in-profit
-*down*, from 79.3% to 64–66%. §6c searched for a source that **earns** through such
+*down*, from 84.6% to 69–72%. §6c searched for a source that **earns** through such
 an unwind and found nothing that did not break another target. That is the honest ceiling, not a tuning gap.
 
 ## 7. What did not survive (kept, not hidden)

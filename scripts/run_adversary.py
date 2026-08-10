@@ -81,9 +81,16 @@ def rescaled_legs(raw: dict, start: str = mb.START_REPORT) -> pd.DataFrame:
     return df[df.notna().sum(axis=1) >= 2]
 
 
+def _managed(stack: pd.Series) -> pd.Series:
+    """The book as it ships: the §8 drawdown ladder + daily-loss breaker at the book's one constant
+    leverage. Every stress below is applied to THIS, which is why task 2 can assert bit-exactness
+    against the published master_book.parquet."""
+    return mb.risk_overlay(stack, leverage=mb.BOOK_LEVERAGE)[0]
+
+
 def assemble(raw: dict, start: str = mb.START_REPORT) -> pd.Series:
     df = rescaled_legs(raw, start)
-    return mb.regime_overlay(mb.book_stack(df))
+    return _managed(mb.book_stack(df))
 
 
 def weighted_mean(df: pd.DataFrame, w: np.ndarray) -> pd.Series:
@@ -102,7 +109,7 @@ def weighted_mean(df: pd.DataFrame, w: np.ndarray) -> pd.Series:
 def task2(out: dict) -> pd.DataFrame:
     raw = load_raw()
     df = rescaled_legs(raw)
-    book = mb.regime_overlay(mb.book_stack(df))
+    book = _managed(mb.book_stack(df))
 
     # -- 0. verify bit-exact vs the published parquet -------------------------------------
     saved = pd.read_parquet(R / "master_book.parquet")["ret"]
@@ -169,7 +176,7 @@ def task2(out: dict) -> pd.DataFrame:
                 continue
             rm = raw_mean.copy()
             rm.loc[t] = raw_mean.loc[t] + (shk - vp_t) / nlive.loc[t]
-            sc = scorecard(mb.regime_overlay(rm))
+            sc = scorecard(_managed(rm))
             Ws.append(sc["worst_mo"])
             brW += sc["worst_mo"] < -0.06
             brD += sc["max_dd"] < -0.15
@@ -199,14 +206,19 @@ def task2(out: dict) -> pd.DataFrame:
     print("   -> the passing W (-5.97%) depends on normalising to FULL-SAMPLE vol; PIT-expanding fails W (-6.36%).")
 
     # -- 6. crash-correlation -> 1 stress -------------------------------------------------
-    sg = ["trend_momentum", "carry", "volprem", "xs_momentum", "breakout"]
+    # the short-gamma legs, intersected with what the book actually trades — this was a typed
+    # eight-family list and named two legs (trend, carry) the book dropped, so the stress hit a
+    # column that no longer exists. The long-gamma legs are excluded by name because the whole
+    # point of the test is to co-move the legs that crash TOGETHER.
+    LONG_GAMMA = {"crisis", "gmacro"}
+    sg = [c for c in df.columns if c not in LONG_GAMMA]
     spike_days = (dvix >= dvix.quantile(0.98)).reindex(df.index).fillna(False)
     df2 = df.copy()
     for t in df2.index[spike_days]:
         live = [c for c in sg if pd.notna(df2.loc[t, c])]
         if live:
             df2.loc[t, live] = df2.loc[t, live].min()
-    stressed = mb.regime_overlay(mb.book_stack(df2))
+    stressed = _managed(mb.book_stack(df2))
     sc = scorecard(stressed)
     print("\n6. CRASH-CORRELATION -> 1  (short-gamma legs co-move on worst-2% VIX days)")
     print(f"   stressed book: {fmt(sc)}   (base D={base['max_dd']:+.4f} W={base['worst_mo']:+.4f})")
@@ -258,7 +270,7 @@ def task2(out: dict) -> pd.DataFrame:
     sr_trials = []
     for _ in range(5000):
         w = rng.dirichlet(np.ones(df.shape[1]))
-        sc = scorecard(mb.regime_overlay(weighted_mean(df, w)))
+        sc = scorecard(_managed(weighted_mean(df, w)))
         sr_trials.append(sc["sharpe"] / np.sqrt(PPY))
         hit5 += sc["n"] == 5; best_n = max(best_n, sc["n"])
         if sc["months"] > maxM:
@@ -371,7 +383,7 @@ def attack_candidate_A(out: dict):
             weights[nm] = max(w * (1 + rj.uniform(-.25, .25)) + rj.uniform(-.03, .03), 0)
         df = df[df.notna().sum(axis=1) >= 2]; live = df.notna()
         wv = np.array([weights[c] for c in df.columns]); wsum = (live.values * wv).sum(1); wsum[wsum == 0] = np.nan
-        bk = A.regime_overlay(pd.Series(np.nansum(np.where(live.values, df.values, 0.0) * wv, 1) / wsum, index=df.index))
+        bk = _managed(pd.Series(np.nansum(np.where(live.values, df.values, 0.0) * wv, 1) / wsum, index=df.index))
         n = scorecard(bk)["n"]; ns.append(n); surv += n == 5
     print(f"  HARDER perturbation (all 8 weights x(1+/-25%) & +/-0.03, N=50): {surv}/50 reach 5/5 (median {np.median(ns):.0f}/5)")
     # streak fix test — do the sleeves break the 3 critical streaks?
@@ -402,7 +414,7 @@ def attack_adaptive_B(out: dict):
     for c, v in full_w.items():
         W[c] = v
     wm = legs.notna() * W; wm = wm.div(wm.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0)
-    cheat = B.regime_overlay((legs.fillna(0.0) * wm).sum(axis=1))
+    cheat = _managed((legs.fillna(0.0) * wm).sum(axis=1))
     print(f"  look-ahead cheat (full-sample weights):{fmt(scorecard(cheat))}")
     print("  -> cheat scores BETTER than honest OOS => the walk-forward is genuinely PIT (no look-ahead). Clean.")
     print("  -> BUT the enshrined adaptive book breaks W (-6.4%) => 2/5, a regression below the 3/5 canonical.")

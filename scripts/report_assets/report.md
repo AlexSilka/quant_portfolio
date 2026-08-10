@@ -737,11 +737,13 @@ the question is real. Four arms, including one that is deliberately **not** a re
 
 **Selective, uniform, and objective-aligned — all measured; none lifts the book.** Three further tests close
 the question. **(1) Uniform application** (the anti-cherry-pick control): fitting the *same* purged-CV confidence
-gate to all {{n_families_word}} legs a-priori, hard-gating either **loses** OOS Sharpe (logistic 3.77→3.53) or gains
-(boosting +0.15) — and only by **cutting OOS months-in-profit to 69–77%** (from 85%) and returning the
-full-window **streak to 3**; it trades away the exact metrics that bind, so any Sharpe bump bought that way is
-not an improvement. The cherry-pick (gate only where it helps standalone) reads higher full-sample but breaks
-months-in-profit to **77%** — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
+gate to all {{n_families_word}} legs a-priori, hard-gating **loses** OOS Sharpe against the ungated
+{{oos_sharpe}} either way (logistic {{ml_uniform_logit_oos}}, boosting {{ml_uniform_gbm_oos}}) — and it
+**cuts OOS months-in-profit to {{ml_uniform_months_oos}}** (from {{oos_months}}) and returns the
+full-window **streak to {{ml_uniform_streak_full}}**; it trades away the exact metrics that bind, so any Sharpe bump bought that way is
+not an improvement. The cherry-pick (gate only where it helps standalone) reads
+{{ml_cherry_sharpe_full}} full-sample but breaks
+months-in-profit to **{{ml_cherry_months_full}}** — exactly the overfit it looks like. **(2) Objective-aligned sizing:**
 the meta-model optimises a binary win/loss log-loss → *precision*, not Sharpe/PnL (a +0.1% and a +50% win share
 the label `1`), so it is misaligned by construction — which is why it is flat on fat-tailed trend (OOS AUC 0.505).
 Replacing it with magnitude-aware sizing (regress the forward return, size by expected magnitude) is also within

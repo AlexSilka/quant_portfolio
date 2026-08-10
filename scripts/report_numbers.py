@@ -957,6 +957,20 @@ def build():
                     "cscv_p_loss": _pcu(c["prob_oos_loss"], 0)})
     out["longgamma_table"] = _longgamma_table()
     out.update(_crisis_slot())
+    # §5d's uniform-gate control used to carry these as typed literals, and they went on quoting a book
+    # two changes old — "from 85%" against an OOS block that had read 80.8% for some time. Resolved.
+    ua = (_load("book/ml_book_contribution.json") or {}).get("uniform_and_aligned") or {}
+    if ua:
+        lo, gb, cp = ua.get("uniform_hard_logit"), ua.get("uniform_hard_gbm"), ua.get("cherry_pick_logit")
+        if lo and gb and cp:
+            mo = sorted(v["months_oos"] for v in (lo, gb))
+            out.update({
+                "ml_uniform_logit_oos": f"{lo['sharpe_oos']:.2f}", "ml_uniform_gbm_oos": f"{gb['sharpe_oos']:.2f}",
+                "ml_uniform_months_oos": (f"{_pcu(mo[0], 0)}" if mo[0] == mo[1] else
+                                          f"{_pcu(mo[0], 0)}–{_pcu(mo[1], 0)}"),
+                "ml_uniform_streak_full": str(max(lo["streak_full"], gb["streak_full"])),
+                "ml_cherry_months_full": _pcu(cp["months_full"], 0),
+                "ml_cherry_sharpe_full": f"{cp['sharpe_full']:.2f}"})
     return out
 
 

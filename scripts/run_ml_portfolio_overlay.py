@@ -33,7 +33,7 @@ from sklearn.neural_network import MLPClassifier  # noqa: E402
 import lightgbm as lgb  # noqa: E402
 
 from scripts.run_master_book import (  # noqa: E402
-    FAMILIES, load, rescale, risk_overlay, scorecard, OOS, START_REPORT)
+    FAMILIES, book_stack, load, rescale, risk_overlay, scorecard, OOS, START_REPORT)
 from src.config import RAW_DIR, SEED  # noqa: E402
 from src import bo_common as bo  # noqa: E402
 
@@ -54,7 +54,7 @@ def book_and_families():
     raw = {k: _n(v) for k, v in raw.items() if v is not None}
     df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
     df = df[(df.index >= pd.Timestamp(START_REPORT)) & (df.notna().sum(axis=1) >= 2)]
-    return df.mean(axis=1, skipna=True).rename("ret"), df
+    return book_stack(df).rename("ret"), df
 
 
 def features(ew, df):
