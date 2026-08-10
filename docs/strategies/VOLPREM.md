@@ -25,7 +25,8 @@ scripts/volprem/run_vol_premium.py`. Artifacts: `reports/volprem/volprem_*.{csv,
   2005–2011 histories vs crypto's 2021.
 - **It is deployed as a diversified BOOK, never one asset.** Across **18 Cboe underlyings** with clean
   OHLC (VIX/VXN/RVX/VXD/VXEFA, VXAPL/AZN/GOG/GS/IBM, VXEEM/EWZ/FXI, OVX/GVZ/VXSLV/VXGDX, VXTLT), the equal-risk
-  book nets **Sharpe +3.72, maxDD −78%, skew −18, 84% profitable months**. Crypto and FX are excluded on
+  book nets **Sharpe +3.58, maxDD −78%, skew −18, 84% profitable months** (15 of the 18 live through
+  2022-24 — see the publication gap below). Crypto and FX are excluded on
   frozen structural / data-quality rules (below), *not* on backtested Sharpe. Diversification is the whole
   game: several single-name sleeves **hit −99/−100% ruin** standalone; at 1/18 risk each the book absorbs them.
   (18 Cboe legs are deployed, incl. VXGDX gold-miners; crypto DVOL and FX EVZ are considered but excluded for unhedgeable / corrupt data — below.)
@@ -130,7 +131,7 @@ the 18, which stays positive only because these catastrophes fall on *different*
 | average single sleeve | ~+1.4 | ~−82% | — | — | — |
 | placebo book (fair strike, no premium) | **−1.73** | — | — | — | — |
 
-- **Diversification is the whole game.** Book Sharpe +3.72 vs a single-sleeve average ~+1.4, and the
+- **Diversification is the whole game.** Book Sharpe +3.58 vs a single-sleeve average ~+1.8, and the
   book's −78% tail still beats most single sleeves' −99% (mean pairwise sleeve corr +0.26). Placebo
   −1.73 — the premium, not the basket, is the source.
 - **Crypto short-vol does not survive honest accounting.** A reversal from the close-to-close view
@@ -165,8 +166,8 @@ the 18, which stays positive only because these catastrophes fall on *different*
   `reports/volprem/volprem_cost_robustness.csv`). Every leg is charged a per-underlying vega half-spread
   (`COST_BY_CLASS`: index **1.0**, single-name **2.5**, EM/commodity **2.0** vol-pts/roll — at/above the
   published ~0.5-vega index / 1–2.5-vega single-name range, J.P. Morgan / Risk.net). Those spreads already
-  cost **~0.4 Sharpe** (gross ×0 **4.08** → shipped ×1 **3.72** @252), and the edge **survives far wider
-  execution**: ×2 **3.33**, ×3 **2.94**, ×5 **2.16**. So `var_cap=1e9, wing_markup=0` (**"naked"**) means
+  cost **~0.38 Sharpe** (gross ×0 **3.96** → shipped ×1 **3.58** @252), and the edge **survives far wider
+  execution**: ×2 **3.19**, ×3 **2.79**, ×5 **2.00**. So `var_cap=1e9, wing_markup=0` (**"naked"**) means
   *no bought tail hedge* — the book eats the full −78% tail — **not** that costs are unmodelled. The
   binding constraints are the systemic tail and single-name variance-swap **capacity**, not per-trade cost.
 

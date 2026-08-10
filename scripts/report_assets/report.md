@@ -221,7 +221,7 @@ OOS-block 0.05, max pairwise shift 0.20) — not an in-sample artifact.
 > the mixed calendar — crypto legs trade 365 d/yr, equity/Cboe legs ~252; the blended book ~339), not a
 > flat 365. "Standalone Sharpe" is additionally each family's series **rescaled to the book's 15% vol
 > target** (a causal, time-varying vol overlay that itself lifts Sharpe), so it can exceed a deep-dive's
-> raw figure — e.g. vol-premium **5.71** here (gated) vs **+3.72** raw, ungated ([VOLPREM.md](docs/strategies/VOLPREM.md));
+> raw figure — e.g. vol-premium **5.56** here (gated) vs **+3.58** raw, ungated ([VOLPREM.md](docs/strategies/VOLPREM.md));
 > carry **1.27** vs **+1.21** raw ([CARRY.md](docs/strategies/CARRY.md)). The corr-to-book column is
 > naturally positive since each family is part of the book.*
 
@@ -866,7 +866,7 @@ placebo, walk-forward, correlation to this book):
 - **Short-vol / variance risk premium** (Cboe VIX/VXN/RVX/… vs realised, [docs/strategies/VOLPREM.md](docs/strategies/VOLPREM.md)) —
   short gamma vs the book's long gamma, placebo-confirmed, correlation ~0. Deployed as a diversified
   **18-underlying Cboe book** (equity-index / single-name / international / commodity incl. gold-miners /
-  rates vol indices; crypto DVOL and FX EVZ excluded on frozen ex-ante rules): standalone Sharpe **+3.72**,
+  rates vol indices; crypto DVOL and FX EVZ excluded on frozen ex-ante rules): standalone Sharpe **+3.58**,
   but Sharpe overstates — the honest metrics are skew **−18** and a **−78% systemic-vol tail** that
   diversification softens but cannot remove. In a momentum+carry+VRP blend it peaks **1.77 → 1.84 (10%
   weight) → 1.58 (30%)** (`reports/volprem/volprem_marginal.csv`) — a modest lift that reverses past ~10% as
