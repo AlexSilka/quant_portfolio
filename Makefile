@@ -1,4 +1,4 @@
-.PHONY: integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: attribution gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -64,6 +64,18 @@ features:
 # 2026-08-10 data defects. Reports only; screens live next to the results they change.
 integrity:
 	$(PY) -m src.data.integrity --verbose
+
+# Per-family attribution of any window of the book — weighted contribution (what a leg did to the BOOK,
+# not standalone), plus realised crypto beta and the alpha left after it. "The book stalled, which leg?"
+# Optional args: `make attribution ARGS=2026` or `ARGS="2026-01 2026-08"`.
+attribution:
+	$(PY) scripts/run_window_attribution.py $(ARGS)
+
+# Does the short-vol book's regime gate cover the risk it gates? The shipped VIX gate reads equity vol,
+# but 13 of 18 sleeves are not equity. Tests three per-sleeve rules + placebo/lag/threshold audits.
+# Reports only — run_master_book.py is untouched (the winner costs a brief target; see the printout).
+gate-coverage:
+	$(PY) -m scripts.volprem.run_gate_coverage
 
 # §3 equity NYSE session/half-day integrity check via pandas_market_calendars.
 sessions:
