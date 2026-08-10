@@ -34,11 +34,14 @@ Mean pairwise correlation between families **≈ {{mean_corr_abs}}**.
 families the book scores {{comp_base_targets_full}} on the full window and {{comp_base_targets_oos}} on the
 scored block; trend and carry are dropped because that pair — {{comp_n_passing_word}} of the
 {{comp_n_configs}} configurations tested — is what clears every target on both. Neither leg is weak on its own
-terms (carry's standalone Sharpe is {{comp_carry_solo}}, the {{comp_carry_rank}} of the eight), and the cost
-is real: {{comp_cost_sharpe_oos}} Sharpe on the scored block, the short-vol leg's share of P&L up from
-{{comp_share_before}} to {{comp_share_after}}, and no family left that spans both asset classes.
-[REPORT.md](REPORT.md) §6d-ter carries the full search and the eight-family alternative, which is one line
-away in `scripts/run_master_book.py`.
+terms (carry's standalone Sharpe is {{comp_carry_solo}}, the {{comp_carry_rank}} of the eight). **Return went
+up, not down**: {{comp_d_cagr_full}} of CAGR on the full window and {{comp_d_cagr_oos}} on the block, since six
+legs at equal risk run hotter than eight — the Sharpe reads {{comp_cost_sharpe_oos}} on the block for that same
+reason, and at matched risk the wider book edges it by {{comp_d_cagr_full_vm}}. What the change genuinely costs
+is **concentration and breadth**: the short-vol leg's share of P&L up from {{comp_share_before}} to
+{{comp_share_after}}, and no family left that spans both asset classes. [REPORT.md](REPORT.md) §6d-ter carries
+the full search, the vol-matched comparison and the eight-family alternative, which is one line away in
+`scripts/run_master_book.py`.
 
 **The {{n_families_word}} sources** — each developed in its own deep-dive, combined at genuine equal-weight
 risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:

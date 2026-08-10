@@ -36,11 +36,14 @@ Mean pairwise correlation between families **≈ 0.07**.
 families the book scores 3/5 on the full window and 4/5 on the
 scored block; trend and carry are dropped because that pair — two of the
 37 configurations tested — is what clears every target on both. Neither leg is weak on its own
-terms (carry's standalone Sharpe is 1.22, the fourth-highest of the eight), and the cost
-is real: −0.25 Sharpe on the scored block, the short-vol leg's share of P&L up from
-56% to 64%, and no family left that spans both asset classes.
-[REPORT.md](REPORT.md) §6d-ter carries the full search and the eight-family alternative, which is one line
-away in `scripts/run_master_book.py`.
+terms (carry's standalone Sharpe is 1.22, the fourth-highest of the eight). **Return went
+up, not down**: +4.1pp of CAGR on the full window and +3.9pp on the block, since six
+legs at equal risk run hotter than eight — the Sharpe reads −0.25 on the block for that same
+reason, and at matched risk the wider book edges it by +1.7pp. What the change genuinely costs
+is **concentration and breadth**: the short-vol leg's share of P&L up from 56% to
+64%, and no family left that spans both asset classes. [REPORT.md](REPORT.md) §6d-ter carries
+the full search, the vol-matched comparison and the eight-family alternative, which is one line away in
+`scripts/run_master_book.py`.
 
 **The six sources** — each developed in its own deep-dive, combined at genuine equal-weight
 risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:

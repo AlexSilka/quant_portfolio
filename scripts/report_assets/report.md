@@ -27,9 +27,12 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **{{n
 > **§11 scores the targets on the frozen out-of-sample block**, and there it clears **{{oos_targets}}** (2024-07→: Sharpe
 > **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month **{{oos_worst_month}}**, streak **{{oos_streak}}**).
 > On the **full 15-year window** it also clears **{{book_targets}}** (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD
-> **{{book_dd}}**, worst month **{{book_worst_month}}**, streak **{{book_streak}}**). What that cost: **{{comp_cost_sharpe_oos}} Sharpe** on the scored
-> block against the eight-family book, the short-vol leg's share of P&L up from **{{comp_share_before}} to {{comp_share_after}}**, and **no
-> family left that spans both asset classes** (§6d-ter).
+> **{{book_dd}}**, worst month **{{book_worst_month}}**, streak **{{book_streak}}**). What that changed, measured
+> in §6d-ter: **return went up**, not down — {{comp_d_cagr_full}} of CAGR on the full window,
+> {{comp_d_cagr_oos}} on the block — because six legs at equal risk run hotter than eight; the Sharpe reads
+> **{{comp_cost_sharpe_oos}}** on the block for the same reason, and at matched risk the wider book edges it by
+> {{comp_d_cagr_full_vm}}. **The real price is concentration and breadth**: the short-vol leg's share of P&L up
+> from **{{comp_share_before}} to {{comp_share_after}}**, and **no family left that spans both asset classes**.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 
@@ -1093,19 +1096,31 @@ the strategies. Dropping trend fixes the full window and leaves the block untouc
 {{comp_drop_trend_months_oos}} months-in-profit; dropping carry as well is what lifts the block to
 {{comp_ship_months_oos}}.
 
-**What it costs, measured:**
+**What it costs, measured — and the return column matters here.** A composition change reweights every leg,
+so it moves the book's *volatility* as well as its return, and a Sharpe delta cannot tell those apart. The
+middle column is the eight-family book levered to **{{comp_vm_leverage}}**, which puts it on the shipped
+book's realised volatility — the only like-for-like comparison:
 
-| | eight families | {{n_families_word}} families *(shipped)* |
-|---|---|---|
-| targets, full / block | {{comp_base_targets_full}} · {{comp_base_targets_oos}} | **{{book_targets}} · {{oos_targets}}** |
-| Sharpe, full / block | {{comp_base_sharpe_full}} / {{comp_base_sharpe_oos}} | {{comp_ship_sharpe_full}} / **{{comp_ship_sharpe_oos}}** |
-| vol-premium share of P&L | {{comp_share_before}} | **{{comp_share_after}}** |
-| asset-class breadth | trend spans crypto **and** US equities | no leg spans both; three of {{n_families_word}} are crypto-only |
+{{comp_cost_table}}
 
-So the scorecard is bought with **{{comp_cost_sharpe_oos}} Sharpe on the scored block**, a **more concentrated**
-book (the short-vol leg goes from {{comp_share_before}} to {{comp_share_after}} of P&L, against its own −78%
-tail), and the loss of the only family trading both asset classes. Cross-asset breadth now rests on
-vol-premium's US underlyings and global-macro's EM-FX rather than on a leg that trades both.
+**Returns did not fall — they rose.** At the shipped {{leverage}} the {{n_families_word}}-family book earns
+**{{comp_d_cagr_full}} of CAGR more** on the full window and **{{comp_d_cagr_oos}} more** on the scored block,
+about **{{comp_d_pnl_yr}}/yr more** on the brief's $500k. The Sharpe fell because the book runs *hotter*: six
+legs at equal risk are less diversified than eight, so volatility went {{comp_share_before_vol}} and the
+drawdown and worst month went with it. That is a risk change, not a lost edge — and it is why this table
+carries CAGR next to the ratio.
+
+At **matched risk** the wider book does edge it — the eight-family book at {{comp_vm_leverage}} earns
+{{comp_d_cagr_full_vm}} more on the full window and {{comp_d_cagr_oos_vm}} more on the block — so the honest
+statement is that eight families are a shade more efficient per unit of risk, by an amount inside the noise
+of a two-year block. It still scores
+{{comp_base_targets_full}} and {{comp_base_targets_oos}} at that leverage, because the targets it misses are
+months-in-profit and the losing streak, and those are properties of a month's *sign* that no leverage moves.
+
+**What the change does cost is concentration and breadth**, not money: the short-vol leg goes from
+{{comp_share_before}} to {{comp_share_after}} of P&L against its own −78% tail, and trend was the only family
+trading both asset classes — cross-asset breadth now rests on vol-premium's US underlyings and global-macro's
+EM-FX rather than on a leg that spans both. Those are the real prices, and they are the ones to weigh.
 
 **The brief's own instruction points the other way**, and that is worth recording next to the result:
 *"If the targets are not reachable under honest validation, submit your best result with the trade-off

@@ -15,9 +15,42 @@
     "trend_momentum": 0.89,
     "carry": 1.22
   },
+  "vol_matched_eight": {
+    "leverage": 1.305,
+    "full": {
+      "sharpe": 3.57,
+      "max_dd": -0.0838,
+      "months_in_profit": 0.7872,
+      "worst_month": -0.0509,
+      "longest_losing_streak_mo": 3,
+      "total_return": 350.263,
+      "n_obs": 5282,
+      "cagr": 0.4565,
+      "pnl_usd_per_year": 190998.0,
+      "vol": 0.111
+    },
+    "oos": {
+      "sharpe": 3.32,
+      "max_dd": -0.0577,
+      "months_in_profit": 0.7692,
+      "worst_month": -0.0244,
+      "longest_losing_streak_mo": 2,
+      "total_return": 0.885,
+      "n_obs": 766,
+      "cagr": 0.3534,
+      "pnl_usd_per_year": 153499.0,
+      "vol": 0.0924
+    },
+    "targets_full": 3,
+    "targets_oos": 4
+  },
   "cost_of_passing": {
     "sharpe_full": -0.05,
     "sharpe_oos": -0.25,
+    "cagr_full": 0.0412,
+    "cagr_oos": 0.0387,
+    "cagr_full_vol_matched": -0.0173,
+    "cagr_oos_vol_matched": -0.0085,
     "volprem_pnl_share": [
       0.5563,
       0.6374
@@ -32,7 +65,10 @@
         "worst_month": -0.045,
         "longest_losing_streak_mo": 3,
         "total_return": 184.261,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.398,
+        "pnl_usd_per_year": 169846.0,
+        "vol": 0.0986
       },
       "oos": {
         "sharpe": 3.32,
@@ -41,7 +77,10 @@
         "worst_month": -0.0215,
         "longest_losing_streak_mo": 2,
         "total_return": 0.75,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3062,
+        "pnl_usd_per_year": 135262.0,
+        "vol": 0.0814
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -64,7 +103,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 9,
         "total_return": 7.508,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.1472,
+        "pnl_usd_per_year": 70707.0,
+        "vol": 0.0931
       },
       "oos": {
         "sharpe": 2.09,
@@ -73,7 +115,10 @@
         "worst_month": -0.0253,
         "longest_losing_streak_mo": 2,
         "total_return": 0.427,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1852,
+        "pnl_usd_per_year": 86695.0,
+        "vol": 0.083
       },
       "targets_full": 1,
       "targets_oos": 3,
@@ -101,7 +146,10 @@
         "worst_month": -0.0541,
         "longest_losing_streak_mo": 3,
         "total_return": 323.936,
-        "n_obs": 5177
+        "n_obs": 5177,
+        "cagr": 0.4493,
+        "pnl_usd_per_year": 188312.0,
+        "vol": 0.1085
       },
       "oos": {
         "sharpe": 3.16,
@@ -110,7 +158,10 @@
         "worst_month": -0.0202,
         "longest_losing_streak_mo": 2,
         "total_return": 0.78,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.317,
+        "pnl_usd_per_year": 139695.0,
+        "vol": 0.0883
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -135,7 +186,10 @@
         "worst_month": -0.0524,
         "longest_losing_streak_mo": 3,
         "total_return": 176.815,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.3943,
+        "pnl_usd_per_year": 168550.0,
+        "vol": 0.099
       },
       "oos": {
         "sharpe": 3.52,
@@ -144,7 +198,10 @@
         "worst_month": -0.0208,
         "longest_losing_streak_mo": 2,
         "total_return": 0.846,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3399,
+        "pnl_usd_per_year": 148131.0,
+        "vol": 0.0841
       },
       "targets_full": 3,
       "targets_oos": 5,
@@ -167,7 +224,10 @@
         "worst_month": -0.0583,
         "longest_losing_streak_mo": 3,
         "total_return": 385.549,
-        "n_obs": 5149
+        "n_obs": 5149,
+        "cagr": 0.4655,
+        "pnl_usd_per_year": 193463.0,
+        "vol": 0.0997
       },
       "oos": {
         "sharpe": 3.79,
@@ -176,7 +236,10 @@
         "worst_month": -0.0159,
         "longest_losing_streak_mo": 2,
         "total_return": 0.899,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3584,
+        "pnl_usd_per_year": 154873.0,
+        "vol": 0.0816
       },
       "targets_full": 3,
       "targets_oos": 5,
@@ -199,7 +262,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 3,
         "total_return": 285.52,
-        "n_obs": 5262
+        "n_obs": 5262,
+        "cagr": 0.4376,
+        "pnl_usd_per_year": 184125.0,
+        "vol": 0.1045
       },
       "oos": {
         "sharpe": 3.17,
@@ -208,7 +274,10 @@
         "worst_month": -0.0269,
         "longest_losing_streak_mo": 2,
         "total_return": 0.757,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3086,
+        "pnl_usd_per_year": 136389.0,
+        "vol": 0.0861
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -233,7 +302,10 @@
         "worst_month": -0.0479,
         "longest_losing_streak_mo": 3,
         "total_return": 187.376,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.3995,
+        "pnl_usd_per_year": 170391.0,
+        "vol": 0.0988
       },
       "oos": {
         "sharpe": 3.17,
@@ -242,7 +314,10 @@
         "worst_month": -0.0243,
         "longest_losing_streak_mo": 2,
         "total_return": 0.718,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.295,
+        "pnl_usd_per_year": 131005.0,
+        "vol": 0.0826
       },
       "targets_full": 4,
       "targets_oos": 5,
@@ -264,7 +339,10 @@
         "worst_month": -0.0497,
         "longest_losing_streak_mo": 2,
         "total_return": 260.279,
-        "n_obs": 5042
+        "n_obs": 5042,
+        "cagr": 0.4291,
+        "pnl_usd_per_year": 181168.0,
+        "vol": 0.1069
       },
       "oos": {
         "sharpe": 3.26,
@@ -273,7 +351,10 @@
         "worst_month": -0.0198,
         "longest_losing_streak_mo": 2,
         "total_return": 0.835,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3361,
+        "pnl_usd_per_year": 146953.0,
+        "vol": 0.0902
       },
       "targets_full": 5,
       "targets_oos": 4,
@@ -295,7 +376,10 @@
         "worst_month": -0.0408,
         "longest_losing_streak_mo": 3,
         "total_return": 198.122,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.4044,
+        "pnl_usd_per_year": 172322.0,
+        "vol": 0.102
       },
       "oos": {
         "sharpe": 3.12,
@@ -304,7 +388,10 @@
         "worst_month": -0.0306,
         "longest_losing_streak_mo": 2,
         "total_return": 0.757,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3087,
+        "pnl_usd_per_year": 136474.0,
+        "vol": 0.0874
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -329,7 +416,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 10,
         "total_return": 7.239,
-        "n_obs": 5177
+        "n_obs": 5177,
+        "cagr": 0.1449,
+        "pnl_usd_per_year": 70058.0,
+        "vol": 0.1026
       },
       "oos": {
         "sharpe": 1.86,
@@ -338,7 +428,10 @@
         "worst_month": -0.0243,
         "longest_losing_streak_mo": 2,
         "total_return": 0.407,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1773,
+        "pnl_usd_per_year": 83629.0,
+        "vol": 0.0899
       },
       "targets_full": 1,
       "targets_oos": 3,
@@ -367,7 +460,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 9,
         "total_return": 6.347,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.1365,
+        "pnl_usd_per_year": 66043.0,
+        "vol": 0.0941
       },
       "oos": {
         "sharpe": 2.14,
@@ -376,7 +472,10 @@
         "worst_month": -0.027,
         "longest_losing_streak_mo": 2,
         "total_return": 0.457,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1969,
+        "pnl_usd_per_year": 91735.0,
+        "vol": 0.0856
       },
       "targets_full": 0,
       "targets_oos": 3,
@@ -406,7 +505,10 @@
         "worst_month": -0.0475,
         "longest_losing_streak_mo": 10,
         "total_return": 9.315,
-        "n_obs": 4896
+        "n_obs": 4896,
+        "cagr": 0.1735,
+        "pnl_usd_per_year": 82041.0,
+        "vol": 0.0938
       },
       "oos": {
         "sharpe": 2.38,
@@ -415,7 +517,10 @@
         "worst_month": -0.0331,
         "longest_losing_streak_mo": 2,
         "total_return": 0.5,
-        "n_obs": 765
+        "n_obs": 765,
+        "cagr": 0.2141,
+        "pnl_usd_per_year": 98723.0,
+        "vol": 0.0828
       },
       "targets_full": 2,
       "targets_oos": 3,
@@ -443,7 +548,10 @@
         "worst_month": -0.0606,
         "longest_losing_streak_mo": 3,
         "total_return": 7.638,
-        "n_obs": 5009
+        "n_obs": 5009,
+        "cagr": 0.1593,
+        "pnl_usd_per_year": 76305.0,
+        "vol": 0.1004
       },
       "oos": {
         "sharpe": 1.8,
@@ -452,7 +560,10 @@
         "worst_month": -0.0233,
         "longest_losing_streak_mo": 2,
         "total_return": 0.381,
-        "n_obs": 765
+        "n_obs": 765,
+        "cagr": 0.1668,
+        "pnl_usd_per_year": 79072.0,
+        "vol": 0.0877
       },
       "targets_full": 1,
       "targets_oos": 3,
@@ -481,7 +592,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 9,
         "total_return": 7.054,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.1432,
+        "pnl_usd_per_year": 69043.0,
+        "vol": 0.0954
       },
       "oos": {
         "sharpe": 1.8,
@@ -490,7 +604,10 @@
         "worst_month": -0.0286,
         "longest_losing_streak_mo": 2,
         "total_return": 0.368,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1613,
+        "pnl_usd_per_year": 76596.0,
+        "vol": 0.0849
       },
       "targets_full": 1,
       "targets_oos": 3,
@@ -519,7 +636,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 18,
         "total_return": 5.559,
-        "n_obs": 5042
+        "n_obs": 5042,
+        "cagr": 0.1282,
+        "pnl_usd_per_year": 62553.0,
+        "vol": 0.0999
       },
       "oos": {
         "sharpe": 1.97,
@@ -528,7 +648,10 @@
         "worst_month": -0.0237,
         "longest_losing_streak_mo": 2,
         "total_return": 0.457,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1969,
+        "pnl_usd_per_year": 92064.0,
+        "vol": 0.0934
       },
       "targets_full": 1,
       "targets_oos": 3,
@@ -557,7 +680,10 @@
         "worst_month": -0.0726,
         "longest_losing_streak_mo": 9,
         "total_return": 6.858,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.1414,
+        "pnl_usd_per_year": 68364.0,
+        "vol": 0.0978
       },
       "oos": {
         "sharpe": 1.82,
@@ -566,7 +692,10 @@
         "worst_month": -0.0358,
         "longest_losing_streak_mo": 2,
         "total_return": 0.387,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.1689,
+        "pnl_usd_per_year": 79971.0,
+        "vol": 0.088
       },
       "targets_full": 0,
       "targets_oos": 3,
@@ -596,7 +725,10 @@
         "worst_month": -0.0614,
         "longest_losing_streak_mo": 3,
         "total_return": 314.55,
-        "n_obs": 5177
+        "n_obs": 5177,
+        "cagr": 0.4466,
+        "pnl_usd_per_year": 187462.0,
+        "vol": 0.1102
       },
       "oos": {
         "sharpe": 3.21,
@@ -605,7 +737,10 @@
         "worst_month": -0.0219,
         "longest_losing_streak_mo": 2,
         "total_return": 0.869,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3479,
+        "pnl_usd_per_year": 151562.0,
+        "vol": 0.0943
       },
       "targets_full": 2,
       "targets_oos": 4,
@@ -632,7 +767,10 @@
         "worst_month": -0.0672,
         "longest_losing_streak_mo": 4,
         "total_return": 954.471,
-        "n_obs": 5039
+        "n_obs": 5039,
+        "cagr": 0.5531,
+        "pnl_usd_per_year": 223003.0,
+        "vol": 0.1108
       },
       "oos": {
         "sharpe": 3.73,
@@ -641,7 +779,10 @@
         "worst_month": -0.0257,
         "longest_losing_streak_mo": 2,
         "total_return": 0.97,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3822,
+        "pnl_usd_per_year": 163831.0,
+        "vol": 0.0878
       },
       "targets_full": 2,
       "targets_oos": 4,
@@ -668,7 +809,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 4,
         "total_return": 654.53,
-        "n_obs": 4995
+        "n_obs": 4995,
+        "cagr": 0.516,
+        "pnl_usd_per_year": 211355.0,
+        "vol": 0.1201
       },
       "oos": {
         "sharpe": 3.0,
@@ -677,7 +821,10 @@
         "worst_month": -0.0302,
         "longest_losing_streak_mo": 2,
         "total_return": 0.774,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3149,
+        "pnl_usd_per_year": 139063.0,
+        "vol": 0.0928
       },
       "targets_full": 2,
       "targets_oos": 4,
@@ -704,7 +851,10 @@
         "worst_month": -0.0591,
         "longest_losing_streak_mo": 3,
         "total_return": 350.709,
-        "n_obs": 5177
+        "n_obs": 5177,
+        "cagr": 0.4567,
+        "pnl_usd_per_year": 190889.0,
+        "vol": 0.1092
       },
       "oos": {
         "sharpe": 3.01,
@@ -713,7 +863,10 @@
         "worst_month": -0.0234,
         "longest_losing_streak_mo": 2,
         "total_return": 0.746,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3047,
+        "pnl_usd_per_year": 135049.0,
+        "vol": 0.0896
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -739,7 +892,10 @@
         "worst_month": -0.0612,
         "longest_losing_streak_mo": 2,
         "total_return": 617.256,
-        "n_obs": 4875
+        "n_obs": 4875,
+        "cagr": 0.5103,
+        "pnl_usd_per_year": 209605.0,
+        "vol": 0.1241
       },
       "oos": {
         "sharpe": 3.09,
@@ -748,7 +904,10 @@
         "worst_month": -0.0189,
         "longest_losing_streak_mo": 2,
         "total_return": 0.885,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3534,
+        "pnl_usd_per_year": 153839.0,
+        "vol": 0.0996
       },
       "targets_full": 4,
       "targets_oos": 4,
@@ -773,7 +932,10 @@
         "worst_month": -0.051,
         "longest_losing_streak_mo": 3,
         "total_return": 357.996,
-        "n_obs": 5177
+        "n_obs": 5177,
+        "cagr": 0.4586,
+        "pnl_usd_per_year": 191748.0,
+        "vol": 0.1131
       },
       "oos": {
         "sharpe": 2.91,
@@ -782,7 +944,10 @@
         "worst_month": -0.0308,
         "longest_losing_streak_mo": 2,
         "total_return": 0.77,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3135,
+        "pnl_usd_per_year": 138657.0,
+        "vol": 0.0951
       },
       "targets_full": 4,
       "targets_oos": 4,
@@ -807,7 +972,10 @@
         "worst_month": -0.0583,
         "longest_losing_streak_mo": 3,
         "total_return": 395.346,
-        "n_obs": 5149
+        "n_obs": 5149,
+        "cagr": 0.4679,
+        "pnl_usd_per_year": 194323.0,
+        "vol": 0.1009
       },
       "oos": {
         "sharpe": 4.03,
@@ -816,7 +984,10 @@
         "worst_month": -0.0252,
         "longest_losing_streak_mo": 2,
         "total_return": 1.05,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.4086,
+        "pnl_usd_per_year": 173234.0,
+        "vol": 0.086
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -842,7 +1013,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 3,
         "total_return": 292.788,
-        "n_obs": 5262
+        "n_obs": 5262,
+        "cagr": 0.4399,
+        "pnl_usd_per_year": 184962.0,
+        "vol": 0.1052
       },
       "oos": {
         "sharpe": 3.37,
@@ -851,7 +1025,10 @@
         "worst_month": -0.0299,
         "longest_losing_streak_mo": 2,
         "total_return": 0.848,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3406,
+        "pnl_usd_per_year": 148565.0,
+        "vol": 0.0881
       },
       "targets_full": 3,
       "targets_oos": 5,
@@ -875,7 +1052,10 @@
         "worst_month": -0.0575,
         "longest_losing_streak_mo": 3,
         "total_return": 192.548,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.4019,
+        "pnl_usd_per_year": 171283.0,
+        "vol": 0.0993
       },
       "oos": {
         "sharpe": 3.41,
@@ -884,7 +1064,10 @@
         "worst_month": -0.024,
         "longest_losing_streak_mo": 2,
         "total_return": 0.82,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3311,
+        "pnl_usd_per_year": 144864.0,
+        "vol": 0.0849
       },
       "targets_full": 4,
       "targets_oos": 5,
@@ -907,7 +1090,10 @@
         "worst_month": -0.0602,
         "longest_losing_streak_mo": 2,
         "total_return": 267.268,
-        "n_obs": 5042
+        "n_obs": 5042,
+        "cagr": 0.4316,
+        "pnl_usd_per_year": 182053.0,
+        "vol": 0.1077
       },
       "oos": {
         "sharpe": 3.59,
@@ -916,7 +1102,10 @@
         "worst_month": -0.0187,
         "longest_losing_streak_mo": 2,
         "total_return": 0.972,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3829,
+        "pnl_usd_per_year": 164244.0,
+        "vol": 0.0914
       },
       "targets_full": 4,
       "targets_oos": 5,
@@ -939,7 +1128,10 @@
         "worst_month": -0.0554,
         "longest_losing_streak_mo": 3,
         "total_return": 193.944,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.4025,
+        "pnl_usd_per_year": 171690.0,
+        "vol": 0.1029
       },
       "oos": {
         "sharpe": 3.23,
@@ -948,7 +1140,10 @@
         "worst_month": -0.0314,
         "longest_losing_streak_mo": 2,
         "total_return": 0.833,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3355,
+        "pnl_usd_per_year": 146773.0,
+        "vol": 0.0909
       },
       "targets_full": 4,
       "targets_oos": 5,
@@ -971,7 +1166,10 @@
         "worst_month": -0.0885,
         "longest_losing_streak_mo": 3,
         "total_return": 463.698,
-        "n_obs": 4869
+        "n_obs": 4869,
+        "cagr": 0.5236,
+        "pnl_usd_per_year": 213310.0,
+        "vol": 0.1072
       },
       "oos": {
         "sharpe": 3.49,
@@ -980,7 +1178,10 @@
         "worst_month": -0.0271,
         "longest_losing_streak_mo": 2,
         "total_return": 0.913,
-        "n_obs": 763
+        "n_obs": 763,
+        "cagr": 0.3637,
+        "pnl_usd_per_year": 157179.0,
+        "vol": 0.0901
       },
       "targets_full": 1,
       "targets_oos": 4,
@@ -1008,7 +1209,10 @@
         "worst_month": -0.0583,
         "longest_losing_streak_mo": 3,
         "total_return": 417.052,
-        "n_obs": 5149
+        "n_obs": 5149,
+        "cagr": 0.4729,
+        "pnl_usd_per_year": 195983.0,
+        "vol": 0.0999
       },
       "oos": {
         "sharpe": 3.78,
@@ -1017,7 +1221,10 @@
         "worst_month": -0.0165,
         "longest_losing_streak_mo": 2,
         "total_return": 0.884,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3531,
+        "pnl_usd_per_year": 152891.0,
+        "vol": 0.0809
       },
       "targets_full": 3,
       "targets_oos": 5,
@@ -1041,7 +1248,10 @@
         "worst_month": -0.0575,
         "longest_losing_streak_mo": 3,
         "total_return": 938.923,
-        "n_obs": 5012
+        "n_obs": 5012,
+        "cagr": 0.5515,
+        "pnl_usd_per_year": 222495.0,
+        "vol": 0.1115
       },
       "oos": {
         "sharpe": 3.79,
@@ -1050,7 +1260,10 @@
         "worst_month": -0.0125,
         "longest_losing_streak_mo": 2,
         "total_return": 1.043,
-        "n_obs": 764
+        "n_obs": 764,
+        "cagr": 0.4065,
+        "pnl_usd_per_year": 172704.0,
+        "vol": 0.0911
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -1076,7 +1289,10 @@
         "worst_month": -0.0583,
         "longest_losing_streak_mo": 3,
         "total_return": 429.516,
-        "n_obs": 5149
+        "n_obs": 5149,
+        "cagr": 0.4757,
+        "pnl_usd_per_year": 197081.0,
+        "vol": 0.1031
       },
       "oos": {
         "sharpe": 3.62,
@@ -1085,7 +1301,10 @@
         "worst_month": -0.0213,
         "longest_losing_streak_mo": 2,
         "total_return": 0.921,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3659,
+        "pnl_usd_per_year": 157873.0,
+        "vol": 0.0871
       },
       "targets_full": 3,
       "targets_oos": 4,
@@ -1111,7 +1330,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 3,
         "total_return": 306.251,
-        "n_obs": 5262
+        "n_obs": 5262,
+        "cagr": 0.4441,
+        "pnl_usd_per_year": 186406.0,
+        "vol": 0.1053
       },
       "oos": {
         "sharpe": 3.04,
@@ -1120,7 +1342,10 @@
         "worst_month": -0.0298,
         "longest_losing_streak_mo": 2,
         "total_return": 0.728,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.2983,
+        "pnl_usd_per_year": 132488.0,
+        "vol": 0.0872
       },
       "targets_full": 3,
       "targets_oos": 5,
@@ -1144,7 +1369,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 2,
         "total_return": 545.549,
-        "n_obs": 4855
+        "n_obs": 4855,
+        "cagr": 0.4984,
+        "pnl_usd_per_year": 205228.0,
+        "vol": 0.1161
       },
       "oos": {
         "sharpe": 3.15,
@@ -1153,7 +1381,10 @@
         "worst_month": -0.023,
         "longest_losing_streak_mo": 2,
         "total_return": 0.866,
-        "n_obs": 764
+        "n_obs": 764,
+        "cagr": 0.347,
+        "pnl_usd_per_year": 151284.0,
+        "vol": 0.096
       },
       "targets_full": 4,
       "targets_oos": 4,
@@ -1178,7 +1409,10 @@
         "worst_month": -0.1346,
         "longest_losing_streak_mo": 3,
         "total_return": 321.179,
-        "n_obs": 5262
+        "n_obs": 5262,
+        "cagr": 0.4485,
+        "pnl_usd_per_year": 188099.0,
+        "vol": 0.1087
       },
       "oos": {
         "sharpe": 2.91,
@@ -1187,7 +1421,10 @@
         "worst_month": -0.0292,
         "longest_losing_streak_mo": 2,
         "total_return": 0.732,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.2999,
+        "pnl_usd_per_year": 133288.0,
+        "vol": 0.0915
       },
       "targets_full": 2,
       "targets_oos": 4,
@@ -1214,7 +1451,10 @@
         "worst_month": -0.0545,
         "longest_losing_streak_mo": 2,
         "total_return": 281.572,
-        "n_obs": 5042
+        "n_obs": 5042,
+        "cagr": 0.4363,
+        "pnl_usd_per_year": 183789.0,
+        "vol": 0.1092
       },
       "oos": {
         "sharpe": 2.98,
@@ -1223,7 +1463,10 @@
         "worst_month": -0.023,
         "longest_losing_streak_mo": 2,
         "total_return": 0.809,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3272,
+        "pnl_usd_per_year": 143901.0,
+        "vol": 0.0963
       },
       "targets_full": 5,
       "targets_oos": 5,
@@ -1244,7 +1487,10 @@
         "worst_month": -0.0437,
         "longest_losing_streak_mo": 3,
         "total_return": 208.834,
-        "n_obs": 5282
+        "n_obs": 5282,
+        "cagr": 0.4092,
+        "pnl_usd_per_year": 174040.0,
+        "vol": 0.1027
       },
       "oos": {
         "sharpe": 2.91,
@@ -1253,7 +1499,10 @@
         "worst_month": -0.0357,
         "longest_losing_streak_mo": 2,
         "total_return": 0.718,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.2948,
+        "pnl_usd_per_year": 131244.0,
+        "vol": 0.0902
       },
       "targets_full": 4,
       "targets_oos": 5,
@@ -1276,7 +1525,10 @@
         "worst_month": -0.0576,
         "longest_losing_streak_mo": 2,
         "total_return": 290.438,
-        "n_obs": 5042
+        "n_obs": 5042,
+        "cagr": 0.4392,
+        "pnl_usd_per_year": 184888.0,
+        "vol": 0.1113
       },
       "oos": {
         "sharpe": 3.07,
@@ -1285,7 +1537,10 @@
         "worst_month": -0.0304,
         "longest_losing_streak_mo": 2,
         "total_return": 0.86,
-        "n_obs": 766
+        "n_obs": 766,
+        "cagr": 0.3449,
+        "pnl_usd_per_year": 150624.0,
+        "vol": 0.0979
       },
       "targets_full": 5,
       "targets_oos": 5,

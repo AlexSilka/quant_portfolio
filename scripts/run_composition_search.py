@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.run_master_book as mb  # noqa: E402
-from src.config import OOS_START  # noqa: E402
+from src.config import CAPITAL_USD, OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 
 OOS = pd.Timestamp(OOS_START).tz_localize(None)
@@ -84,9 +84,21 @@ def book(legs: dict[str, pd.Series]) -> pd.Series:
     return mb.risk_overlay(frame(legs).mean(axis=1, skipna=True).dropna(), leverage=mb.BOOK_LEVERAGE)[0]
 
 
+def ret(s: pd.Series) -> dict:
+    """Return and risk, not only the ratio.
+
+    A composition change reweights every leg, so it moves the book's volatility as well as its return, and
+    Sharpe cannot tell those apart. Reporting only the ratio made a change that RAISED return by ~10% read
+    as a cost, because the ratio fell — the same blindness this report criticises in its ML section."""
+    yrs = (s.index.max() - s.index.min()).days / 365.25
+    return {"cagr": round(float((1 + s).prod() ** (1 / yrs) - 1), 4),
+            "pnl_usd_per_year": round(float(s.sum()) * CAPITAL_USD / yrs, 0),
+            "vol": round(float(s.std(ddof=1) * (365 ** 0.5)), 4)}
+
+
 def score(legs: dict[str, pd.Series]) -> dict:
     b = book(legs)
-    full, oos = mb.scorecard(b), mb.scorecard(b.loc[OOS:])
+    full, oos = {**mb.scorecard(b), **ret(b)}, {**mb.scorecard(b.loc[OOS:]), **ret(b.loc[OOS:])}
     # concentration is what a removal actually buys or costs — same definition as run_master_book's
     # pnl_share (each leg's contribution to the equal-weight sum, over the book's own window)
     df = frame(legs)
@@ -126,8 +138,19 @@ def main():
     # this search has to call "shipped", or the report's cost-of-passing would describe a different book
     shipped_drop = [n for n in names if n not in {lab for lab, _, _ in mb.FAMILIES}]
     shipped = next(lab for lab, drop in configs if sorted(drop) == sorted(shipped_drop))
+    legs_shipped = {k: v for k, v in raw.items() if k not in shipped_drop}
     wide = frame(raw)
     solo_legs = {c: wide[c].dropna() for c in wide.columns}
+    # the honest like-for-like: any composition change moves book vol, so the eight-family book is also
+    # scored at the leverage that puts it on the SHIPPED book's realised volatility. Same risk, same
+    # question — does the wider book actually earn more?
+    b8, b6 = frame(raw).mean(axis=1, skipna=True).dropna(), frame(legs_shipped).mean(axis=1, skipna=True).dropna()
+    lev = mb.BOOK_LEVERAGE * float(b6.std(ddof=1) / b8.std(ddof=1))
+    m8 = mb.risk_overlay(b8, leverage=lev)[0]
+    vol_matched = {"leverage": round(lev, 3), "full": {**mb.scorecard(m8), **ret(m8)},
+                   "oos": {**mb.scorecard(m8.loc[OOS:]), **ret(m8.loc[OOS:])}}
+    vol_matched["targets_full"] = n_targets(vol_matched["full"])
+    vol_matched["targets_oos"] = n_targets(vol_matched["oos"])
     base, ship = rows["all eight"], rows[shipped]
     out = {"n_configurations": len(configs), "passing": passing, "shipped": shipped,
            # same convention as run_master_book's own standalone_sharpe — the vol-targeted leg over the
@@ -135,9 +158,14 @@ def main():
            # comparing against the numbers the README's source table prints
            "standalone_sharpe": {k: round(summarise(v, mb.ppy_of(v))["sharpe_ann"], 2)
                                  for k, v in solo_legs.items()},
+           "vol_matched_eight": vol_matched,
            "cost_of_passing": {
                "sharpe_full": round(ship["full"]["sharpe"] - base["full"]["sharpe"], 2),
                "sharpe_oos": round(ship["oos"]["sharpe"] - base["oos"]["sharpe"], 2),
+               "cagr_full": round(ship["full"]["cagr"] - base["full"]["cagr"], 4),
+               "cagr_oos": round(ship["oos"]["cagr"] - base["oos"]["cagr"], 4),
+               "cagr_full_vol_matched": round(ship["full"]["cagr"] - vol_matched["full"]["cagr"], 4),
+               "cagr_oos_vol_matched": round(ship["oos"]["cagr"] - vol_matched["oos"]["cagr"], 4),
                "volprem_pnl_share": [base["volprem_pnl_share"], ship["volprem_pnl_share"]]},
            "configurations": rows}
     p = mb.R / "book" / "composition_search.json"

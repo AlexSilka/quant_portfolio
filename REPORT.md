@@ -29,9 +29,12 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **six
 > **§11 scores the targets on the frozen out-of-sample block**, and there it clears **5/5** (2024-07→: Sharpe
 > **3.07**, months **80.8%**, max-DD **−5.7%**, worst month **−3.0%**, streak **2**).
 > On the **full 15-year window** it also clears **5/5** (Sharpe **3.53**, months **82.4%**, max-DD
-> **−8.3%**, worst month **−5.8%**, streak **2**). What that cost: **−0.25 Sharpe** on the scored
-> block against the eight-family book, the short-vol leg's share of P&L up from **56% to 64%**, and **no
-> family left that spans both asset classes** (§6d-ter).
+> **−8.3%**, worst month **−5.8%**, streak **2**). What that changed, measured
+> in §6d-ter: **return went up**, not down — +4.1pp of CAGR on the full window,
+> +3.9pp on the block — because six legs at equal risk run hotter than eight; the Sharpe reads
+> **−0.25** on the block for the same reason, and at matched risk the wider book edges it by
+> +1.7pp. **The real price is concentration and breadth**: the short-vol leg's share of P&L up
+> from **56% to 64%**, and **no family left that spans both asset classes**.
 > Execution is t+2 bars; funding at every 8h settlement; costs are liquidity-aware (never flat); the regime
 > gate's own switching is charged the vega spread, so its timing is not free.
 
@@ -1167,19 +1170,39 @@ the strategies. Dropping trend fixes the full window and leaves the block untouc
 76.9% months-in-profit; dropping carry as well is what lifts the block to
 80.8%.
 
-**What it costs, measured:**
+**What it costs, measured — and the return column matters here.** A composition change reweights every leg,
+so it moves the book's *volatility* as well as its return, and a Sharpe delta cannot tell those apart. The
+middle column is the eight-family book levered to **1.30×**, which puts it on the shipped
+book's realised volatility — the only like-for-like comparison:
 
-| | eight families | six families *(shipped)* |
-|---|---|---|
-| targets, full / block | 3/5 · 4/5 | **5/5 · 5/5** |
-| Sharpe, full / block | 3.58 / 3.32 | 3.53 / **3.07** |
-| vol-premium share of P&L | 56% | **64%** |
-| asset-class breadth | trend spans crypto **and** US equities | no leg spans both; three of six are crypto-only |
+| | eight families | eight, vol-matched | six families *(shipped)* |
+|---|---|---|---|
+| targets, full / block | 3/5 · 4/5 | 3/5 · 4/5 | **5/5 · 5/5** |
+| Sharpe, full / block | 3.58 / 3.32 | 3.57 / 3.32 | 3.53 / **3.07** |
+| **CAGR, full / block** | +39.8% / +30.6% | +45.6% / +35.3% | **+43.9% / +34.5%** |
+| **P&L /yr on $500k** | $170k | $191k | **$185k** |
+| book volatility | 9.9% | 11.1% | **11.1%** |
+| max-DD / worst month | −7.4% / −4.5% | −8.4% / −5.1% | **−8.3% / −5.8%** |
+| vol-premium share of P&L | 56% | — | **64%** |
 
-So the scorecard is bought with **−0.25 Sharpe on the scored block**, a **more concentrated**
-book (the short-vol leg goes from 56% to 64% of P&L, against its own −78%
-tail), and the loss of the only family trading both asset classes. Cross-asset breadth now rests on
-vol-premium's US underlyings and global-macro's EM-FX rather than on a leg that trades both.
+**Returns did not fall — they rose.** At the shipped 1.15× the six-family book earns
+**+4.1pp of CAGR more** on the full window and **+3.9pp more** on the scored block,
+about **$15k/yr more** on the brief's $500k. The Sharpe fell because the book runs *hotter*: six
+legs at equal risk are less diversified than eight, so volatility went from 9.9% to 11.1% and the
+drawdown and worst month went with it. That is a risk change, not a lost edge — and it is why this table
+carries CAGR next to the ratio.
+
+At **matched risk** the wider book does edge it — the eight-family book at 1.30× earns
++1.7pp more on the full window and +0.9pp more on the block — so the honest
+statement is that eight families are a shade more efficient per unit of risk, by an amount inside the noise
+of a two-year block. It still scores
+3/5 and 4/5 at that leverage, because the targets it misses are
+months-in-profit and the losing streak, and those are properties of a month's *sign* that no leverage moves.
+
+**What the change does cost is concentration and breadth**, not money: the short-vol leg goes from
+56% to 64% of P&L against its own −78% tail, and trend was the only family
+trading both asset classes — cross-asset breadth now rests on vol-premium's US underlyings and global-macro's
+EM-FX rather than on a leg that spans both. Those are the real prices, and they are the ones to weigh.
 
 **The brief's own instruction points the other way**, and that is worth recording next to the result:
 *"If the targets are not reachable under honest validation, submit your best result with the trade-off

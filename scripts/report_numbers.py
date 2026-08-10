@@ -539,10 +539,42 @@ def _composition():
     rest = d["n_configurations"] - len(dict.fromkeys(shown))
     rows.append(f"| *({rest} further pairs)* | — | fail at least one |")
 
+    vm, cost = d.get("vol_matched_eight") or {}, d["cost_of_passing"]
+    ctab = ["| | eight families | eight, vol-matched | {N} families *(shipped)* |", "|---|---|---|---|",
+            f"| targets, full / block | {base['targets_full']}/5 · {base['targets_oos']}/5 | "
+            f"{vm.get('targets_full', '—')}/5 · {vm.get('targets_oos', '—')}/5 | "
+            f"**{ship['targets_full']}/5 · {ship['targets_oos']}/5** |",
+            f"| Sharpe, full / block | {base['full']['sharpe']:.2f} / {base['oos']['sharpe']:.2f} | "
+            f"{vm['full']['sharpe']:.2f} / {vm['oos']['sharpe']:.2f} | "
+            f"{ship['full']['sharpe']:.2f} / **{ship['oos']['sharpe']:.2f}** |",
+            f"| **CAGR, full / block** | {_pc(base['full']['cagr'])} / {_pc(base['oos']['cagr'])} | "
+            f"{_pc(vm['full']['cagr'])} / {_pc(vm['oos']['cagr'])} | "
+            f"**{_pc(ship['full']['cagr'])} / {_pc(ship['oos']['cagr'])}** |",
+            f"| **P&L /yr on $500k** | ${base['full']['pnl_usd_per_year'] / 1e3:.0f}k | "
+            f"${vm['full']['pnl_usd_per_year'] / 1e3:.0f}k | "
+            f"**${ship['full']['pnl_usd_per_year'] / 1e3:.0f}k** |",
+            f"| book volatility | {_pcu(base['full']['vol'])} | {_pcu(vm['full']['vol'])} | "
+            f"**{_pcu(ship['full']['vol'])}** |",
+            f"| max-DD / worst month | {_pc(base['full']['max_dd'])} / {_pc(base['full']['worst_month'])} | "
+            f"{_pc(vm['full']['max_dd'])} / {_pc(vm['full']['worst_month'])} | "
+            f"**{_pc(ship['full']['max_dd'])} / {_pc(ship['full']['worst_month'])}** |",
+            f"| vol-premium share of P&L | {_pcu(cost['volprem_pnl_share'][0], 0)} | — | "
+            f"**{_pcu(cost['volprem_pnl_share'][1], 0)}** |"]
     solo = d["standalone_sharpe"]
     ranked = sorted(solo, key=lambda k: -solo[k])
     return {
         "comp_table": "\n".join(rows),
+        "comp_cost_table": "\n".join(ctab).replace("{N}", _word(ship["n_families"])),
+        "comp_vm_leverage": f"{vm.get('leverage', float('nan')):.2f}×",
+        # deltas between two rates are POINTS, not percent — "+4.1% more CAGR" reads as a relative gain
+        # and is a different (wrong) number. The vol-matched pair is quoted as the wider book's advantage,
+        # so its sign matches the sentence that carries it.
+        "comp_d_cagr_full": f"{100 * cost['cagr_full']:+.1f}pp".replace("-", "−"),
+        "comp_d_cagr_oos": f"{100 * cost['cagr_oos']:+.1f}pp".replace("-", "−"),
+        "comp_d_cagr_full_vm": f"{-100 * cost['cagr_full_vol_matched']:+.1f}pp".replace("-", "−"),
+        "comp_d_cagr_oos_vm": f"{-100 * cost['cagr_oos_vol_matched']:+.1f}pp".replace("-", "−"),
+        "comp_d_pnl_yr": f"${abs(ship['full']['pnl_usd_per_year'] - base['full']['pnl_usd_per_year']) / 1e3:.0f}k",
+        "comp_share_before_vol": f"from {_pcu(base['full']['vol'])} to {_pcu(ship['full']['vol'])}",
         "comp_n_configs": str(d["n_configurations"]),
         "comp_n_configs_word": _word(d["n_configurations"]),
         "comp_n_passing_word": _word(len(d["passing"])),

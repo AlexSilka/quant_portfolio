@@ -78,7 +78,10 @@ FAMILIES = [
     # spanning both asset classes, and carry was the fourth-highest standalone of the eight (1.22).
     # Three of the six that remain are crypto-only and the rest are vol/macro overlays, so "cross-asset"
     # now rests on vol-prem's US underlyings and global-macro's EM-FX rather than on a leg that trades
-    # both. Cost on the scored block: Sharpe 3.32 -> 3.07.
+    # both. RETURN did not fall — CAGR 39.8% -> 43.9% full, 30.6% -> 34.5% on the block, because six legs
+    # at equal risk run hotter (vol 9.9% -> 11.1%). That is also why block Sharpe reads 3.32 -> 3.07; at
+    # matched risk the eight-family book edges it by 1.7pp of CAGR. The price is concentration (volprem
+    # 56% -> 64% of P&L) and breadth, not money.
     # CARRY IS NOT IN THE BOOK either — dropped with trend, for the same stated reason and in the same
     # breath: those two removals are the only pair (of 37 configurations tested) that clears all five
     # targets on BOTH windows. Its series is still built and published by scripts/carry/*, so the
