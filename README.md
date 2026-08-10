@@ -33,7 +33,7 @@ Over fifteen years the book has one **3-month** losing run, which is longer than
 target allows; it is stated here rather than dropped, and §6d-quater gives the window.
 
 On the brief's $500k of sizing capital that is **$3.15M** of P&L, **~$202k/yr**
-(+40.4%/yr not reinvested, +48.9%/yr compounded). Positive in **16 of 16 calendar years**.
+(+40.5%/yr not reinvested, +49.0%/yr compounded). Positive in **16 of 16 calendar years**.
 Mean pairwise correlation between families **≈ 0.07**.
 
 **The composition was fixed before the sleeve-level gate below, and has not been re-picked since.** Trend
@@ -58,8 +58,8 @@ risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free 
 | [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +7.09 | **67%** |
 | [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
 | [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 7% |
-| [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
 | [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.42 | 7% |
+| [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
 | [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the others bleed | +0.38 | 4% |
 
 The short-vol leg carries **two regime gates**, ANDed, and they are what hold the worst month and the losing
@@ -67,7 +67,7 @@ streak. The shared one is the **VIX term structure** (flat unless both curve seg
 second is per sleeve: the same contango test on the sleeve's **own** implied vol against its own three-month
 level — because the VIX is the volatility of the S&P 500 and speaks for only five of the eighteen sleeves,
 while the other thirteen sell variance on metals, oil, duration, EM and single names. Remove the leg entirely
-and a genuine **Sharpe +1.26** book still stands.
+and a genuine **Sharpe +1.27** book still stands.
 
 **One disclosure §14 asks for.** That second gate was added after a stall *inside* the scored block was
 diagnosed, so it is a change made with the block visible. What defends it: the defect is structural and
