@@ -28,17 +28,17 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
+import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy of it
 from src.metrics import summarise, monthly_returns  # noqa: E402
 from src.config import LAB_DIR  # noqa: E402
 
 PPY = 365
 START_REPORT = "2016-08-01"
 R = ROOT / "reports"
-FAMILIES = [
-    ("trend_momentum", "trend/trend_block_returns.parquet"), ("carry", "carry_breadth_headline.parquet"),
-    ("volprem", "volprem_book.parquet"), ("xs_momentum", "xs/xs_book.parquet"),
-    ("breakout", "bo_combined_portfolio.parquet"), ("crisis", "crisis_sleeve.parquet"),
-]
+# Imported: the copy here named two legs the book dropped, omitted two it gained, and used paths from
+# before reports/ grew its per-family subfolders — so the weight frontier was drawn over a book that is
+# not the one it is compared against.
+FAMILIES = [(lab, f) for lab, f, _ in mb.FAMILIES]
 TARGET = dict(S=(2.5, 4.0), M=0.80, W=-0.06, D=-0.15, K=2)   # the scorecard box
 
 
@@ -46,12 +46,9 @@ def rescale(net, target=0.15):
     return net * (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
 
 
-def regime_overlay(b, vol_lb=63, dd_thr=-0.06, floor=0.4, cap=1.4):
-    tgt = b.std() * np.sqrt(PPY)
-    lev = (tgt / (b.rolling(vol_lb).std() * np.sqrt(PPY))).clip(0.0, cap)
-    eq = (1.0 + b).cumprod(); dd = eq / eq.cummax() - 1.0
-    throttle = 1.0 + (dd / dd_thr).clip(0.0, 1.0) * (floor - 1.0)
-    return b * (lev * throttle).shift(1).fillna(0.0)
+def regime_overlay(b):
+    """The shipped §8 overlay. The copy this replaced was the managed-vol one run_master_book retired."""
+    return mb.risk_overlay(b, leverage=mb.BOOK_LEVERAGE)[0]
 
 
 def _norm(s):
@@ -79,7 +76,9 @@ def load_legs():
 
 
 def load_sleeve(name):
-    df = pd.read_parquet(R / f"{name}_sleeve.parquet")
+    # reports/lab/, not reports/ — the lab sleeves moved when reports/ grew its per-family
+    # subfolders, and the flat path here had been unopenable ever since.
+    df = pd.read_parquet(LAB_DIR / f"{name}_sleeve.parquet")
     return rescale(_norm(df["ret"] if "ret" in df.columns else df.iloc[:, 0]))
 
 

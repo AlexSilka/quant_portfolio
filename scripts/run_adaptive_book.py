@@ -32,6 +32,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy of it
 from src import bo_common as bo  # noqa: E402
 from src.config import LAB_DIR  # noqa: E402
 from src.metrics import summarise, monthly_returns  # noqa: E402
@@ -44,16 +45,11 @@ rng = np.random.default_rng(SEED)
 
 # (label, file, column) — the same honest headlines run_master_book reads; bab (optional 7th) uses the
 # beta-neutral construction (the mandatory one per the BAB deep-dive; == bab_book.parquet['ret']).
-FAMILIES = {
-    "trend_momentum": ("trend/trend_block_returns.parquet", "ret"),
-    "carry": ("carry_breadth_headline.parquet", "ret"),
-    "volprem": ("volprem_book.parquet", "ret"),
-    "xs_momentum": ("xs/xs_book.parquet", "ret"),
-    "breakout": ("bo_combined_portfolio.parquet", "ret"),
-    "crisis": ("crisis_sleeve.parquet", "ret"),
-    "bab": ("bab_returns.parquet", "crypto_beta_neutral"),
-}
-CORE6 = ["trend_momentum", "carry", "volprem", "xs_momentum", "breakout", "crisis"]
+# Imported, never copied: the pasted version of this dict named trend and carry (dropped from the
+# book), had never heard of global-macro, and carried pre-reorganisation paths without the per-family
+# reports/ subfolders — so it was loading a different book from a layout that had moved underneath it.
+FAMILIES = {lab: (f, c) for lab, f, c in mb.FAMILIES}
+CORE6 = list(FAMILIES)
 MIN_TRAIN = 63          # days of history before leaving the equal-weight burn-in
 MIN_OBS = 40            # min obs for a family to earn a data-driven weight at a rebalance
 
@@ -101,14 +97,11 @@ def load_legs(families):
     return df[df.notna().sum(axis=1) >= 2]
 
 
-def regime_overlay(b, vol_lb=63, dd_thr=-0.06, floor=0.4, cap=1.4):
-    """Canonical book-level managed-vol + drawdown-throttle overlay (PIT). Used as an on/off option,
-    not retuned — its internal params are the run_master_book values."""
-    tgt = b.std() * np.sqrt(PPY)
-    lev = (tgt / (b.rolling(vol_lb).std() * np.sqrt(PPY))).clip(0.0, cap)
-    eq = (1.0 + b).cumprod(); dd = eq / eq.cummax() - 1.0
-    throttle = 1.0 + (dd / dd_thr).clip(0.0, 1.0) * (floor - 1.0)
-    return b * (lev * throttle).shift(1).fillna(0.0)
+def regime_overlay(b):
+    """The book's own overlay as it ships (§8 ladder + daily-loss breaker at the constant leverage),
+    used as an on/off option and never retuned here. The copy this replaced was the managed-vol
+    overlay run_master_book retired, so the 'canonical' in its docstring had stopped being true."""
+    return mb.risk_overlay(b, leverage=mb.BOOK_LEVERAGE)[0]
 
 
 # ── scorecard (identical to the task spec) ────────────────────────────────────────────────────

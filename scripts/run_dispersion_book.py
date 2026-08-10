@@ -1,7 +1,8 @@
 """Dispersion book — the master book made ROBUST to a single leg's outlier, by construction only.
 
-Same six risk-premia families as run_master_book.py (the source of truth), same per-family 15%-vol
-rescale, same book-level regime_overlay. The ONLY change is how the live legs are combined: instead
+Same families as run_master_book.py (the source of truth) — IMPORTED from it, not copied — same
+per-family 15%-vol rescale, same book-level risk overlay. The ONLY change is how the live legs are
+combined: instead
 of a naive equal-weight mean — where one leg blowing out drags the whole book to a slight loss — each
 leg's contribution is capped by a POINT-IN-TIME function of that leg's OWN recent risk, so no single
 leg can dominate. Two rules, both pure "cap a single leg's outlier":
@@ -39,6 +40,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy of it
 from src import bo_common as bo  # noqa: E402
 from src.config import LAB_DIR, SEED  # noqa: E402
 from src.metrics import summarise, monthly_returns  # noqa: E402
@@ -46,46 +48,22 @@ from src.metrics import summarise, monthly_returns  # noqa: E402
 PPY = 365
 START_REPORT = "2016-08-01"
 R = bo.REPORTS
-# identical to run_master_book.FAMILIES — the honest, survivorship-free published headline of each family
-FAMILIES = [
-    ("trend_momentum", "trend/trend_block_returns.parquet", "ret"),
-    ("carry", "carry/carry_breadth_headline.parquet", "ret"),
-    ("volprem", "volprem/volprem_book.parquet", "ret"),
-    ("xs_momentum", "xs/xs_book.parquet", "ret"),
-    ("breakout", "breakout/bo_combined_portfolio.parquet", "ret"),
-    ("crisis", "book/crisis_sleeve.parquet", "ret"),
-]
+FAMILIES = mb.FAMILIES        # imported: a copy of this list had drifted two families in each direction
 
 # dispersion construction parameters — round, robustness-chosen (perturbed ±25% below, W stays intact)
 VOV_FAST, VOV_TARGET, VOV_FLOOR = 20, 0.15, 0.4   # vol-of-vol cap: ~1-month fast vol vs 15% target
 STOP_THR = 0.06                              # per-leg intra-month stop (tight, no-whipsaw plateau 4-6%)
 
 
-# ── load + rescale — verbatim from run_master_book.py so the legs are byte-identical ──────────
-def load(label, file, col):
-    p = R / file
-    if not p.exists():
-        return None
-    df = pd.read_parquet(p)
-    s = (df[col] if col in df.columns else df.iloc[:, 0]).dropna()
-    s.index = pd.to_datetime(s.index)
-    if s.index.tz is not None:
-        s.index = s.index.tz_localize(None)
-    return s.rename(label)
+# ── load / rescale / overlay: the assembler's own, imported. They used to be pasted here, and the
+#    pasted overlay outlived the real one — run_master_book replaced it with the §8 ladder and this
+#    copy went on scoring the dispersion book against a construction the deliverable had retired.
+load, rescale = mb.load, mb.rescale
 
 
-def rescale(net, target=0.15):
-    scale = (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
-    return net * scale
-
-
-def regime_overlay(b, vol_lb=63, dd_thr=-0.06, floor=0.4, cap=1.4):
-    """Book-level managed-vol overlay — IDENTICAL to run_master_book.regime_overlay. Point-in-time."""
-    tgt = b.std() * np.sqrt(PPY)
-    lev = (tgt / (b.rolling(vol_lb).std() * np.sqrt(PPY))).clip(0.0, cap)
-    eq = (1.0 + b).cumprod(); dd = eq / eq.cummax() - 1.0
-    throttle = 1.0 + (dd / dd_thr).clip(0.0, 1.0) * (floor - 1.0)
-    return b * (lev * throttle).shift(1).fillna(0.0)
+def regime_overlay(b):
+    """The book as it ships: §8 drawdown ladder + daily-loss breaker at the book's constant leverage."""
+    return mb.risk_overlay(b, leverage=mb.BOOK_LEVERAGE)[0]
 
 
 # ── per-leg point-in-time taming — CALENDAR-SAFE ──────────────────────────────────────────────
