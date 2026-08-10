@@ -15,56 +15,76 @@ no network).
 
 ## The result in one page
 
-A **six-family, equal-weight book** at a constant **1.15× leverage** (~10.7% annualised vol).
-The brief scores its five targets on the **final out-of-sample block**; the 15-year window is shown alongside
-as supporting evidence, not as a second scorecard.
+A **six-family, equal-weight book** at a constant **1.15× leverage** (~10.5% annualised vol).
+§11 scores the five targets on the **final out-of-sample block**, so that is the scorecard. The 15-year
+column is the same book measured over the longer window — supporting evidence, reported because a book that
+works only on the block it is scored on is not a book, but not a second scorecard and not counted as one.
 
-| §11 target | OOS block (2024-07 →) | full window (2011 → 2026) |
+| §11 target | OOS block (2024-07 →) | full window (2011 → 2026), not scored |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.07** ✓ | **3.53** ✓ |
-| months in profit ≥ 80% | **80.8%** ✓ | **82.4%** ✓ |
-| max drawdown ≤ 15% | **−5.7%** ✓ | **−8.3%** ✓ |
-| longest losing streak ≤ 2 mo | **2** ✓ | **2** ✓ |
-| worst single month ≥ −6% | **−3.0%** ✓ | **−5.76%** ✓ |
-| | **5 / 5** | **5 / 5** |
+| Sharpe, net, 2.5–4.0 | **3.54** ✓ | 3.91 |
+| months in profit ≥ 80% | **80.8%** ✓ | 81.4% |
+| max drawdown ≤ 15% | **−5.7%** ✓ | −8.3% |
+| longest losing streak ≤ 2 mo | **2** ✓ | 3 |
+| worst single month ≥ −6% | **−1.7%** ✓ | −5.76% |
+| | **5 / 5** | — |
 
-On the brief's $500k of sizing capital that is **$2.88M** of P&L, **~$185k/yr**
-(+37.0%/yr not reinvested, +43.9%/yr compounded). Positive in **16 of 16 calendar years**.
+Over fifteen years the book has one **3-month** losing run, which is longer than the block's
+target allows; it is stated here rather than dropped, and §6d-quater gives the window.
+
+On the brief's $500k of sizing capital that is **$3.15M** of P&L, **~$202k/yr**
+(+40.4%/yr not reinvested, +48.9%/yr compounded). Positive in **16 of 16 calendar years**.
 Mean pairwise correlation between families **≈ 0.07**.
 
-**The composition is the one choice here made against the scorecard, not before it.** With all eight
-families the book scores 3/5 on the full window and 4/5 on the
-scored block; trend and carry are dropped because that pair — two of the
-37 configurations tested — is what clears every target on both. Neither leg is weak on its own
-terms (carry's standalone Sharpe is 1.22, the fourth-highest of the eight). **Return went
-up, not down**: +4.1pp of CAGR on the full window and +3.9pp on the block, since six
-legs at equal risk run hotter than eight — the Sharpe reads −0.25 on the block for that same
-reason, and at matched risk the wider book edges it by +1.7pp. What the change genuinely costs
-is **concentration and breadth**: the short-vol leg's share of P&L up from 56% to
-64%, and no family left that spans both asset classes. [REPORT.md](REPORT.md) §6d-ter carries
-the full search, the vol-matched comparison and the eight-family alternative, which is one line away in
-`scripts/run_master_book.py`.
+**The composition was fixed before the sleeve-level gate below, and has not been re-picked since.** Trend
+and carry were dropped under the earlier rule — the one pair, of the 37 single- and
+double-removal configurations, that then cleared all five targets on both windows. With the gate in place
+0 configurations clear both; six clear the scored block, and the shipped book is one of
+them while the eight-family book is not (4/5 on the block — months 76.9%).
+Re-running the search now would mean choosing a composition against the block §10 says to run exactly once,
+so the search is published as the denominator (§6d-ter) and the composition is left where it was. Neither
+dropped leg is weak on its own terms (carry's standalone Sharpe is 1.22, the
+fourth-highest of the eight). **Return went up, not down**: +5.2pp of CAGR on the full
+window and +5.3pp on the block, since six legs at equal risk run hotter than eight. What it costs
+is **concentration and breadth**: the short-vol leg's share of P&L up from 59% to
+67%, and no family left that spans both asset classes. The eight-family alternative is one
+line away in `scripts/run_master_book.py`.
 
 **The six sources** — each developed in its own deep-dive, combined at genuine equal-weight
 risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:
 
 | family | what it earns on | Sharpe | share of P&L |
 |---|---|---|---|
-| [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +5.56 | **64%** |
-| [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 10% |
-| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 8% |
-| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 7% |
+| [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +7.09 | **67%** |
+| [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
+| [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 7% |
 | [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
+| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 7% |
 | [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the others bleed | +0.38 | 4% |
 
-The short-vol leg carries its own **VIX-term-structure gate** (flat unless both curve segments are in contango),
-which is what holds the worst month and the losing streak. Remove that leg entirely and a genuine
-**Sharpe +1.26** book still stands.
+The short-vol leg carries **two regime gates**, ANDed, and they are what hold the worst month and the losing
+streak. The shared one is the **VIX term structure** (flat unless both curve segments are in contango). The
+second is per sleeve: the same contango test on the sleeve's **own** implied vol against its own three-month
+level — because the VIX is the volatility of the S&P 500 and speaks for only five of the eighteen sleeves,
+while the other thirteen sell variance on metals, oil, duration, EM and single names. Remove the leg entirely
+and a genuine **Sharpe +1.26** book still stands.
+
+**One disclosure §14 asks for.** That second gate was added after a stall *inside* the scored block was
+diagnosed, so it is a change made with the block visible. What defends it: the defect is structural and
+checkable without looking at a single return — thirteen sleeves were gated on a market they do not trade;
+neither constant is fitted (63 trading days is the span a 3M vol index covers, and the 1.0 threshold is the
+contango boundary the VIX gate already used); and it pays **more in the in-sample years than in the scored
+one** — +13.4pp of book return in 2012 and +13.0pp in 2013 against +6.9pp in 2026, better in 14 of 16 calendar
+years. A rule fitted to the block would show that the other way round. §6d-quater carries the audit: a random
+gate at each sleeve's own duty cycle, added execution lag, and the whole threshold surface.
 
 **Three honest limits, quantified in [REPORT.md](REPORT.md), not buried:**
 
-1. **Concentration.** Short-vol is 64% of P&L and its standalone tail is **−78%** (one day: −76% in the 2010
-   flash crash). No term-structure rule reaches that day — the curve was in contango the session before.
+1. **Concentration.** Short-vol is 67% of P&L. Ungated, its standalone tail is **−78%** (one day:
+   −76% in the 2010 flash crash), and no *VIX* rule reaches that day — that curve was in contango the session
+   before. The sleeve-level gate does reach it, on the sleeves' own curves: the deployed leg loses **0.6%**
+   that session and draws down **−15.8%** at worst. That is the tail timed, not removed — a dislocation out of
+   a state that is calm in every sleeve at once would still land in full.
 2. **Capacity.** That same leg is a variance-swap *replication*, not an executed option book, and the 18-leg
    construction caps out around low tens of $M before the thin legs stop filling.
 3. **Crypto-heavy.** Breakout, BAB and x-sect are crypto; short-vol is US index options, global-macro is
@@ -90,8 +110,8 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.53** (5/5), OOS **3.07** (5/5), −8.3% max-DD, 6 families |
-| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; 2010-event max-DD is what binds first, at 1.05× |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.91** (4/5), OOS **3.54** (5/5), −8.3% max-DD, 6 families |
+| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised worst month is what binds first, at 1.15× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |
@@ -137,7 +157,7 @@ per-family write-ups ([docs/strategies/](docs/strategies/)) — six that ship an
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the six family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.53 full / 3.07 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.91 full / 3.54 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

@@ -30,8 +30,7 @@
       "cost_share_of_gross_pnl": 0.2032,
       "breakeven_cost_mult": 4.9,
       "cost_fragile": false,
-      "reproduces_published_series": false,
-      "note": "re-run total return +1.351 vs published +1.387 (2.6% apart)"
+      "reproduces_published_series": true
     }
   },
   "from_deep_dives": {
@@ -49,7 +48,7 @@
     },
     "vol-prem": {
       "sharpe_at_cost_mult": {
-        "5": 2.16
+        "5": 2.0
       },
       "cost_fragile": false,
       "source": "volprem/volprem_cost_robustness.csv"

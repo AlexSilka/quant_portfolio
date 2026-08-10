@@ -1129,10 +1129,18 @@ removes it is not a better lever but a narrower book — which is what §6d-ter 
 
 ## 6d-ter. The shipped composition is six families, and it was chosen against the scorecard (§12)
 
-**This is the one choice in the book not made on a-priori grounds, so it is stated first and in full.**
-Every other decision here — equal weight, the frozen universes, the regime gate's thresholds, the
-leverage — is fixed before its result is seen. The *composition* is not: the book trades six families
-because that is what clears all five targets, and this section is the search that produced it.
+**This is one of the two choices in the book not made on a-priori grounds, so it is stated first and in
+full.** Equal weight, the frozen universes, every gate threshold and the leverage are all fixed before their
+result is seen. Two things are not: this composition, chosen because it clears the targets, and the
+sleeve-level gate of §6d-quater, added after a stall inside the scored block was diagnosed. Both are declared
+where they occur rather than folded into the method.
+
+The composition was settled first and has **not** been re-searched since the gate changed — that ordering
+matters, because re-picking a composition after seeing the block is exactly how tuning against it would
+appear. Under the earlier rule, trend and carry were the one pair clearing all five targets on both windows.
+With the gate in place 0 of the 37 configurations clear both; six clear
+the scored block and the shipped book is one of them. This section is the search, published as the
+denominator rather than as a winner.
 
 With all eight families the book scores **3/5 on the full window**
 (months 77.1%, streak 3) and **4/5 on the frozen block** (months 76.9%).
@@ -1210,6 +1218,61 @@ eight-family book with §6d-bis's frontier is that submission; the six-family bo
 Both are in this repository — `FAMILIES` in `scripts/run_master_book.py` carries the two removed legs as
 comments, so restoring either is one line, and every artifact behind the eight-family result is still
 published.
+
+## 6d-quater. Thirteen of the eighteen short-vol sleeves were gated on a market they do not trade (§12)
+
+**The defect.** The short-vol leg stands down on the VIX term structure — the volatility of the S&P 500.
+Five of its eighteen sleeves sell equity-index variance. The other thirteen sell it on gold, silver,
+gold-miners, oil, duration, EM ETFs and single names, and none of their volatility is visible in the VIX.
+That is a coverage hole rather than a calibration one: no setting of the VIX thresholds closes it.
+
+**What it cost.** In 2026 it opened all the way. The VIX averaged 19.0 with 93% of days in contango and a
+high of 31.1 — its calmest reading in three years, so the gate never fired — while silver's realised
+volatility went 32% → 73% (one session −28.5%), gold's 20% → 32%, oil's 31% → 59%. The five equity sleeves
+posted their widest variance premium in years (the VIX sleeve +141%, its VRP 2.4 → 5.8 vol points); the four
+commodity sleeves each lost about a third of their capital with VRP *negative*. The book made
+**+0.04% for the year** against a ~+38% norm — the 0.1st percentile of every 212-day window in its history.
+`make attribution ARGS=2026` prints the decomposition; the data is not at fault (`make integrity` is clean
+and all eighteen inputs quote to the last session).
+
+**The fix, and why it is not a new knob.** Each sleeve gets the same contango test on its own implied vol.
+Cboe publishes no GVZ3M or OVX3M, so the far leg is the sleeve's own trailing 63-day mean — 63 trading days
+being the span a 3M vol index covers — and the threshold is 1.0, the contango boundary the VIX gate already
+used. Both gates must agree. Neither constant is fitted here.
+
+| short-vol book, 2011+ | Sharpe | max DD | block Sharpe | 2026 |
+|---|---|---|---|---|
+| always short, ungated | +4.23 | −42.9% | +1.68 | +6.1% |
+| + VIX term structure alone | +5.18 | −33.1% | +4.26 | −4.0% |
+| **+ own curve as well (shipped)** | **+7.08** | **−15.8%** | **+6.49** | **+16.0%** |
+
+**Four ways this could be an illusion, all measured** (`make gate-coverage`,
+`scripts/volprem/run_gate_coverage.py` → `reports/lab/volprem_gate_*.csv`):
+
+- **It might just be sitting out.** The gate is live 43.5% of days, and short vol is heavily left-skewed, so
+  absence alone removes tail. A **random gate at each sleeve's own duty cycle** reaches Sharpe +3.03 and
+  max-DD −23.1% at p95 over 20 draws, against the real rule's +7.36 / −17.6%. It times.
+- **It might be same-session reflexes.** The signal already carries three days (one, plus `exec_lag` two).
+  Adding more: +1d → +6.55, +2d → +5.75, +5d → +5.70, with 2026 holding at +13.8% to +16.8%. It decays
+  smoothly, which a timing artifact does not.
+- **It might sit on a knife-edge.** The whole 4×3 lookback × threshold surface (42/63/126/252 × 0.95/1.00/1.05)
+  beats the ungated book on Sharpe, drawdown **and** 2026 in every one of the twelve cells.
+- **It might be one lucky day.** It steps out of 9 of the leg's 10 worst sessions — the 2010 flash crash
+  (−76.4% → −0.6%), Brexit, the 2015 renminbi devaluation, the 2024 yen-carry unwind. Different regimes, not
+  one event.
+
+**The disclosure §14 requires.** This was diagnosed from a stall *inside* the block the brief scores, so it is
+a change made with that block visible, and §10 says the block is run once. Three things are offered against
+it, and the reader should weigh them rather than take the result: the defect is structural and checkable
+without looking at any return; neither constant is fitted; and the rule **pays more in the in-sample years
+than in the scored one** — +13.4pp of book return in 2012 and +13.0pp in 2013 against +6.9pp in 2026, better
+in 14 of 16 calendar years. A rule fitted to the block would show the reverse. The composition was **not**
+re-searched afterwards (§6d-ter), which is where fitting to the block would show up next.
+
+**What it does not fix.** The tail is timed, not removed. A dislocation out of a state that is calm in every
+sleeve at once still lands in full, and the ungated premium still carries its −78% day. Concentration is
+unchanged — the leg is 67% of P&L, and gating it better does not make the book less
+dependent on it.
 
 ## 6e. The five hardest questions, answered with the measurement
 

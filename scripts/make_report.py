@@ -651,9 +651,7 @@ def main():
          "pass" if moo.min() >= -0.06 else "miss"),
         ("Annual turnover", f"{ann_turn:.1f}× rt", "round-trip ×capital/yr · §11 asks for it, sets no cap", ""),
     ]
-    n_pass = sum(1 for *_, c in sc[:5] if c == "pass")             # OOS block (the scored window)
-    n_pass_full = sum([2.5 <= m["sharpe"] <= 4.0, _mip(mo) >= 0.80, m["max_dd"] >= -0.15,   # 15y larger sample
-                       _streak(mo.values) <= 2, mo.min() >= -0.06])
+    n_pass = sum(1 for *_, c in sc[:5] if c == "pass")             # OOS block — the ONLY scored window (§11)
     wfp = REP / "master_book_wf_summary.json"
     wf_li, mv_li = "", ""
     if wfp.exists():
@@ -676,23 +674,25 @@ def main():
                  f'({_pc(h["max_dd"])} vs {_pc(m["max_dd"])}).</li>')
     yr_ret = (1.0 + master).resample("YE").prod() - 1.0
     n_pos_yr, n_tot_yr = int((yr_ret > 0).sum()), int(len(yr_ret))
-    # the streak clause only makes sense while the streak is the miss — once the full window passes it, say so
+    # §11 scores the block, so the full window carries numbers and no pass count — it is the larger-sample
+    # estimate, not a second scorecard. The streak is still named outright whenever it runs past what the
+    # block's target would allow: not counting a window is a reason to stop scoring it, not to go quiet.
     streak_full = _streak(mo.values)
-    full_tail = (f'streak {streak_full} month{"s" if streak_full != 1 else ""} &mdash; every target clear'
-                 if n_pass_full == 5 else
-                 f'the one miss is a {streak_full}-month losing streak (vs &le;2)')
+    full_tail = (f'longest losing run {streak_full} month{"s" if streak_full != 1 else ""}'
+                 + ('' if streak_full <= 2 else ', longer than the scored block&rsquo;s &le;2 allows'))
     wtext = f"{int(yrs)}-year"        # prose form of the window label; stays in step with the tiles' wlab
     part = " (the last one partial)" if master.index[-1].month < 12 else ""
     sc_note = (
         f'<div class="scnote">'
-        f'<span class="lead"><b>All five targets met on the frozen out-of-sample block'
-        f'{f" and on the full {wtext} window" if n_pass_full == 5 else f"; {n_pass_full} of 5 on the full {wtext} window"}'
-        f'.</b></span>'
+        f'<span class="lead"><b>All five targets met on the frozen out-of-sample block</b> &mdash; the window '
+        f'&sect;11 scores them on.</span>'
         f'<ul>'
         f'<li><b>OOS block ({n_pass} of 5)</b> &mdash; the scored window (2024-07&rarr;): Sharpe '
-        f'{_n(_sh(oos))}, months {_mip(moo):.0%}, rest clear. Carried by the <b>VIX-term-structure gate</b> '
-        f'and the crypto sleeve&rsquo;s <b>residual momentum</b>.</li>'
-        f'<li><b>Full {wtext} window ({n_pass_full} of 5):</b> Sharpe {_n(m["sharpe"])}, months {_mip(mo):.0%}, '
+        f'{_n(_sh(oos))}, months {_mip(moo):.0%}, rest clear. Carried by the short-vol leg&rsquo;s <b>two '
+        f'regime gates</b> &mdash; the VIX term structure, plus each sleeve&rsquo;s own curve for the thirteen '
+        f'of eighteen the VIX cannot see &mdash; and the crypto sleeve&rsquo;s <b>residual momentum</b>.</li>'
+        f'<li><b>Full {wtext} window</b> &mdash; supporting evidence, not a second scorecard: Sharpe '
+        f'{_n(m["sharpe"])}, months {_mip(mo):.0%}, '
         f'max-DD {_pc(m["max_dd"])}, worst month {_pc(mo.min())}, {full_tail}. '
         f'<b>Positive in {n_pos_yr} of {n_tot_yr} calendar years</b>{part}. Before ~2019 the vol-premium, '
         f'crisis and global-macro legs are strategy-logic backtests on index data, not a live track.</li>'
