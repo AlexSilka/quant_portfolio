@@ -192,6 +192,10 @@ breakout:
 	$(PY) scripts/breakout/run_bo_xs_pit.py
 	$(PY) scripts/breakout/run_bo_combined.py
 	$(PY) scripts/breakout/run_bo_contribution.py
+	$(PY) scripts/breakout/run_bo_spot.py
+	$(PY) scripts/breakout/run_bo_ml_wf.py
+	$(PY) scripts/breakout/run_bo_improve.py
+	$(PY) scripts/breakout/run_bo_ts_book.py
 	$(PY) scripts/breakout/make_bo_figures.py
 
 smoke:

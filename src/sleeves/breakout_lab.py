@@ -38,6 +38,37 @@ def entry_events(side: pd.Series) -> pd.DatetimeIndex:
     return side.index[(side != 0.0) & (side != prev)]
 
 
+def fresh_side(side: pd.Series) -> pd.Series:
+    """Collapse a persistent side to an impulse that fires only on the onset bar.
+
+    The entries here are *persistent* (+1 for every bar price sits above the channel), so a
+    trend-riding exit that stops out mid-move re-enters on the very next bar while the condition
+    still holds — it pays the round trip and buys the same position back. Feeding the impulse
+    instead makes a stop-out final until price makes a genuinely new breakout.
+    """
+    out = pd.Series(0.0, index=side.index)
+    onset = entry_events(side)
+    out.loc[onset] = side.reindex(onset)
+    return out
+
+
+def adx(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 14) -> pd.Series:
+    """Wilder's ADX — trend strength, direction-blind, 0-100. Causal.
+
+    Used as a regime gate: the standard reading is that below ~20-25 the market is ranging and
+    breakouts fail more often than they follow through.
+    """
+    up, dn = high.diff(), -low.diff()
+    plus_dm = pd.Series(np.where((up > dn) & (up > 0), up, 0.0), index=high.index)
+    minus_dm = pd.Series(np.where((dn > up) & (dn > 0), dn, 0.0), index=high.index)
+    tr = atr(high, low, close, n)
+    ew = dict(alpha=1.0 / n, adjust=False, min_periods=n)
+    plus_di = 100.0 * plus_dm.ewm(**ew).mean() / (tr + EPS)
+    minus_di = 100.0 * minus_dm.ewm(**ew).mean() / (tr + EPS)
+    dx = 100.0 * (plus_di - minus_di).abs() / (plus_di + minus_di + EPS)
+    return dx.ewm(**ew).mean()
+
+
 # --- entries (persistent side) ----------------------------------------------------
 
 def donchian_side(close: pd.Series, high: pd.Series, low: pd.Series, lookback: int = 55,

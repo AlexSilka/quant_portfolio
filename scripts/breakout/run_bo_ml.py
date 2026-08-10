@@ -10,8 +10,15 @@ Optimization variants measured (the "different variants" ask):
   models   : LightGBM, RandomForest, HistGradientBoosting
   weights  : unweighted vs AFML average-uniqueness sample weights
   threshold: swept 0.50/0.55/0.60 (sensitivity, not peak-picked)
-Incremental value is reported on the frozen core-10 book, in-sample AND on the held-out 2024-07+ block
-(gates trained only on each fold's past), as precision lift, Sharpe, drawdown and turnover deltas.
+Incremental value is reported on the frozen core-10 book, in-sample AND on the held-out 2024-07+
+block, as precision lift, Sharpe, drawdown and turnover deltas.
+
+CAVEAT — read this number as a generalisation estimate, not as a track record. `purged_kfold` makes
+folds contiguous in time but trains each one on its whole complement, so the earliest fold is fitted
+100% on its own future and the OOS block's fold is still ~25% future-fitted. Purging removes
+label-overlap leakage, not look-ahead. `run_bo_ml_wf.py` re-runs the same gate under an expanding
+walk-forward that only ever sees resolved trades, and that is the number to quote for what a desk
+could have earned.
 
     python scripts/breakout/run_bo_ml.py
 """

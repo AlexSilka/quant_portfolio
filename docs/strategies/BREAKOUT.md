@@ -136,6 +136,11 @@ plateau (0.50→0.97, 0.55→0.90, 0.60→1.13), not a spike. AFML uniqueness-we
 lifts OOS. Honest incremental value: **risk reduction + OOS robustness + rescuing 1h**, not merely a
 peak-Sharpe boost.
 
+> **These are generalisation estimates, not a track record.** Purged k-fold keeps folds contiguous
+> but trains each on its whole complement, so the gate that filters a 2020 trade is fitted on
+> 2021-2026. [§13](#13-the-ml-gate-under-a-walk-forward) re-runs it under an expanding walk-forward
+> and prices the difference; the gate survives, at a lower level.
+
 ## 7. Final book & robustness
 
 Combining the honest legs — core-10 × 1d raw chandelier (non-ML trend capture) + 4h/1h ML-gated —
@@ -311,6 +316,10 @@ python scripts/breakout/run_bo_xs_pit.py      # point-in-time top-30, look-ahead
 python scripts/breakout/run_bo_xs_signals.py  # momentum vs breakout, same harness (§7b)
 python scripts/breakout/run_bo_combined.py    # final risk-parity two-leg squeeze (§7b)
 python scripts/breakout/run_bo_contribution.py # marginal contribution to the multi-family book (§7c)
+python scripts/breakout/run_bo_spot.py        # spot vs perp, pre-perp history, PIT universe (§12)
+python scripts/breakout/run_bo_ml_wf.py       # the gate under a walk-forward, net labels (§13)
+python scripts/breakout/run_bo_improve.py     # one-knob construction candidates (§11)
+python scripts/breakout/run_bo_ts_book.py     # shipped vs corrected assembly (§13)
 python scripts/run_master_book.py    # integrated master book incl. breakout (§7c)
 python scripts/breakout/make_bo_figures.py    # figures
 ```
@@ -335,3 +344,182 @@ Donchian rule; ML incremental value is measured against it.
 - **The long-trend alignment filter** — pre-registered as best-evidenced, but neutral-to-slightly-
   negative on already-trending crypto (1.46 vs 1.59 without it); kept off in the default.
 - **Adding breadth (top-30 vs core-10)** — dilutes (0.70 vs 0.87); marginal alts add noise, not edge.
+
+One-knob candidates against the frozen construction (`run_bo_improve.py`; spot, long-short, core-10,
+1d+4h). Each is scored on the perp-era window, the full spot window, **and** the never-seen 2017-19
+block — the third column is the one that decides, because the first two share a price history:
+
+| candidate | 2020+ | 2017+ | **2017-19 (never seen)** | verdict |
+|---|---|---|---|---|
+| Donchian **89** instead of 55 | +0.21 | +0.10 | **−0.12** | not established |
+| **ADX ≥ 20** regime gate | +0.10 | +0.05 | **−0.11** | not established |
+| ADX ≥ 25 | −0.04 | −0.14 | — | worse |
+| Donchian 20 / 34 / 144 | −0.03 / −0.00 / +0.12 | −0.00 / +0.03 / −0.07 | — | no signal |
+| chandelier k = 2 / 4 / 5 | −0.13 / −0.07 / −0.15 | −0.05 / −0.04 / −0.13 | — | k=3 is a shallow plateau |
+| volume-weighted position size | −0.63 | −0.56 | — | turnover death |
+| suppress re-entry after a stop | ±0.00 | ±0.00 | ±0.00 | no-op, see below |
+
+- **A longer channel and an ADX gate both look like improvements and neither survives.** Each lifts
+  2020+ by ~0.1-0.2 and each *loses* ~0.11 on the only block the parameters were never exposed to. What
+  they do robustly everywhere is cut risk, not raise return: drawdown −9.1% → −6.6%, turnover 9.1 → 6.5
+  round turns a year. Take them as a turnover reduction if that is worth something; do not book the
+  Sharpe. Combining them adds nothing over the longer channel alone (+0.10 on 2017+, same as lb-89).
+- **Volume-weighted position sizing** — the cheapest breakout analogue of the volume-weighted crypto
+  TSMOM result (Huang, Sangiorgi & Urquhart 2024). Modulating the held position by a rolling volume
+  z-score churns it every bar: turnover 9 → 56/yr, Sharpe +1.09 → +0.53, drawdown −9.1% → −20.5%. The
+  published result weights *across assets in a portfolio*; it does not transfer to modulating a single
+  time-series position, and the transfer was the assumption, not the finding.
+- **Suppressing re-entry after a chandelier stop** — reading the code suggests a defect: the entry is a
+  *persistent* side (+1 for every bar above the channel), so a stop-out should be bought straight back
+  on the next bar while the condition still holds. Collapsing the side to an onset impulse
+  (`breakout_lab.fresh_side`) changes 1,046 signal bars to 755 on BTC 4h and changes **zero** held
+  positions: at all 259 stop-outs the persistent side is already off, because a 3×ATR retracement always
+  takes price back inside a 55-bar channel. The defect does not exist; recorded because it was measured
+  rather than assumed.
+- **Equal-weighting with `fillna(0).mean()`** — the shipped book divides by all 30 slots regardless of
+  how many have listed, so it runs at 78% of intended size through 2020. Real, and small: correcting it
+  to an active-sleeve mean moves the book +1.03 → +1.06 Sharpe, CAGR +3.3% → +3.4%.
+
+
+## 12. Venue: the funding bill, and the 2.4 years before perps existed
+
+Everything above executes on USD-M perpetuals, which is why every window starts 2020-01 — the month
+perps list. Binance **spot** klines for the same names reach back to **2017-08**, and the two venues
+price the same position very differently (`run_bo_spot.py`).
+
+**The funding bill is the largest single cost in this strategy, and it is conditional.** Averaged over
+the core-10 since 2020, holding a perp long costs **10.3%/yr** in funding (positive at 71-86% of
+settlements). But the book is not long at random — it is long precisely when the market is trending up
+and funding is extreme. Measured against the book's own executed position:
+
+| perp funding, conditional on the book's position | annualised |
+|---|---|
+| paid while the book is **long** | **−23.4%** |
+| received while the book is **short** | **+2.3%** |
+| unconditional | −10.3% |
+
+So the long leg pays more than twice the headline rate, and the short leg collects almost nothing —
+funding has usually already normalised or inverted by the time a trend book flips short. Against a
+gross CAGR of ~7% at a ~0.2 average gross exposure, this is the dominant cost line, ahead of
+commission and slippage combined.
+
+Spot has no funding but charges **2× the taker fee** (10bps vs 5bps) and its short is not free: the
+coin must be borrowed. Live Binance VIP-0 cross-margin rates (read 2026-08-10 from the public
+margin-spec endpoint) average **2.93%/yr** across the core-10 — BTC 0.44%, ETH 2.16%, up to SOL 5.47%.
+That is charged here on short gross, the same convention as the equity short-borrow.
+
+**Matched window 2020-01→2026-07, frozen core-10, 1d+4h, long-short, all costs charged:**
+
+| execution | Sharpe | MC-P5 | CAGR | vol | maxDD |
+|---|---|---|---|---|---|
+| all-perp (the shipped book) | +0.89 | +0.29 | +6.2% | 7.0% | −9.2% |
+| all-spot | +1.01 | +0.40 | +7.2% | 7.1% | −9.1% |
+| **long on spot, short on perp** | **+1.03** | **+0.42** | **+7.3%** | 7.1% | −9.0% |
+
+Spot beats perp *despite* paying double the fee, because 8 round turns a year at 5 extra bps is 40bps
+while the funding it avoids is worth ~1pp of CAGR at this exposure. The split — long leg on spot, short
+leg on perps — is the venue-optimal execution and costs nothing extra to run; the incremental gain over
+all-spot is small (the short leg's borrow-vs-funding gap is ~5pp/yr on ~0.2 gross, ~45% of the time).
+
+**The history is the more valuable half.** 2017-08→2019-12 is data no version of this construction has
+been fitted on, and the early spot cross-section is *less* survivorship-biased than any perp universe:
+4 names in 2017-12, 12 by 2018-06, 59 by 2019-12, and the cohort is EOS, ICX, IOTA, HOT — 2017-bubble
+alts that faded and that no current-perp list contains.
+
+| spot, 1d+4h, long-short | Sharpe | MC-P5 | CAGR | maxDD |
+|---|---|---|---|---|
+| full 2017-08→2026-07, frozen core-10 | +1.09 | +0.57 | +7.9% | −9.1% |
+| **never-seen block 2017-08→2019-12** | **+1.34** | +0.27 | +9.3% | −4.7% |
+| full window, point-in-time top-10 (trailing dollar volume) | +0.90 | +0.39 | +5.6% | −7.4% |
+| never-seen block, point-in-time top-10 | +1.33 | +0.31 | +8.7% | −3.5% |
+
+The construction holds on the pre-perp block at a level indistinguishable from the fitted period, which
+is the strongest single piece of evidence in this document that breakout on crypto is a real premium
+rather than a 2020-2021 artifact. The frozen core-10's hindsight premium over a point-in-time universe
+is **~0.19 Sharpe** on the full window and **~0.01 on the never-seen block** — the frozen list flatters
+mainly the period in which those names were already the winners.
+
+**Long-only looks better and is worse.** Dropping the short leg lifts the ratio on every cut (spot
+1d+4h: +1.09 → +1.55; perp: +0.89 → +1.28). Regressed on an equal-weight buy-and-hold of the same ten
+coins, the reason is visible:
+
+| leg | corr to buy-hold | R² | alpha/yr | t(alpha) |
+|---|---|---|---|---|
+| long-short | −0.02 | 0.00 | **+7.4%** | +2.66 |
+| long-only | **+0.67** | **0.45** | +4.2% | +2.75 |
+
+Long-only trades ~3pp of annual alpha for 0.67 correlation to crypto beta, and it pays for it in the
+regimes that matter: 2022 −0.88 vs long-short +0.52, 2026 −3.21 vs −0.43. In a book whose reason for
+holding a crypto sleeve is decorrelation, the higher Sharpe is the wrong thing to buy.
+
+## 13. The ML gate under a walk-forward
+
+`run_bo_ml.py` estimates the gate with `purged_kfold`. Purging removes label-overlap leakage; it does
+not remove look-ahead, because each fold trains on its whole complement. Measured on BTC 4h
+(`run_bo_ml_wf.py`), the share of each fold's training events that lie *after* its test window:
+
+| fold | test span | training events after the test fold |
+|---|---|---|
+| 0 | 2020-04 → 2021-09 | **100%** |
+| 1 | 2021-09 → 2022-11 | 74% |
+| 2 | 2022-12 → 2024-04 | 50% |
+| 3 | 2024-04 → 2025-06 | 25% |
+| 4 | 2025-06 → 2026-07 | 0% |
+
+The strict 2024-07 block sits in folds 3 and 4, so even the held-out number is ~25% future-fitted. The
+replacement is an expanding walk-forward: a block is scored only by trades whose label had already
+resolved before it opened, plus the embargo. A second correction is independent of the first — the
+label is `close(t1)/close(t0)` at the *signal* bars and gross, while the book fills at t+2 and pays
+fees and funding. Re-pricing the label at execution, net of round-trip cost and funding, flips **10.3%**
+of labels (win rate 36.4% → 35.3%).
+
+Each gate is compared against the same ungated book restricted to exactly the sleeves and dates that
+gate covers, so this is a gate comparison and not a window comparison. `=vol` rescales the gated book
+to the ungated book's volatility — the gate keeps only 13-20% of trades and runs at ~2% vol against
+7.8%, so the raw ratio flatters it and the raw CAGR damns it; only the vol-matched column is readable.
+
+| perp, 4h+1h | Sharpe | CAGR | =vol CAGR | maxDD | kept | **OOS Sharpe** |
+|---|---|---|---|---|---|---|
+| ungated primary | +0.30 | +2.1% | — | −13.3% | 100% | +0.20 |
+| k-fold, gross labels (shipped) | +0.89 | +1.8% | +6.9% | −2.7% | 19% | +0.31 |
+| k-fold, net labels | +0.75 | +1.4% | +5.7% | −3.3% | 18% | +0.77 |
+| **walk-forward, net labels** | **+0.72** | +2.0% | +5.5% | −5.5% | 16% | **+0.64** |
+| walk-forward pooled across symbols | +0.78 | +1.8% | +5.8% | −3.2% | 13% | −0.07 |
+| walk-forward, AFML bet sizing | +0.55 | +0.6% | +4.1% | −1.8% | 100% | +0.30 |
+
+| spot, 4h+1h | Sharpe | =vol CAGR | maxDD | **OOS Sharpe** |
+|---|---|---|---|---|
+| ungated primary | +0.24 | — | −14.2% | −0.06 |
+| k-fold, gross labels | +0.80 | +6.5% | −3.8% | +0.28 |
+| k-fold, net labels | +0.74 | +6.0% | −3.2% | **+1.06** |
+| **walk-forward, net labels** | +0.45 | +3.4% | −4.1% | +0.76 |
+| walk-forward, AFML bet sizing | +0.74 | +5.8% | −1.4% | **+1.01** |
+
+Four things follow, and they are separable:
+
+1. **The gate survives.** Stripped of every future fold, meta-labelling still takes perp from +0.30 to
+   +0.72 and its held-out block from +0.20 to +0.64; spot from +0.24 to +0.45 and −0.06 to +0.76. The
+   headline in §6 was inflated, not invented.
+2. **The look-ahead was worth ~0.1-0.3 Sharpe**, more on spot than on perp (k-fold/net vs
+   walk-forward/net: 0.75 → 0.72 perp, 0.74 → 0.45 spot; on the held-out block 0.77 → 0.64 and
+   1.06 → 0.76).
+3. **The label is worth more than the model.** Pricing the label net-of-cost-at-execution moves the
+   held-out block from +0.31 to +0.77 (perp) and +0.28 to +1.06 (spot) — a bigger effect than the
+   choice of estimator, and it costs nothing.
+4. **Pooling and bet-sizing are not free wins.** One model per timeframe trained on all ten symbols
+   has ~10× the data and is worse out of sample (−0.07 perp). AFML bet sizing halves the drawdown and
+   is the best spot variant out of sample (+1.01) but the worst on perp (+0.55) — no consistent edge.
+
+**Assembled book, one correction at a time** (`run_bo_ts_book.py`; core-10, 1d raw chandelier +
+4h/1h gated, 2020-01→2026-07 so the split is tradeable throughout):
+
+| assembly | Sharpe | MC-P5 | CAGR | maxDD | months+ | **OOS** |
+|---|---|---|---|---|---|---|
+| shipped: all-perp, k-fold gate, gross labels | +1.04 | +0.38 | +3.4% | −4.1% | 49% | +0.13 |
+| + walk-forward gate on net labels | +1.07 | +0.46 | +4.8% | −5.2% | 49% | +0.26 |
+| **+ venue split (long spot, short perp)** | **+1.07** | **+0.50** | +3.8% | −5.2% | 52% | **+0.37** |
+
+The headline barely moves. Everything the corrections buy shows up where the shipped book was weakest:
+the held-out block nearly triples (+0.13 → +0.37), the Monte-Carlo 5th percentile rises +0.12, months
+in profit go 49% → 52%, and the 2026 downturn improves from −0.73 to −0.21. That is the right shape for
+a correction — it did not manufacture return, it removed an optimism and a cost.

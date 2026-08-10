@@ -63,6 +63,13 @@ EQUITY_HALF_SPREAD_BPS = 2.0      # penny-ish spread on liquid large caps
 EQUITY_BORROW_BPS_ANNUAL = 50.0   # stock-borrow on the SHORT leg (§9): ~0.5%/yr general-collateral for
                                   # liquid large caps (the equity x-sect shorts top-100 names; hard-to-borrow
                                   # small caps run far higher and are excluded). Charged per bar on short gross.
+CRYPTO_SPOT_BORROW_BPS_ANNUAL = 293.0  # coin-borrow to SHORT on spot margin. There is no free spot short: the
+                                  # coin must be borrowed and sold. Mean VIP-0 cross-margin daily rate over the
+                                  # core-10, read live 2026-08-10 from Binance's public margin-spec endpoint
+                                  # (BTC 0.44%/yr, ETH 2.16%, up to SOL 5.47%). Charged per bar on short gross,
+                                  # the same convention as the equity borrow above. A perp short pays no borrow
+                                  # and instead RECEIVES funding (~+10%/yr average since 2020), which is why the
+                                  # short leg belongs on perps and the long leg on spot.
 
 # ── Almgren √-impact: impact_bps = IMPACT_K * sigma_bar * sqrt(order_notional / ADV_bar) * 1e4.
 #    Scales the cost up for a large order in a thin name — this is what makes the mid-cap tail of
