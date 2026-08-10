@@ -1,4 +1,4 @@
-.PHONY: attribution gate-ablation gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: attribution gate-ablation gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab crisis seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -163,6 +163,13 @@ residmom:
 	$(PY) scripts/residmom/run_residmom.py
 	$(PY) scripts/residmom/run_residmom_robust.py
 	$(PY) scripts/residmom/run_residmom_ml.py
+
+# Crisis-alpha deep-dive: the book's long-gamma leg, and how big a slot a hedge deserves. Rebuilds the
+# family series, then the evidence behind its sizing — per-class cost diagnosis, every construction
+# variant with its crash-window payoff, the slot sweep and the rotated/flat controls. See CRISIS.md.
+crisis:
+	$(PY) scripts/run_crisis.py
+	$(PY) scripts/run_crisis_lab.py
 
 # Calendar-seasonality deep-dive: pre-FOMC drift + turn-of-month (a tested-and-mapped family). See SEASONAL.md.
 seasonal:
