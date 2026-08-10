@@ -75,7 +75,7 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
     # discontinued index into a frozen strike that keeps trading. Cboe stopped publishing VXSLV, VXFXI
     # and VXGDX in Feb-2022 and resumed in 2025; unbounded, those three sold variance at their
     # February-2022 level for three years, and the manufactured P&L flattered the out-of-sample block
-    # by +0.49 Sharpe. Past the limit the quote is gone, and a leg with no quote is a leg you do not
+    # by 0.59 Sharpe (2.27 -> 1.68). Past the limit the quote is gone, and a leg with no quote is a leg you do not
     # have — masked out below rather than held flat, so the book renormalises onto the live sleeves.
     # The bound is not a tuned number: at 1, 3, 5, 10 and 21 bars the book prints 3.58 full / 1.67
     # out-of-sample either way. What matters is bounding it at all; where is immaterial, because the
