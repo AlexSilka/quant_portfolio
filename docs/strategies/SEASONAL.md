@@ -39,12 +39,15 @@ Figures: [seasonal.png](../../reports/figures/seasonal.png). Reproduce: `make se
   weeks beat odd weeks 2005-2015 (+8.7/+7.4 vs −2.6/+1.4bps) and the ordering **inverts** afterwards
   (+4.4/+4.8 vs +8.2/+6.8). Long-only even weeks nets **+0.50 against buy-&-hold +0.66**; the
   long-even/short-odd book nets **+0.09**.
-- **The decisive portfolio test is the beta control, and the family fails it.** The master book is
-  market-neutral and slightly *short* beta, so any long-equity stub lifts it. Blended at 20%,
-  buy-&-hold SPY takes it **3.91 → 4.07** (OOS 3.54 → **3.76**); the best of 309 calendar arms reaches
-  **4.00** (OOS 3.51), and it is the widest, most-long-the-market turn-of-month window. Every genuinely
-  market-neutral event arm *lowers* the book out-of-sample. **A calendar sleeve here buys exposure that
-  has a cheaper supplier.**
+- **The portfolio test, scored on all five brief targets rather than the Sharpe alone, still says no —
+  for a better reason.** A 20% blend of *anything* at matched vol costs the book ~11 points of CAGR
+  (48.9% → a median 37.4% across the 294 arms), because it swaps a piece of a 3.9-Sharpe book for a
+  0.5-Sharpe one. Some arms do print 5/5 on the full window by fixing the losing streak — but so does the
+  **same arm with its dates scrambled**: 8 of 294 arms hold 5/5 in both windows (2.7%) against **5.8%**
+  of 1470 time-shifted copies of those same arms, i.e. the flip is not the calendar. And out-of-sample
+  most arms *cost* a target (months-in-profit 80.8% → 76.9%).
+  Meanwhile plain buy-&-hold SPY lifts the Sharpe the most (3.91 → **4.07**) and takes the scorecard
+  **down** (4/5 → 3/5). **Nothing here is worth 11 points of CAGR.**
 - **What the sweep did buy:** the corrected engine, a calendar 38% deeper, an asset map (the premium is
   a *risk-asset* premium — EFA/BTC/QQQ/SLV/EEM/XLK at the top, the whole Treasury complex negative and
   monotonically so in maturity), and the finding that the strongest surviving *effect* is crypto's **6h**
@@ -262,24 +265,53 @@ arm lands at **0.00**. Purged walk-forward selection over the arm grid returns *
 event books, **+0.50** for the turn-of-month grid, **+0.39** for the crypto intraday books and **−0.60**
 for the crypto daily one — i.e. picking the window in-sample does not reliably survive either.
 
-**The control that decides it.** Every arm is blended into the master book at matched vol, and compared
-against two stubs that contain no calendar at all:
+**The control that decides it — on all five targets, not the ratio.** A Sharpe alone cannot answer this
+question: the book's Sharpe has room (3.91 in a 2.5-4.0 band) while the target it actually misses is the
+**losing streak**, and a blend trades those against each other. Every arm is blended at matched vol and
+scored on the brief's full card, against two stubs that contain no calendar at all:
 
-| blended at | 0% | 10% | 20% | 30% | OOS 0% → 20% |
-|---|---|---|---|---|---|
-| **buy-&-hold SPY** (no calendar) | 3.909 | 4.009 | **4.065** | 4.030 | 3.54 → **3.76** |
-| best calendar arm (ToM (−4,+3), SPY) | 3.909 | 3.979 | 3.997 | 3.922 | 3.54 → 3.51 |
-| ToM (−4,+3), 8-asset risk-parity | 3.909 | 3.977 | 3.993 | 3.918 | 3.54 → 3.67 |
-| event L/S, 8-asset risk-parity | 3.909 | 3.956 | 3.946 | 3.837 | 3.54 → 3.36 |
-| BTC 6h pre-announcement | 3.909 | 3.922 | 3.874 | 3.729 | 3.54 → 3.34 |
-| **random 33%-of-days SPY** (no calendar) | 3.909 | 3.915 | 3.855 | 3.691 | 3.54 → 3.53 |
+**Full window** (book alone: Sharpe 3.91, CAGR 48.9%, maxDD −8.3%, months 81.4%, worst −5.8%, streak 3 → **4/5**):
 
-The book is market-neutral and slightly short beta, so *any* long-equity stub lifts it — and the naked
-one lifts it most. The only arms that beat the random-days stub are the ones that are long the market a
-third of the time, and they lose to simply being long the market all of the time. The arms that are
-genuinely market-neutral — the event long/shorts, the crypto intraday books — **reduce the book out of
-sample**. Whatever a calendar sleeve would contribute here is exposure, and exposure has a cheaper
-supplier.
+| +20% of | Sharpe | CAGR | maxDD | months>0 | worst mo | streak | targets |
+|---|---|---|---|---|---|---|---|
+| **buy-&-hold SPY** (no calendar) | **4.06** | 40.1% | −6.8% | **79.8%** | −3.1% | 2 | **3/5** |
+| **random 33%-of-days SPY** (no calendar) | 3.91 | 38.6% | −6.8% | **79.8%** | −3.5% | 3 | **3/5** |
+| ToM (−4,+3), SPY | 4.00 | 39.7% | −6.6% | 81.4% | −4.8% | 3 | 4/5 |
+| ToM (−4,+3), 8-asset risk-parity | 3.99 | 39.9% | −6.5% | 82.5% | −5.0% | 2 | **5/5** |
+| event L/S (0)/(+1), 8-asset risk-parity | 3.91 | 38.6% | −7.9% | 81.9% | −3.5% | 2 | **5/5** |
+| event L/S (0)/(+1), HYG | 3.92 | 38.7% | −7.2% | 81.9% | −3.5% | 2 | **5/5** |
+| event L/S (−1,0)/(+1,+2), 8-asset | 3.95 | 38.9% | −7.6% | 80.8% | −3.5% | 3 | 4/5 |
+| BTC 6h pre-announcement | 3.87 | 38.9% | −6.7% | 80.8% | −4.3% | 3 | 4/5 |
+
+**OOS block** (book alone: Sharpe 3.54, CAGR 39.8%, maxDD −5.7%, months 80.8%, worst −1.7%, streak 2 → **5/5**):
+
+| +20% of | Sharpe | CAGR | months>0 | targets |
+|---|---|---|---|---|
+| **buy-&-hold SPY** | **3.76** | 33.9% | 80.8% | **5/5** |
+| **random 33%-of-days SPY** | 3.69 | 33.2% | 80.8% | **5/5** |
+| ToM (−4,+3), 8-asset risk-parity | 3.67 | 33.6% | 76.9% | 4/5 |
+| event L/S, 8-asset risk-parity | 3.36 | 30.0% | 80.8% | 5/5 |
+| BTC 6h pre-announcement | 3.34 | 29.8% | 76.9% | 4/5 |
+
+Three things the Sharpe column alone would have hidden, and they point the same way:
+
+1. **Every 20% blend costs ~11 points of CAGR** — 48.9% → a median of 37.4% across all 294 arms — because
+   at matched vol you are swapping a piece of a 3.9-Sharpe book for a 0.5-Sharpe one. The ratio can go up
+   while the money goes down; on this book it does.
+2. **Adding beta is not free either.** Buy-&-hold lifts the Sharpe most and takes the scorecard *down*
+   (4/5 → 3/5): it fixes the losing streak and breaks months-in-profit (81.4% → 79.8%). So the earlier
+   one-line summary — "beta lifts it more" — is true of the ratio and false of the deliverable.
+3. **The 5/5 prints have nothing to do with the calendar.** Of the 294 arms, 24 take the full window to
+   5/5 and **8 hold 5/5 in both windows (2.7%)**. Run each arm against its own null — the same series
+   **circularly shifted in time**, which keeps its return distribution, sparsity, vol and cost drag and
+   destroys only the alignment between its P&L and the book's bad months — and the scrambled versions
+   print 5/5 **more** often: 8.6% full and **5.8% in both windows** over 1470 draws. The missing target
+   is a *discrete streak count* one month can flip, so any decorrelated stream flips it now and then;
+   picking the arm that happened to flip it is window-shopping with extra steps.
+
+Standalone, the event books also show why they can never carry a months-in-profit target on their own:
+they are flat by construction in the four months a year with no meeting, so months-in-profit runs 36-43%
+and the longest losing streak 7-9 months even when the arm is profitable overall.
 
 ## 8. Honest verdict & ceiling
 

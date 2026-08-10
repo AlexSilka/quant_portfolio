@@ -150,13 +150,17 @@ class Arm:
         for (a, b), lab in zip(SUBS, SUB_LABELS):
             w = r[(r.index >= pd.Timestamp(a, tz="UTC")) & (r.index <= pd.Timestamp(b, tz="UTC"))]
             sub[lab] = round(sharpe(w, self.ppy), 2) if len(w) > 20 else None
+        sc = scorecard(r, self.ppy)
         d = {"arm": self.name, "group": self.group,
              "long": ",".join(map(str, self.longs)) or "-", "short": ",".join(map(str, self.shorts)) or "-",
              "sharpe": round(sharpe(r, self.ppy), 3),
              "ann_ret_pct": round(float(r.mean() * self.ppy * 100), 2),
+             "cagr_pct": round(sc["cagr"] * 100, 2),
              "ann_vol_pct": round(float(r.std(ddof=1) * np.sqrt(self.ppy) * 100), 2),
              "days_in_market_pct": round(float((self.pos != 0).mean() * 100), 1),
-             "max_dd": round(summarise(r, self.ppy)["max_dd"], 3),
+             "max_dd": sc["max_dd"], "calmar": round(sc["cagr"] / abs(sc["max_dd"]), 2) if sc["max_dd"] else None,
+             "months_in_profit": sc["months_in_profit"], "worst_month": sc["worst_month"],
+             "losing_streak_mo": sc["longest_losing_streak_mo"],
              **{f"sh_{k}": v for k, v in sub.items()}}
         if with_placebo:
             p = self.placebo()
@@ -446,12 +450,16 @@ class IntradayArm:
         for (a, b), lab in zip(SUBS, SUB_LABELS):
             w = r[(r.index >= pd.Timestamp(a, tz="UTC")) & (r.index <= pd.Timestamp(b, tz="UTC"))]
             sub[lab] = round(sharpe(w, self.ppy), 2) if len(w) > 20 else None
+        sc = scorecard(r, self.ppy)
         d = {"arm": self.name, "group": self.group, "long": f"{self.hours:.0f}h@{self.end_offset:+.0f}h",
              "short": "-", "sharpe": round(sharpe(r, self.ppy), 3),
              "ann_ret_pct": round(float(r.mean() * self.ppy * 100), 2),
+             "cagr_pct": round(sc["cagr"] * 100, 2),
              "ann_vol_pct": round(float(r.std(ddof=1) * np.sqrt(self.ppy) * 100), 2),
              "days_in_market_pct": round(float((r != 0).mean() * 100), 1),
-             "max_dd": round(summarise(r, self.ppy)["max_dd"], 3),
+             "max_dd": sc["max_dd"], "calmar": round(sc["cagr"] / abs(sc["max_dd"]), 2) if sc["max_dd"] else None,
+             "months_in_profit": sc["months_in_profit"], "worst_month": sc["worst_month"],
+             "losing_streak_mo": sc["longest_losing_streak_mo"],
              "mean_bps_per_event": round(float(self.events.mean() * 1e4), 1),
              "t_per_event": round(tstat(self.events), 2), "n_events": int(len(self.events)),
              **{f"sh_{k}": v for k, v in sub.items()}}
@@ -572,6 +580,32 @@ def ppy_of(s: pd.Series) -> float:
     return len(s) / yrs if yrs > 0 else 252.0
 
 
+def scorecard(s: pd.Series, ppy: float | None = None) -> dict:
+    """The brief's five scored targets on a return series, not just the Sharpe.
+
+    A ratio is the wrong instrument for this decision on its own: the book's binding constraints are
+    months-in-profit, the losing streak and the worst month, and a long-beta stub moves those in the
+    opposite direction to the Sharpe it lifts. Same computation as run_master_book.scorecard so the
+    numbers here are comparable to the shipped scorecard line for line.
+    """
+    s = s.dropna()
+    ss = summarise(s, ppy_of(s) if ppy is None else ppy)
+    mo = (1.0 + s).resample("ME").prod() - 1.0
+    streak = mx = 0
+    for v in (mo <= 0).astype(int).to_numpy():
+        streak = streak + 1 if v else 0
+        mx = max(mx, streak)
+    c = {"sharpe": round(ss["sharpe_ann"], 2), "max_dd": round(ss["max_dd"], 4),
+         "months_in_profit": round(ss["months_in_profit"], 4),
+         "worst_month": round(float(mo.min()) if len(mo) else 0.0, 4),
+         "longest_losing_streak_mo": int(mx),
+         "cagr": round(float((1 + s).prod() ** (365.25 / max((s.index.max() - s.index.min()).days, 1)) - 1), 4)}
+    c["targets_hit"] = int(sum([2.5 <= c["sharpe"] <= 4.0, c["max_dd"] >= -0.15,
+                                c["months_in_profit"] >= 0.80, c["worst_month"] >= -0.06,
+                                c["longest_losing_streak_mo"] <= 2]))
+    return c
+
+
 def section_beta_control(R: pd.DataFrame, arms: list) -> dict:
     """The control the first pass never ran: does a naked beta stub lift the book by MORE?
 
@@ -608,7 +642,13 @@ def section_beta_control(R: pd.DataFrame, arms: list) -> dict:
         ppy_o = ppy_of(b_o)              # the OOS block is fully live (~366 obs/yr), not the blend's ~323
         out[lab] = {"lift": lift, "oos_0pct": round(sharpe(b_o, ppy_o), 2),
                     "oos_20pct": round(sharpe(0.8 * b_o + 0.2 * h_o, ppy_o), 2),
-                    "corr_to_book": round(float(h.corr(book)), 3)}
+                    "corr_to_book": round(float(h.corr(book)), 3),
+                    "solo": scorecard(c.dropna()),
+                    # the whole scorecard at the blend weight, not just its Sharpe: the book's binding
+                    # targets are months-in-profit / streak / worst month, and a long-beta stub trades
+                    # them against the ratio it lifts
+                    "blend20_full": scorecard(0.8 * book + 0.2 * hm, ppy_b),
+                    "blend20_oos": scorecard(0.8 * b_o + 0.2 * h_o, ppy_o)}
     ranked = sorted(out.items(), key=lambda kv: -kv[1]["lift"]["20%"])
     print(f"  {'candidate':26s} {'corr':>6s} " + " ".join(f"{w:>7s}" for w in ("0%", "10%", "20%", "30%")) +
           "   OOS 0%→20%")
@@ -620,6 +660,84 @@ def section_beta_control(R: pd.DataFrame, arms: list) -> dict:
     print(f"\n  best calendar arm at 20%: {best_cal:.3f}   vs   buy-&-hold SPY: "
           f"{out['buy_hold_SPY']['lift']['20%']:.3f}  →  "
           f"{'the calendar adds nothing beta would not' if best_cal <= out['buy_hold_SPY']['lift']['20%'] else 'the calendar beats plain beta'}")
+
+    base = scorecard(book, ppy_b)
+    base_o = scorecard(book[book.index >= oos], ppy_of(book[book.index >= oos]))
+    print("\n  ALL FIVE TARGETS at a 20% blend (Sharpe alone hides what the blend costs):")
+    hdr = f"  {'candidate':26s} {'Sh':>5s} {'CAGR':>7s} {'maxDD':>7s} {'mo>0':>6s} {'worst':>7s} {'streak':>7s} {'hit':>4s}"
+    print(hdr)
+
+    def _line(lab, c, tag=""):
+        print(f"  {lab:26s} {c['sharpe']:>5.2f} {c['cagr']:>7.1%} {c['max_dd']:>7.1%} "
+              f"{c['months_in_profit']:>6.1%} {c['worst_month']:>7.1%} {c['longest_losing_streak_mo']:>7d} "
+              f"{c['targets_hit']:>3d}/5{tag}")
+
+    _line("book alone (full)", base)
+    for lab, d in ranked[:6]:
+        _line(f"+20% {lab}", d["blend20_full"], "   <-- pure beta" if lab in stubs else "")
+    for lab in stubs:
+        if lab not in dict(ranked[:6]):
+            _line(f"+20% {lab}", out[lab]["blend20_full"], "   <-- pure beta")
+    print(f"\n  same, OOS block only ({oos.date()}→):")
+    print(hdr)
+    _line("book alone (OOS)", base_o)
+    for lab, d in ranked[:6]:
+        _line(f"+20% {lab}", d["blend20_oos"], "   <-- pure beta" if lab in stubs else "")
+    for lab in stubs:
+        if lab not in dict(ranked[:6]):
+            _line(f"+20% {lab}", out[lab]["blend20_oos"], "   <-- pure beta")
+    # How often does a 20% blend print 5/5 at all, and does the CALENDAR have anything to do with it?
+    # The target the book misses is the losing streak — a discrete count one month can flip — so an arm
+    # that "takes the book to 5/5" is only evidence if it does so more often than the same arm with its
+    # dates scrambled. A circular time shift is the right null: it keeps the arm's return distribution,
+    # sparsity, vol and cost drag, and destroys only the alignment between its P&L and the book's bad
+    # months, which is the entire mechanism a calendar sleeve could be contributing through.
+    b_oos = book[book.index >= oos]
+    ppy_oos = ppy_of(b_oos)
+    sd_b = book.std()
+
+    def _blend_hits(vals: np.ndarray) -> tuple[int, int]:
+        h = pd.Series(vals, index=book.index).fillna(0.0)
+        if h.std() == 0:
+            return 0, 0
+        hm = h * (sd_b / h.std())
+        return (scorecard(0.8 * book + 0.2 * hm, ppy_b)["targets_hit"],
+                scorecard(0.8 * b_oos + 0.2 * hm[hm.index >= oos], ppy_oos)["targets_hit"])
+
+    n_shift, real_full, real_both, null_full, null_both, null_n, winners, cagrs = 5, 0, 0, 0, 0, 0, [], []
+    for a in arms:
+        s = a.net if a.net.index.tz is None else a.net.tz_localize(None)
+        v = s.reindex(book.index).fillna(0.0).to_numpy()
+        f, o = _blend_hits(v)
+        real_full += f == 5
+        if f == 5 and o == 5:
+            real_both += 1
+            winners.append(a.name)
+        hm_std = pd.Series(v, index=book.index).std()
+        if hm_std > 0:
+            cagrs.append(scorecard(0.8 * book + 0.2 * pd.Series(v, index=book.index) * (sd_b / hm_std),
+                                   ppy_b)["cagr"])
+        for _ in range(n_shift):
+            f2, o2 = _blend_hits(np.roll(v, int(rng.integers(60, max(len(v) - 60, 61)))))
+            null_full += f2 == 5
+            null_both += (f2 == 5) and (o2 == 5)
+            null_n += 1
+    n = len(arms)
+    print("\n  Scorecard lottery — how often a 20% blend prints 5/5, arms vs their own time-shifted null")
+    print(f"    (book alone: {base['targets_hit']}/5 full, {base_o['targets_hit']}/5 OOS)")
+    print(f"    real calendar arms     n={n:5d}: 5/5 full {real_full:4d} ({real_full/n:5.1%}) | "
+          f"5/5 in BOTH {real_both:4d} ({real_both/n:5.1%})")
+    print(f"    same arms, dates rolled n={null_n:5d}: 5/5 full {null_full:4d} ({null_full/null_n:5.1%}) | "
+          f"5/5 in BOTH {null_both:4d} ({null_both/null_n:5.1%})")
+    print(f"    → {'scrambling the dates prints 5/5 MORE often — the calendar contributes nothing to the scorecard' if real_both/n <= null_both/null_n else 'the calendar beats its own scrambled null'}")
+    print(f"    and every blend costs return: median blended CAGR {np.median(cagrs):.1%} "
+          f"vs {base['cagr']:.1%} for the book alone")
+    out["_baseline"] = {"full": base, "oos": base_o}
+    out["_scorecard_lottery"] = {
+        "n_arms": n, "arms_5of5_full": real_full, "arms_5of5_both": real_both,
+        "arms_5of5_both_names": winners, "n_null_draws": null_n, "null_5of5_full": null_full,
+        "null_5of5_both": null_both, "median_blended_cagr": round(float(np.median(cagrs)), 4),
+        "book_alone_cagr": base["cagr"]}
     return out
 
 

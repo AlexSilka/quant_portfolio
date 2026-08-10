@@ -1286,10 +1286,13 @@ nothing that did not break another target. That is the honest ceiling of this bo
   top, the whole Treasury complex negative), five basket sizes (the 21-asset mix dilutes to +0.05), five
   timeframes (crypto's 6h pre-announcement window is the best arm, +0.69/+0.64 net BTC/ETH), the FOMC-cycle
   even-week structure (holds 2005-15, inverts after) and dash-for-cash conditioning (wrong sign); deflated
-  over all 309 arms the best is 0.65. **The decisive test is the beta control:** blended into the book at
-  20%, buy-&-hold SPY lifts it 3.91 → **4.07** (OOS 3.54 → 3.76) while the best calendar arm reaches 4.00
-  (OOS 3.51) and every market-neutral arm *lowers* the OOS book — the sleeve would be buying exposure that
-  has a cheaper supplier. Excluded. **Three plumbing defects were fixed to see this** (now in `src/`, so
+  over all 309 arms the best is 0.65. **Scored on all five targets rather than the Sharpe**, a 20% blend of
+  *anything* at matched vol costs the book ~11 points of CAGR (48.9% → median **37.4%**), because it swaps a
+  slice of a 3.9-Sharpe book for a 0.5-Sharpe one; the arms that do print 5/5 on the full window flip the
+  losing streak 3→2, but the same arm **circularly shifted in time** prints 5/5 *more* often (real 2.7% vs
+  shifted **5.8%**, 1470 draws), and out-of-sample most arms cost a target (months-in-profit 80.8% → 76.9%).
+  Plain buy-&-hold SPY lifts the Sharpe most (3.91 → 4.07) and takes the scorecard **down**, 4/5 → 3/5.
+  Nothing here is worth 11 points of CAGR. Excluded. **Three plumbing defects were fixed to see this** (now in `src/`, so
   the next calendar study inherits them): an open-labelled-bar look-ahead that ended the "24h into the
   statement" window an hour *after* it (BTC +102.5bps t=2.4 → **+83.5 t=1.9**), price-only returns that
   booked SPY's ex-dividend as a post-FOMC fade (offset +2 −15.7 → −5.5bps; the ex-date lands there in 39

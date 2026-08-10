@@ -153,10 +153,14 @@ higher upside. Beware look-ahead in on-chain aggregates (many are revised) — a
 > mix dilutes to +0.05), five **timeframes** (crypto's 6h pre-announcement window is the best arm at
 > +0.69/+0.64 net for BTC/ETH), the **FOMC-cycle** even-week structure (holds 2005-15, inverts after;
 > long-only +0.50 vs B&H +0.66) and dash-for-cash **conditioning** (wrong sign). Deflated over all 309
-> arms nothing clears — best 0.65. **The decisive test is the beta control:** blended into the master
-> book at 20%, buy-&-hold SPY lifts it 3.91 → **4.07** (OOS 3.54 → 3.76) while the best calendar arm
-> reaches 4.00 (OOS 3.51) and every genuinely market-neutral arm *lowers* the OOS book. A calendar sleeve
-> here buys exposure with a cheaper substitute. **Trading it market-neutral *between* assets and with ML does not
+> arms nothing clears — best 0.65. **The portfolio test, scored on all five targets rather than the
+> Sharpe:** a 20% blend of *anything* at matched vol costs the book ~11 points of CAGR (48.9% → median
+> **37.4%**), because it swaps a slice of a 3.9-Sharpe book for a 0.5-Sharpe one. Some arms do print 5/5
+> on the full window by flipping the losing streak 3→2 — but the same arm **circularly shifted in time**
+> prints 5/5 *more* often (real 2.7% vs shifted **5.8%** over 1470 draws), so the flip is not the
+> calendar; and out-of-sample most arms *cost* a target (months-in-profit 80.8% → 76.9%). Plain
+> buy-&-hold SPY lifts the Sharpe most (3.91 → 4.07) and takes the scorecard **down**, 4/5 → 3/5. Nothing
+> here is worth 11 points of CAGR. **Trading it market-neutral *between* assets and with ML does not
 > rescue it either:** a dollar-neutral long/short across names (in-window only) is negative or sub-bar
 > (crypto pre-FOMC −0.47, stocks ToM −0.49, crypto ToM +0.36 at the 96th placebo pctile); a conditional
 > pre-FOMC ML gate (VIX/10y-2y-slope/drift, purged CV) adds nothing — SPY +0.24 → +0.23 even though the
