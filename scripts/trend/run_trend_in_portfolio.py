@@ -1,7 +1,7 @@
 """Integrate the trend block into the master multi-strategy portfolio.
 
-Builds the recommended trend block (frozen config core-10 crypto @ 1d+4h + 10 US equities @ 1d,
-EMA long-biased, equal-risk) as a clean published return stream, then combines it with the OTHER
+Builds the recommended trend block (point-in-time crypto @ 1d+4h + index ETFs and point-in-time
+single names @ 1d, EMA long-biased, equal-risk) as a clean published return stream, then combines it with the OTHER
 strategy families at risk parity — READ-ONLY on their series, exactly the convention of
 `run_master_book.py` — and reports the master book with this trend block as the trend leg. Writes only
 new `reports/trend/*` artifacts; never touches other families' files.
@@ -90,7 +90,7 @@ def per_year(s):
 def main():
     print("=== Integrate the improved trend block into the master multi-strategy portfolio ===\n")
     block = build_trend_block()
-    print(f"trend block built (core-10 crypto 1d+4h + 10 equity): standalone Sharpe "
+    print(f"trend block built (point-in-time crypto 1d+4h + equity 1d): standalone Sharpe "
           f"{summarise(block, PPY)['sharpe_ann']:+.2f}, {block.index.min().date()}..{block.index.max().date()}")
     print("  -> wrote reports/trend/trend_block_returns.parquet\n")
 
