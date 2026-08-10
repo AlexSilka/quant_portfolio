@@ -9,6 +9,8 @@ data/cache/
 # stray CWD-relative cache from before config.py centralised paths; unused by the pipeline (which reads data/raw)
 scripts/data/raw/
 *.log
+# run/scratch output of every script — whole tree, not just the .log files (sweeps drop SUMMARY.txt etc.)
+logs/
 *.egg-info/
 
 # Employer's confidential test brief — kept out of the public repo
