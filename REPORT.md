@@ -413,9 +413,15 @@ different name: any move off equal-risk buys worst-month at the cost of months-i
 **Operational reality — can 1.15× actually be filled?** Yes on every leg, and the binding constraint is not
 leverage at all:
 
-- **Crypto perps** (carry, breakout, BAB, the crypto side of x-sect and trend) — USD-M margin is 0.5–5% of
-  notional, so 1.15× gross is a rounding error against available margin; what actually binds is per-symbol
-  position limits and depth in thin names, already charged through the √-impact cost model (§9).
+- **Crypto perps** (carry, BAB, the crypto side of x-sect and trend, and breakout's short leg) — USD-M margin
+  is 0.5–5% of notional, so 1.15× gross is a rounding error against available margin; what actually binds is
+  per-symbol position limits and depth in thin names, already charged through the √-impact cost model (§9).
+- **Crypto spot** (breakout's long leg only) — the one leg that is not margin. Its longs are filled on spot to
+  skip the funding a perp long pays, which is 23.4%/yr *conditional on that book being long*
+  ([BREAKOUT.md §12](docs/strategies/BREAKOUT.md#12-venue-the-funding-bill-and-the-24-years-before-perps-existed)),
+  and a spot long is 100% cash rather than 0.5–5% margin. That cash is small enough not to bind: the leg
+  averages **1.7%** of book equity and peaks at **7.4%** (measured ungated, so an upper bound — the shipped
+  4h/1h legs are ML-gated to ~16–20% of their trades and hold less).
 - **US equities long/short** (equity side of x-sect and trend) — Reg T allows 2× gross on a margin account, more
   under portfolio margin; 1.15× is inside it. Shorts need a prime broker and borrow, charged at 50bps/yr (§9).
 - **ETFs and futures** (crisis, gmacro) — 5–10% initial margin; 1.15× is not a constraint.
