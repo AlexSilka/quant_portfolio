@@ -40,6 +40,17 @@ def _api_key() -> str:
     raise RuntimeError("TWELVEDATA_API_KEY not set (env or .env)")
 
 
+class RateLimited(RuntimeError):
+    """The feed refused to answer, as opposed to answering that a symbol has no data.
+
+    The distinction is load-bearing for any study whose UNIVERSE is built by looping over symbols
+    and skipping the ones that fail: a permanent absence is a stable universe definition, while a
+    rate-limit silently shrinks the universe by however many names the feed happened to refuse on
+    that run. Measured on run_carry_equity, two names refused made the SAME code publish a headline
+    whose entire 3,639-day history differed by up to 3.1e-02. Callers that build a universe must
+    re-raise this rather than absorb it into a skip list."""
+
+
 def _request(**params) -> dict:
     return _request_ep(_BASE, **params)
 
@@ -62,7 +73,7 @@ def _request_ep(base: str, **params) -> dict:
                 return {"values": []}
             raise RuntimeError(f"twelvedata: {msg}")
         return data
-    raise RuntimeError("twelvedata: rate-limited after retries")
+    raise RateLimited("twelvedata: rate-limited after retries")
 
 
 def load_bars(symbol: str, interval: str, start: str, end: str | None = None,

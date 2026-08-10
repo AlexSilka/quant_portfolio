@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.data.twelvedata import RateLimited  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.data.twelvedata import load_dividends  # noqa: E402
 from src.metrics import summarise  # noqa: E402
@@ -71,6 +72,11 @@ def main():
         try:
             px[t] = load_equity_daily(t, start="2012-01-01")["close"]
             divs[t] = load_dividends(t, start="2011-01-01")
+        except RateLimited:
+            raise                       # a refused fetch would silently shrink the universe, and the
+                                        # universe IS the result — two names refused moved this study's
+                                        # entire history by up to 3.1e-02. Fail rather than publish a
+                                        # headline computed on whatever the feed felt like answering.
         except Exception as e:
             print(f"skip {t}: {e}")
     P = pd.DataFrame(px).sort_index()

@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.data.twelvedata import RateLimited  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.data.rates import short_rates  # noqa: E402
 from src.metrics import summarise  # noqa: E402
@@ -41,6 +42,9 @@ def main():
     for pair in carry_fx.PAIR_MAP:
         try:
             fx_close[pair] = load_equity_daily(f"{pair}=X", start="2012-01-01")["close"]
+        except RateLimited:
+            raise                       # same reason as run_carry_equity: a refused fetch changes the
+                                        # universe, not just the coverage, and does it silently.
         except Exception as e:
             print(f"skip {pair}: {e}")
     usd_value = carry_fx.usd_value_panel(fx_close)
