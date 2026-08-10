@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from src import bo_common as bo  # noqa: E402
-from scripts.breakout.run_bo_xs_tf import BPD, PPY, xs_daily  # noqa: E402
+from scripts.breakout.run_bo_xs_tf import BPD, PPY, adv_panel, funding_panel, xs_daily  # noqa: E402
 from src.config import OOS_START, RAW_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
@@ -73,9 +73,10 @@ def score(pnl, tf):
     if pnl.shape[1] < 15:
         return None
     lb = 126 * BPD[tf]
-    net = xs_daily(pnl, breakout_signal(pnl, "nearness", lb), PPY[tf], rebal=BPD[tf])
+    adv, fund = adv_panel(pnl.columns, tf), funding_panel(pnl.columns, pnl.index)
+    net = xs_daily(pnl, breakout_signal(pnl, "nearness", lb), PPY[tf], rebal=BPD[tf], adv=adv, funding=fund)
     plac = pd.DataFrame(bo.rng.standard_normal(pnl.shape), index=pnl.index, columns=pnl.columns)
-    netp = xs_daily(pnl, plac, PPY[tf], rebal=BPD[tf])
+    netp = xs_daily(pnl, plac, PPY[tf], rebal=BPD[tf], adv=adv, funding=fund)
     s = summarise(net, 365)
     mc = bootstrap_sharpe(net, 365, 500, bo.SEED) if s["sharpe_ann"] > 0.3 else {}
     oos = net[net.index >= OOS_START]

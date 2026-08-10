@@ -22,13 +22,13 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **six
 > **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg
 > timed out of the crashes by its own **VIX-term-structure regime gate** (flat unless **both** curve segments
 > are in contango), sized at a constant **1.15×** (§4b), with a disclosed **§8 risk overlay** on top.
-> The book nets **Sharpe 3.91** at **−8.3% max drawdown** — on the brief's **$500k** sizing
-> capital that is **$3.15M** of P&L, **~$202k/yr** — **+40.5%/yr** not reinvested,
-> **+49.0%/yr** compounded (a rate, not a reachable balance: capacity caps the book long before the end of
+> The book nets **Sharpe 3.92** at **−8.3% max drawdown** — on the brief's **$500k** sizing
+> capital that is **$3.16M** of P&L, **~$202k/yr** — **+40.5%/yr** not reinvested,
+> **+49.1%/yr** compounded (a rate, not a reachable balance: capacity caps the book long before the end of
 > the window) — months-in-profit **81%**, **positive in all 16 calendar years**.
 > **§11 scores the targets on the frozen out-of-sample block**, and there it clears **5/5** (2024-07→: Sharpe
-> **3.54**, months **80.8%**, max-DD **−5.7%**, worst month **−1.7%**, streak **2**).
-> On the **full 15-year window** it also clears **4/5** (Sharpe **3.91**, months **81.4%**, max-DD
+> **3.53**, months **80.8%**, max-DD **−5.7%**, worst month **−1.7%**, streak **2**).
+> On the **full 15-year window** it also clears **4/5** (Sharpe **3.92**, months **81.4%**, max-DD
 > **−8.3%**, worst month **−5.8%**, streak **3**). What that changed, measured
 > in §6d-ter: **return went up**, not down — +5.2pp of CAGR on the full window,
 > +5.3pp on the block — because six legs at equal risk run hotter than eight; the Sharpe reads
@@ -64,10 +64,10 @@ hidden one.)
   different reporting windows nets Sharpe **3.78 full-history / 4.00 15-year / 3.86 10-year**, so nothing hinges
   on the early window.
 - **Robust, not fitted.** The portfolio is robust because the families are decorrelated — measured
-  (block-bootstrap MC-P5 **+3.45**), not asserted — and **positive in 16 of 16 calendar years** 2011–26 (weakest 2026 at +1.2).
+  (block-bootstrap MC-P5 **+3.46**), not asserted — and **positive in 16 of 16 calendar years** 2011–26 (weakest 2026 at +1.2).
   Against the task scorecard, the book scores **5/5 out-of-sample and 4/5 on the full window** — the final out-of-sample block
-  (2024-07→, the window the brief scores: Sharpe **3.54**, months-in-profit **80.8%**, max-DD −5.7%, worst month
-  −1.7%, streak 2) and the **full 15-year window** (Sharpe **3.91**, months-in-profit **81.4%**, max-DD −8.3%,
+  (2024-07→, the window the brief scores: Sharpe **3.53**, months-in-profit **80.8%**, max-DD −5.7%, worst month
+  −1.7%, streak 2) and the **full 15-year window** (Sharpe **3.92**, months-in-profit **81.4%**, max-DD −8.3%,
   worst month −5.8%, streak 3). Months-in-profit ≥80%, the worst month and the ≤2-month streak hold
   **not** by reweighting the short-vol leg — that route deepens the worst month past −6% and collapses under ±25%
   perturbation (the old, and correct, reweighting-ceiling) — but by a **VIX-term-structure regime gate** that
@@ -80,7 +80,7 @@ hidden one.)
 - **Where the margin is thin — stated, not buried.** The binding target is no longer the drawdown but the
   **worst month**: at **−5.8%** against **−6%** it clears both accounting conventions
   (fixed-$500k reads **−5.70%**), but it is a single month (Apr-2020; the next worst is
-  −4.0%) sitting close to the floor, and the bootstrap puts a −8.6% month inside its
+  −3.9%) sitting close to the floor, and the bootstrap puts a −8.6% month inside its
   5th percentile.
   **1.15× is the level that ships, on both conventions** — 1.20× clears the fixed-size one by 5bp and fails the compounded one by 1bp, and
   1.25× fails both (§4b). The **−78% standalone tail is untouched by the gate** (§6c-bis prices a hedge that would bound it): into the 2010 flash crash the
@@ -135,8 +135,8 @@ A complete, reproducible pipeline, every stage runnable:
   **per-family baseline-vs-ML table is §5d.**
 - **Backtest** — bar-close→execution delay (no same-bar fill), liquidity-aware costs (commission +
   half-spread + √-impact, never flat), funding charged at every 8h settlement. **Cost sensitivity (§9):**
-  the book re-charged at **1×/2×/3×** the rebalancing cost it is charged nets Sharpe **+3.91 /
-  +3.20 / +2.48** (max-DD −8.3% / −10.3% / −12.2%),
+  the book re-charged at **1×/2×/3×** the rebalancing cost it is charged nets Sharpe **+3.92 /
+  +3.20 / +2.48** (max-DD −8.3% / −10.3% / −12.3%),
   **break-even at ≈7×**; that charge is deliberately conservative — it counts the mixed 252/365
   calendar's weekend renormalisation as trading, so it bills ~102× round-trip a year against the
   ~7.4× the book actually rebalances. **Per family, cost as a share of gross P&L**, each measured
@@ -160,7 +160,7 @@ A complete, reproducible pipeline, every stage runnable:
   break-even (vol-prem 2.16 at 5× its vega spread, trend 0.87 at 3×); neither is fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
-  quoted at that size with **P&L not reinvested**: **$3.15M** over the 15-year window, **~$202k/yr**, worst month
+  quoted at that size with **P&L not reinvested**: **$3.16M** over the 15-year window, **~$202k/yr**, worst month
   **−$28,515**, deepest drawdown **−$43,344**. **The accounting convention no longer moves any target** — the
   scorecard is compounded (risk a constant fraction of capital, max-DD −8.35%, worst month −5.76%), while holding
   size fixed at $500k and taking percentages *of that same capital* gives **−8.67%** and **−5.70%**: ~0.2pp
@@ -215,7 +215,7 @@ a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.6
 restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a
 per-family weight cap (1.5× the 1/6 equal weight; never binds). The drawdown ladder is ~neutral on this benign-tail
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
-cluster the losing months, holding the book at **Sharpe 3.91** and closing the scorecard to
+cluster the losing months, holding the book at **Sharpe 3.92** and closing the scorecard to
 **5/5 out-of-sample, 4/5 on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
 pairwise cross-family correlation is ≈ 0.07** — the corr-to-book column is naturally higher since each
 family is part of the book. **The decorrelation is stable out-of-sample** — the same matrix re-measured on two halves of the
@@ -225,7 +225,7 @@ in-sample artifact.
 | family | honest series | standalone Sharpe | corr to book |
 |---|---|---|---|
 | **vol-premium** | short-vol / VRP across 18 Cboe underlyings (incl. gold-miners), 2005+ ([docs/strategies/VOLPREM.md](docs/strategies/VOLPREM.md)) | 7.09 | +0.44 |
-| **breakout** | crypto trend+ML / PIT top-30 x-sect ([docs/strategies/BREAKOUT.md](docs/strategies/BREAKOUT.md)) | 1.42 | +0.54 |
+| **breakout** | crypto trend+ML / PIT top-30 x-sect ([docs/strategies/BREAKOUT.md](docs/strategies/BREAKOUT.md)) | 1.45 | +0.54 |
 | **BAB / low-vol** | beta-neutral top-25 crypto, betting-against-beta ([docs/strategies/BAB.md](docs/strategies/BAB.md)) | 1.29 | +0.51 |
 | **global-macro** | EM-FX + commodities TSMOM (`scripts/run_gmacro.py`) | 0.93 | +0.57 |
 | **x-sect momentum** | crypto residual (idio) + equity, top-100 liquid ([docs/strategies/XSECT.md](docs/strategies/XSECT.md)) | 0.85 | +0.41 |
@@ -247,20 +247,20 @@ in-sample artifact.
 > carry is not in the book (§6d-ter), and is quoted here because its deep-dive is. The corr-to-book column is
 > naturally positive since each family is part of the book.*
 
-- **Master book (risk-managed deliverable, 1.15× = ~10.5% book vol):** full-sample Sharpe **3.91**; on the brief's
-  **$500k** sizing capital **$3.15M** of P&L, **~$202k/yr** — **+40.5%/yr**
-  not reinvested, **+49.0%/yr** compounded (§9) — max DD **−8.3%**, months-in-profit
+- **Master book (risk-managed deliverable, 1.15× = ~10.5% book vol):** full-sample Sharpe **3.92**; on the brief's
+  **$500k** sizing capital **$3.16M** of P&L, **~$202k/yr** — **+40.5%/yr**
+  not reinvested, **+49.1%/yr** compounded (§9) — max DD **−8.3%**, months-in-profit
   **81.4%**, worst month **−5.8%**, streak **3mo** — **4 of 5 on the
   15-year window** (a 3-month losing streak against ≤2);
-  block-bootstrap MC **[Sharpe P5 +3.45, P50 +3.93, P95 +4.38; max-DD P5 −12.7%, P50 −8.8%]**; mean
-  pairwise cross-family correlation **+0.07**. **On the final OOS block: Sharpe 3.54, months-in-profit
+  block-bootstrap MC **[Sharpe P5 +3.46, P50 +3.94, P95 +4.39; max-DD P5 −12.7%, P50 −8.8%]**; mean
+  pairwise cross-family correlation **+0.07**. **On the final OOS block: Sharpe 3.53, months-in-profit
   80.8%, max-DD −5.7%, worst −1.7%, streak 2mo — 5/5.**
   Per-family P&L share: **volprem 67%**, gmacro 9%, x-sect 7%, breakout 7%, BAB 7%, crisis 4% — volprem-dominated, stated not hidden.
 - **Four-scheme Monte Carlo** (§10, all with P5/P50/P95 of Sharpe, max-DD *and* monthly hit): block bootstrap
-  (Sharpe P5 +3.45, the widest), trade-order resample, entry jitter ±1-3 bars, randomised start dates — the
+  (Sharpe P5 +3.46, the widest), trade-order resample, entry jitter ±1-3 bars, randomised start dates — the
   Sharpe holds across every scheme.
 - **Marginal contribution** (standalone-descending, on the premium stack, short-vol leg VIX-gated), families
-  added in that order: **7.09 → 6.41 → 6.24 → 5.11 → 4.75 → 3.93** — the curve *falls* as diversifiers join: they trade a little
+  added in that order: **7.09 → 6.42 → 6.25 → 5.12 → 4.75 → 3.93** — the curve *falls* as diversifiers join: they trade a little
   Sharpe for a much smaller tail (−19.7% at the anchor alone, and along the last four additions
   −14.8% → −12.0% → −8.2% → −7.6%). Removing the anchor (vol-premium) still leaves **+1.27**. `master_book_marginal.csv` carries
   max-DD and months-in-profit per addition too.
@@ -274,7 +274,7 @@ in-sample artifact.
   the legs are dollar- or beta-neutral spreads whose overlaps are small (mean pairwise correlation
   +0.06), which is why the approximation holds, and a live implementation would net at the order router.
 - **Per-year Sharpe (regime profile):** **positive in all 16 calendar years** 2011–2026 —
-  2011 **+1.7** · 2012 **+5.6** · 2013 **+4.4** · 2014 **+4.8** · 2015 **+5.2** · 2016 **+2.7** · 2017 **+5.3** · 2018 **+3.8** · 2019 **+4.3** · 2020 **+2.9** · 2021 **+5.2** · 2022 **+2.9** · 2023 **+4.8** · 2024 **+4.0** · 2025 **+4.4** · 2026 **+1.2** (weakest 2026 at +1.2, a partial year). No down *year*, but through the **isolated crisis windows the book is negative**
+  2011 **+1.7** · 2012 **+5.6** · 2013 **+4.4** · 2014 **+4.8** · 2015 **+5.2** · 2016 **+2.7** · 2017 **+5.3** · 2018 **+3.8** · 2019 **+4.3** · 2020 **+2.9** · 2021 **+5.2** · 2022 **+2.8** · 2023 **+4.9** · 2024 **+4.0** · 2025 **+4.4** · 2026 **+1.2** (weakest 2026 at +1.2, a partial year). No down *year*, but through the **isolated crisis windows the book is negative**
   (Q2-2020 is the deepest quarter and contains the −5.8% worst month, Apr-2020;
   the gate flattens the short-vol leg before the systemic crashes but not before a one-session dislocation),
   shown in the dashboard stress table.
@@ -541,7 +541,7 @@ to −4% turns it back on. All three are causal — they read yesterday's equity
   multiple-testing penalty is set by a number only the researcher knows, which is why the trial count is
   published here — and why the ladder now ends at whatever the zoo actually mined rather than at a
   constant pinned in the script.
-- **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+3.45** (full four-scheme table in §4).
+- **Portfolio Monte Carlo:** block-bootstrap 5th-percentile Sharpe **+3.46** (full four-scheme table in §4).
 - **Leakage:** execution is delayed to t+2 (never the signal bar's own close); funding is charged at
   every 8h settlement; costs are liquidity-aware (√-impact scaled to bar $-volume, never flat); vol
   targeting uses lagged volatility; feature computability is proven by the shift audit; fixed seeds throughout.
@@ -579,7 +579,7 @@ The brief asks for **two distinct things**, and the book has both:
 
 - **A final out-of-sample block, held to the end and run exactly once** (§10/§11) — `OOS_START=2024-07-01`,
   the last ~2 years, never inspected until the end. **§11 scores the targets on this block and nothing else**,
-  so it is the deliverable's scorecard (Sharpe **3.54**, 5/5); the 15-year window is reported
+  so it is the deliverable's scorecard (Sharpe **3.53**, 5/5); the 15-year window is reported
   alongside it because §10 asks for per-year/per-quarter metrics and §12 for a ceiling assessment — it is
   supporting evidence, never a second scorecard.
 - **A rolling & anchored walk-forward with periodic re-fitting** (§10) at the portfolio level
@@ -614,7 +614,7 @@ months to mean anything:
 At one year a ≤2-month streak target is close to a coin flip and one bad quarter breaks months-in-profit. Going
 longer is bounded from the other side: the crypto legs list only from 2020, so a 5-year block would leave a
 single year of live crypto history for construction. **The honest caveat that comes with the choice: at 25
-months the standard error of the OOS Sharpe is ±0.70, so 3.54 is 3.54 ±0.70**, and the block is a benign
+months the standard error of the OOS Sharpe is ±0.70, so 3.53 is 3.53 ±0.70**, and the block is a benign
 stretch — its only real stress is the Aug-2024 yen-carry unwind (book −1.0%), while Apr-2025 was *positive*
 (+1.0%). The boundary is not re-cut now that results are known: moving it after the fact is window-shopping,
 which is exactly what `OOS_START`'s frozen-constant comment forbids.
@@ -870,11 +870,11 @@ crash months while the other five families stay invested and earning. Reproduce:
 
 ## 6. Ceiling assessment & honest limits
 
-- **Reachable here:** a diversified six-family book at full-sample Sharpe ≈ **3.91** net
+- **Reachable here:** a diversified six-family book at full-sample Sharpe ≈ **3.92** net
   (+40.5%/yr on the brief's $500k at 1.15×, drawdown −8.3%,
-  block-bootstrap MC-P5 **+3.45**) that meets **all five** targets on the window the brief
-  scores — the final out-of-sample block (Sharpe **3.54**) — and **four of the five** on the full
-  15-year window (Sharpe **3.91**, missing on a 3-month losing streak against ≤2). Vol-premium anchors the Sharpe;
+  block-bootstrap MC-P5 **+3.46**) that meets **all five** targets on the window the brief
+  scores — the final out-of-sample block (Sharpe **3.53**) — and **four of the five** on the full
+  15-year window (Sharpe **3.92**, missing on a 3-month losing streak against ≤2). Vol-premium anchors the Sharpe;
   five decorrelated sources cut its tail; a VIX-term-structure regime gate times the
   short-vol leg out of the crashes that used to break the worst month and cluster the losing months; and the
   crypto cross-sectional sleeve runs on **residual (idiosyncratic) momentum**, a better-built momentum that
@@ -1294,7 +1294,7 @@ dependent on it.
 Every objection below is one this report invites. Each is answered from an artifact, not from prose, and
 where the answer is "yes, that is a real weakness" it says so.
 
-**1. "A net Sharpe near 3.91 is not credible for a real book."** It would not be for a *sleeve*, and no sleeve here
+**1. "A net Sharpe near 3.92 is not credible for a real book."** It would not be for a *sleeve*, and no sleeve here
 earns it: the best single sleeve's **deflated Sharpe is 0.00 at N=2,129 trials**, and the same
 selection walk-forwarded out-of-sample gives **+0.13**. The book's number comes from *not selecting* —
 six premia at mean pairwise correlation **0.07**, each applied uniformly across its
@@ -1310,7 +1310,7 @@ prices a wing that would cut the worst day from **−76% to −6%** for ~16% of 
 honest position is a disclosed tail, not a hedged one.
 
 **3. "A two-year out-of-sample block proves nothing."** At 25 months the standard error of the OOS Sharpe is
-**±0.70**, stated in §5c — 3.54 is 3.54 ± 0.70. The length is a trade: at one year the ≤2-month streak
+**±0.70**, stated in §5c — 3.53 is 3.53 ± 0.70. The length is a trade: at one year the ≤2-month streak
 target is close to a coin flip, and the crypto legs only list from 2020 so a five-year block leaves one year
 to build on. The wider evidence is the book-level walk-forward, which runs out-of-sample **2006→2026 at
 Sharpe 3.84** and pays for that history in drawdown (−15.3%).

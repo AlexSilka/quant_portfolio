@@ -17,7 +17,7 @@ import pandas as pd
 
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_xs_big import NONCRYPTO, symbols_with_tf  # noqa: E402
-from scripts.breakout.run_bo_xs_tf import BPD, PPY, xs_daily  # noqa: E402
+from scripts.breakout.run_bo_xs_tf import BPD, PPY, funding_panel, xs_daily  # noqa: E402
 from src.config import OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
@@ -60,20 +60,21 @@ def metrics(net, label):
 
 def main():
     print(f"=== Cross-sectional breakout on a POINT-IN-TIME top-{N} universe (no look-ahead) ===")
-    print("(52w-high nearness, ~daily rebalance, daily-resampled, net 6bps/side)\n")
+    print("(52w-high nearness, ~daily rebalance, daily-resampled; net of commission+spread,\n \u221a-impact from ADV and perp funding at every settlement)\n")
     rows, series = [], {}
     for tf in ["1d", "4h", "1h"]:
         C, Q = panels(tf)
         near = breakout_signal(C, "nearness", 126 * BPD[tf])
+        adv, fund = Q.rolling(20).median().shift(1), funding_panel(C.columns, C.index)
 
         # STATIC top-N: the N coins with the highest FULL-history volume (look-ahead selection)
         top = Q.median().sort_values(ascending=False).index[:N]
-        net_s = xs_daily(C[top], near[top], PPY[tf], rebal=BPD[tf])
+        net_s = xs_daily(C[top], near[top], PPY[tf], rebal=BPD[tf], adv=adv[top], funding=fund)
 
         # PIT top-N: membership from trailing volume only; non-members masked out of the ranking
         mem = pit_members(Q, N, 63 * BPD[tf])
         avg_n = float(mem.reindex(C.index).sum(axis=1).replace(0, np.nan).mean())
-        net_p = xs_daily(C, near.where(mem), PPY[tf], rebal=BPD[tf])
+        net_p = xs_daily(C, near.where(mem), PPY[tf], rebal=BPD[tf], adv=adv, funding=fund)
 
         print(f"--- {tf}  ({C.shape[1]} coins in pool, PIT universe avg {avg_n:.0f} names) ---")
         for label, net in [("static_top30", net_s), ("PIT_top30", net_p)]:

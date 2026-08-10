@@ -14,7 +14,7 @@ import pandas as pd
 
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_xs_big import NONCRYPTO, build_panel, symbols_with_tf  # noqa: E402
-from scripts.breakout.run_bo_xs_tf import BPD, PPY, xs_daily  # noqa: E402
+from scripts.breakout.run_bo_xs_tf import BPD, PPY, adv_panel, funding_panel, xs_daily  # noqa: E402
 from src.config import OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
@@ -41,7 +41,9 @@ def liquidity_rank():
 def score(pnl, tf):
     if pnl.shape[1] < 8:
         return None
-    net = xs_daily(pnl, breakout_signal(pnl, "nearness", 126 * BPD[tf]), PPY[tf], rebal=BPD[tf])
+    adv, fund = adv_panel(pnl.columns, tf), funding_panel(pnl.columns, pnl.index)
+    net = xs_daily(pnl, breakout_signal(pnl, "nearness", 126 * BPD[tf]), PPY[tf],
+                   rebal=BPD[tf], adv=adv, funding=fund)
     s = summarise(net, 365)
     mc = bootstrap_sharpe(net, 365, 500, bo.SEED) if s["sharpe_ann"] > 0.3 else {}
     oos = net[net.index >= OOS_START]

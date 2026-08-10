@@ -20,10 +20,10 @@ funding at every settlement), the honest result is:
 >
 > Adding a **cross-sectional** breakout sleeve (a point-in-time top-30-liquid crypto universe, ranked by
 > 52-week-high nearness, long the most broken-out / short the least, dollar-neutral) and blending it with
-> the trend leg at **risk parity** gives the final squeeze: **Sharpe +1.44, MC-P5 +0.82, max DD −11.5%**,
-> positive every year 2020-2025 (2022 crash +1.09, trendless-2025 chop +0.85). The legs correlate **+0.10**
+> the trend leg at **risk parity** gives the final squeeze: **Sharpe +1.47, MC-P5 +0.85, max DD −11.7%**,
+> positive every year 2020-2025 (2022 crash +0.90, trendless-2025 chop +0.84). The legs correlate **+0.10**
 > — the cross-sectional leg earns from *dispersion*, so it is decorrelated from the trend leg and covers
-> its regime hole. Strict OOS +0.23 (dragged by the 2026 crypto downturn; both legs are honest about it).
+> its regime hole. Strict OOS +0.19 (dragged by the 2026 crypto downturn; both legs are honest about it).
 > No universe look-ahead: membership uses trailing volume only.
 
 Three findings drive the work, each measured, not asserted:
@@ -233,17 +233,17 @@ real churn, charged). This quantifies and removes the selection bias:
 
 | TF | static top-30 Sharpe (MC-P5) | **PIT top-30 Sharpe (MC-P5)** | bias removed |
 |---|---|---|---|
-| 1d | +1.22 (+0.58) | **+0.80 (+0.20)** | −0.42 |
-| 4h | +1.48 (+0.81) | **+1.14 (+0.48)** | −0.34 |
-| 1h | +1.70 (+1.08) | **+1.02 (+0.37)** | −0.68 |
+| 1d | +1.20 (+0.56) | **+0.85 (+0.22)** | −0.35 |
+| 4h | +1.46 (+0.81) | **+1.16 (+0.47)** | −0.30 |
+| 1h | +1.69 (+1.07) | **+1.04 (+0.38)** | −0.65 |
 
 The look-ahead was worth **~0.3–0.7 Sharpe**; the honest sleeve is **~1.0–1.14 (best at 4h), MC-P5 still
 positive**, and its PIT 4h per-year is positive every year 2020-2025 (2022 +1.14, 2025 +0.73) — the
 regime-complementarity survives de-biasing. **Combined 50/50 with the time-series book** (correlation
 +0.13) at **risk parity** (`run_bo_combined.py`; each leg re-scaled to 15% vol on trailing vol, then
-equal-weighted): **Sharpe +1.44, MC-P5 +0.82, max DD −11.5%, months-in-profit 62%**, positive every year
-2020-2025 (2022 +1.09, 2025 +0.85), strict OOS **+0.23**. Marginal: trend leg alone +1.12 → +XS **+1.44**
-(+0.32 from a +0.11-correlated leg). This decorrelated two-leg crypto breakout book is the honest
+equal-weighted): **Sharpe +1.47, MC-P5 +0.85, max DD −11.7%, months-in-profit 63%**, positive every year
+2020-2025 (2022 +0.90, 2025 +0.84), strict OOS **+0.19**. Marginal: trend leg alone +1.12 → +XS **+1.47**
+(+0.34 from a +0.11-correlated leg). This decorrelated two-leg crypto breakout book is the honest
 deliverable — Sharpe ~1.4 net, robust MC 5th-pct, no universe look-ahead.
 
 **Why crypto and not equities — verified, not asserted (`run_bo_xs_signals.py`).** Running cross-sectional
@@ -271,12 +271,12 @@ trailing (PIT) vol and **equal-weighted (1/N, no performance-based selection)** 
 (breakout, a crypto-perp leg, lists from 2020). Breakout's honest series is the combined trend+ML / PIT
 cross-sectional squeeze above (`reports/breakout/bo_combined_portfolio.parquet`).
 
-- **Standalone (rescaled) Sharpe:** breakout **+1.42** — mid-pack among the eight (vol-premium **4.57**
+- **Standalone (rescaled) Sharpe:** breakout **+1.45** — mid-pack among the eight (vol-premium **4.57**
   anchors; trend 1.35, BAB 1.29, carry 1.27, gmacro 1.02, x-sect 0.89, crisis 0.49).
 - **Correlation to the book:** **+0.56** (mean *pairwise* cross-family correlation ≈ 0.06); breakout is a
   genuinely independent crypto source, not a trend-cluster duplicate.
 - **Master with vs without breakout:** Sharpe **3.52 → 3.50** — breakout's marginal (leave-one-out) add is
-  **≈ +0.03** (`breakout_delta_sharpe` in `reports/master_book_summary.json`); **vol-premium is the anchor** —
+  **≈ +0.04** (`breakout_delta_sharpe` in `reports/master_book_summary.json`); **vol-premium is the anchor** —
   removing *it* drops the book to **1.75**. Breakout earns its slot by decorrelation and crypto-regime
   coverage, not by lifting the headline Sharpe.
 - **Marginal-contribution curve** (added in standalone-descending order): vol-premium 4.57 → +breakout 4.49 →
@@ -333,6 +333,7 @@ python scripts/breakout/run_bo_xs_tf.py       # cross-sectional across timeframe
 python scripts/breakout/run_bo_xs_big.py      # expanded ~800-perp universe, 3 sub-universes (§7b)
 python scripts/breakout/run_bo_xs_liq.py      # liquidity-tier sweep (the hump) (§7b)
 python scripts/breakout/run_bo_xs_pit.py      # point-in-time top-30, look-ahead-free (§7b)
+python scripts/breakout/run_bo_xs_costs.py    # XS cost decomposition: impact + funding (§12)
 python scripts/breakout/run_bo_xs_signals.py  # momentum vs breakout, same harness (§7b)
 python scripts/breakout/run_bo_combined.py    # final risk-parity two-leg squeeze (§7b)
 python scripts/breakout/run_bo_contribution.py # marginal contribution to the multi-family book (§7c)
@@ -459,10 +460,37 @@ At the master book it is invisible — breakout is one of six families in a book
 contribution moves +0.027 → +0.033. The sleeve got better; the book did not notice. Both are reported
 because only quoting the first would be the flattering half.
 
-The **cross-sectional leg keeps the all-perp fill**, and not because it was checked and preferred: its
-harness (`run_bo_xs_tf.xs_daily`) charges a flat 6bps/side and **no funding at all**, so there is no
-funding for a venue move to save. Pricing that leg's funding is the prerequisite, and it would lower
-its published Sharpe, not raise it — a separate piece of work, named here rather than quietly skipped.
+**The cross-sectional leg now pays the same cost model** (`run_bo_xs_costs.py`, then the fix in
+`xs_daily`). It used to charge a flat 6bps of turnover and nothing else — no √-impact, which
+`src/config.py` makes mandatory precisely so the illiquid tail of a panel cannot trade at the majors'
+price, and no funding, which `xsect.xs_backtest` explicitly tells crypto callers to charge separately.
+Adding them one at a time on the point-in-time top-30:
+
+| 4h leg | CAGR | maxDD | months+ | Sharpe | OOS |
+|---|---|---|---|---|---|
+| as shipped (flat 6bps, no funding) | 19.3% | −17.9% | 61% | +1.14 | +0.09 |
+| + √-impact from ADV | 18.7% | −18.0% | 61% | +1.11 | +0.07 |
+| + funding at every settlement | 20.3% | −18.0% | 59% | +1.19 | +0.05 |
+| **both — the book's own model** | 19.6% | −18.1% | 59% | **+1.16** | +0.03 |
+
+**Funding on this leg is a credit, not a cost, and that was the opposite of the prediction.** The
+reasoning going in was that a breakout signal buys what funding is most expensive on, so both legs
+should pay. Measured on the names the book actually holds, the **short** book carries the higher rate:
+**+10.2%/yr against the long book's +6.0%** on 1d (+13.8% vs +12.9% on 4h), for a net **+4%/yr**
+collected — shorting the laggards pays more than being long the leaders costs, because funding on
+beaten-down alts stays stubbornly positive. It is a mean, not a median: only 39% of 4h bars are
+positive, so the credit arrives in tails.
+
+Net of both corrections the leg moves **+0.01 to +0.05** on the PIT universes and **−0.01 to −0.03**
+on the static ones, the combined sleeve goes **+1.44 → +1.47** (MC-P5 +0.82 → +0.85) and its held-out
+block **+0.23 → +0.19**. The master book does not move: 5/5 out-of-sample, 4/5 full window, unchanged
+on every one of the five. A correctness fix that neither rescues nor damages anything is the right
+shape — it removes an incentive, not a result.
+
+The venue split is **not** carried over to this leg. It gains +0.04 in-sample and *loses* out of
+sample (+0.03 → +0.00 at 4h), and the mechanism is much weaker than on the time-series leg: the
+funding credit sits on the **short** book, which the split leaves on perps anyway, so all it does is
+move the long book to spot and pay 5 extra bps per turn on a book that rebalances daily.
 
 **The history is the more valuable half.** 2017-08→2019-12 is data no version of this construction has
 been fitted on, and the early spot cross-section is *less* survivorship-biased than any perp universe:

@@ -22,7 +22,7 @@ works only on the block it is scored on is not a book, but not a second scorecar
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026), not scored |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **3.54** ✓ | 3.91 |
+| Sharpe, net, 2.5–4.0 | **3.53** ✓ | 3.92 |
 | months in profit ≥ 80% | **80.8%** ✓ | 81.4% |
 | max drawdown ≤ 15% | **−5.7%** ✓ | −8.3% |
 | longest losing streak ≤ 2 mo | **2** ✓ | 3 |
@@ -32,8 +32,8 @@ works only on the block it is scored on is not a book, but not a second scorecar
 Over fifteen years the book has one **3-month** losing run, which is longer than the block's
 target allows; it is stated here rather than dropped, and §6d-quater gives the window.
 
-On the brief's $500k of sizing capital that is **$3.15M** of P&L, **~$202k/yr**
-(+40.5%/yr not reinvested, +49.0%/yr compounded). Positive in **16 of 16 calendar years**.
+On the brief's $500k of sizing capital that is **$3.16M** of P&L, **~$202k/yr**
+(+40.5%/yr not reinvested, +49.1%/yr compounded). Positive in **16 of 16 calendar years**.
 Mean pairwise correlation between families **≈ 0.07**.
 
 **The composition was fixed before the sleeve-level gate below, and has not been re-picked since.** Trend
@@ -58,7 +58,7 @@ risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free 
 | [short-vol / VRP](docs/strategies/VOLPREM.md) | selling insurance against volatility across 18 Cboe underlyings | +7.09 | **67%** |
 | [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
 | [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 7% |
-| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.42 | 7% |
+| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.45 | 7% |
 | [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
 | [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the others bleed | +0.38 | 4% |
 
@@ -110,7 +110,7 @@ no key, offline, seconds each:
 
 | command | what it recomputes | expected |
 |---|---|---|
-| `make master` | the whole portfolio, from scratch | full **Sharpe 3.91** (4/5), OOS **3.54** (5/5), −8.3% max-DD, 6 families |
+| `make master` | the whole portfolio, from scratch | full **Sharpe 3.92** (4/5), OOS **3.53** (5/5), −8.3% max-DD, 6 families |
 | `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised worst month is what binds first, at 1.15× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
@@ -157,7 +157,7 @@ per-family write-ups ([docs/strategies/](docs/strategies/)) — six that ship an
 ```bash
 # 1. Reproduce the headline OFFLINE — no key, no download, ~seconds. Works on a fresh clone as-is:
 #    because reports/ is committed, run_master_book.py simply reads the six family series already
-#    there and re-assembles the risk-parity portfolio (Sharpe 3.91 full / 3.54 OOS).
+#    there and re-assembles the risk-parity portfolio (Sharpe 3.92 full / 3.53 OOS).
 make master
 
 # 2. Rebuild the pipeline from raw data — discovery, the crisis/gmacro diversifier legs, validation,

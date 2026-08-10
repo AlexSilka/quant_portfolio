@@ -190,6 +190,7 @@ breakout:
 	$(PY) scripts/breakout/run_bo_xs_big.py
 	$(PY) scripts/breakout/run_bo_xs_liq.py
 	$(PY) scripts/breakout/run_bo_xs_pit.py
+	$(PY) scripts/breakout/run_bo_xs_costs.py
 	$(PY) scripts/breakout/run_bo_combined.py
 	$(PY) scripts/breakout/run_bo_contribution.py
 	$(PY) scripts/breakout/run_bo_spot.py
