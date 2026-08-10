@@ -16,11 +16,12 @@ The paid leg is OHLC realised variance (intraday path + gap), not close-to-close
 always-short, uncapped, vol-targeted 15%, net of per-leg vega costs, t+2; the book is their equal-risk
 average re-targeted to 15%. Annualised at 252 trading days.
 
-The deployed series (`ret_gated`) carries TWO regime gates, ANDed. The shared VIX term structure is the
-right read for the five equity-index sleeves and says nothing about the other thirteen, which sell
-variance on metals, oil, duration, EM and single names — so each sleeve also gates on its own implied
-vol against its own three-month level (`own_curve_gate`). Gating only on the VIX left those thirteen
-exposed to any vol event the S&P did not share, which is what 2026 was.
+The deployed series (`ret_gated`) carries TWO regime gates, ANDed, and each is pointed only at what it
+can see. Every sleeve gates on its own implied vol against its own three-month level (`own_curve_gate`),
+because the VIX says nothing about metals, oil or duration — leaving those sleeves on the VIX alone is
+what 2026 cost. The shared VIX term structure then reaches the thirteen EQUITY sleeves whose volatility
+is the same factor it measures (VIX_GATE_CLASSES) and stops at gold, silver, gold-miners, oil and
+duration: on those five it bought no drawdown at all and cost return and a month of losing streak.
 
     python scripts/volprem/run_vol_premium_book.py
 """
@@ -95,6 +96,16 @@ def implied(src, sym):
 COST_BY_CLASS = {"crypto": 1.0, "eq_index": 1.0, "single": 2.5, "intl": 2.0,
                  "commodity": 2.0, "rates": 1.5, "fx": 1.5}
 
+# The sleeve classes the shared VIX gate is allowed to reach. The VIX is the volatility of the S&P 500,
+# so it is a live regime read for anything whose vol is that same factor — the index sleeves, the US
+# single names that make up the index, and the international equity ETFs that move with it. It is not a
+# read on gold, silver, gold-miners, oil or duration: those five sell variance on markets the VIX cannot
+# see, which is exactly why `own_curve_gate` exists. Gating them on it anyway was half a fix — it bought
+# nothing (leg drawdown is -15.8% with or without) and cost 5 points of leg CAGR and the book's
+# full-window losing streak, 2 months -> 3. The boundary is categorical, not a tuned cell: gate on the
+# VIX only what the VIX is the volatility of. Measured over the whole reach ladder in run_gate_ablation.py.
+VIX_GATE_CLASSES = frozenset({"eq_index", "single", "intl"})
+
 
 def naive_df(df):
     idx = pd.DatetimeIndex(df.index)
@@ -132,7 +143,7 @@ def book_from(rets: dict) -> pd.Series:
     return vt(raw, PPY_BOOK)
 
 
-def gated_leg(src, sym, und, cls, ppy, gate: pd.Series, own_curve: bool = True) -> pd.Series:
+def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool = True) -> pd.Series:
     """One sleeve under BOTH regime gates, with the two things a gate costs kept honest:
 
       * the switch is PAID — flattening the swap and putting it back on crosses the same vega spread a
@@ -142,11 +153,13 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series, own_curve: bool = True) 
         stretches as low volatility and levers the leg up on re-entry — free leverage exactly when the
         gate steps back in, which is an accounting artifact, not an edge.
 
-    Two gates, because one of them only speaks for five of the eighteen sleeves. `gate` is the shared VIX
-    term structure — the right signal for the equity-index legs and blind to the other thirteen, which
-    sell variance on metals, oil, duration, EM and single names. `own_curve_gate` gives each sleeve the
-    same contango test on its OWN implied vol, so a metals sleeve stands down on a metals vol event even
-    while the VIX curve is calm. They compose with AND: both must say contango.
+    Two gates, because neither speaks for all eighteen sleeves. `gate` is whatever regime series the
+    caller hands in — `gated_book` passes the shared VIX term structure to the thirteen equity sleeves
+    it can read and an always-live series to the five that sell metals, oil and duration (see
+    VIX_GATE_CLASSES). `own_curve_gate` gives every sleeve the same contango test on its OWN implied
+    vol, so a metals sleeve stands down on a metals vol event while the VIX curve is calm. They compose
+    with AND: both must say contango. This function stays mechanical — it applies the gate it is given
+    and does not decide reach, so a study can hand it any coverage rule and be scored on that rule.
 
     `own_curve=False` drops the per-sleeve half. The shipped leg keeps both — the flag exists so a
     candidate study can attribute a lift to the VIX rule it names, instead of scoring every VIX variant
@@ -158,7 +171,10 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series, own_curve: bool = True) 
     base = {"timed": False, "var_cap": 1e9, "bars": bars,
             "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5)}
     ungated = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
-    both = gate.reindex(px.index).ffill().fillna(0.0)
+    # `gate=None` means this sleeve has no shared regime signal at all — built on the sleeve's own index
+    # so there is no fill question, rather than a wide constant series that would read as flat wherever
+    # it fails to cover the bars.
+    both = pd.Series(1.0, index=px.index) if gate is None else gate.reindex(px.index).ffill().fillna(0.0)
     if own_curve:
         both = both * own_curve_gate(iv, px.index)
     net = vp.short_vol_book(px, iv, ppy=ppy, gate=both, **base)["net"]
@@ -167,13 +183,17 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series, own_curve: bool = True) 
 
 
 def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> pd.Series:
-    """The deployed (gated) book. The re-entry artifact bites a second time at book level — `vt` would
-    re-target the equal-risk mean on ITS trailing vol, which the gated flat stretches deflate — so the
-    book's scale is taken from the ungated book and applied to the gated one."""
+    """The deployed (gated) book, and where the shared gate's REACH is decided: `gate` goes to the
+    sleeves in VIX_GATE_CLASSES, the rest run on their own curve alone against an always-live series.
+
+    The re-entry artifact bites a second time at book level — `vt` would re-target the equal-risk mean
+    on ITS trailing vol, which the gated flat stretches deflate — so the book's scale is taken from the
+    ungated book and applied to the gated one."""
     gat = {}
     for src, sym, und, cls, ppy in UNIVERSE:
         if sym in rets_ungated:
-            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate, own_curve=own_curve)
+            gat[sym] = gated_leg(src, sym, und, cls, ppy,
+                                 gate if cls in VIX_GATE_CLASSES else None, own_curve=own_curve)
     raw_u = pd.DataFrame(rets_ungated).sort_index().mean(axis=1, skipna=True).dropna()
     raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
     scale = (TVOL / (raw_u.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)
@@ -292,19 +312,20 @@ def main():
     pdf.to_csv(VOLPREM_DIR / "volprem_book_sleeves.csv", index=False)
     # Publish both the raw premium (`ret`) and the deployed series (`ret_gated`): the regime gating is part
     # of THIS strategy's signal — validated as timing, not de-risking — so it ships from here, not the book
-    # assembler. Two gates compose with AND: the shared VIX term structure (flat unless BOTH curve segments
-    # are in contango — the regime that precedes the systemic short-vol crash), and each sleeve's own curve,
-    # because the VIX speaks for the five equity-index sleeves and is blind to the thirteen that sell metals,
-    # oil, duration, EM and single-name variance. `ret_gated` is rebuilt through the sleeves rather than
-    # multiplied onto `ret`, so every switch pays the vega spread. The raw column stays intact: the master
-    # reads `ret_gated`, run_ml_book_contribution reads `ret`.
+    # assembler. Two gates compose with AND: each sleeve's own curve everywhere, and the shared VIX term
+    # structure (flat unless BOTH curve segments are in contango — the regime that precedes the systemic
+    # short-vol crash) on the thirteen equity sleeves whose vol the VIX actually measures. `ret_gated` is
+    # rebuilt through the sleeves rather than multiplied onto `ret`, so every switch pays the vega spread.
+    # The raw column stays intact: the master reads `ret_gated`, run_ml_book_contribution reads `ret`.
     gate = short_vol_gate(book.index)
     deployed = gated_book(rets, gate)
     own_live = np.mean([own_curve_gate(naive_dt(implied(s, y)), underlying_bars(u, c)["close"].index).mean()
                         for s, y, u, c, _ in UNIVERSE])
+    n_vix = sum(cls in VIX_GATE_CLASSES for *_, cls, _ in UNIVERSE)
     print(f"\n  gates: VIX curve live {gate.mean():.1%} of days, {int((gate.diff().abs() > 0).sum())} switches "
           f"({(gate.diff().abs() > 0).sum() / ((gate.index[-1] - gate.index[0]).days / 365.25):.1f}/yr, spread "
-          f"charged); own-curve live {own_live:.1%} of days per sleeve (mean over the 18)")
+          f"charged), applied to {n_vix}/{len(UNIVERSE)} sleeves ({', '.join(sorted(VIX_GATE_CLASSES))}); "
+          f"own-curve live {own_live:.1%} of days per sleeve (mean over the 18)")
     sg = summarise(deployed, PPY_BOOK)
     print(f"  gated book:      Sharpe {sg['sharpe_ann']:+.2f}  maxDD {sg['max_dd']:+.1%}  "
           f"skew {deployed.skew():+.2f}  months+ {sg['months_in_profit']:.0%}")

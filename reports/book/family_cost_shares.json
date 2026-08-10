@@ -35,14 +35,14 @@
   },
   "from_deep_dives": {
     "breakout": {
-      "breakeven_cost_mult": 10.4,
-      "cost_share_of_gross_pnl": 0.0962,
+      "breakeven_cost_mult": 7.9,
+      "cost_share_of_gross_pnl": 0.1266,
       "cost_fragile": false,
       "source": "breakout/bo_final_summary.json"
     },
     "x-sect": {
-      "breakeven_cost_mult": 6.4,
-      "cost_share_of_gross_pnl": 0.1562,
+      "breakeven_cost_mult": 7.2,
+      "cost_share_of_gross_pnl": 0.1389,
       "cost_fragile": false,
       "source": "xs/xs_summary.json"
     },

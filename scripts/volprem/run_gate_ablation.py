@@ -6,14 +6,20 @@ the first speaks only for the five equity-index sleeves. That raises the obvious
 sleeve has a gate that reads its own volatility, is the shared one still earning its slot, or is it now
 just standing thirteen non-equity sleeves down on a market they do not trade?
 
-Four arms, each built by the SHIPPED `gated_leg`/`book_of` construction with nothing swapped but the gate,
-so the numbers are comparable to the published series (the `both` arm is asserted to reproduce
-`volprem_book.parquet:ret_gated` exactly):
+Seven arms, each built by the SHIPPED `gated_leg`/`book_of` construction with nothing swapped but the
+gate, so the numbers are comparable to the published series (whichever arm carries the shipped reach is
+asserted to reproduce `volprem_book.parquet:ret_gated` exactly):
 
   ungated     no gate at all — the always-short baseline
-  vix         shared VIX term structure only            (what shipped before the coverage fix)
-  own         per-sleeve own curve only, NO shared gate (the arm this question is about)
-  both        own AND vix                               (SHIPPED)
+  vix         shared VIX term structure only, all 18    (what shipped before the coverage fix)
+  own         per-sleeve own curve only, NO shared gate
+  vix_eq      own curve + shared VIX on the 5 index sleeves
+  vix_us      own curve + shared VIX on index + US single names (10)
+  vix_equity  own curve + shared VIX on all 13 equity sleeves     (SHIPPED)
+  both        own curve + shared VIX on all 18, incl. metals/oil/duration
+
+The middle four walk the shared gate's reach out class by class, which is the question the ladder was
+built for: the VIX is the volatility of the S&P 500, so how far from equity does it stay informative?
 
 Judged on the whole metric set, not Sharpe: Sharpe is blind to the money a gate costs, because every leg
 is vol-targeted — halving time-in-market can leave the ratio flat while cutting compounded return. So CAGR,
@@ -38,13 +44,12 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import own_curve_gate, short_vol_gate  # noqa: E402
 
 from .run_gate_coverage import book_of  # noqa: E402
-from .run_vol_premium_book import (PPY_BOOK, UNIVERSE, gated_leg, implied,  # noqa: E402
-                                   naive_dt, underlying_bars)
+from .run_vol_premium_book import (PPY_BOOK, UNIVERSE, VIX_GATE_CLASSES, gated_leg,  # noqa: E402
+                                   implied, naive_dt, underlying_bars)
 
 WINDOW = "2011-01-01"       # the master book's reporting window; also where VIX9D starts, so the shared
                             # gate is only a live signal from here (before it abstains and every arm agrees)
 OOS = OOS_START.tz_localize(None) if OOS_START.tz is not None else OOS_START
-ALWAYS = pd.Series(1.0, index=pd.date_range("2004-01-01", "2027-01-01", freq="D"))   # the "no shared gate" gate
 EQ, US, INTL = {"eq_index"}, {"eq_index", "single"}, {"eq_index", "single", "intl"}
 ALL = {"eq_index", "single", "intl", "commodity", "rates"}
 
@@ -131,8 +136,8 @@ def table(title: str, cards: dict[str, dict]) -> None:
 # ── master-book re-assembly with one leg swapped, mirroring run_ml_book_contribution.assemble ──────
 def book_card(volprem: pd.Series) -> dict:
     from src.config import BOOK_LEVERAGE  # noqa: PLC0415
-    from scripts.run_master_book import (FAMILIES, OOS as MB_OOS, START_REPORT, load,  # noqa: PLC0415
-                                         rescale, risk_overlay, scorecard)
+    from scripts.run_master_book import (FAMILIES, OOS as MB_OOS, START_REPORT, book_stack,  # noqa: PLC0415
+                                         load, rescale, risk_overlay, scorecard)
     raw = {}
     for lab, f, c in FAMILIES:
         s = volprem.rename(lab) if lab == "volprem" else load(lab, f, c)
@@ -141,7 +146,7 @@ def book_card(volprem: pd.Series) -> dict:
     df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
     df = df[df.index >= pd.Timestamp(START_REPORT)]
     df = df[df.notna().sum(axis=1) >= 2]
-    managed = risk_overlay(df.mean(axis=1, skipna=True).rename("ret"), leverage=BOOK_LEVERAGE)[0]
+    managed = risk_overlay(book_stack(df), leverage=BOOK_LEVERAGE)[0]
     full, oos = scorecard(managed), scorecard(managed[managed.index >= MB_OOS])
     return {"full": full, "oos": oos, "cagr_full": cagr(managed),
             "cagr_oos": cagr(managed[managed.index >= MB_OOS])}
@@ -153,7 +158,7 @@ def main() -> None:
 
     ungated, own_g, vix_g = {}, {}, {}
     for src, sym, und, cls, ppy in UNIVERSE:
-        ungated[sym] = gated_leg(src, sym, und, cls, ppy, ALWAYS, own_curve=False)
+        ungated[sym] = gated_leg(src, sym, und, cls, ppy, None, own_curve=False)
         idx = underlying_bars(und, cls).index
         own_g[sym] = own_curve_gate(naive_dt(implied(src, sym)), idx)
         vix_g[sym] = vix.reindex(idx).ffill().fillna(0.0)
@@ -161,7 +166,7 @@ def main() -> None:
     legs, books, gate_of = {}, {}, {}
     for arm, (reach, own) in ARMS.items():
         legs[arm] = {sym: (ungated[sym] if arm == "ungated" else
-                           gated_leg(src, sym, und, cls, ppy, vix if cls in reach else ALWAYS, own_curve=own))
+                           gated_leg(src, sym, und, cls, ppy, vix if cls in reach else None, own_curve=own))
                      for src, sym, und, cls, ppy in UNIVERSE}
         books[arm] = book_of(legs[arm], ungated)
         one = {sym: pd.Series(1.0, index=g.index) for sym, g in vix_g.items()}    # neutral gate factor
@@ -171,13 +176,15 @@ def main() -> None:
         print(f"  {arm:10s} built ({len(legs[arm])} sleeves, shared gate on "
               f"{sum(cls in reach for *_, cls, _ in UNIVERSE)}/{len(UNIVERSE)})")
 
-    # The `both` arm must BE the published series, or this whole ablation is measuring something else.
+    # Whichever arm carries the SHIPPED reach must BE the published series, or this whole ablation is
+    # measuring something else. Resolved from VIX_GATE_CLASSES so the check follows what actually ships.
+    shipped = next(a for a, (reach, own) in ARMS.items() if own and reach == set(VIX_GATE_CLASSES))
     published = pd.read_parquet(VOLPREM_DIR / "volprem_book.parquet")["ret_gated"].dropna()
     pix = pd.DatetimeIndex(published.index)
     published.index = (pix.tz_convert("UTC").tz_localize(None) if pix.tz is not None else pix).normalize()
-    common = books["both"].index.intersection(published.index)
-    err = float((books["both"].reindex(common) - published.reindex(common)).abs().max())
-    print(f"\n  reconstruction check: max|both - published ret_gated| = {err:.2e} over {len(common)} days"
+    common = books[shipped].index.intersection(published.index)
+    err = float((books[shipped].reindex(common) - published.reindex(common)).abs().max())
+    print(f"\n  reconstruction check: max|{shipped} - published ret_gated| = {err:.2e} over {len(common)} days"
           f"{'  OK' if err < 1e-12 else '  *** MISMATCH — numbers below are not the shipped leg ***'}")
 
     def since(gates, start):
@@ -230,20 +237,20 @@ def main() -> None:
 
     # --- decorrelation is why the leg is in the book at all, so a gate must not spend it ----------------
     print("\n=== CORRELATION ===")
-    from scripts.run_master_book import FAMILIES, load, rescale  # noqa: PLC0415
+    from scripts.run_master_book import FAMILIES, book_stack, load, rescale  # noqa: PLC0415
     legs_rest = {lab: load(lab, f, c) for lab, f, c in FAMILIES if lab != "volprem"}
     rest = pd.DataFrame({k: rescale(v) for k, v in legs_rest.items() if v is not None}).sort_index()
-    rest = rest[rest.index >= WINDOW].mean(axis=1, skipna=True).dropna()
+    rest = book_stack(rest[rest.index >= WINDOW]).dropna()
     for a in ARMS:
         j = w[a].index.intersection(rest.index)
         print(f"  {a:8s} corr to the other 7 families {float(w[a].reindex(j).corr(rest.reindex(j))):+.3f}"
-              f"   corr to shipped 'both' {float(w[a].corr(w['both'])):+.3f}")
+              f"   corr to shipped '{shipped}' {float(w[a].corr(w[shipped])):+.3f}")
 
-    # --- is own-vs-both a real difference or a coin flip? paired moving-block bootstrap -----------------
-    print("\n=== IS own-vs-both REAL? (moving-block bootstrap, 21d blocks, 1000 draws, paired days) ===")
+    # --- is dropping the shared gate a real difference or a coin flip? paired moving-block bootstrap ----
+    print(f"\n=== IS own-vs-{shipped} REAL? (moving-block bootstrap, 21d blocks, 1000 draws, paired days) ===")
     rng = np.random.default_rng(SEED)
-    j = w["own"].index.intersection(w["both"].index)
-    A, B = w["own"].reindex(j).to_numpy(), w["both"].reindex(j).to_numpy()
+    j = w["own"].index.intersection(w[shipped].index)
+    A, B = w["own"].reindex(j).to_numpy(), w[shipped].reindex(j).to_numpy()
     nb, blk = len(j) // 21, 21
     d_sh, d_mu = [], []
     for _ in range(1000):
@@ -252,18 +259,18 @@ def main() -> None:
         a, b = A[pick], B[pick]
         d_sh.append(np.sqrt(PPY_BOOK) * (a.mean() / a.std(ddof=1) - b.mean() / b.std(ddof=1)))
         d_mu.append((a.mean() - b.mean()) * PPY_BOOK)
-    for nm, arr, f in (("Sharpe(own)-Sharpe(both)", np.array(d_sh), "{:+.2f}"),
-                       ("ann mean(own)-mean(both)", np.array(d_mu), "{:+.1%}")):
-        print(f"  {nm:26s} p5 {f.format(np.percentile(arr, 5))}  median {f.format(np.median(arr))}  "
-              f"p95 {f.format(np.percentile(arr, 95))}   P(own>both) {float((arr > 0).mean()):.0%}")
+    for nm, arr, f in ((f"Sharpe(own)-Sharpe({shipped})", np.array(d_sh), "{:+.2f}"),
+                       (f"ann mean(own)-mean({shipped})", np.array(d_mu), "{:+.1%}")):
+        print(f"  {nm:30s} p5 {f.format(np.percentile(arr, 5))}  median {f.format(np.median(arr))}  "
+              f"p95 {f.format(np.percentile(arr, 95))}   P(own>shipped) {float((arr > 0).mean()):.0%}")
 
     # --- per-year, because a gate that pays in one crisis and bleeds every other year is not a gate ----
     print(f"\n=== PER-YEAR RETURN ({WINDOW}+) ===")
     yrs = pd.DataFrame({a: (1 + w[a]).resample("YE").prod() - 1 for a in ARMS})
     yrs.index = yrs.index.year
-    print(f"  {'year':6s}" + "".join(f"{a:>12s}" for a in ARMS) + f"{'own - both':>14s}")
+    print(f"  {'year':6s}" + "".join(f"{a:>12s}" for a in ARMS) + f"{f'own - {shipped}':>16s}")
     for y, r in yrs.iterrows():
-        print(f"  {y:<6d}" + "".join(f"{r[a]:>+11.1%} " for a in ARMS) + f"{r['own'] - r['both']:>+13.1%}")
+        print(f"  {y:<6d}" + "".join(f"{r[a]:>+11.1%} " for a in ARMS) + f"{r['own'] - r[shipped]:>+15.1%}")
 
     # --- book level: the five targets are what the leg is actually judged on -------------------------
     print("\n=== MASTER BOOK with each volprem arm (8 families, book risk overlay, shipped leverage) ===")
