@@ -45,7 +45,14 @@ WINDOW = "2011-01-01"       # the master book's reporting window; also where VIX
                             # gate is only a live signal from here (before it abstains and every arm agrees)
 OOS = OOS_START.tz_localize(None) if OOS_START.tz is not None else OOS_START
 ALWAYS = pd.Series(1.0, index=pd.date_range("2004-01-01", "2027-01-01", freq="D"))   # the "no shared gate" gate
-ARMS = {"ungated": (ALWAYS, False), "vix": (None, False), "own": (ALWAYS, True), "both": (None, True)}
+EQ, US, INTL = {"eq_index"}, {"eq_index", "single"}, {"eq_index", "single", "intl"}
+ALL = {"eq_index", "single", "intl", "commodity", "rates"}
+
+# (asset classes the SHARED VIX gate reaches, per-sleeve own-curve gate on?). The shipped leg points the
+# VIX at all eighteen sleeves, so metals, oil and duration stand down on a market they do not trade —
+# these arms walk the shared gate's reach back class by class to find where it stops being informative.
+ARMS = {"ungated": (set(), False), "vix": (ALL, False), "own": (set(), True),
+        "vix_eq": (EQ, True), "vix_us": (US, True), "vix_equity": (INTL, True), "both": (ALL, True)}
 
 
 def cagr(s: pd.Series) -> float:
@@ -142,7 +149,7 @@ def book_card(volprem: pd.Series) -> dict:
 
 def main() -> None:
     vix = short_vol_gate(pd.DatetimeIndex(sorted(set(underlying_bars("SPY", "eq_index").index))))
-    print(f"building 4 gate arms x {len(UNIVERSE)} sleeves (shipped construction, gate is the only swap)")
+    print(f"building {len(ARMS)} gate arms x {len(UNIVERSE)} sleeves (shipped construction, gate is the only swap)")
 
     ungated, own_g, vix_g = {}, {}, {}
     for src, sym, und, cls, ppy in UNIVERSE:
@@ -152,14 +159,17 @@ def main() -> None:
         vix_g[sym] = vix.reindex(idx).ffill().fillna(0.0)
 
     legs, books, gate_of = {}, {}, {}
-    for arm, (gate, own) in ARMS.items():
+    for arm, (reach, own) in ARMS.items():
         legs[arm] = {sym: (ungated[sym] if arm == "ungated" else
-                           gated_leg(src, sym, und, cls, ppy, vix if gate is None else gate, own_curve=own))
+                           gated_leg(src, sym, und, cls, ppy, vix if cls in reach else ALWAYS, own_curve=own))
                      for src, sym, und, cls, ppy in UNIVERSE}
         books[arm] = book_of(legs[arm], ungated)
-        gate_of[arm] = ({sym: own_g[sym] * vix_g[sym] for sym in own_g} if arm == "both" else
-                        own_g if arm == "own" else vix_g if arm == "vix" else None)
-        print(f"  {arm:8s} built ({len(legs[arm])} sleeves)")
+        one = {sym: pd.Series(1.0, index=g.index) for sym, g in vix_g.items()}    # neutral gate factor
+        gate_of[arm] = None if arm == "ungated" else {
+            sym: (own_g[sym] if own else one[sym]) * (vix_g[sym] if cls in reach else one[sym])
+            for _, sym, _, cls, _ in UNIVERSE}
+        print(f"  {arm:10s} built ({len(legs[arm])} sleeves, shared gate on "
+              f"{sum(cls in reach for *_, cls, _ in UNIVERSE)}/{len(UNIVERSE)})")
 
     # The `both` arm must BE the published series, or this whole ablation is measuring something else.
     published = pd.read_parquet(VOLPREM_DIR / "volprem_book.parquet")["ret_gated"].dropna()
