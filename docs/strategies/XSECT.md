@@ -9,6 +9,39 @@ diversifier against the time-series trend book, not a re-labelled copy of it.
 
 ---
 
+## Perp funding was never charged — and it is a credit
+
+`scripts/xs/portfolio.py` is the writer the build actually runs (`make xs`) and the one that produced
+the committed `reports/xs/xs_book.parquet`; its crypto legs trade **perps**. It passed `cost_bps` and
+an ADV panel to `xs_backtest` but never charged funding, although that function's own docstring says
+crypto callers must: "crypto perps pay funding, not borrow, so those callers leave
+borrow_bps_annual=0 and charge funding separately." Fixed 2026-08-10; funding is now binned onto each
+panel's bar grid so no 8h settlement is dropped inside a 1d bar, and coverage is 100% of names on all
+three panels.
+
+**It pays the book, it does not cost it** — the opposite of the obvious guess, and the same sign the
+breakout family's cross-sectional leg shows ([BREAKOUT.md §12](BREAKOUT.md)). Momentum is long the
+winners, where funding is dearest; but measured on the names actually held, the **short** book carries
+more, because beaten-down alts keep stubbornly positive funding:
+
+| leg | long book | short book | net | Sharpe | CAGR |
+|---|---|---|---|---|---|
+| crypto_1d | +3.3%/yr | **+8.6%/yr** | +5.3% | 0.79 → **0.93** | 12.3% → 15.0% |
+| crypto_4h | +6.1%/yr | **+10.4%/yr** | +4.3% | 0.41 → **0.58** | 5.9% → 9.0% |
+| crypto_1h | +7.3%/yr | **+10.1%/yr** | +2.8% | 0.62 → **0.75** | 9.4% → 12.0% |
+
+Family level: crypto book **+0.67 → +0.83**, cross-asset book **+0.81 → +0.88**, max DD −18.7% →
+−17.6%. The family had been *under*-stated, not flattered.
+
+**A second writer exists and is not the one that runs.** `scripts/xs/build_xs_book.py` builds a
+different construction (crypto on the **spot** panel, idiosyncratic momentum) into the same
+`xs_book.parquet`. It is in no Makefile target and no orchestrator; the committed artifact's
+composition (`crypto_1d/4h/1h + stocks_broad`, window 2012-01-03..2026-08-04) matches
+`portfolio.py`'s and not its. Treat `portfolio.py` as canonical. If the spot construction is ever
+made canonical instead, note that it has the mirror-image defect: a spot short must borrow the coin,
+and that leg passes no `borrow_bps_annual` (see `CRYPTO_SPOT_BORROW_BPS_ANNUAL`, ~2.9%/yr live).
+
+
 ## 1. Headline
 
 Cross-sectional momentum is a **real but modest, market-neutral edge** — a decorrelated
@@ -147,7 +180,7 @@ weak as it is, is the only real second source.
 **residual (idiosyncratic) momentum** — the same cross-sectional ranking on the market-beta-neutralised
 residual (BHM), monthly rebalance on the 300-name PIT spot panel — through the full funnel and found it a
 steadier, lower-turnover crypto momentum (net Sharpe ≈ **+0.6**) that lifts the assembled book's
-out-of-sample consistency at no return cost. That is the construction `build_xs_book.crypto_spot_xsect`
+out-of-sample consistency at no return cost. That construction lives in `build_xs_book.crypto_spot_xsect`, which is **not** the writer the build runs — see the funding section above
 ships; the equity leg keeps the risk-adjusted-momentum engine above. The two legs (≈0.00 correlated) are
 risk-parity combined into the family series the master book reads.
 
