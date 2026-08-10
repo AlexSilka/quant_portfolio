@@ -1001,7 +1001,8 @@ proxy is not a headline.
 
 ## 6c-ter. The hedge was being paid an earner's wage (§12)
 
-The crisis-alpha leg had gone quiet — standalone Sharpe **{{crisis_solo_sharpe}}** over 21 years,
+The crisis-alpha leg had gone quiet — the full deep-dive is [CRISIS.md](docs/strategies/CRISIS.md) —
+standalone Sharpe **{{crisis_solo_sharpe}}** over 21 years,
 **{{crisis_solo_cagr}}** a year, **{{crisis_solo_oos_sharpe}}** on the frozen block. Two questions had to be
 separated before touching it: how much of that is this construction, and how much is the strategy class.
 
@@ -1237,9 +1238,6 @@ published.
 
 ## 6d-quater. Thirteen of the eighteen short-vol sleeves were gated on a market they do not trade (§12)
 
-*Closed in two halves: every sleeve now gates on its own curve, and the shared VIX gate was pulled back
-off the five sleeves whose market it cannot see.*
-
 **The defect.** The short-vol leg stands down on the VIX term structure — the volatility of the S&P 500.
 Five of its eighteen sleeves sell equity-index variance. The other thirteen sell it on gold, silver,
 gold-miners, oil, duration, EM ETFs and single names, and none of their volatility is visible in the VIX.
@@ -1259,27 +1257,30 @@ Cboe publishes no GVZ3M or OVX3M, so the far leg is the sleeve's own trailing 63
 being the span a 3M vol index covers — and the threshold is 1.0, the contango boundary the VIX gate already
 used. Both gates must agree. Neither constant is fitted here.
 
-**The other half of the same fix: the shared gate now stops where the VIX stops being a signal.** Giving
-every sleeve its own curve still left the VIX pointed at all eighteen, so gold, silver, gold-miners, oil and
-duration went on standing down on an equity-market read. Walking that reach out one asset class at a time
-(`make gate-ablation`) is monotone with no knife-edge cell — the leg trades CAGR for tail all the way — and
-the trade stops paying exactly at the equity boundary: extending the VIX past the thirteen equity sleeves to
-the last five leaves leg drawdown at −15.8% and book drawdown at −7.7%, unchanged, while costing five points
-of leg CAGR. So the VIX now gates the thirteen sleeves whose volatility is the factor it measures, and the
-five that trade metals, oil and duration run on their own curve alone. The boundary is categorical rather
-than tuned: gate on the VIX only what the VIX is the volatility of.
-
 | short-vol book, 2011+ | Sharpe | max DD | block Sharpe | 2026 |
 |---|---|---|---|---|
 | always short, ungated | +4.23 | −42.9% | +1.68 | +6.1% |
-| + VIX term structure alone, on all 18 | +5.18 | −33.1% | +4.26 | −4.0% |
-| + own curve as well, VIX still on all 18 | +7.08 | −15.8% | +6.49 | +16.0% |
-| **+ VIX pulled back to the 13 equity sleeves (shipped)** | **+7.28** | **−15.8%** | **+6.42** | **+16.5%** |
+| + VIX term structure alone | +5.18 | −33.1% | +4.26 | −4.0% |
+| **+ own curve as well (shipped)** | **+7.08** | **−15.8%** | **+6.49** | **+16.0%** |
 
-What the last row gives up is named rather than buried: the all-eighteen version steps the leg fully out of
-7 of its 10 worst sessions against 3 for the shipped one, and its book worst month on the scored block is
-−1.63% against −2.47%. Both clear the −6% target with room; the shipped row is chosen for coverage
-coherence and the ~2pp of book CAGR, not because it is the safer of the two.
+**"Then why is the gold sleeve still gated on the VIX?"** Because the shared gate is not being asked to
+forecast the volatility of gold — that is the own-curve gate's job, and the paragraph above is the
+measurement that it does it. The VIX gate is a *systemic-stress* read: when that curve inverts the shock is
+broad and the sleeves fall together whatever they sell. Walking its reach back one asset class at a time
+(`make gate-ablation`) prices that claim rather than asserting it. On the leg's ten worst sessions:
+
+| shared VIX gate reaches | leg over those 10 days | leg fully flat | book CAGR, 15y | block worst month |
+|---|---|---|---|---|
+| nothing — own curve only | −19.1% | 0 of 10 | +60.5% | −2.71% |
+| the 13 equity sleeves | −16.9% | 3 of 10 | +58.6% | −2.47% |
+| **all 18 (shipped)** | **−14.2%** | **7 of 10** | +56.9% | **−1.63%** |
+
+The ladder is monotone with no knife-edge cell, and it is a straight trade: narrowing the reach buys
+full-window CAGR — a number §11 does not score — and gives back the cover on exactly the days this leg
+exists to survive. Its systemic tail is the book's stated central risk, so the reach stays wide. Narrowing
+it to the equity sleeves also leaves months-in-profit on the scored block unchanged at 81% while dropping to
+77% with no shared gate at all, which is 5/5 against 4/5 — one month either way, so the tail evidence rather
+than that margin is what the decision rests on.
 
 **Four ways this could be an illusion, all measured** (`make gate-coverage`,
 `scripts/volprem/run_gate_coverage.py` → `reports/lab/volprem_gate_*.csv`):
