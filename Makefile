@@ -1,4 +1,4 @@
-.PHONY: attribution gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: attribution gate-ablation gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
 
 PY := .venv/bin/python
 
@@ -76,6 +76,12 @@ attribution:
 # Reports only — run_master_book.py is untouched (the winner costs a brief target; see the printout).
 gate-coverage:
 	$(PY) -m scripts.volprem.run_gate_coverage
+
+# The deployed short-vol leg ANDs a shared VIX gate with a per-sleeve own-curve one. This ablates each
+# half on the full metric set (return, vol, drawdown depth AND duration, tails, monthly distribution)
+# plus the five brief targets at book level, and checks the two-gate arm reproduces the shipped series.
+gate-ablation:
+	$(PY) -m scripts.volprem.run_gate_ablation
 
 # §3 equity NYSE session/half-day integrity check via pandas_market_calendars.
 sessions:

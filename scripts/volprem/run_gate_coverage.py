@@ -1,6 +1,6 @@
 """Does the short-vol book's regime gate cover the risk it is gating?
 
-The shipped gate is the VIX term structure — flat unless both equity-index curve segments are in
+The shared gate is the VIX term structure — flat unless both equity-index curve segments are in
 contango. But only 5 of the 18 sleeves are equity indices. The other 13 sell variance on single names,
 EM/international ETFs, oil, gold, silver, gold-miners and duration, and *nothing in the shipped gate can
 see their volatility*. That is not a hypothetical gap: in 2026 the equity sleeves printed their widest
@@ -19,8 +19,9 @@ none has a threshold fitted here:
   own_ts       the shipped gate's own logic where no 3M index exists: contango proxied by the sleeve's
                implied vol against its OWN trailing 63-day mean (63d = the calendar length of a 3M
                index), with the SHIPPED >= 1.0 threshold.
-  own+vix      own_ts AND the shipped VIX gate — the equity legs keep the real term structure, the
-               other thirteen gain one.
+  own+vix      own_ts AND the shared VIX gate — the equity legs keep the real term structure, the
+               other thirteen gain one. This is what ships; run_gate_ablation.py measures what each
+               half of it contributes.
 
 and four ways for a result this size (-78% -> -18% max drawdown) to be an illusion, all reported:
 
@@ -134,10 +135,10 @@ def main() -> None:
     rows = []
     print(f"=== SHORT-VOL BOOK, {BOOK_START}+ (18 sleeves, net of per-leg vega spread, vol-targeted 15%) ===")
     rows.append(line("always-short (ungated)", book_of(ungated, ungated)))
-    rows.append(line("+ VIX term structure (SHIPPED)", book_of(build("vix"), ungated)))
+    rows.append(line("+ VIX term structure alone", book_of(build("vix"), ungated)))
     rows.append(line("+ per-sleeve timed (implied > realised)", book_of(build("timed"), ungated)))
     rows.append(line("+ per-sleeve own term structure", book_of(build("own_ts"), ungated)))
-    rows.append(line("+ own term structure AND VIX", book_of(build("own+vix"), ungated)))
+    rows.append(line("+ own term structure AND VIX (SHIPPED)", book_of(build("own+vix"), ungated)))
 
     print(f"\n=== 1. duty cycle — mean {np.mean(list(duty.values())):.1%} of days live ===")
     print("  " + "  ".join(f"{s}:{d:.0%}" for s, d in duty.items()))
@@ -192,8 +193,9 @@ def main() -> None:
                   "duty_cycle": [round(duty[s], 4) for s in duty]}).to_csv(
                       LAB_DIR / "volprem_gate_duty.csv", index=False)
     print(f"\nwrote {LAB_DIR / 'volprem_gate_coverage.csv'} (+ surface, duty)")
-    print("NOT SHIPPED: this changes the book's full-window losing streak from 2 to 3 months, which is a "
-          "brief target. run_master_book.py is untouched; scripts/run_window_attribution.py shows the cost.")
+    print("SHIPPED, and it costs one target on the un-scored window: the book's FULL-window losing streak "
+          "goes 2 -> 3 months. The brief scores the OOS block, where the two-gate leg is 5/5 and the "
+          "VIX-only leg gives up the 2026 commodity vol event; scripts/run_window_attribution.py has the cost.")
 
 
 if __name__ == "__main__":
