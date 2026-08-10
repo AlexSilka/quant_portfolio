@@ -634,6 +634,7 @@ def main():
     summ = json.loads((REP / "master_book_summary.json").read_text())
     master = pd.read_parquet(REP / "master_book.parquet")["ret"].dropna()
     legs = pd.read_parquet(REP / "master_book_legs.parquet")
+    slots = pd.read_parquet(REP / "master_book_slots.parquet")   # per-day slot share of each family
     corr = pd.read_csv(REP / "master_book_correlation.csv", index_col=0)
     marg = pd.read_csv(REP / "master_book_marginal.csv")
     m = summ["master"]
@@ -863,17 +864,23 @@ def main():
     # baseline for the leave-one-out delta must be the SAME construction as the counterfactual — the
     # equal-weight mean of all legs; the deliverable's own Sharpe additionally carries the risk overlay,
     # so subtracting from it would bias every delta by that difference.
-    all_legs = _sh(legs.mean(axis=1, skipna=True))
+    def _stack(d):
+        """The book from a set of legs, weighted the way the assembler weights them — a flat mean
+        would price every leave-one-out counterfactual at a slot the hedge is not actually held at."""
+        w = slots[d.columns].reindex(d.index)
+        return (d * w).sum(axis=1, min_count=1) / d.notna().mul(w).sum(axis=1).replace(0, np.nan)
+
+    all_legs = _sh(_stack(legs))
     fam_rows = ""
     for f in sorted(fams, key=lambda c: -solo.get(c, 0.0)):
         s = legs[f].dropna()
         joined = pd.concat([legs[f], master], axis=1).dropna()
         c = float(joined.corr().iloc[0, 1]) if len(joined) > 2 else 0.0
-        wo = _sh(legs.drop(columns=[f]).mean(axis=1, skipna=True))   # book with this family removed
+        wo = _sh(_stack(legs.drop(columns=[f])))                     # book with this family removed
         fam_rows += (f"<tr><td>{sf(f)}</td><td>{_n(solo.get(f, 0.0))}</td><td>{_pc(_mdd(s))}</td>"
                      f"<td>{pnl.get(f, 0.0):.0%}</td>"
                      f"<td>{_n(c)}</td><td>{_n(wo)}</td><td>{_n(all_legs - wo)}</td></tr>")
-    n_neg = sum(1 for f in fams if all_legs - _sh(legs.drop(columns=[f]).mean(axis=1, skipna=True)) <= 0)
+    n_neg = sum(1 for f in fams if all_legs - _sh(_stack(legs.drop(columns=[f]))) <= 0)
     fam_note = (f'<p class="valline">&Delta; Sharpe is measured against the equal-weight mean of all legs '
                 f'({_n(all_legs)}). <b>{n_neg} of {len(fams)} families carry a &le;0 &Delta;</b> and are held '
                 f'anyway &mdash; a stated choice: Sharpe is a band (2.5&ndash;4.0), not a maximand, and these '

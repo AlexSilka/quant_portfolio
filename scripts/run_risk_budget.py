@@ -40,7 +40,7 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from scripts.run_master_book import (  # noqa: E402
-    OOS, R, assemble, ppy_of, risk_overlay, scorecard)
+    OOS, R, assemble, book_stack, ppy_of, risk_overlay, scorecard)
 from src.config import BOOK_LEVERAGE, SEED  # noqa: E402
 from src.validation.monte_carlo import mc_metrics  # noqa: E402
 
@@ -106,8 +106,7 @@ def replay_starts(index):
 def book_of(legs, lev_map):
     """Equal-weight mean over the legs live each day, each leg scaled by its OWN leverage — the same
     assembly as run_master_book, generalised so leverage need not be uniform across families."""
-    return legs.mul(pd.Series({c: lev_map.get(c, 1.0) for c in legs.columns}), axis=1) \
-               .mean(axis=1, skipna=True).rename("ret")
+    return book_stack(legs.mul(pd.Series({c: lev_map.get(c, 1.0) for c in legs.columns}), axis=1)).rename("ret")
 
 
 def event_replay(df, wide, start):
@@ -153,7 +152,7 @@ def largest_passing(grid, col, ok):
 def main():
     df, _ = assemble()
     wide, _ = assemble(start="2005-01-01")                 # same legs, extended back over the 2010 event
-    ew = df.mean(axis=1, skipna=True).rename("ret")
+    ew = book_stack(df).rename("ret")
     ppy = ppy_of(ew)
     stack_vol = float(ew.std(ddof=1) * np.sqrt(ppy))
     pre = ew[ew.index < OOS]

@@ -43,6 +43,7 @@ from src import bo_common as bo  # noqa: E402
 from src.config import BOOK_LEVERAGE, CAPITAL_USD, OOS_START, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
+from src.risk.stress import hedge_weight  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
 
 PPY = 365
@@ -58,7 +59,6 @@ LADDER = ((-0.06, 0.66), (-0.09, 0.33), (-0.12, 0.0))   # drawdown → gross exp
 LADDER_RESTORE = -0.04             # re-risk only once drawdown recovers above this (hysteresis)
 DAILY_LOSS_LIMIT = -0.04           # circuit breaker: flatten the day AFTER a book loss worse than this
 GROSS_CAP = 2.0                    # max book gross exposure (leverage limit)
-PER_FAMILY_CAP = 1.0 / 8 * 1.5     # no family may exceed 1.5× equal risk weight (equal-weight => never binds)
 
 # (label, file, column) — each family's honest published headline (avoid the capped fake-Sharpe VRP col)
 FAMILIES = [
@@ -122,6 +122,55 @@ FAMILIES = [
     # to the other legs (corr ~+0.17 to the book). See docs/strategies/BAB.md.
     ("bab", "bab/bab_book_c25.parquet", "ret"),
 ]
+
+
+# No family may exceed 1.5x equal risk weight. Derived from the family count rather than typed: it was
+# written as 1/8*1.5 for an eight-family book and stayed there when two legs were dropped, which read as
+# 1.13x equal weight rather than the 1.5x it claims. The hedge slot below is what can approach it now —
+# at its 1.5-slot ceiling that leg is 1.5/6.5 = 23.1% of the book against this 25.0% limit, so the ramp
+# sits inside the stated cap rather than quietly redefining it.
+PER_FAMILY_CAP = 1.5 / len(FAMILIES)
+
+# Every family holds ONE equal-risk slot. The long-gamma hedge is the exception, and it is the only
+# weight in this book that is not a flat 1/N — stated here rather than buried in the assembly.
+#
+# Why it is not flat. A hedge and an earner want opposite sizing rules. Through a calm decade the crisis
+# leg is the weakest earner in the book (standalone Sharpe ~0.6 against a book above 3), so a full slot
+# of it dilutes every calm month; through a crash it is the only leg paying. Held flat it cost 15pp of
+# CAGR to buy a worst month 2.4pp shallower, and — since the vol-premium leg gained its regime gate —
+# it also LENGTHENED the book's losing streak (2 months without it, 3 with) and cut months-in-profit
+# from 86% to 81%. The streak was the thing it was originally bought to fix; the gate now fixes it
+# better, and the hedge had gone from covering that failure to causing it.
+#
+# So the slot is ramped on market stress (src/risk/stress.py — VIX term structure and the S&P's
+# drawdown from its trailing-year high, both read at t-1): a quarter slot when nothing is moving, a
+# slot and a half when the curve is inverted or the market is 12% off its high. The average is ~0.70,
+# so this buys the SAME average protection, at the times it pays for it. It is not performance-based
+# selection — no leg's P&L, and no book P&L, is an input — and rotating the stress path gives the whole
+# gain back, which is what says the timing rather than the smaller average is doing the work
+# (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
+HEDGE_SLOT = {"crisis": (0.25, 1.5)}
+
+
+def slot_weights(df):
+    """Each family's share of an equal-risk slot, per day: 1.0 everywhere except the long-gamma hedge."""
+    w = pd.DataFrame(1.0, index=df.index, columns=df.columns)
+    for fam, (calm, stressed) in HEDGE_SLOT.items():
+        if fam in w.columns:
+            w[fam] = hedge_weight(df.index, calm, stressed).to_numpy()
+    return w
+
+
+def book_stack(df, slots=None):
+    """THE book: the slot-weighted mean over the families that PRINT each day.
+
+    Every consumer that needs the assembled book calls this rather than re-deriving it — an unweighted
+    `df.mean(axis=1)` was the old spelling and is now wrong by the hedge's slot. Reduces exactly to that
+    mean when every slot is 1.0."""
+    slots = slot_weights(df) if slots is None else slots
+    num = (df * slots).sum(axis=1, min_count=1)
+    den = df.notna().mul(slots).sum(axis=1).replace(0, np.nan)
+    return (num / den).rename("ret")
 
 
 def load(label, file, col):
@@ -302,17 +351,19 @@ def risk_overlay(raw, leverage=1.0, limits="book_equity"):
     return managed.rename("ret"), gross.rename("gross"), int((breaker == 0).sum())
 
 
-def book_weights(df, scales):
+def book_weights(df, scales, slots=None):
     """The per-leg weights the book's own return series implies, day by day — the single source every
     exposure / turnover / rebalance-log figure is derived from (verified: (raw_legs * these).sum(axis=1)
-    reproduces `df.mean(axis=1, skipna=True)` to 1e-17).
+    reproduces `book_stack(df)` to 1e-17).
 
-    The book averages over the legs that PRINT each day, so a leg's weight is scale_i / n_printing, and
-    on a day when the equity and Cboe markets are shut the crypto legs carry the whole book. That is a
-    consequence of the equal-weight-over-live-legs convention, and it is where most of the book's
-    measured turnover comes from — quantified on the dashboard, not smoothed away here."""
-    n_live = df.notna().sum(axis=1).replace(0, np.nan)
-    return scales.where(df.notna()).div(n_live, axis=0)
+    The book averages over the legs that PRINT each day, so a leg's weight is its slot share over the
+    slot shares printing, and on a day when the equity and Cboe markets are shut the crypto legs carry
+    the whole book. That is a consequence of the equal-weight-over-live-legs convention, and it is where
+    most of the book's measured turnover comes from — quantified on the dashboard, not smoothed away
+    here. The hedge slot varies with market stress, so its weight moves day to day as well."""
+    slots = slot_weights(df) if slots is None else slots
+    live = df.notna().mul(slots).sum(axis=1).replace(0, np.nan)
+    return (scales * slots).where(df.notna()).div(live, axis=0)
 
 
 def book_turnover(w):
@@ -361,10 +412,12 @@ def main():
     print(f"families: {list(df.columns)}\nreporting window: {df.index.min().date()}..{df.index.max().date()} "
           f"({len(df)} days; {int(live.min())}-{int(live.max())} live/day)\n")
 
-    # genuine EQUAL-WEIGHT risk parity — every family at 1/N, no performance-based selection.
-    raw_ew = df.mean(axis=1, skipna=True).rename("ret")
+    # risk parity with no performance-based selection: every EARNER at 1/N, the long-gamma hedge at the
+    # stress-ramped slot above (HEDGE_SLOT) — a market-state rule, not a P&L one.
+    slots = slot_weights(df)
+    raw_ew = book_stack(df, slots)
     managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
-    w = book_weights(df, scales)
+    w = book_weights(df, scales, slots)
     turn = book_turnover(w)
     ann_turn = float(turn.mean() * PPY)
     # The same book with every leg that has STARTED holding a weight every day — its last computable
@@ -373,9 +426,11 @@ def main():
     # between the two conventions is the honest measure of what the shipped one costs.
     started = pd.DataFrame({c: (df.index >= df[c].first_valid_index())
                                & (df.index <= df[c].last_valid_index()) for c in df.columns}, index=df.index)
-    w_held = scales.where(df.notna()).ffill().where(started).div(started.sum(axis=1), axis=0)
+    slots_started = slots.where(started, 0.0)
+    live_started = slots_started.sum(axis=1).replace(0, np.nan)
+    w_held = (scales * slots).where(df.notna()).ffill().where(started).div(live_started, axis=0)
     ann_turn_held = float(book_turnover(w_held).mean() * PPY)
-    ret_held = df.fillna(0.0).where(started).sum(axis=1) / started.sum(axis=1)
+    ret_held = (df.fillna(0.0) * slots_started).sum(axis=1) / live_started
     sc_held = scorecard(ret_held.dropna())
     stack_vol = float(raw_ew.std(ddof=1) * np.sqrt(ppy_of(raw_ew)))
 
@@ -395,7 +450,10 @@ def main():
           f"(${fx_full['worst_month_usd']:,.0f}) months {fx_full['months_in_profit']:.1%} · P&L "
           f"${fx_full['pnl_usd']:,.0f} (${fx_full['pnl_usd_per_year']:,.0f}/yr)")
     print(f"  book gross exposure: min {gross.min():.2f} mean {gross.mean():.2f} max {gross.max():.2f} (cap {GROSS_CAP})")
-    print(f"  book net exposure ~0 (legs dollar-neutral); per-family weight 1/{len(df.columns)} (cap {PER_FAMILY_CAP:.2f})")
+    print(f"  book net exposure ~0 (legs dollar-neutral); earner weight 1/{len(df.columns)}, hedge slot "
+          f"{HEDGE_SLOT} ramped on market stress (mean {slots[list(HEDGE_SLOT)[0]].mean():.2f}) (cap {PER_FAMILY_CAP:.2f})"
+          if set(HEDGE_SLOT) & set(df.columns) else
+          f"  book net exposure ~0 (legs dollar-neutral); per-family weight 1/{len(df.columns)} (cap {PER_FAMILY_CAP:.2f})")
     print(f"  annual turnover {ann_turn:.1f}x round-trip. Holding every started leg through the days its own "
           f"market is shut, instead of renormalising onto whoever is open, would turn over {ann_turn_held:.1f}x "
           f"for {sc_held} — same book, a fifteenth of the trading; the shipped convention is what is measured "
@@ -407,7 +465,7 @@ def main():
     print(f"  per-year Sharpe: {per_year}")
 
     # integration delta: with vs without breakout — like-for-like (both raw equal-weight, no overlay)
-    wo = df[[c for c in df.columns if c != "breakout"]].mean(axis=1, skipna=True)
+    wo = book_stack(df[[c for c in df.columns if c != "breakout"]])
     mw = describe(wo, mc=True)
     print(f"\nWITHOUT breakout (raw): Sharpe {mw['sharpe']:+.2f}  MC-P5 {mw['mc_p5']:+.2f}")
     print(f"WITH breakout    (raw): Sharpe {summarise(raw_ew, ppy_of(raw_ew))['sharpe_ann']:+.2f}")
@@ -418,17 +476,17 @@ def main():
     order = sorted(df.columns, key=lambda c: -solo[c])
     marg = []
     for k in range(1, len(order) + 1):
-        b = df[order[:k]].mean(axis=1, skipna=True)
+        b = book_stack(df[order[:k]])
         sc = scorecard(b)
         marg.append({"n": k, "added": order[k - 1], "sharpe": sc["sharpe"],
                      "max_dd": sc["max_dd"], "months_in_profit": sc["months_in_profit"]})
     top = order[0]
-    _notop = df[[c for c in df.columns if c != top]].mean(axis=1, skipna=True)
+    _notop = book_stack(df[[c for c in df.columns if c != top]])
     notop = summarise(_notop, ppy_of(_notop))["sharpe_ann"]
     mean_corr = float(corr.values[np.triu_indices_from(corr.values, 1)].mean())
     # each leg against the book it is part of — the §4 family table's second column. Published rather than
     # transcribed, because that table used to be typed and went on listing legs the book no longer trades.
-    _ew = df.mean(axis=1, skipna=True)
+    _ew = raw_ew
     corr_to_book = {c: round(float(df[c].corr(_ew)), 3) for c in df.columns}
     # §7.2 correlation STABILITY — the same matrix on two halves of the window. "Diversification that exists
     # only in-sample is not diversification": if the decorrelation is real it must persist out-of-sample.
@@ -444,8 +502,10 @@ def main():
     print("marginal curve (Sharpe): " + " -> ".join(f"{r['added'][:4]} {r['sharpe']:+.2f}" for r in marg))
     print(f"top contributor ({top}) removed: {notop:+.2f}  (vs managed {sc_full['sharpe']:+.2f})")
 
-    # per-family share of book P&L (contribution of each leg to the equal-weight sum)
-    contrib = (df / len(df.columns)).sum()
+    # per-family share of book P&L — each leg through the weight it is actually held at, so the hedge
+    # slot's stress ramp shows up here rather than being reported as a flat sixth of the book.
+    live_slots = df.notna().mul(slots).sum(axis=1).replace(0, np.nan)
+    contrib = (df.fillna(0.0) * slots).div(live_slots, axis=0).sum()
     pnl_share = (contrib / contrib.sum()).round(4).to_dict()
     print(f"per-family P&L share: { {k: round(v,3) for k,v in pnl_share.items()} }")
 
@@ -471,6 +531,10 @@ def main():
     managed.to_frame().to_parquet(R / "master_book.parquet")
     raw_ew.rename("ret").to_frame().to_parquet(R / "master_book_raw.parquet")
     df.to_parquet(R / "master_book_legs.parquet")
+    # the slot share each family is held at, per day — published so the report renderer and every
+    # leave-one-out counterfactual weight the legs the way the book does instead of re-deriving a flat
+    # mean that has been wrong since the hedge slot started ramping.
+    slots.to_parquet(R / "master_book_slots.parquet")
     # every exposure/turnover/cost figure downstream reads these two files — nothing re-derives the
     # assembly from the family blocks, which is how a stale family list or the wrong column slips in
     w.to_parquet(R / "master_book_weights.parquet")

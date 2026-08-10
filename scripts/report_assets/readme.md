@@ -13,7 +13,9 @@ no network).
 
 ## The result in one page
 
-A **{{n_families_word}}-family, equal-weight book** at a constant **{{leverage}} leverage** (~{{book_vol}} annualised vol).
+A **{{n_families_word}}-family book** at a constant **{{leverage}} leverage** (~{{book_vol}} annualised vol): the
+{{n_families}} earners at equal risk, and the one long-gamma hedge sized by market stress instead of held flat
+(a quarter slot when nothing is moving, a slot and a half when the VIX curve inverts — REPORT §6c-ter).
 §11 scores the five targets on the **final out-of-sample block**, so that is the scorecard. The 15-year
 column is the same book measured over the longer window — supporting evidence, reported because a book that
 works only on the block it is scored on is not a book, but not a second scorecard and not counted as one.
@@ -49,7 +51,8 @@ is **concentration and breadth**: the short-vol leg's share of P&L up from {{com
 line away in `scripts/run_master_book.py`.
 
 **The {{n_families_word}} sources** — each developed in its own deep-dive, combined at genuine equal-weight
-risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free / point-in-time** universe:
+risk parity (no per-leg weighting *fitted*: the hedge slot follows market state, never anyone's P&L), every
+one on a **survivorship-free / point-in-time** universe:
 
 {{family_source_table}}
 

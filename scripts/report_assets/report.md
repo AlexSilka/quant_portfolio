@@ -146,8 +146,8 @@ A complete, reproducible pipeline, every stage runnable:
   \* carry's re-run reproduces the published series to 2.6% rather than exactly, so its share is
   approximate. **{{n_family_cost_fragile}} of the eight is cost-fragile: {{family_cost_fragile_names}}**, which
   pays {{family_cost_worst_share}} of its gross P&L in cost and breaks even at 3.0× — expected for a
-  crash-hedge that trades to stay long gamma, and the reason it is held at 1/8 risk for what it does in the
-  bad months rather than for its own P&L. Vol-prem and trend publish a Sharpe at a cost multiple instead of a
+  crash-hedge that trades to stay long gamma, and the reason its slot is ramped on market stress (§6c-ter)
+  for what it does in the bad months rather than for its own P&L. Vol-prem and trend publish a Sharpe at a cost multiple instead of a
   break-even (vol-prem 2.16 at 5× its vega spread, trend 0.87 at 3×); neither is fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
@@ -195,8 +195,12 @@ produces a false null. Holding to reversal is what surfaces the real edge (verif
 ## 4. Results — the master portfolio
 
 The canonical assembly (`scripts/run_master_book.py`) reads each family's one honest published series,
-re-scales each to ~15% vol on trailing (lagged) vol, and **equal-weights all {{n_families_word}} (1/N — genuine risk
-parity, no performance-based selection)**. The short-vol leg enters already timed by its own **VIX-term-structure
+re-scales each to ~15% vol on trailing (lagged) vol, and **equal-weights the {{n_families}} earners (1/N — genuine risk
+parity, no performance-based selection)**. The one exception is the long-gamma hedge, which is sized
+**by market stress rather than flat** — a quarter of a slot when nothing is moving, a slot and a half when
+the VIX curve is inverted or the S&P is 12% off its trailing-year high, averaging ~{{crisis_mean_weight}}
+(`src/risk/stress.py`, §6c-ter). No P&L of any kind is an input, so this is still not performance-based
+selection; it is the observation that a hedge and an earner want opposite sizing rules. The short-vol leg enters already timed by its own **VIX-term-structure
 regime gate** (flat unless both curve segments are in contango, `src/risk/vol_regime.py`, published as the
 volprem strategy's `ret_gated` series and rebuilt through the sleeves so each switch pays the vega spread)
 — the dynamic tail-timing that does the real work. The stack is then sized to the book's stated risk
@@ -204,7 +208,8 @@ budget — **one constant 1.15× leverage** (`BOOK_LEVERAGE`, the only dial that
 book risk; §4b derives it and states what currently binds it) — and a disclosed **§8 book-level risk overlay** is applied on top:
 a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.66/0.33/0.0,
 restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a
-per-family weight cap (1.5× the 1/{{n_families}} equal weight; never binds). The drawdown ladder is ~neutral on this benign-tail
+per-family weight cap (1.5× the 1/{{n_families}} equal weight — the stress-ramped hedge slot is the only leg
+that approaches it, reaching 23.1% of the book against the 25.0% limit at its ceiling). The drawdown ladder is ~neutral on this benign-tail
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
 cluster the losing months, holding the book at **Sharpe {{book_sharpe}}** and closing the scorecard to
 **{{oos_targets}} out-of-sample, {{book_targets}} on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
@@ -250,7 +255,7 @@ in-sample artifact.
   max-DD and months-in-profit per addition too.
 - **What happens when two legs want the same capital, or opposite sides of the same asset.** Capital is
   allocated by risk budget, not first-come: each family is vol-targeted to the same 15% and then held at
-  1/8 of book risk, so a loud signal in one family cannot crowd out another — it can only use its own
+  1/{{n_families}} of book risk, so a loud signal in one family cannot crowd out another — it can only use its own
   slot harder, and even that is capped at 3×. Opposing positions net at the portfolio level: if trend is
   long BTC and BAB short it, the book carries the difference and is charged once, never twice for
   crossing itself. **The honest limitation is that the book combines return series, not positions**, so
@@ -447,14 +452,14 @@ everything else below differs by family, and the differences are the point.
 
 | family | entry | exit / stop | max holding | max exposure |
 |---|---|---|---|---|
-| **trend** | EMA(50/200) cross, long-biased | **held to reversal** — no time stop, deliberately: the premium lives in the fat right tail a barrier would cut | unbounded by design | 3× leg cap × 1/8 book risk |
-| **breakout** | Donchian-55 break, ML confidence gate | **chandelier ATR(3) trailing stop** + long-trend(100) alignment filter | bounded by the trail | 3× × 1/8 |
-| **carry** | funding z-score (7-bar level), top-100 point-in-time names | none — the premium is a *level*, not a move; the position is re-struck each rebalance | to the next daily rebalance; funding charged at every 8h settlement | dollar-neutral, beta-hedged to BTC; 3× × 1/8 |
-| **vol-prem** | always short variance, 18 Cboe underlyings at equal risk | the **VIX-term-structure gate** — the leg stands down while either curve segment is inverted | one roll | 3× × 1/8, and sized on its −78% tail rather than its Sharpe |
-| **x-sect** | risk-adjusted momentum, top/bottom 30% crypto · 10% equity | none — re-struck at each rebalance | 21 bars (monthly cadence, chosen to keep turnover and cost low) | dollar-neutral; 3× × 1/8 |
-| **BAB** | beta-neutral long low-β / short high-β, top 20% of the top-100 liquid names | none — re-struck at each rebalance | 21 days | beta-neutral by Frazzini-Pedersen leg scaling; 3× × 1/8 |
-| **crisis-alpha** | multi-lookback time-series momentum (10/20/40, 20/40/63, 40/63/120) on liquid ETFs and FX | signal flip | to the flip | 3× × 1/8 |
-| **global-macro** | the same TSMOM tranches on EM FX and commodities | signal flip | to the flip | 3× × 1/8 |
+| **trend** | EMA(50/200) cross, long-biased | **held to reversal** — no time stop, deliberately: the premium lives in the fat right tail a barrier would cut | unbounded by design | 3× leg cap; not traded (§6d-ter) |
+| **breakout** | Donchian-55 break, ML confidence gate | **chandelier ATR(3) trailing stop** + long-trend(100) alignment filter | bounded by the trail | 3× × 1/{{n_families}} |
+| **carry** | funding z-score (7-bar level), top-100 point-in-time names | none — the premium is a *level*, not a move; the position is re-struck each rebalance | to the next daily rebalance; funding charged at every 8h settlement | dollar-neutral, beta-hedged to BTC; 3×; not traded (§6d-ter) |
+| **vol-prem** | always short variance, 18 Cboe underlyings at equal risk | the **VIX-term-structure gate** — the leg stands down while either curve segment is inverted | one roll | 3× × 1/{{n_families}}, and sized on its −78% tail rather than its Sharpe |
+| **x-sect** | risk-adjusted momentum, top/bottom 30% crypto · 10% equity | none — re-struck at each rebalance | 21 bars (monthly cadence, chosen to keep turnover and cost low) | dollar-neutral; 3× × 1/{{n_families}} |
+| **BAB** | beta-neutral long low-β / short high-β, top 20% of the top-100 liquid names | none — re-struck at each rebalance | 21 days | beta-neutral by Frazzini-Pedersen leg scaling; 3× × 1/{{n_families}} |
+| **crisis-alpha** | multi-lookback time-series momentum (10/20/40, 20/40/63, 40/63/120) on liquid ETFs and FX | signal flip | to the flip | 3×; slot ramped 0.25–1.5 on market stress (§6c-ter) |
+| **global-macro** | the same TSMOM tranches on EM FX and commodities | signal flip | to the flip | 3× × 1/{{n_families}} |
 
 At the book: **gross cap 2.0×** against a shipped constant **1.15×**, net exposure ≈ 0 (every leg is
 dollar- or beta-neutral or a spread), **per-family cap 1.5× the equal weight** (which never binds while
@@ -856,16 +861,15 @@ crash months while the other {{n_families_less_one_word}} families stay invested
   **{{book_months}}** *and* worst-month **{{book_worst_month}}** together, which the weighting axis cannot do at
   any weight. That beats the frontier: the scorecard reads **{{oos_targets_met}}** on the scored block and
   **{{book_targets_met}}** on the full window. The mechanism is the right one, and on its own it was still not
-  sufficient — the last two targets came from the composition choice in §6d-ter, not from the gate. *(Sweep on
+  sufficient — the block's remaining targets came from the composition choice in §6d-ter and from sizing the
+  hedge on stress in §6c-ter, not from the gate. *(Sweep on
   the core-family book; the deliverable is the {{n_families_word}}-family master with the VIX overlay.)*
-- **Every diversifier earns its place — crisis-alpha is not redundant after the VIX gate (checked).** The VIX
-  gate times the *short-vol* leg out of vol spikes; the crisis / managed-futures leg hedges the *broad-market*
-  crashes it cannot, and the two are complementary, not overlapping. Dropping crisis (7 families + VIX gate)
-  *raises* Sharpe to **4.19 full / 4.33 OOS** — but that **overshoots the ≤4.0 target band** (both windows then fail
-  the Sharpe target), breaks the worst month (**−7.8%** full), returns the streak to **3 months**, and cuts OOS
-  months-in-profit to **77%** — the scorecard falls to **2/5 full and 3/5 OOS**.
-  It also removes real crash protection: through 2018-Q4 the book returns **−3.2% with crisis vs −7.2% without**,
-  COVID **+0.9% vs −1.4%**. (Remove the crisis family from `run_master_book.FAMILIES` to reproduce.)
+- **The crisis-alpha leg is still worth holding, but not at an earner's weight (§6c-ter).** Dropping it
+  outright *raises* Sharpe to **{{crisis_drop_sharpe}}** and CAGR to **{{crisis_drop_cagr}}** — but that
+  overshoots the ≤4.0 band and takes the worst month to **{{crisis_drop_worst_month}}**, so the book buys
+  return by removing the only leg that pays in a crash. Held flat at one slot it costs the opposite way:
+  since the VIX gate arrived the leg **lengthens** the losing streak it was originally bought to shorten.
+  Ramping the slot on market stress is what resolves it, and §6c-ter shows the controls.
 - **Binding constraints:** costs/turnover kill 5m (and most 15m) sleeves; the surviving edge is
   **crypto-heavy** (no family spans both classes since trend was dropped), so the book carries crypto-regime risk (visible as the
   book's thinnest years — {{weakest_year}} at {{weakest_year_sharpe}} — positive but well below the
@@ -993,6 +997,72 @@ level, which is now measured twice. Until then the
 deliverable keeps the naked book and its disclosed tail, because a headline resting on a 2.2× margin from a
 proxy is not a headline.
 
+## 6c-ter. The hedge was being paid an earner's wage (§12)
+
+The crisis-alpha leg had gone quiet — standalone Sharpe **{{crisis_solo_sharpe}}** over 21 years,
+**{{crisis_solo_cagr}}** a year, **{{crisis_solo_oos_sharpe}}** on the frozen block. Two questions had to be
+separated before touching it: how much of that is this construction, and how much is the strategy class.
+
+**Most of it is the class, and that is the first thing that stops a bad decision.** Kaminski and Wen
+(AlphaSimplex, Jun-2025) date the trend industry's current drawdown from Apr-2024 at **−21.8%** on the SG
+Trend Index — the second-deepest since 2000, behind only "Trade War 1.0" (2015–19, −23%). This leg's
+−11.9% in 2025 is half the benchmark's. Their other finding is the one that matters for sizing: trend
+drawdowns **cluster in calm, rising-equity markets** and unwind when equities break, which is the same
+sentence as "the hedge is paid for in the good years". Re-fitting the leg to 2024–26 would be fitting the
+premium away, so nothing below is selected on the last two years.
+
+**Where the construction does leak is turnover, not signal.** Per class the leg is +0.25 equity, +0.67
+commodity, +1.28 crypto — and negative in bonds and FX, where it trades 91× and 70× a year against crypto's
+9×. With the cost switched off the same two books are positive: the sign is an artifact of a ±1 rule that
+flips a full position on a one-day sign change, and on low-vol assets that position sits at the 3× cap.
+
+{{crisis_class_table}}
+
+**But repairing the signal makes the leg worse at its job.** The industry-standard fix is Baz et al.'s
+EWMAC with a response function, which damps an already-extended trend instead of holding it at full size.
+It works exactly as advertised on the ratio — and a crash *is* an extended trend, so it damps the payoff
+the leg exists for. Breadth (sector, single-country and extra commodity/bond ETFs) also failed, at
+{{crisis_ewmac_sharpe}} → +0.39: sectors are the S&P again.
+
+{{crisis_signal_table}}
+
+That is the whole trap in one table. On Sharpe alone EWMAC is the upgrade — **{{crisis_ewmac_sharpe}}
+against {{crisis_solo_sharpe}}**, {{crisis_ewmac_cagr}} a year against {{crisis_solo_cagr}} — and it turns
+COVID from {{crisis_ship_covid}} into {{crisis_ewmac_covid}}. A leg selected on its own ratio would have
+been shipped and would have quietly stopped being a hedge.
+
+**What was actually mis-set is the size.** Since the vol-premium leg gained its regime gate, the crisis leg
+stopped covering the failure it was bought for and started causing it: held flat at one slot it takes the
+book's losing streak to **{{crisis_flat_streak}} months** and months-in-profit down to {{crisis_flat_months}},
+for {{crisis_flat_cagr}} against {{crisis_drop_cagr}} without it. Dropping it is not the answer either — that
+is what takes the worst month to {{crisis_drop_worst_month}} and pushes Sharpe past the top of the band.
+
+{{crisis_sizing_table}}
+
+Ramping the slot on market stress — a quarter slot when nothing is moving, a slot and a half when the VIX
+curve inverts or the S&P is 12% off its high, both read at t−1 — buys **the same average protection
+({{crisis_mean_weight}} of a slot) at the times it pays for it**: {{crisis_cagr_gain}} of CAGR on the full
+window and {{crisis_oos_cagr_gain}} on the frozen block, a worst month of {{crisis_timed_worst_month}}, and
+the streak back to {{crisis_timed_streak}}.
+
+**The control is what makes that a result rather than a smaller position.** Diluting less would raise return
+on its own, so the ramp is scored against the same average weight held flat, and against the same ramp
+rotated onto the wrong days — same re-sizing, same frequency, no alignment:
+
+{{crisis_control_table}}
+
+The rotated ramp lands on the flat one. The timing is doing the work, and it does it in **all five**
+sub-windows of 2011–2026, not one era. The ramp's ends are stated rather than swept, and every neighbouring
+pair tested (0.0–1.0 through 0.5–2.0) also beats the flat slot on return and worst month;
+`reports/lab/crisis_lab.json` publishes that neighbourhood so the choice can be argued with.
+
+**What it costs, stated.** The full-window Sharpe rises past the ≤4.0 band, so the book now fails that
+target on the long window where it used to pass — and it used to pass it *because* a low-Sharpe leg was
+dragging the ratio down, which is not a reason to hold one. On the frozen block the brief scores, all five
+targets still clear. A crypto-drawdown term was built for the stress reading and rejected: the book's
+crypto legs are dollar-neutral, so a BTC drawdown is not stress for this book (correlation +0.09), and
+adding it raised the hedge's average weight by a third for no move in the worst month or the drawdown.
+
 ## 6d. The last hindsight universes: the trend leg's crypto core and equity names (§12)
 
 The report's own standard is that a family trades a **survivorship-free** universe — the x-sect deep-dive's
@@ -1037,11 +1107,14 @@ chosen in hindsight.
 ## 6d-bis. Seven routes to the streak, all measured, all closed — the frontier before the composition changed (§12)
 
 **Read this section against the eight-family book, not the shipped one.** It is the frontier this report
-found while all eight families traded, when a 3-month losing streak broke the full window. The shipped
-{{n_families_word}}-family book does not have that streak ({{book_streak}} months) — but it clears it by
-dropping two families (§6d-ter), which is a composition choice, not one of the levers below. Those levers
-are what a book *keeps* its composition and still tries to fix the streak with, and every one of them
-fails; that is why the section stays, and why §6d-ter is stated as a cost rather than as a solution.
+found while all eight families traded, when a 3-month losing streak broke the full window. Dropping two
+families (§6d-ter) cleared the streak on the *block* but left it at 3 on the full window — an earlier
+version of this paragraph claimed otherwise, reading the block's number as though it were both. What
+finally took the full window to {{book_streak}} months was sizing the long-gamma hedge on market stress
+(§6c-ter): held flat at a full slot, that leg was *adding* a month to the streak. Neither is one of the
+levers below. Those levers are what a book *keeps* its composition and its flat weights and still tries to
+fix the streak with, and every one of them fails; that is why the section stays, and why §6d-ter is stated
+as a cost rather than as a solution.
 
 The brief anticipates this case: *"If the targets are not reachable under honest validation, submit your
 best result with the trade-off frontier you found... Do not tune against the final out-of-sample block to
@@ -1089,12 +1162,15 @@ result is seen. Two things are not: this composition, chosen because it clears t
 sleeve-level gate of §6d-quater, added after a stall inside the scored block was diagnosed. Both are declared
 where they occur rather than folded into the method.
 
-The composition was settled first and has **not** been re-searched since the gate changed — that ordering
-matters, because re-picking a composition after seeing the block is exactly how tuning against it would
-appear. Under the earlier rule, trend and carry were the one pair clearing all five targets on both windows.
-With the gate in place {{comp_n_passing_word}} of the {{comp_n_configs}} configurations clear both; six clear
-the scored block and the shipped book is one of them. This section is the search, published as the
-denominator rather than as a winner.
+The composition was settled first and has **not** been re-searched since — not when the gate changed, and
+not when the hedge slot started ramping (§6c-ter). That ordering matters, because re-picking a composition
+after seeing the block is exactly how tuning against it would appear. Under the earlier rule, trend and
+carry were the one pair clearing all five targets on both windows. That is **no longer the reason to hold
+this composition, and the section says so rather than quietly keeping the old sentence**: with the hedge
+sized on stress, {{comp_n_full_word}} of the {{comp_n_configs}} configurations clear the full window and so
+{{comp_n_passing_word}} clear both, while {{comp_n_block_word}} clear the scored block — the shipped book
+among them. What every full-window failure now has in common is the Sharpe *ceiling*, not a risk target.
+This section is the search, published as the denominator rather than as a winner.
 
 With all eight families the book scores **{{comp_base_targets_full}} on the full window**
 ({{comp_base_miss_full}}) and **{{comp_base_targets_oos}} on the frozen block** ({{comp_base_miss_oos}}).
@@ -1107,11 +1183,14 @@ Two rows deserve a caveat rather than a footnote: a removal can also *shorten* t
 the assembler needs two live legs, and "drop global-macro" loses its early months that way — which is why
 its tail reads worse than the leg's own hedging value would suggest.
 
-**{{comp_n_passing_word_cap}} of {{comp_n_configs}} pass, and that ratio is the point.** A {{comp_n_configs}}-way search that returns {{comp_n_passing_word}} survivors is
-weak evidence by construction, and this report spends §6 measuring exactly that failure mode: of 2,000
+**{{comp_n_block_word_cap}} of {{comp_n_configs}} clear the scored block, and that ratio is the point.** A
+{{comp_n_configs}}-way search that returns {{comp_n_block_word}} survivors is weak evidence by construction,
+and this report spends §6 measuring exactly that failure mode: of 2,000
 random re-weightings of the same eight legs, **none** reaches 5/5, and CSCV puts the probability of
 backtest overfitting at {{cscv_pbo}}. A composition picked because it passes is the same mechanism seen from the
-other side. It is disclosed rather than presented as a design.
+other side. It is disclosed rather than presented as a design — and the honest reading is that this
+composition is now one survivor among {{comp_n_block_word}} rather than one of two, which is *weaker*
+evidence than the section used to carry, not stronger.
 
 **Neither removed leg is weak on its own terms.** Trend's standalone ({{comp_trend_solo}}) sits between
 {{comp_trend_neighbours}}; carry is **{{comp_carry_solo}}**, the {{comp_carry_rank}} of the eight. What
@@ -1241,16 +1320,20 @@ gaps: equity BAB's beta ranking sits at the **14th percentile of shuffled rankin
 FX carry nets **+0.39** because the price leg offsets the accrual, and breakout is negative on equities and
 FX under every construction. The book is crypto-heavy because that is where the edge survived costs.
 
-**5. "You miss targets."** Yes, and more than when this section was written. The scored out-of-sample block
+**5. "You miss targets."** One, and it is worth being precise about which. The scored out-of-sample block
 is **{{oos_targets_met}}** — missing on {{oos_miss}} — and the full window is **{{book_targets_met}}**, missing
-on {{book_miss}}. Both misses are the same underlying thing: months that are flat-to-slightly-negative in a
-crypto unwind, clustered rather than scattered (Dec-2021 → Feb-2022 is the run that sets the streak). Neither
-is a knob left untuned. **A streak is a sign property and leverage is a positive scalar**, so the grid shows
-the same streak at *every* level from 1.00× to 2.00× — sizing cannot touch it. Nor can either be de-risked
-away, because a flat month is not a profitable month: §5d measures a classifier aimed at exactly this target
-and it pushes months-in-profit *down*, from {{ml_base_months}} to {{ml_gate_months}}. What would fix them is a
-source that **earns** through a crypto unwind rather than sitting out of it; §6c searched for one and found
-nothing that did not break another target. That is the honest ceiling of this book, not a tuning gap.
+on {{book_miss}}. Every one of the four *risk* targets clears on both windows; what the long window fails is
+the Sharpe **ceiling**, and a ratio above the band is a statement that the risk is understated somewhere, not
+that the book lost money. The honest version of that statement is in §6c-ter: the book used to sit inside the
+band partly because a Sharpe-0.5 hedge was held at a full slot and dragged the ratio down, and **holding a
+weak leg to flatter a ratio is not a risk control**. Sizing that hedge on market stress instead took the
+worst month from {{crisis_flat_worst_month}} to {{crisis_timed_worst_month}} and the streak from
+{{crisis_flat_streak}} to {{crisis_timed_streak}} — the risk got *better* and the ratio walked out of the
+band, which is the trade this report would make every time. What remains genuinely unfixable is the
+flat-to-slightly-negative month in a crypto unwind: it cannot be de-risked away, because a flat month is not
+a profitable month, and §5d measures a classifier aimed at exactly that target which pushes months-in-profit
+*down*, from {{ml_base_months}} to {{ml_gate_months}}. §6c searched for a source that **earns** through such
+an unwind and found nothing that did not break another target. That is the honest ceiling, not a tuning gap.
 
 ## 7. What did not survive (kept, not hidden)
 

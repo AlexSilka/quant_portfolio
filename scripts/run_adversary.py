@@ -83,7 +83,7 @@ def rescaled_legs(raw: dict, start: str = mb.START_REPORT) -> pd.DataFrame:
 
 def assemble(raw: dict, start: str = mb.START_REPORT) -> pd.Series:
     df = rescaled_legs(raw, start)
-    return mb.regime_overlay(df.mean(axis=1, skipna=True))
+    return mb.regime_overlay(mb.book_stack(df))
 
 
 def weighted_mean(df: pd.DataFrame, w: np.ndarray) -> pd.Series:
@@ -102,7 +102,7 @@ def weighted_mean(df: pd.DataFrame, w: np.ndarray) -> pd.Series:
 def task2(out: dict) -> pd.DataFrame:
     raw = load_raw()
     df = rescaled_legs(raw)
-    book = mb.regime_overlay(df.mean(axis=1, skipna=True))
+    book = mb.regime_overlay(mb.book_stack(df))
 
     # -- 0. verify bit-exact vs the published parquet -------------------------------------
     saved = pd.read_parquet(R / "master_book.parquet")["ret"]
@@ -157,7 +157,7 @@ def task2(out: dict) -> pd.DataFrame:
     rng = np.random.default_rng(SEED)
     idx = df.index
     nlive = df.notna().sum(axis=1)
-    raw_mean = df.mean(axis=1, skipna=True)
+    raw_mean = mb.book_stack(df)
     inj = {}
     for name, shk in (("Flash2010(-49%)", -0.490), ("Brexit2016(-16%)", -0.160), ("Aug2015(-11%)", -0.110)):
         brW = brD = 0
@@ -206,7 +206,7 @@ def task2(out: dict) -> pd.DataFrame:
         live = [c for c in sg if pd.notna(df2.loc[t, c])]
         if live:
             df2.loc[t, live] = df2.loc[t, live].min()
-    stressed = mb.regime_overlay(df2.mean(axis=1, skipna=True))
+    stressed = mb.regime_overlay(mb.book_stack(df2))
     sc = scorecard(stressed)
     print("\n6. CRASH-CORRELATION -> 1  (short-gamma legs co-move on worst-2% VIX days)")
     print(f"   stressed book: {fmt(sc)}   (base D={base['max_dd']:+.4f} W={base['worst_mo']:+.4f})")

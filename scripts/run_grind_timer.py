@@ -69,7 +69,7 @@ def main() -> None:
     raw = {k: v for k, v in raw.items() if v is not None}
     df = pd.DataFrame({k: mb.rescale(v) for k, v in raw.items()}).sort_index()
     df = df[df.index >= pd.Timestamp(START)]; df = df[df.notna().sum(axis=1) >= 2]
-    mean6 = df.mean(axis=1, skipna=True)
+    mean6 = mb.book_stack(df)
     canon = mb.regime_overlay(mean6)
 
     eq = (1 + mean6).cumprod(); dd = eq / eq.cummax() - 1.0

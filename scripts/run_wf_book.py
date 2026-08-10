@@ -34,10 +34,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import OOS_START, SEED  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 try:                                                              # canonical family list + PIT loaders + overlay
-    from scripts.run_master_book import (FAMILIES as _FAMILIES, load as _load_fam, rescale as _rescale_fam,  # noqa: E402
+    from scripts.run_master_book import (FAMILIES as _FAMILIES, book_stack as _book_stack,  # noqa: E402
+                                 load as _load_fam, rescale as _rescale_fam,
                                  risk_overlay as _risk_overlay, scorecard as _scorecard_fn)
 except Exception:                                                 # noqa: BLE001 — fall back to the truncated legs
     _FAMILIES = _risk_overlay = _scorecard_fn = None
+    _book_stack = lambda d: d.mean(axis=1, skipna=True)           # the assembler is absent; legs are pre-weighted
 
 R = Path("reports")
 PPY = 365
@@ -152,7 +154,7 @@ def main():
     hb_2016 = _sc(headline[headline.index >= "2016-08-01"])          # a 10-year (2016+) comparison slice (master reports from 2011)
     eq_vals = [rows[n]["sharpe"] for n in configs if n.startswith("equal")]   # cadence/window invariance (fixed alloc)
     # crisis-window stress on the equal-weight book (maxDD is annualisation-free — the robust read)
-    ew = df.mean(axis=1, skipna=True)
+    ew = _book_stack(df)
     stress = {}
     for lab, a, b in STRESS:
         w = ew[a:b]
@@ -169,7 +171,7 @@ def main():
         for wlab, wst in [("full_21y_2005", "2005-01-01"), ("15y_2011", "2011-08-01"), ("10y_2016", "2016-08-01")]:
             d = df[df.index >= pd.Timestamp(wst)]
             d = d[d.notna().sum(axis=1) >= 2]
-            mg, _, _ = _risk_overlay(d.mean(axis=1, skipna=True))
+            mg, _, _ = _risk_overlay(_book_stack(d))
             windows[wlab] = _scorecard_fn(mg)
 
     print("=== BOOK-LEVEL WALK-FORWARD (accumulated out-of-sample track, §10) ===")

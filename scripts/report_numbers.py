@@ -589,6 +589,12 @@ def _composition():
         "comp_n_configs_word": _word(d["n_configurations"]),
         "comp_n_passing_word": _word(len(d["passing"])),
         "comp_n_passing_word_cap": _word(len(d["passing"])).capitalize(),
+        # how many clear the window the brief actually scores, and how many clear the long one — kept
+        # apart because they stopped being the same question once the hedge slot started ramping: the
+        # full window now fails on the Sharpe BAND for every configuration, which is not a risk miss.
+        "comp_n_block_word": _word(sum(1 for v in cfg.values() if v["targets_oos"] == 5)),
+        "comp_n_block_word_cap": _word(sum(1 for v in cfg.values() if v["targets_oos"] == 5)).capitalize(),
+        "comp_n_full_word": _word(sum(1 for v in cfg.values() if v["targets_full"] == 5)),
         "comp_passing": " and ".join(sorted((name(k) for k in d["passing"]), key=len)),
         "comp_base_targets_full": f"{base['targets_full']}/5",
         "comp_base_targets_oos": f"{base['targets_oos']}/5",
@@ -648,6 +654,96 @@ def _longgamma_table(rungs=("0.15", "0.25", "0.40"), tag="E curve-timed long vol
         if w in d[tag]:
             rows.append(row(w, d[tag][w]))
     return "\n".join(rows)
+
+
+def _crisis_slot():
+    """§6c-ter — what the long-gamma slot's sizing is worth, from run_crisis_lab's artifact.
+
+    Three tables and the scalars around them: how the hedge is SIZED (the row that ships is the ramped
+    one), what the controls say about whether the ramp times anything, and what re-engineering its
+    SIGNAL does to the crash payoff it exists for. All measured through the canonical assembler."""
+    d = _load("lab/crisis_lab.json")
+    if not d:
+        return {}
+    out, fin = {}, d.get("finalists") or {}
+    ship, timed = fin.get("shipped sign-blend | full slot"), fin.get("shipped sign-blend | stress-timed")
+    half, drop = fin.get("shipped sign-blend | half slot"), (d.get("slot_size_sweep") or {}).get(
+        "V0 shipped (sign blend)", {}).get("0.00")
+    if ship and timed:
+        rows = ["| the hedge slot | full window: Sharpe / CAGR / worst month / months / streak "
+                "| frozen block: targets / Sharpe / CAGR |", "|---|---|---|"]
+
+        def row(label, c, bold=False):
+            if not c:
+                return None
+            b = (lambda x: f"**{x}**") if bold else (lambda x: x)
+            f, o = c["full"], c["oos"]
+            return (f"| {label} | {f['sharpe']:+.2f} / {_pc(f['cagr'])} / {b(_pc(f['worst_month'], 2))} / "
+                    f"{_pcu(f['months_in_profit'], 0)} / {f['streak']} | {b(f'{o['targets']}/5')} / "
+                    f"{o['sharpe']:+.2f} / {_pc(o['cagr'])} |")
+        for lab, card, bold in (("dropped entirely", drop, False), ("one full slot (was shipped)", ship, False),
+                                ("half a slot, constant", half, False),
+                                ("**ramped on market stress** (ships)", timed, True)):
+            r = row(lab, card, bold)
+            if r:
+                rows.append(r)
+        out["crisis_sizing_table"] = "\n".join(rows)
+        out.update({
+            "crisis_flat_cagr": _pc(ship["full"]["cagr"]), "crisis_flat_oos_cagr": _pc(ship["oos"]["cagr"]),
+            "crisis_flat_streak": str(ship["full"]["streak"]),
+            "crisis_flat_months": _pcu(ship["full"]["months_in_profit"], 0),
+            "crisis_flat_worst_month": _pc(ship["full"]["worst_month"], 2),
+            "crisis_timed_cagr": _pc(timed["full"]["cagr"]), "crisis_timed_oos_cagr": _pc(timed["oos"]["cagr"]),
+            "crisis_timed_worst_month": _pc(timed["full"]["worst_month"], 2),
+            "crisis_timed_months": _pcu(timed["full"]["months_in_profit"], 0),
+            "crisis_timed_streak": str(timed["full"]["streak"]),
+            "crisis_cagr_gain": _pcu(timed["full"]["cagr"] - ship["full"]["cagr"]),
+            "crisis_oos_cagr_gain": _pcu(timed["oos"]["cagr"] - ship["oos"]["cagr"]),
+        })
+        if drop:
+            out.update({"crisis_drop_cagr": _pc(drop["full"]["cagr"]),
+                        "crisis_drop_oos_cagr": _pc(drop["oos"]["cagr"]),
+                        "crisis_drop_worst_month": _pc(drop["full"]["worst_month"], 2),
+                        "crisis_drop_sharpe": f"{drop['full']['sharpe']:+.2f}"})
+
+    ctrl = (d.get("controls") or {}).get("shipped sign-blend") or {}
+    if ctrl:
+        real, rot, flat = ctrl["stress_timed"], ctrl["rotated_conditioner_median"], ctrl["constant_at_mean_weight"]
+        out["crisis_control_table"] = "\n".join([
+            "| the slot at the same average weight | full window: CAGR / worst month | frozen block: CAGR |",
+            "|---|---|---|",
+            f"| ramped on market stress | **{_pc(real['full']['cagr'])}** / **{_pc(real['full']['worst_month'], 2)}** "
+            f"| **{_pc(real['oos']['cagr'])}** |",
+            f"| the same ramp, rotated to the wrong days | {_pc(rot['full']['cagr'])} / "
+            f"{_pc(rot['full']['worst_month'], 2)} | {_pc(rot['oos']['cagr'])} |",
+            f"| held flat at the ramp's own average | {_pc(flat['full']['cagr'])} / "
+            f"{_pc(flat['full']['worst_month'], 2)} | {_pc(flat['oos']['cagr'])} |"])
+        out["crisis_mean_weight"] = f"{ctrl['mean_weight']:.2f}"
+
+    v = d.get("variants_standalone") or {}
+    base, ew = v.get("V0 shipped (sign blend)"), v.get("V1 EWMAC + response fn")
+    if base and ew:
+        wins = ["2008 GFC", "2011 selloff", "2018 Q4", "COVID crash", "yen unwind 2024"]
+        out["crisis_signal_table"] = "\n".join([
+            "| | standalone Sharpe | " + " | ".join(wins) + " |",
+            "|---|---|" + "---|" * len(wins),
+            f"| sign blend (ships) | {base['sharpe']:+.2f} | "
+            + " | ".join(f"**{_pc(base['crash'].get(w, float('nan')), 1)}**" for w in wins) + " |",
+            f"| EWMAC + response function | **{ew['sharpe']:+.2f}** | "
+            + " | ".join(_pc(ew['crash'].get(w, float('nan')), 1) for w in wins) + " |"])
+        out.update({"crisis_solo_sharpe": f"{base['sharpe']:+.2f}", "crisis_solo_cagr": _pc(base["cagr"]),
+                    "crisis_solo_oos_sharpe": f"{base['oos_sharpe']:+.2f}",
+                    "crisis_ewmac_sharpe": f"{ew['sharpe']:+.2f}", "crisis_ewmac_cagr": _pc(ew["cagr"]),
+                    "crisis_ewmac_covid": _pc(ew["crash"].get("COVID crash", float("nan")), 1),
+                    "crisis_ship_covid": _pc(base["crash"].get("COVID crash", float("nan")), 1)})
+
+    diag = d.get("diagnosis_by_class") or {}
+    if diag:
+        out["crisis_class_table"] = "\n".join(
+            ["| class | Sharpe, costs off | Sharpe, costs on | turnover / yr |", "|---|---|---|---|"]
+            + [f"| {k} | {c['gross_sharpe']:+.2f} | {c['net_sharpe']:+.2f} | {c['turnover_yr']:.0f}x |"
+               for k, c in diag.items()])
+    return out
 
 
 def build():
@@ -860,6 +956,7 @@ def build():
                     "cscv_is_bar": _n(c["is_sharpe_mean"], 3), "cscv_oos_bar": _n(c["oos_sharpe_mean"], 3),
                     "cscv_p_loss": _pcu(c["prob_oos_loss"], 0)})
     out["longgamma_table"] = _longgamma_table()
+    out.update(_crisis_slot())
     return out
 
 

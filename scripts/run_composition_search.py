@@ -81,7 +81,7 @@ def frame(legs: dict[str, pd.Series]) -> pd.DataFrame:
 def book(legs: dict[str, pd.Series]) -> pd.Series:
     """The canonical assembly, restricted to a subset of families — same rescale, same overlay, same
     leverage. Nothing here may differ from run_master_book except which columns enter the mean."""
-    return mb.risk_overlay(frame(legs).mean(axis=1, skipna=True).dropna(), leverage=mb.BOOK_LEVERAGE)[0]
+    return mb.risk_overlay(mb.book_stack(frame(legs)).dropna(), leverage=mb.BOOK_LEVERAGE)[0]
 
 
 def ret(s: pd.Series) -> dict:
@@ -144,7 +144,7 @@ def main():
     # the honest like-for-like: any composition change moves book vol, so the eight-family book is also
     # scored at the leverage that puts it on the SHIPPED book's realised volatility. Same risk, same
     # question — does the wider book actually earn more?
-    b8, b6 = frame(raw).mean(axis=1, skipna=True).dropna(), frame(legs_shipped).mean(axis=1, skipna=True).dropna()
+    b8, b6 = mb.book_stack(frame(raw)).dropna(), mb.book_stack(frame(legs_shipped)).dropna()
     lev = mb.BOOK_LEVERAGE * float(b6.std(ddof=1) / b8.std(ddof=1))
     m8 = mb.risk_overlay(b8, leverage=lev)[0]
     vol_matched = {"leverage": round(lev, 3), "full": {**mb.scorecard(m8), **ret(m8)},
