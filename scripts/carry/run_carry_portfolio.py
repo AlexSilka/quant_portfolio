@@ -16,6 +16,7 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+import scripts.run_master_book as mb  # noqa: E402  the assembler weights the book, not a flat mean
 from src.config import CARRY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
@@ -62,7 +63,11 @@ def main():
     print(f"  break-even cost multiple: {be:.0f}x base" if be else "  break-even: >40x base")
 
     # ---- correlation to the master book (carry held out) + risk-budget blend sweep ----
-    book = pd.read_parquet(REPORTS_DIR / "master_book_legs.parquet").drop(columns=["carry"]).mean(axis=1)
+    # Carry is no longer a leg (§6d-ter), so dropping it by name raised KeyError; and the baseline has
+    # to be weighted the way the assembler weights the book, not a flat mean, or the hedge slot enters
+    # at a share the book does not hold it at. Same defect as carry/make_carry_figures had.
+    _legs = pd.read_parquet(REPORTS_DIR / "master_book_legs.parquet")
+    book = mb.book_stack(_legs.drop(columns=[c for c in ("carry",) if c in _legs.columns]))
     if carry.index.tz is not None:
         book.index = book.index.tz_localize(carry.index.tz)
     idx = carry.index.intersection(book.index)
