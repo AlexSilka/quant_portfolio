@@ -8,18 +8,42 @@ meeting), when the policy statement is released at ~14:00 ET. The pre-FOMC drift
 anchor is the announcement, and the tradable window is the day(s) leading into it.
 
 Only *regularly scheduled* meetings are listed: the drift is an anticipation effect and needs the
-meeting's timing to be known in advance, so unscheduled/emergency actions (2020 conference calls,
-inter-meeting cuts) are deliberately excluded. One caveat is stamped inline: in 2020 the regularly
-scheduled Mar 17-18 meeting was pre-empted by the emergency Sunday-Mar-15 cut; the scheduled Mar 18
-anchor is kept for completeness (one event of ~65) and the driver's per-year / sub-period splits
-surface any COVID-window distortion rather than hiding it.
+meeting's timing to be known in advance, so unscheduled/emergency actions (2008 and 2020 conference
+calls, inter-meeting cuts) are deliberately excluded. One caveat is stamped inline: in 2020 the
+regularly scheduled Mar 17-18 meeting was pre-empted by the emergency Sunday-Mar-15 cut; the scheduled
+Mar 18 anchor is kept for completeness (one event of ~170) and the driver's per-year / sub-period
+splits surface any COVID-window distortion rather than hiding it.
+
+The calendar runs 2005→ because that is where the ETF price history starts. Eight scheduled meetings
+a year is a thin sample for anything measured per-event, so every year of overlap with the prices is
+worth having: the 2005-2010 block is +48 events (+38%) and it is also the block the pre-FOMC-drift
+literature was written on, which is what makes the post-2015 decay legible instead of ambiguous.
 """
 from __future__ import annotations
 
 import pandas as pd
 
-# Announcement day (statement release, ~14:00 ET). Verified against the Fed's per-year calendars.
+# Announcement day (statement release, ~14:00 ET from 2013; ~14:15 ET before that — immaterial for
+# daily bars, and the intraday tests only reach 2020). Verified against the Fed's per-year calendars.
 FOMC_ANNOUNCEMENTS: list[str] = [
+    # 2005  (equity ETF history starts 2005-01-03, so the calendar starts where the prices do)
+    "2005-02-02", "2005-03-22", "2005-05-03", "2005-06-30", "2005-08-09", "2005-09-20",
+    "2005-11-01", "2005-12-13",
+    # 2006
+    "2006-01-31", "2006-03-28", "2006-05-10", "2006-06-29", "2006-08-08", "2006-09-20",
+    "2006-10-25", "2006-12-12",
+    # 2007  (Aug 10, Aug 16 and Dec 6 were unscheduled conference calls — excluded)
+    "2007-01-31", "2007-03-21", "2007-05-09", "2007-06-28", "2007-08-07", "2007-09-18",
+    "2007-10-31", "2007-12-11",
+    # 2008  (the Jan 22 and Oct 8 emergency cuts came out of conference calls — excluded)
+    "2008-01-30", "2008-03-18", "2008-04-30", "2008-06-25", "2008-08-05", "2008-09-16",
+    "2008-10-29", "2008-12-16",
+    # 2009
+    "2009-01-28", "2009-03-18", "2009-04-29", "2009-06-24", "2009-08-12", "2009-09-23",
+    "2009-11-04", "2009-12-16",
+    # 2010  (May 9 and Oct 15 were unscheduled conference calls — excluded)
+    "2010-01-27", "2010-03-16", "2010-04-28", "2010-06-23", "2010-08-10", "2010-09-21",
+    "2010-11-03", "2010-12-14",
     # 2011
     "2011-01-26", "2011-03-15", "2011-04-27", "2011-06-22", "2011-08-09", "2011-09-21",
     "2011-11-02", "2011-12-13",

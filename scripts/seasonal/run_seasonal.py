@@ -5,8 +5,14 @@ to the deliverable book + lift curve). Because a calendar window is *determinist
 advance*, the honest execution model is hold-through-the-window (cost charged only at the edges, not
 the daily round-trip that killed the overnight sleeve) — see src/sleeves/seasonal.py.
 
+Returns are dividend-inclusive and intraday prices are re-stamped at the instant they are observed;
+both matter more here than in a signal-driven family, because a calendar study reads a handful of
+specific bars and the dividend calendar and the bar-labelling convention both land inside them
+(src/sleeves/seasonal.py). The variant sweep over window anchor, side, assets and timeframe lives in
+run_seasonal_variants.py — this driver holds the two a-priori windows.
+
 Coverage (the request: crypto + stocks + FX, several timeframes, top-10/50/100, parameter variations):
-  • pre-FOMC drift  — SPY/QQQ/IWM/DIA daily 2011→ (long history, incl. the classic-vs-decayed split),
+  • pre-FOMC drift  — SPY/QQQ/IWM/DIA daily 2005→ (long history, incl. the classic-vs-decayed split),
                       the *precise* intraday 2pm→2pm window (SPY/QQQ, 5-min, 2020→), and the crypto
                       analogue (BTC/ETH daily + hourly, funding-charged).
   • turn-of-month   — SPY / BTC / FX-basket time-series, a (days_before × days_after) parameter
@@ -31,6 +37,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.config import CACHE_DIR, RAW_DIR, REPORTS_DIR, SEASONAL_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.fomc import announce_days, announce_timestamps_utc  # noqa: E402
+from src.data.twelvedata import load_dividends  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import seasonal as sz  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
@@ -47,21 +54,37 @@ rng = np.random.default_rng(SEED)
 FOMC_OFFSETS = [-1]              # headline pre-FOMC window: the trading day *before* the announcement
 TOM_BEFORE, TOM_AFTER = 1, 3     # classic Lakonishok-Smidt turn-of-month (−1,+3)
 EQ_COST, CR_COST, FX_COST = 3.0, 6.0, 0.9   # per-side bps (equity / crypto taker / FX majors)
-START_EQ = "2011-01-01"          # FOMC-date coverage floor (deep equity history for the decay story)
+START_EQ = "2005-01-01"          # ETF history floor = FOMC calendar floor (src/data/fomc.py)
 DECAY_SPLIT = "2018-01-01"       # classic (pre) vs recent (post) — the repo's frozen train_start
 
 
 # ── loaders ─────────────────────────────────────────────────────────────────────────────────
 def _etf_close(ticker: str, start=START_EQ) -> pd.Series:
-    df = pd.read_parquet(ETF_RAW / f"{ticker}_1d.parquet")
-    s = df["close"]
+    """Split-adjusted daily closes (the level series — momentum features need prices, not returns)."""
+    s = pd.read_parquet(ETF_RAW / f"{ticker}_1d.parquet")["close"]
     if s.index.tz is None:
         s.index = s.index.tz_localize("UTC")
     return s[s.index >= pd.Timestamp(start, tz="UTC")]
 
 
-def _intraday_close(ticker: str, tf: str) -> pd.Series:
-    """A single split-adjusted intraday close series (Twelve Data), UTC, for the precise window."""
+def _etf_returns(ticker: str, start=START_EQ) -> pd.Series:
+    """Dividend-inclusive daily returns. `equity_td` closes are split-adjusted only, and an ETF's
+    ex-dates are themselves a calendar — SPY goes ex two trading days after a quarter-end FOMC in
+    ~a quarter of all meetings — so price returns book a fake loss inside the measured window."""
+    s = _etf_close(ticker, start)
+    try:
+        div = load_dividends(ticker, start="2004-01-01")
+    except Exception:
+        div = None                                          # non-distributing or unavailable
+    return sz.total_return(s, div)
+
+
+def _intraday_price_at(ticker: str, tf: str) -> pd.Series:
+    """Intraday closes (Twelve Data), UTC, RE-STAMPED at the instant each price is observed.
+
+    Twelve Data labels a bar by its open, so the close stamped 13:55 is the 14:00 price; `asof(T)` on
+    the raw index hands back a price one bar past T, which for the pre-announcement window means it
+    ends after the statement instead of at it. sz.price_at_instant undoes the labelling."""
     cands = sorted(TD.glob(f"{ticker}_{tf}_*.parquet"))
     if not cands:
         return pd.Series(dtype=float)
@@ -69,7 +92,7 @@ def _intraday_close(ticker: str, tf: str) -> pd.Series:
     df = df[~df.index.duplicated(keep="last")].sort_index()
     if df.index.tz is None:
         df.index = df.index.tz_localize("UTC")
-    return df["close"]
+    return sz.price_at_instant(df["close"], pd.Timedelta(tf))
 
 
 def _panel(tag: str) -> tuple[pd.DataFrame, pd.DataFrame | None]:
@@ -147,8 +170,7 @@ def section_fomc_equity() -> dict:
     ann = announce_days("UTC")
     out, books = {}, {}
     for t in ("SPY", "QQQ", "IWM", "DIA"):
-        px = _etf_close(t)
-        ret = px.pct_change(fill_method=None)
+        ret = _etf_returns(t)
         n_ev = int(((ann >= ret.index.min()) & (ann <= ret.index.max())).sum())
 
         # window comparison: day-before / announce-day / both / two-days-before
@@ -161,10 +183,8 @@ def section_fomc_equity() -> dict:
             wtab[name] = {**dec, "net_sharpe": round(_sh(net, 252), 3)}
 
         # per-offset drift map: mean bps on each single offset −3..+2 (where does the drift live?)
-        offmap = {}
-        for off in range(-3, 3):
-            pos = sz.window_position(ret.index, ann, [off])
-            offmap[off] = round(float((ret * pos).replace(0.0, np.nan).dropna().mean() * 1e4), 2)
+        offmap = {off: round(float(sz.offset_event_returns(ret, ann, off).mean() * 1e4), 2)
+                  for off in range(-3, 3)}
 
         # headline book = day-before timing; decay split + fill-timing robustness
         pos = sz.window_position(ret.index, ann, FOMC_OFFSETS)
@@ -206,38 +226,20 @@ def section_fomc_equity() -> dict:
 # ════════════════════════════════════════════════════════════════════════════════════════════
 # SECTION 2 — pre-FOMC drift, precise intraday 2pm→2pm window (SPY/QQQ, 5-min, 2020→)
 # ════════════════════════════════════════════════════════════════════════════════════════════
-def _precise_window_returns(px_intraday: pd.Series, announce_utc: pd.DatetimeIndex,
-                            hours: float = 24.0) -> pd.Series:
-    """Per-event return over [T−hours, T] using asof prices — the exact Lucca-Moench 24h window.
-
-    asof (last observed price ≤ timestamp) is bar-labelling-agnostic, so it works for a 5-min equity
-    series (with the overnight gap folded in, exactly as the 24h calendar window intends) or a 24/7
-    crypto series alike. Events whose window start/end falls outside the data are dropped.
-    """
-    s = px_intraday.dropna().sort_index()
-    rows = {}
-    for T in announce_utc:
-        p1 = s.asof(T)
-        p0 = s.asof(T - pd.Timedelta(hours=hours))
-        if pd.notna(p0) and pd.notna(p1) and p0 > 0 and s.index.min() <= T - pd.Timedelta(hours=hours):
-            rows[T] = p1 / p0 - 1.0
-    return pd.Series(rows).sort_index()
-
-
 def section_fomc_intraday() -> dict:
     print(f"\n{'='*82}\nSECTION 2 — PRE-FOMC precise intraday 2pm→2pm window (5-min, 2020→)\n{'='*82}")
     ann_ts = announce_timestamps_utc(14, 0)      # 14:00 ET localized → UTC per date (DST-correct)
     out = {}
     for t in ("SPY", "QQQ", "IWM", "DIA"):
-        s = _intraday_close(t, "5min")
+        s = _intraday_price_at(t, "5min")
         tf_used = "5min"
         if s.empty:
-            s, tf_used = _intraday_close(t, "1h"), "1h"     # 5-min not archived for all ETFs → 1h fallback
+            s, tf_used = _intraday_price_at(t, "1h"), "1h"  # 5-min not archived for all ETFs → 1h fallback
         if s.empty:
             continue
-        ev = _precise_window_returns(s, ann_ts, 24.0)
+        ev = sz.event_window_returns(s, ann_ts, 24.0)
         # daily proxy over the same events for comparison (day-before close-to-close)
-        px = _etf_close(t, "2020-01-01"); dret = px.pct_change(fill_method=None)
+        dret = _etf_returns(t, "2020-01-01")
         pos = sz.window_position(dret.index, announce_days("UTC"), [-1])
         proxy = (dret * pos).replace(0.0, np.nan).dropna()
         out[t] = {"n_events": int(len(ev)), "bar": tf_used,
@@ -279,7 +281,8 @@ def section_fomc_crypto() -> dict:
     h = pd.read_parquet(CACHE / "crypto_1h_close.parquet", columns=["BTCUSDT"])["BTCUSDT"]
     if h.index.tz is None:
         h.index = h.index.tz_localize("UTC")
-    ev = _precise_window_returns(h, announce_timestamps_utc(14, 0), 24.0)
+    ev = sz.event_window_returns(sz.price_at_instant(h, pd.Timedelta("1h")),
+                                 announce_timestamps_utc(14, 0), 24.0)
     out["BTC_hourly_precise"] = {"n_events": int(len(ev)), "mean_bps": round(float(ev.mean() * 1e4), 2),
                                  "hit_rate": round(float((ev > 0).mean()), 3),
                                  "t_stat": round(float(ev.mean() / (ev.std(ddof=1) / np.sqrt(len(ev)))), 2)}
@@ -326,7 +329,7 @@ def section_tom_ts() -> dict:
         return grid
 
     grids = []
-    grids += run_one("SPY", _etf_close("SPY").pct_change(fill_method=None), EQ_COST, 252)
+    grids += run_one("SPY", _etf_returns("SPY"), EQ_COST, 252)
     Cc, _ = _panel("crypto_1d")
     btc_ret = Cc["BTCUSDT"].pct_change(fill_method=None)
     grids += run_one("BTC", btc_ret, CR_COST, 365, funding=_btc_funding_daily(btc_ret.index, "BTCUSDT"))
@@ -369,7 +372,7 @@ def section_combined(fomc_books: dict, tom_books: dict) -> dict:
     ann = announce_days("UTC")
     out, books = {}, {}
     # SPY combined: long inside (pre-FOMC day-before) ∪ (turn-of-month) — one book, cost amortised
-    spy = _etf_close("SPY"); ret = spy.pct_change(fill_method=None)
+    ret = _etf_returns("SPY")
     anch = sz.month_end_anchors(ret.index)
     pos = ((sz.window_position(ret.index, ann, FOMC_OFFSETS) +
             sz.window_position(ret.index, anch, sz.turn_of_month_offsets(TOM_BEFORE, TOM_AFTER))) > 0).astype(float)
@@ -415,15 +418,26 @@ def section_combined(fomc_books: dict, tom_books: dict) -> dict:
             if f.index.tz is not None:
                 f.index = f.index.tz_localize(None)
         h = cand.copy(); h.index = h.index.tz_localize(None)
-        common = h.dropna().index.intersection(bp.dropna().index)
-        if len(common) > 50:
-            corr["book"] = round(float(h.reindex(common).corr(bp.reindex(common))), 3)
+        bk = bp.dropna()
+        if len(bk) > 50:
+            # the candidate is mapped onto the BOOK's calendar (flat on days it does not trade) and
+            # annualised by the book's own obs/yr — intersecting instead would quietly re-annualise the
+            # book on the equity calendar and print a baseline that is not the book's headline Sharpe
+            corr["book"] = round(float(h.reindex(bk.index).fillna(0.0).corr(bk)), 3)
             for c in bs.columns:
-                corr[c] = round(float(h.reindex(common).corr(bs[c].reindex(common))), 3)
-            bk = bp.reindex(common).dropna()
+                corr[c] = round(float(h.reindex(bk.index).fillna(0.0).corr(bs[c].reindex(bk.index))), 3)
+            ppy_book = len(bk) / ((bk.index.max() - bk.index.min()).days / 365.25)
             hm = h.reindex(bk.index).fillna(0.0)
             hm = hm * (bk.std() / hm.std()) if hm.std() > 0 else hm
-            lift = {f"{int(w*100)}%": round(_sh((1 - w) * bk + w * hm, 252), 3) for w in (0.0, 0.15, 0.3, 0.5)}
+            lift = {f"{int(w*100)}%": round(_sh((1 - w) * bk + w * hm, ppy_book), 3)
+                    for w in (0.0, 0.15, 0.3, 0.5)}
+            # control: a naked long-SPY stub blended in the same way. The book is market-neutral, so any
+            # long-equity exposure lifts it; a calendar sleeve is only interesting if it lifts it MORE.
+            beta = _etf_returns("SPY").copy()
+            beta.index = beta.index.tz_localize(None)
+            beta = beta.reindex(bk.index).fillna(0.0)
+            beta = beta * (bk.std() / beta.std())
+            lift["buy_hold_spy_at_15%"] = round(_sh(0.85 * bk + 0.15 * beta, ppy_book), 3)
             print(f"  corr to book {corr.get('book')}  → book-lift by weight {lift}")
     out["corr_to_book"], out["book_lift_by_weight"] = corr, lift
     return {"summary": out, "_books": books}

@@ -161,6 +161,7 @@ residmom:
 # Calendar-seasonality deep-dive: pre-FOMC drift + turn-of-month (a tested-and-mapped family). See SEASONAL.md.
 seasonal:
 	$(PY) scripts/seasonal/run_seasonal.py
+	$(PY) scripts/seasonal/run_seasonal_variants.py
 	$(PY) scripts/seasonal/run_seasonal_xasset_ml.py
 
 # On-chain / network-signal deep-dive (H3): free Coin Metrics community + blockchain.com + DefiLlama;

@@ -111,23 +111,49 @@ def load_bars(symbol: str, interval: str, start: str, end: str | None = None,
     return out
 
 
-def load_dividends(symbol: str, start: str = "2010-01-01", end: str | None = None,
-                   cache_dir: str = RAW_DIR) -> pd.Series:
-    """Return cash dividends per share indexed by ex-date (UTC), cached per symbol. Used to build a
-    trailing-12m dividend yield — the equity analogue of a currency's rate or a perp's funding."""
-    if end is None:
-        end = pd.Timestamp.now().strftime("%Y-%m-%d")
-    cpath = Path(cache_dir) / "twelvedata" / f"{symbol.replace('/', '-')}_div.parquet"
-    if cpath.exists():
-        return pd.read_parquet(cpath)["amount"]
+def _dividend_chunk(symbol: str, start: str, end: str) -> pd.Series:
     r = _request_ep(_DIV, symbol=symbol, start_date=start, end_date=end)
     vals = r.get("dividends") or []
     if not vals:
-        s = pd.Series(dtype=float, name="amount")
-    else:
-        df = pd.DataFrame(vals)
-        df.index = pd.to_datetime(df["ex_date"], utc=True)
-        s = pd.to_numeric(df["amount"], errors="coerce").dropna().sort_index().rename("amount")
+        return pd.Series(dtype=float, name="amount")
+    df = pd.DataFrame(vals)
+    df.index = pd.to_datetime(df["ex_date"], utc=True)
+    return pd.to_numeric(df["amount"], errors="coerce").dropna().sort_index().rename("amount")
+
+
+def load_dividends(symbol: str, start: str = "2010-01-01", end: str | None = None,
+                   cache_dir: str = RAW_DIR) -> pd.Series:
+    """Return cash dividends per share indexed by ex-date (UTC), cached per symbol.
+
+    Two uses: a trailing-12m dividend yield (the equity analogue of a currency's rate or a perp's
+    funding), and building total returns — `equity_td` closes are split-adjusted only, so an ex-date
+    shows up as a price drop that is not a loss. That matters wherever a calendar pins a window near
+    a recurring ex-date: SPY's quarterly ex-date is the third Friday of the quarter-end month, which
+    is two trading days after the March/June/September/December FOMC announcement in ~a quarter of
+    all meetings, and every monthly-paying bond ETF goes ex on the first business day of the month —
+    i.e. inside the turn-of-month window. Price returns manufacture a fake drop in exactly the bars
+    those studies read.
+
+    The endpoint returns at most 100 records per request, which silently truncates a monthly payer to
+    ~8 years, so the history is walked backwards in windows and the union is cached — a single request
+    would have reported 2018→ as "all the dividends TLT ever paid".
+    """
+    if end is None:
+        end = pd.Timestamp.now().strftime("%Y-%m-%d")
+    cpath = Path(cache_dir) / "twelvedata" / f"{symbol.replace('/', '-')}_div.parquet"
+    have = pd.read_parquet(cpath)["amount"] if cpath.exists() else pd.Series(dtype=float, name="amount")
+    if len(have) and have.index.min() <= pd.Timestamp(start, tz="UTC") + pd.Timedelta(days=370):
+        return have                                  # cache already reaches the requested start
+    parts, cur = [have], pd.Timestamp(end, tz="UTC")
+    floor = pd.Timestamp(start, tz="UTC")
+    while cur > floor:
+        chunk = _dividend_chunk(symbol, str((cur - pd.DateOffset(years=6)).date()), str(cur.date()))
+        if chunk.empty:
+            break                                    # no payments in this window: history exhausted
+        parts.append(chunk)
+        cur = chunk.index.min() - pd.Timedelta(days=1)
+    s = pd.concat(parts)
+    s = s[~s.index.duplicated(keep="last")].sort_index().rename("amount")
     cpath.parent.mkdir(parents=True, exist_ok=True)
     s.to_frame().to_parquet(cpath)
     return s

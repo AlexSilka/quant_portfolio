@@ -136,25 +136,38 @@ higher upside. Beware look-ahead in on-chain aggregates (many are revised) — a
 
 ## H4 — Calendar seasonality done right: pre-FOMC drift + turn-of-month  — ❌ TESTED, real-but-beta
 
-> **Verdict — tested end-to-end, not deployable ([SEASONAL.md](strategies/SEASONAL.md), `make seasonal`).** Both
-> effects are real in the data but net of cost they are **beta-timing, not alpha** — H4 joins the
+> **Verdict — tested end-to-end plus a 309-arm variant sweep, not deployable ([SEASONAL.md](strategies/SEASONAL.md), `make seasonal`).**
+> Both effects are real in the data but net of cost they are **beta-timing, not alpha** — H4 joins the
 > overnight/session family in the "real-as-beta, not viable market-neutral" pile. The **pre-FOMC drift**
-> has a clean signature (SPY +8.7bps day-before / +7.5bps announce, then −16.9/−15.8bps the two days
-> after; in-window Sharpe +1.25) but the standalone timing book nets only +0.05–0.13 across SPY/QQQ/IWM/
-> DIA and **does not beat a shuffled-calendar placebo** (63rd–74th pctile; a 1-day hold pays a full
-> round-trip for ~8 events/yr). **Turn-of-month is beta**: the net Sharpe *rises monotonically as the
-> window widens* toward buy-&-hold (SPY (−1,+1) 0.08 → (−4,+5) 0.77 ≈ B&H 0.76), the classic (−1,+3)
-> window (0.29) **underperforms buy-&-hold** and sits at the 57th placebo pctile, the stock book is flat
-> at ~0.29 across top-50…500 (no cross-sectional signal), and crypto ToM is dead (−0.01). The combined
-> SPY sleeve nets +0.32 (MC-P5 −0.11, deflated 0.31), is decorrelated (+0.18) but sub-bar so it **drags
-> the book** (3.47→3.16 at 30%). **One genuine result kept for the edge map:** BTC's exact 24h→2pm-ET
-> pre-FOMC window returns **+102bps, t=+2.4** — a significant crypto risk-on drift, not a levered sleeve.
-> **Trading it market-neutral *between* assets and with ML does not rescue it either:** a dollar-neutral
-> long/short across names (in-window only) is negative or sub-bar (crypto pre-FOMC −0.47, stocks ToM −0.41
-> below-random, crypto ToM +0.36 at the 96th placebo pctile — one marginal near-miss); a conditional
-> pre-FOMC ML gate (VIX/10y-2y-slope/drift, purged CV) makes it worse (SPY 0.24→0.07, negative OOS IC) and
-> a cross-sectional LGBM ranker is worse in-window than all-days. Removing the beta removes the return.
-> The spec below is kept for reference / to prevent a re-run.
+> has a clean signature and it lives on the **announcement bar**, not the day before (SPY +22.6bps t+2.3
+> on announce vs +11.8 the day before, then −16.3 the day after; QQQ +34.7 t+3.2), but it **decayed**:
+> the equal-weight equity basket earns +59.5bps (t+2.9) per meeting in 2005-10, +28.0 in 2011-15, then
+> −9.7 and +2.5 — nothing since 2015. The standalone timing books net +0.09–0.17 across SPY/QQQ/IWM/DIA
+> at the 67th–84th **shuffled-calendar placebo** percentile (a 1-day hold pays a full round-trip for ~8
+> events/yr). **Turn-of-month is beta — now shown directly**: the long-in-window/short-out-of-window
+> calendar spread nets **−0.02 on SPY** (in−out +1.45bps, t+0.4) and is negative on every other stream,
+> while the net Sharpe still *rises with window width* toward buy-&-hold (SPY (−1,+1) 0.11 → (−4,+3)
+> 0.68 ≈ B&H 0.64); the stock book is flat across top-50…500 and crypto ToM is dead. Sweeping the four
+> free axes changes nothing: both **sides** of every window, 25 **assets** (a coherent risk-on ordering —
+> EFA/BTC/QQQ/SLV at the top, the whole Treasury complex negative), five **basket sizes** (the 21-asset
+> mix dilutes to +0.05), five **timeframes** (crypto's 6h pre-announcement window is the best arm at
+> +0.69/+0.64 net for BTC/ETH), the **FOMC-cycle** even-week structure (holds 2005-15, inverts after;
+> long-only +0.50 vs B&H +0.66) and dash-for-cash **conditioning** (wrong sign). Deflated over all 309
+> arms nothing clears — best 0.65. **The decisive test is the beta control:** blended into the master
+> book at 20%, buy-&-hold SPY lifts it 3.91 → **4.07** (OOS 3.54 → 3.76) while the best calendar arm
+> reaches 4.00 (OOS 3.51) and every genuinely market-neutral arm *lowers* the OOS book. A calendar sleeve
+> here buys exposure with a cheaper substitute. **Trading it market-neutral *between* assets and with ML does not
+> rescue it either:** a dollar-neutral long/short across names (in-window only) is negative or sub-bar
+> (crypto pre-FOMC −0.47, stocks ToM −0.49, crypto ToM +0.36 at the 96th placebo pctile); a conditional
+> pre-FOMC ML gate (VIX/10y-2y-slope/drift, purged CV) adds nothing — SPY +0.24 → +0.23 even though the
+> ridge has real OOS signal (IC +0.29), because gating away 41% of the events gives back what the ranking
+> earns, and BTC goes +0.28 → −0.19 — and a cross-sectional LGBM ranker is worse in-window than all-days.
+> Removing the beta removes the return. **Three plumbing defects were fixed to see this** and now live in `src/`: an
+> open-labelled-bar look-ahead that ended the "24h into the statement" window an hour *after* it (BTC
+> +102.5bps t=2.4 → **+83.5 t=1.9**), price-only returns that booked SPY's ex-dividend as a post-FOMC
+> fade (offset +2 −15.7 → −5.5bps; the ex-date falls there in 39 of 172 meetings), and an event calendar
+> starting in 2011 while the prices start in 2005 (125 → **173 events**). The spec below is kept for
+> reference / to prevent a re-run.
 
 **Thesis.** (a) **Pre-FOMC announcement drift** — a large share of the equity premium accrues in the
 ~24h before scheduled FOMC announcements (Lucca-Moench 2015); (b) **turn-of-month** — returns

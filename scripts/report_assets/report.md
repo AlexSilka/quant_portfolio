@@ -620,8 +620,9 @@ Across six structurally distinct families the model **never manufactures out-of-
 in the cross-section**; its honest, repeatable value is drawdown control and entry precision (trend, breakout,
 carry). ML was also run on two *rejected* families and **confirmed the rejection**: on-chain — a 21-trial ranker on
 on-chain features nets **+0.32** while the *identical harness on price features* nets **+1.09** (the method works,
-the data doesn't); and calendar-seasonality — a purged-CV pre-FOMC gate makes SPY *worse* (0.24→0.07, negative OOS
-IC), because removing the beta removes the return. Full per-family model grids and leakage controls:
+the data doesn't); and calendar-seasonality — a purged-CV pre-FOMC gate leaves SPY where it started (+0.24 →
++0.23) even though the ridge carries real OOS signal (IC +0.29), because gating away 41% of the events gives
+back exactly what the ranking earns. Full per-family model grids and leakage controls:
 [TREND.md §7](docs/strategies/TREND.md), [BREAKOUT.md §6](docs/strategies/BREAKOUT.md),
 [XSECT.md §7](docs/strategies/XSECT.md), [CARRY.md §3](docs/strategies/CARRY.md),
 [BAB.md §3d](docs/strategies/BAB.md), [ONCHAIN.md](docs/strategies/ONCHAIN.md); artifacts under
@@ -1207,22 +1208,35 @@ nothing that did not break another target. That is the honest ceiling of this bo
   and fixed. Decorrelated (+0.07) but negative — documented, not traded.
 - **Calendar seasonality — pre-FOMC drift + turn-of-month (H4)** — the event-based half of the §4
   calendar family, held-through-window so cost is charged only at the edges (not overnight's daily
-  round-trip), full funnel ([docs/strategies/SEASONAL.md](docs/strategies/SEASONAL.md)). Both effects are **real but beta,
-  not alpha**. The pre-FOMC drift has a clean shape (SPY +8.7bps day-before / +7.5bps announce, then
-  −16.9/−15.8bps the two days after; in-window Sharpe +1.25) yet the timing book nets only **+0.05–0.13**
-  across SPY/QQQ/IWM/DIA and **fails the shuffled-calendar placebo** (63rd–74th pctile — a 1-day hold
-  pays a full round-trip for ~8 events/yr). **Turn-of-month is beta by construction**: net Sharpe rises
-  monotonically as the window widens toward buy-&-hold (SPY (−1,+1) 0.08 → (−4,+5) 0.77 ≈ B&H 0.76), the
-  classic (−1,+3) window (0.29) **underperforms buy-&-hold**, the stock book is flat at ~0.29 across
-  top-50…500 (no cross-sectional signal), and crypto ToM is dead (−0.01). Combined SPY sleeve +0.32
-  (MC-P5 −0.11, deflated 0.31), decorrelated (+0.18) but sub-bar → **drags the book** (3.47→3.16 @30%),
-  excluded. **One genuine edge-map find:** BTC's exact 24h→2pm-ET pre-FOMC window returns **+102bps,
-  t=+2.4** — a significant crypto risk-on drift, located for future event-study work, not a levered sleeve.
-  **Neither a market-neutral cross-asset long/short nor ML rescues it** (`run_seasonal_xasset_ml.py`):
-  the dollar-neutral seasonal-momentum book between names is negative or sub-bar (best is crypto ToM +0.36,
-  96th placebo pctile), a purged-CV pre-FOMC ML gate (VIX/10y-2y-slope/drift) makes it worse (SPY
-  0.24→0.07, negative OOS IC), and a cross-sectional LGBM ranker is worse in-window than all-days —
-  removing the beta removes the return.
+  round-trip), full funnel plus a **309-arm variant sweep** over the four axes the family is free in —
+  which bar the window is anchored on, which side is traded, which assets and how many, which timeframe
+  ([docs/strategies/SEASONAL.md](docs/strategies/SEASONAL.md)). Both effects are **real but beta, not
+  alpha**. The drift lives on the **announcement bar**, not the day before (SPY +22.6bps t+2.3 vs +11.8;
+  QQQ +34.7 t+3.2), and it **decayed**: the equal-weight equity basket earns +59.5bps (t+2.9) per meeting
+  in 2005-10, +28.0 in 2011-15, then −9.7 and +2.5 — nothing since 2015. The timing books net **+0.09–0.17**
+  across SPY/QQQ/IWM/DIA at the 67th–84th **shuffled-calendar placebo** percentile (a 1-day hold pays a
+  full round-trip for ~8 events/yr). **Turn-of-month is beta — shown directly**: the long-in-window /
+  short-out-of-window calendar spread nets **−0.02 on SPY** (in−out +1.45bps, t+0.4) and is negative on
+  every other stream, while net Sharpe still rises with window width toward buy-&-hold (SPY (−1,+1) 0.11
+  → (−4,+3) 0.68 ≈ B&H 0.64); the stock book is flat across top-50…500 and crypto ToM is dead. The sweep
+  changes nothing — both sides of every window, 25 assets (a coherent risk-on ordering: EFA/BTC/QQQ/SLV
+  top, the whole Treasury complex negative), five basket sizes (the 21-asset mix dilutes to +0.05), five
+  timeframes (crypto's 6h pre-announcement window is the best arm, +0.69/+0.64 net BTC/ETH), the FOMC-cycle
+  even-week structure (holds 2005-15, inverts after) and dash-for-cash conditioning (wrong sign); deflated
+  over all 309 arms the best is 0.65. **The decisive test is the beta control:** blended into the book at
+  20%, buy-&-hold SPY lifts it 3.91 → **4.07** (OOS 3.54 → 3.76) while the best calendar arm reaches 4.00
+  (OOS 3.51) and every market-neutral arm *lowers* the OOS book — the sleeve would be buying exposure that
+  has a cheaper supplier. Excluded. **Three plumbing defects were fixed to see this** (now in `src/`, so
+  the next calendar study inherits them): an open-labelled-bar look-ahead that ended the "24h into the
+  statement" window an hour *after* it (BTC +102.5bps t=2.4 → **+83.5 t=1.9**), price-only returns that
+  booked SPY's ex-dividend as a post-FOMC fade (offset +2 −15.7 → −5.5bps; the ex-date lands there in 39
+  of 172 meetings), and an event calendar starting in 2011 while the prices start in 2005 (125 → **173
+  events**). **Neither a market-neutral cross-asset long/short nor ML rescues it** (`run_seasonal_xasset_ml.py`):
+  the dollar-neutral seasonal-momentum book between names is negative or sub-bar (crypto pre-FOMC −0.47,
+  stocks ToM −0.49, best is crypto ToM +0.36 at the 96th placebo pctile), a purged-CV pre-FOMC ML gate
+  (VIX/10y-2y-slope/drift) adds nothing (SPY +0.24 → +0.23 with OOS IC +0.29 — the ranking is real, gating
+  away 41% of the events gives it back; BTC +0.28 → −0.19), and a cross-sectional LGBM ranker is worse
+  in-window than all-days — removing the beta removes the return.
 - **Cross-sectional skewness / lottery (MAX)** — H2, short high-skew / long low-skew, the retail
   lottery-mispricing bet ([docs/strategies/LOTTERY.md](docs/strategies/LOTTERY.md)). **Inverted in crypto** (skew-short −0.38,
   MAX-short −0.67; all 24 window×tail cells negative, walk-forward OOS −0.43): the monthly-horizon

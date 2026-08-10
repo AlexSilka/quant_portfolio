@@ -49,7 +49,12 @@ def window_position(index: pd.DatetimeIndex, anchors: pd.DatetimeIndex,
     """
     n = len(index)
     pos = np.zeros(n, dtype=float)
-    # locate each anchor's bar position (next bar if the anchor date itself is not a trading bar)
+    # locate each anchor's bar position (next bar if the anchor date itself is not a trading bar).
+    # Anchors predating the data are dropped, not snapped: searchsorted returns 0 for all of them, so
+    # an event calendar deeper than the price history would pile every one of its early events onto
+    # the first bar and mark it as a window.
+    anchors = pd.DatetimeIndex(anchors)
+    anchors = anchors[anchors >= index[0]] if n else anchors
     locs = index.searchsorted(anchors)
     for a in np.unique(locs):
         if a >= n:
@@ -71,6 +76,8 @@ def window_instances(index: pd.DatetimeIndex, anchors: pd.DatetimeIndex,
     """
     n = len(index)
     ids = np.full(n, np.nan)
+    anchors = pd.DatetimeIndex(anchors)
+    anchors = anchors[anchors >= index[0]] if n else anchors
     locs = index.searchsorted(anchors)
     for a in np.unique(locs):
         if a >= n:
@@ -80,6 +87,58 @@ def window_instances(index: pd.DatetimeIndex, anchors: pd.DatetimeIndex,
             if 0 <= j < n:
                 ids[j] = float(a)
     return pd.Series(ids, index=index)
+
+
+def signed_position(index: pd.DatetimeIndex, anchors: pd.DatetimeIndex,
+                    long_offsets: list[int] | tuple[int, ...] = (),
+                    short_offsets: list[int] | tuple[int, ...] = ()) -> pd.Series:
+    """+1 on long-window bars, −1 on short-window bars, 0 elsewhere — the event long/short book.
+
+    The long-only window_position can only ever harvest drift: hold a subset of days in a rising
+    market and you earn a slice of the market's return, which is why a random-day placebo matches it.
+    A signed book that is long as many event-days as it is short carries ~no average exposure, so a
+    random-anchor placebo centres on zero and any surviving return has to come from the event itself.
+    That makes it the construction that can actually separate an announcement premium from beta —
+    e.g. long the announce-day bar, short the day after. A bar claimed by both sides nets to flat.
+    """
+    lo = window_position(index, anchors, list(long_offsets)) if len(long_offsets) else 0.0
+    sh = window_position(index, anchors, list(short_offsets)) if len(short_offsets) else 0.0
+    return (lo - sh) if (len(long_offsets) or len(short_offsets)) else pd.Series(0.0, index=index)
+
+
+def offset_event_returns(ret: pd.Series, anchors: pd.DatetimeIndex, offset: int,
+                         pad: int = 5) -> pd.Series:
+    """One return per event: the bar `offset` trading days from each anchor, stamped by anchor date.
+
+    The per-event series, not a masked copy of the price series — masking and dropping zeros loses
+    events whose bar happened to return exactly zero and silently merges two anchors that land on the
+    same bar, so the count it averages over is not the number of events. Events within `pad` bars of
+    either end are dropped so every offset in a window is measurable on the same event set.
+    """
+    idx = ret.index
+    anchors = pd.DatetimeIndex(anchors)
+    locs = np.unique(idx.searchsorted(anchors[(anchors >= idx[0]) & (anchors <= idx[-1])]))
+    locs = locs[(locs >= pad) & (locs < len(idx) - pad)]
+    out = pd.Series(ret.to_numpy()[locs + offset], index=idx[locs])
+    return out.dropna()
+
+
+def cycle_day(index: pd.DatetimeIndex, anchors: pd.DatetimeIndex) -> pd.Series:
+    """Bars elapsed since the most recent anchor (0 on the anchor bar itself), NaN before the first.
+
+    "FOMC-cycle time" from Cieslak-Morse-Vissing-Jorgensen (2019), who report that the whole US
+    equity premium since 1994 accrued in even weeks of this cycle (days 0-4, 10-14, 20-24 …) and
+    nothing in odd weeks. Counting in bars rather than calendar days keeps a week five bars wide
+    across holidays, which is what makes the even/odd alternation testable at all.
+    """
+    n = len(index)
+    d = np.full(n, np.nan)
+    locs = np.unique(index.searchsorted(anchors))
+    locs = locs[locs < n]
+    for k, a in enumerate(locs):
+        end = locs[k + 1] if k + 1 < len(locs) else n
+        d[a:end] = np.arange(end - a)
+    return pd.Series(d, index=index)
 
 
 def month_end_anchors(index: pd.DatetimeIndex) -> pd.DatetimeIndex:
@@ -104,13 +163,69 @@ def turn_of_month_offsets(days_before: int = 1, days_after: int = 3) -> list[int
     return list(range(-(days_before - 1), days_after + 1))
 
 
+# ── price/return plumbing the calendar studies are unusually sensitive to ───────────────────
+def price_at_instant(close: pd.Series, bar: pd.Timedelta) -> pd.Series:
+    """Re-stamp an open-labelled bar's close at the moment that price is actually observed.
+
+    Binance klines and Twelve Data bars are both indexed by the bar's OPEN time, so the close stamped
+    at 19:00 is the price at 20:00. `series.asof(T)` therefore hands back a price one bar AFTER T. For
+    a window that is supposed to *end* at a 14:00-ET policy statement that is not a rounding error: it
+    drops a quiet hour off the front and folds the announcement reaction in at the back, which is the
+    one hour the whole study is built to exclude. Shifting the index by the bar width makes `asof(T)`
+    mean "last price observed at or before T" again.
+    """
+    s = close.dropna().sort_index()
+    out = s.copy()
+    out.index = s.index + bar
+    return out
+
+
+def event_window_returns(price_at: pd.Series, timestamps: pd.DatetimeIndex, hours: float,
+                         end_offset_hours: float = 0.0) -> pd.Series:
+    """Per-event return over [T + end_offset − hours, T + end_offset], indexed by event timestamp.
+
+    `price_at` must be instant-stamped (see price_at_instant). end_offset_hours slides the whole
+    window relative to the event: 0 = the classic pre-announcement window ending at the statement,
+    +24 = the "sell the news" window that starts when the statement lands. Events whose window start
+    predates the data are dropped rather than silently anchored to the first available price.
+    """
+    s = price_at.dropna().sort_index()
+    end = pd.Timedelta(hours=end_offset_hours)
+    span = pd.Timedelta(hours=hours)
+    rows = {}
+    for t in timestamps:
+        t1, t0 = t + end, t + end - span
+        if t0 < s.index.min() or t1 > s.index.max():
+            continue
+        p1, p0 = s.asof(t1), s.asof(t0)
+        if pd.notna(p0) and pd.notna(p1) and p0 > 0:
+            rows[t] = p1 / p0 - 1.0
+    return pd.Series(rows, dtype=float).sort_index()
+
+
+def total_return(close: pd.Series, dividends: pd.Series | None) -> pd.Series:
+    """Daily total return from a split-adjusted-only close plus cash dividends on their ex-dates.
+
+    Without this a calendar study reads every ex-date as a loss. That is not a diffuse rounding
+    problem — dividend calendars are themselves calendars, so the error lands in exactly the bars
+    being measured: SPY goes ex two trading days after the March/June/September/December FOMC in
+    roughly a quarter of all meetings, and every monthly-paying bond ETF goes ex on the first
+    business day of the month, i.e. inside the turn-of-month window.
+    """
+    if dividends is None or not len(dividends):
+        return close.pct_change(fill_method=None)
+    d = dividends.reindex(close.index).fillna(0.0)
+    return (close + d) / close.shift(1) - 1.0
+
+
 # ── time-series book: long the index only inside the window ─────────────────────────────────
 def hold_backtest(ret: pd.Series, position: pd.Series, *, cost_bps: float = 3.0,
                   exec_shift: int = 0) -> dict:
     """Long-in-window time-series book on one return stream; charge cost only at window edges.
 
-    position ∈ {0,1} (target exposure per bar). The return earned is position·ret; turnover is
-    |Δposition| so a 0→1 entry and a 1→0 exit each cost one side of `cost_bps` (a round trip = 2×) —
+    position ∈ {−1,0,1} (target exposure per bar; signed_position builds the long/short case). The
+    return earned is position·ret; turnover is |Δposition| so a 0→1 entry and a 1→0 exit each cost one
+    side of `cost_bps`, and a +1→−1 flip costs two sides because it is two trades (a round trip = 2×) —
     and, crucially, *nothing is charged on the days held inside the window*. exec_shift>0 slides the
     whole realised position that many bars later (the fill-timing robustness). Returns the same
     5-field shape as xsect.xs_backtest so the caller can vol-target the net series.
