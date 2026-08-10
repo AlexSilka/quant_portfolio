@@ -923,7 +923,7 @@ crash months while the other five families stay invested and earning. Reproduce:
   hedge on stress in §6c-ter, not from the gate. *(Sweep on
   the core-family book; the deliverable is the six-family master with the VIX overlay.)*
 - **The crisis-alpha leg is still worth holding, but not at an earner's weight (§6c-ter).** Dropping it
-  outright *raises* Sharpe to **+4.76** and CAGR to **+64.4%** — but that
+  outright *raises* Sharpe to **+4.89** and CAGR to **+66.8%** — but that
   overshoots the ≤4.0 band and takes the worst month to **−8.10%**, so the book buys
   return by removing the only leg that pays in a crash. Held flat at one slot it costs the opposite way:
   since the VIX gate arrived the leg **lengthens** the losing streak it was originally bought to shorten.
@@ -1105,20 +1105,20 @@ been shipped and would have quietly stopped being a hedge.
 
 **What was actually mis-set is the size.** Since the vol-premium leg gained its regime gate, the crisis leg
 stopped covering the failure it was bought for and started causing it: held flat at one slot it takes the
-book's losing streak to **3 months** and months-in-profit down to 81%,
-for +49.3% against +64.4% without it. Dropping it is not the answer either — that
+book's losing streak to **2 months** and months-in-profit down to 81%,
+for +50.8% against +66.8% without it. Dropping it is not the answer either — that
 is what takes the worst month to −8.10% and pushes Sharpe past the top of the band.
 
 | the hedge slot | full window: Sharpe / CAGR / worst month / months / streak | frozen block: targets / Sharpe / CAGR |
 |---|---|---|
-| dropped entirely | +4.76 / +64.4% / −8.10% / 86% / 2 | 4/5 / +4.27 / +50.3% |
-| one full slot (was shipped) | +3.94 / +49.3% / −5.70% / 81% / 3 | 5/5 / +3.58 / +40.3% |
-| half a slot, constant | +4.40 / +55.9% / −6.60% / 84% / 2 | 5/5 / +3.97 / +44.8% |
-| **ramped on market stress** (ships) | +4.40 / +56.9% / **−5.10%** / 85% / 2 | **5/5** / +3.96 / +45.9% |
+| dropped entirely | +4.89 / +66.8% / −8.10% / 87% / 2 | 4/5 / +4.29 / +50.2% |
+| one full slot (was shipped) | +4.04 / +50.8% / −5.70% / 81% / 2 | 5/5 / +3.56 / +39.8% |
+| half a slot, constant | +4.52 / +57.6% / −6.60% / 84% / 2 | 5/5 / +3.95 / +44.1% |
+| **ramped on market stress** (ships) | +4.51 / +58.6% / **−5.10%** / 85% / 2 | **5/5** / +3.95 / +45.4% |
 
 Ramping the slot on market stress — a quarter slot when nothing is moving, a slot and a half when the VIX
 curve inverts or the S&P is 12% off its high, both read at t−1 — buys **the same average protection
-(0.70 of a slot) at the times it pays for it**: 7.6% of CAGR on the full
+(0.70 of a slot) at the times it pays for it**: 7.8% of CAGR on the full
 window and 5.6% on the frozen block, a worst month of −5.10%, and
 the streak back to 2.
 
@@ -1128,9 +1128,9 @@ rotated onto the wrong days — same re-sizing, same frequency, no alignment:
 
 | the slot at the same average weight | full window: CAGR / worst month | frozen block: CAGR |
 |---|---|---|
-| ramped on market stress | **+56.9%** / **−5.10%** | **+45.9%** |
-| the same ramp, rotated to the wrong days | +53.4% / −6.55% | +44.0% |
-| held flat at the ramp's own average | +53.0% / −6.20% | +42.9% |
+| ramped on market stress | **+58.6%** / **−5.10%** | **+45.4%** |
+| the same ramp, rotated to the wrong days | +55.1% / −6.55% | +43.5% |
+| held flat at the ramp's own average | +54.6% / −6.20% | +42.2% |
 
 The rotated ramp lands on the flat one. The timing is doing the work, and it does it in **all five**
 sub-windows of 2011–2026, not one era. The ramp's ends are stated rather than swept, and every neighbouring
@@ -1447,7 +1447,7 @@ that the book lost money. The honest version of that statement is in §6c-ter: t
 band partly because a Sharpe-0.5 hedge was held at a full slot and dragged the ratio down, and **holding a
 weak leg to flatter a ratio is not a risk control**. Sizing that hedge on market stress instead took the
 worst month from −5.70% to −5.10% and the streak from
-3 to 2 — the risk got *better* and the ratio walked out of the
+2 to 2 — the risk got *better* and the ratio walked out of the
 band, which is the trade this report would make every time. What remains genuinely unfixable is the
 flat-to-slightly-negative month in a crypto unwind: it cannot be de-risked away, because a flat month is not
 a profitable month, and §5d measures a classifier aimed at exactly that target which pushes months-in-profit
