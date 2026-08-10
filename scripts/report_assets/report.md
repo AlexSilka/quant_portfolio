@@ -922,22 +922,22 @@ structurally short the single-name variance premium, which is the richest premiu
 budget and pays for it every calm month. That is a sizing error, not a verdict on the source, so the size is
 swept (share of one equal-risk slot):
 
-| E, share of one slot | selection window: Sharpe / CAGR / worst month / months | frozen block: Sharpe / CAGR |
-|---|---|---|
-| 0 (shipped) | +3.72 / +42.4% / **−5.70%** / 81% | **+3.77** / +36% |
-| 0.15 | +3.76 / +41.9% / **−4.80%** / 82% | +3.44 / +40% |
-| 0.25 | +3.75 / +41.7% / **−3.90%** / 82% | +2.88 / +43% |
-| 0.40 | +3.71 / +41.3% / −3.90% / 82% | +2.26 / +47% |
+{{longgamma_table}}
 
-On the selection window this is a real improvement on the *binding* axis: the worst month gains **1.9pp of
-headroom** (−5.70% → −3.90%) and months-in-profit ticks up, for ~0.7pp of CAGR. The mechanism is visible in
-the months it fixes — Oct-2018 −5.74% → −3.58%, Aug-2015 −3.65% → −2.22%.
+On the selection window the hedge does the right thing and does very little of it: the worst month gains
+**0.3pp** of headroom (−5.8% → −5.5% at a quarter slot) and months-in-profit ticks 83% → 84%, for **1.3pp
+of CAGR**. Month by month the effect is the same size — the book's worst month is Apr-2020 at −5.76%, and
+a quarter slot of E takes it to −5.53%; the largest single improvement anywhere in the record is Nov-2011,
+−2.88% → −1.99%. An earlier version of this section claimed 1.9pp of headroom off a −3.90% worst month.
+That was measured on a book two data fixes and a composition change ago, and it overstated the case for
+the hedge by a factor of six; the table above is now rendered from the search's own artifact so it cannot
+drift again.
 
 **It is not shipped, and the reason is the one the brief fixes.** §11 scores the targets on the frozen block,
-and there the hedge costs Sharpe monotonically (**3.77 → 3.44 at the smallest size tested, → 2.88 at 0.25**)
-while raising CAGR — it added volatility across a block that contained no crash big enough to pay for it. The
-book already clears all five targets on that block, so paying scored Sharpe to buy headroom on a
-*supporting*-window metric that already passes is the wrong trade. Recorded as a measured option, not taken:
+and there the hedge costs Sharpe monotonically (**3.07 → 2.71 at the smallest size tested, → 2.26 at 0.25
+and 1.80 at 0.40**) while raising CAGR — it added volatility across a block that contained no crash big
+enough to pay for it. The book already clears all five targets on that block, so paying a fifth of its
+scored Sharpe to buy 0.3pp on a *supporting*-window metric that already passes is the wrong trade. Recorded as a measured option, not taken:
 if a future window puts the worst month back on its limit, E at 0.15–0.25 of a slot is the lever with the
 evidence already attached.
 

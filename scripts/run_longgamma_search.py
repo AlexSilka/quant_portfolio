@@ -202,17 +202,24 @@ def main():
 
     # --- the size sweep: parity is the wrong default for a hedge, so ask what fraction of a slot works
     print("\nfractional sizing — share of ONE equal-risk slot (selection window):")
+    # Both windows per rung, because the report argues the sizing on the selection window and reads the
+    # frozen block beside it — quoting one from the artifact and typing the other by hand is how that
+    # table went stale. 0.15/0.40 are in the grid because they are the rungs the argument turns on.
     sweep = {}
     for tag in [t for t in cands if not t.startswith("D")]:
         row = {}
-        for w in (0.10, 0.25, 0.50, 1.00):
+        for w in (0.10, 0.15, 0.25, 0.40, 0.50, 1.00):
             c = card(book_with(cands[tag], SELECT_END, w=w))
+            c["oos"] = card(book_with(cands[tag], None, w=w).loc[OOS:])
             row[f"{w:.2f}"] = c
             flag = "  <-- 5/5" if n_targets(c) == 5 else ""
             print(f"  {tag:26s} w={w:.2f}  Sh {c['sharpe']:+.2f}  CAGR {c['cagr']:+.1%}  DD {c['max_dd']:+.1%}  "
                   f"worst {c['worst_month']:+.1%}  mo {c['months_in_profit']:.0%}  strk {c['streak']} "
                   f"[{n_targets(c)}/5]{flag}")
         sweep[tag] = row
+    base = card(book_with(None, SELECT_END))
+    base["oos"] = card(book_with(None, None).loc[OOS:])
+    sweep["baseline (no extra leg)"] = {"0.00": base}
     out["size_sweep"] = sweep
 
     LAB_DIR.mkdir(parents=True, exist_ok=True)

@@ -581,6 +581,33 @@ def _verdict(sc, prefix):
             f"{prefix}_miss_short": (missed[0] if missed else "")}
 
 
+def _longgamma_table(rungs=("0.15", "0.25", "0.40"), tag="E curve-timed long vol") -> str:
+    """The §6c size-sweep table, from run_longgamma_search's artifact. It used to be typed, on a book
+    two data fixes and a composition change ago, which is how it came to claim 1.9pp of worst-month
+    headroom for a leg that buys 0.3pp."""
+    d = _load("lab/longgamma_search.json").get("size_sweep") or {}
+    if not d or tag not in d:
+        return "_(long-gamma sweep unavailable — run `python scripts/run_longgamma_search.py`)_"
+    head = ("| E, share of one slot | selection window: Sharpe / CAGR / worst month / months "
+            "| frozen block: Sharpe / CAGR |\n|---|---|---|")
+    rows = [head]
+
+    def row(label, c, bold=False):
+        b = (lambda x: f"**{x}**") if bold else (lambda x: x)
+        o = c.get("oos", {})
+        oos_sharpe = b(f"{o.get('sharpe', float('nan')):+.2f}")
+        return (f"| {label} | {c['sharpe']:+.2f} / {_pc(c['cagr'])} / {b(_pc(c['worst_month']))} / "
+                f"{_pcu(c['months_in_profit'], 0)} | {oos_sharpe} / {_pc(o.get('cagr', float('nan')), 0)} |")
+
+    base = (d.get("baseline (no extra leg)") or {}).get("0.00")
+    if base:
+        rows.append(row("0 (shipped)", base, bold=True))
+    for w in rungs:
+        if w in d[tag]:
+            rows.append(row(w, d[tag][w]))
+    return "\n".join(rows)
+
+
 def build():
     """The registry: {placeholder name -> rendered string}. Missing artifacts drop their keys rather
     than resolving to a guess, so render_report fails loudly instead of publishing a blank."""
@@ -790,6 +817,7 @@ def build():
         out.update({"cscv_pbo": _pcu(c["pbo"], 0), "cscv_n": f"{c['n_strategies']:,}",
                     "cscv_is_bar": _n(c["is_sharpe_mean"], 3), "cscv_oos_bar": _n(c["oos_sharpe_mean"], 3),
                     "cscv_p_loss": _pcu(c["prob_oos_loss"], 0)})
+    out["longgamma_table"] = _longgamma_table()
     return out
 
 
