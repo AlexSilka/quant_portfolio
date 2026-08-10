@@ -144,6 +144,21 @@ peak-Sharpe boost.
 
 ## 7. Final book & robustness
 
+**What the percentages are of.** Every return in this document is a fraction of the **capital allocated
+to the sleeve** — the brief's $500k sizing capital — not of the position and not of the whole book. Two
+consequences worth stating because they are easy to misread:
+
+- **The sleeve holds ~11% of that capital in positions on average** (peak 30%). Vol-targeting 15% onto
+  coins that run 60-80% annualised gives a position near 0.2×, and the rest is the buffer that lets the
+  position expand when volatility falls. So the raw time-series leg's **3.6%/yr on allocated capital is
+  ≈33%/yr on the money actually at risk** — both true, answering different questions.
+- **The family series handed to the master book is levered relative to this one.** `run_bo_combined.py`
+  rescales each leg to a common 15% vol (up to 3×) before blending, so the same strategy reads **3.6%
+  CAGR** as the raw time-series leg and **15.0% CAGR** as the combined family leg
+  (2020 +42.3%, 2021 +28.8%, 2022 +11.2%, 2023 +9.5%, 2024 +10.8%, 2025 +8.0%, 2026 −6.1%). Quoting one
+  against the other is a leverage comparison, not a performance comparison. Inside the master book the
+  leg is rescaled again and weighted 1/6; it accounts for **6.7% of book P&L**.
+
 Combining the honest legs — core-10 × 1d raw chandelier (non-ML trend capture) + 4h/1h ML-gated —
 equal-risk, 30 sleeves (`run_bo_final.py`):
 
@@ -325,6 +340,8 @@ python scripts/breakout/run_bo_spot.py        # spot vs perp, pre-perp history, 
 python scripts/breakout/run_bo_ml_wf.py       # the gate under a walk-forward, net labels (§13)
 python scripts/breakout/run_bo_improve.py     # one-knob construction candidates (§11)
 python scripts/breakout/run_bo_ts_book.py     # shipped vs corrected assembly (§13)
+python scripts/breakout/run_bo_pre_perp.py    # can the book start in 2017? (§12)
+python scripts/breakout/run_bo_deep_history.py # and further back than Binance? (§12)
 python scripts/run_master_book.py    # integrated master book incl. breakout (§7c)
 python scripts/breakout/make_bo_figures.py    # figures
 ```
@@ -464,6 +481,86 @@ is the strongest single piece of evidence in this document that breakout on cryp
 rather than a 2020-2021 artifact. The frozen core-10's hindsight premium over a point-in-time universe
 is **~0.19 Sharpe** on the full window and **~0.01 on the never-seen block** — the frozen list flatters
 mainly the period in which those names were already the winners.
+
+**So should the shipped book start in 2017? No — and the reason is a venue, not a statistic**
+(`run_bo_pre_perp.py`). The block is only tradeable long-only for most of its length: Binance margin
+went live **2019-07-11**, and USD-M perps are not in the cache until 2020-01, so a short leg
+backtested over 2017-08 → 2019-07 is an instrument that did not exist on this venue. (BitMEX had a
+BTC perp from 2016, but that is one coin, another venue, and a quanto contract — not this panel.)
+Building the book three ways over 2017-08 → 2026-07, identical except for when the short leg is
+allowed:
+
+| construction | full window | **2017-08→2019-07** | 2020+ | 2017 | 2018 | 2019 |
+|---|---|---|---|---|---|---|
+| frozen core-10, shorts from 2017 (untradeable) | +1.12 | +1.71 | +1.05 | +2.47 | **+1.17** | +1.22 |
+| **frozen core-10, shorts only where a venue existed** | +1.10 | +1.90 | +1.05 | +3.88 | **−0.56** | +1.66 |
+| PIT top-10, shorts only where a venue existed | +0.91 | +1.65 | +0.82 | +4.70 | **−0.58** | +1.20 |
+
+The pre-perp block's +1.90 is **entirely 2017** — and "2017" here is 2017-08-17 → 12-31, about 4.5
+months of the parabolic blow-off top with **four** coins listed (BTC, ETH, BNB, LTC), an annualised
+ratio from ~136 observations. The year that would actually test a trend system, **2018, is negative
+(−0.56)**, precisely because the short leg had nowhere to go. The untradeable variant earns **+1.17**
+in 2018 — that is the size of the P&L the venue constraint removes, and it is the P&L that made the
+block look attractive.
+
+**Read on the full metric set rather than the ratio, the extension is flat.** Same construction, the
+only difference being where it starts, plus buy-and-hold as the control the book exists to beat:
+
+| | CAGR | total | vol | maxDD | Calmar | worst mo | months+ | **streak** | Sharpe |
+|---|---|---|---|---|---|---|---|---|---|
+| long-short, **2017-08→** | 7.5% | +92% | 6.8% | −9.0% | 0.84 | −2.8% | 50% | **7 mo** | +1.10 |
+| long-short, **2020-01→** | 7.7% | +63% | 7.3% | −9.0% | 0.85 | −2.8% | 51% | **4 mo** | +1.05 |
+| buy-and-hold, EW core-10 | 56.0% | +5284% | 82.3% | −86.7% | 0.65 | −37.8% | 54% | 6 mo | +0.96 |
+| buy-and-hold, vol-matched to 15% | 14.3% | +230% | 16.0% | −26.2% | 0.55 | −9.3% | 54% | 6 mo | +0.92 |
+
+The 2.4 extra years leave CAGR, drawdown and Calmar where they were and **nearly double the longest
+losing run, 4 months to 7** — 2018 spent as a long-only book in a bear market is exactly that run.
+Against buy-and-hold the sleeve earns its slot on shape, not on level: at matched risk the market
+pays 14.3% for a −26% drawdown and a −9.3% month, the sleeve pays 7.5% for −9.0% and −2.8%, a Calmar
+of 0.84 against 0.55. Per year it is roughly flat through every crash the market takes 70% in
+(2018 −1.7%, 2022 **+3.3%**, 2025 −1.2%, 2026 −2.2%), and it does not chase the manias (2021 +23.6%
+against +1420%). The short leg is what makes 2022 positive: long-only scores **−2.5%** there.
+
+Carried to the portfolio (equal-weight premium stack at 1.15×, breakout swapped leg-for-leg), the
+extra history buys nothing:
+
+| breakout leg | full-window Sharpe | targets | OOS Sharpe | targets | months-in-profit |
+|---|---|---|---|---|---|
+| shipped (perp signal, from 2020) | +3.93 | 5/5 | +3.54 | 5/5 | 81.9% |
+| same spot construction, restricted to 2020+ | +3.90 | 5/5 | +3.60 | 5/5 | 82.5% |
+| **same construction, extended to 2017** | +3.87 | 5/5 | +3.60 | 5/5 | 81.4% |
+
+Against its own control, the 2.4 extra years are worth **−0.03 full-window Sharpe, 0.00 OOS, and
+−1.1pp of months-in-profit**. Nothing breaks; nothing improves. By 2017 the book already runs three
+other families, and a sixth leg at 1/N weight over 2.4 years is a rounding error on a 15-year window.
+**The shipped book therefore stays on the 2020 window**; the spot history earns its keep as *evidence*
+that the construction is not a 2020-21 artifact
+([above](#12-venue-the-funding-bill-and-the-24-years-before-perps-existed)), not as track record.
+
+**And further back than Binance? The data exists and the answer is still no** (`run_bo_deep_history.py`).
+Coin Metrics' free reference price reaches **2010-07 for BTC**, 2013 for LTC, 2014 for DOGE/DASH/XMR/XRP
+and 2015 for ETH — 16 years over 14 assets. Two costs, both measured. It is *close-only*: no high, no
+low, no volume, so the Donchian channel and Wilder ATR have to be degraded to a close-only twin, which
+on the 2017-2026 overlap where both are computable scores **−0.16 Sharpe and −1.6pp CAGR** against the
+real construction (an error bar in the conservative direction). And the deep window is long-only for
+its first nine years, for the same venue reason as above. Run anyway, and split by era:
+
+| era | CAGR | maxDD | Calmar | Sharpe | assets live |
+|---|---|---|---|---|---|
+| 2010-2013 | **61.6%** | −6.8% | 9.06 | **+3.68** | **1** (BTC) |
+| 2014-2016 | 5.7% | −4.3% | 1.32 | +1.73 | 4-8 |
+| 2017-2019 | 10.6% | −5.0% | 2.09 | +1.93 | 8-14 |
+| 2020-2026 | 2.4% | −11.4% | 0.21 | +0.39 | 14 |
+
+The 16-year headline (CAGR 15.3%, Calmar 1.34, Sharpe +1.81) is carried entirely by the first row, and
+the first row is **not executable at the brief's size**: on 2011-01-01 Bitcoin's entire market
+capitalisation was **$1.5M**, so a $500k book is **33% of the asset**. The first year the demonstration
+size is genuinely negligible is 2014 (0.005% of market cap) — and cutting the window there drops the
+same series to **CAGR 5.1%, Calmar 0.45, Sharpe +0.89**, which is the shipped window's neighbourhood.
+Every start date that removes an earlier, thinner, less tradeable era lowers the numbers monotonically
+(+1.81 from 2010 → +1.61 from 2013 → +0.89 from 2014 → +0.54 from 2017 → +0.39 from 2020). Deep history
+does not lengthen a track record here; it draws a decay curve and prices the capacity that made the
+early part look good.
 
 **Long-only looks better and is worse.** Dropping the short leg lifts the ratio on every cut (spot
 1d+4h: +1.09 → +1.55; perp: +0.89 → +1.28). Regressed on an equal-weight buy-and-hold of the same ten

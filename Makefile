@@ -196,6 +196,8 @@ breakout:
 	$(PY) scripts/breakout/run_bo_ml_wf.py
 	$(PY) scripts/breakout/run_bo_improve.py
 	$(PY) scripts/breakout/run_bo_ts_book.py
+	$(PY) scripts/breakout/run_bo_pre_perp.py
+	$(PY) scripts/breakout/run_bo_deep_history.py
 	$(PY) scripts/breakout/make_bo_figures.py
 
 smoke:
