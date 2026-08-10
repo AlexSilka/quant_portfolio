@@ -46,8 +46,8 @@ from src.config import LAB_DIR, OOS_START, SEED, VOLPREM_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import own_curve_gate, short_vol_gate  # noqa: E402
 
-from .run_gate_coverage import book_of  # noqa: E402
-from .run_vol_premium_book import (PPY_BOOK, UNIVERSE, gated_leg, implied,  # noqa: E402
+from scripts.volprem.run_gate_coverage import book_of  # noqa: E402
+from scripts.volprem.run_vol_premium_book import (PPY_BOOK, UNIVERSE, gated_leg, implied,  # noqa: E402
                                    naive_dt, underlying_bars)
 
 WINDOW = "2011-01-01"       # the master book's reporting window; also where VIX9D starts, so the shared

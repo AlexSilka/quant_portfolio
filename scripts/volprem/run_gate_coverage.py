@@ -49,7 +49,7 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import short_vol_gate  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 
-from .run_vol_premium_book import (COST_BY_CLASS, PPY_BOOK, TVOL, UNIVERSE,  # noqa: E402
+from scripts.volprem.run_vol_premium_book import (COST_BY_CLASS, PPY_BOOK, TVOL, UNIVERSE,  # noqa: E402
                                    implied, naive_dt, underlying_bars)
 
 BOOK_START = "2011-01-01"        # the master book's reporting window; the 2005-10 run-up is shown too
