@@ -1005,10 +1005,10 @@ swept (share of one equal-risk slot):
 
 | E, share of one slot | selection window: Sharpe / CAGR / worst month / months | frozen block: Sharpe / CAGR |
 |---|---|---|
-| 0 (shipped) | +3.60 / +45.5% / **−5.8%** / 83% | **+3.07** / +34% |
-| 0.15 | +3.61 / +44.8% / −5.6% / 84% | +2.71 / +40% |
-| 0.25 | +3.58 / +44.2% / −5.5% / 84% | +2.26 / +43% |
-| 0.40 | +3.50 / +43.4% / −5.4% / 85% | +1.80 / +48% |
+| 0 (shipped) | +4.11 / +52.6% / **−5.7%** / 82% | **+3.56** / +40% |
+| 0.15 | +4.10 / +51.8% / −5.6% / 82% | +3.09 / +46% |
+| 0.25 | +4.05 / +51.2% / −5.5% / 82% | +2.53 / +50% |
+| 0.40 | +3.92 / +50.0% / −5.4% / 80% | +1.97 / +53% |
 
 On the selection window the hedge does the right thing and does very little of it: the worst month gains
 **0.3pp** of headroom (−5.8% → −5.5% at a quarter slot) and months-in-profit ticks 83% → 84%, for **1.3pp
