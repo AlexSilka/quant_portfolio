@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, OOS_START, models, precompute, proba_cache  # noqa: E402
-from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
+from src.backtest.engine import positions_from_events, vol_target  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
@@ -34,9 +34,14 @@ CRISES = {"covid_2020H1": ("2020-01-01", "2020-06-30"),
           "chop_2023_25": ("2023-01-01", "2025-12-31")}
 
 
-def daily_ret_cost(px, pos, tf, fund, adv):
+def daily_ret_cost(sym, px, pos, tf, fund):
+    """Vol-target the signal, then fill it across venues: long on spot, short on perps (§12).
+
+    The signal, universe and sizing are unchanged — only the fill moves, so the difference against
+    the all-perp book is the funding bill and the extra spot commission, nothing else.
+    """
     posv = vol_target(pos, px["close"], bo.TVOL, bo.CRYPTO_TF[tf])
-    bt = backtest(px["close"], posv, capital=bo.CAP, funding=fund, adv=adv, **bo.CC)
+    bt = bo.backtest_split(sym, tf, px, posv, fund)
     ret = (1 + bt["net_ret"]).resample("D").prod() - 1
     cost = bt["cost"].resample("D").sum()
     return ret.rename("ret"), cost.rename("cost")
@@ -52,15 +57,14 @@ def build_final():
             continue
         side = bl.donchian_side(px["close"], px["high"], px["low"], 55)
         pos = bl.hold_atr_trailing(px["close"], px["high"], px["low"], side, 3.0, 14)
-        adv = px["quote_volume"].rolling(20).median().shift(1)
-        out[f"{sym}_1d"] = daily_ret_cost(px, pos, "1d", bo.safe_funding(sym), adv)
+        out[f"{sym}_1d"] = daily_ret_cost(sym, px, pos, "1d", bo.safe_funding(sym))
     # 4h + 1h ML-gated leg (LightGBM + uniqueness weights)
     sleeves = precompute()
     pc = proba_cache(sleeves, models()["lightgbm"], weighted=True)
     for key, s in sleeves.items():
         kept = pc[key].index[pc[key].values >= THR]
         pos = positions_from_events(s["px"].index, s["trades"]["side"], s["trades"]["t1"], kept)
-        out[key] = daily_ret_cost(s["px"], pos, s["tf"], s["fund"], s["adv"])
+        out[key] = daily_ret_cost(key.rsplit("_", 1)[0], s["px"], pos, s["tf"], s["fund"])
     return out
 
 
@@ -122,10 +126,10 @@ def main():
     print(f"\nsleeve correlation: mean {corr.values[iu].mean():+.2f}  max {corr.values[iu].max():+.2f}")
     print(f"best sleeve ({best_key}) deflated Sharpe @ N={n_trials}: {dsr:.2f}")
 
-    rets.to_parquet(bo.REPORTS / "bo_final_sleeve_returns.parquet")
-    costs.to_parquet(bo.REPORTS / "bo_final_costs.parquet")
-    port.rename("ret").to_frame().to_parquet(bo.REPORTS / "bo_final_portfolio.parquet")
-    (bo.REPORTS / "bo_final_summary.json").write_text(json.dumps({
+    rets.to_parquet(bo.BREAKOUT / "bo_final_sleeve_returns.parquet")
+    costs.to_parquet(bo.BREAKOUT / "bo_final_costs.parquet")
+    port.rename("ret").to_frame().to_parquet(bo.BREAKOUT / "bo_final_portfolio.parquet")
+    (bo.BREAKOUT / "bo_final_summary.json").write_text(json.dumps({
         "portfolio": s, "mc": mc, "per_year": per_year, "per_quarter": per_q, "regimes": regimes,
         "oos_split": {"is": summarise(is_, 365), "oos": summarise(oos, 365)},
         "cost_levels": levels, "breakeven_mult": breakeven,

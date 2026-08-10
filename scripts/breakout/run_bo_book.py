@@ -81,8 +81,8 @@ def main():
               flush=True)
 
     df = pd.DataFrame(rows)
-    df.to_csv(bo.REPORTS / f"bo_book_results_{CFG_ID}.csv", index=False)
-    pd.DataFrame(all_ret).sort_index().to_parquet(bo.REPORTS / f"bo_all_returns_{CFG_ID}.parquet")
+    df.to_csv(bo.BREAKOUT / f"bo_book_results_{CFG_ID}.csv", index=False)
+    pd.DataFrame(all_ret).sort_index().to_parquet(bo.BREAKOUT / f"bo_all_returns_{CFG_ID}.parquet")
     surv = df[df.robust].sort_values("sharpe", ascending=False)
     print(f"\n=== {CFG_ID}: {len(surv)}/{len(df)} sleeves robust "
           f"(Sharpe>0.5 & MC-P5>0); placebo-robust {int((df.placebo_sharpe>0.5).sum())}/{len(df)} ===")
@@ -114,9 +114,9 @@ def _portfolio(surv, df, all_ret):
            "best_sleeve": best.sleeve, "best_sleeve_dsr": best_dsr,
            "placebo_fdr": float((df.placebo_sharpe > 0.5).mean()),
            "survivors": list(dfs), "mean_turnover": float(surv.ann_turnover.mean())}
-    (bo.REPORTS / f"bo_book_summary_{CFG_ID}.json").write_text(json.dumps(out, indent=2, default=float))
-    rets.to_parquet(bo.REPORTS / f"bo_book_sleeve_returns_{CFG_ID}.parquet")
-    port.rename("ret").to_frame().to_parquet(bo.REPORTS / f"bo_book_portfolio_{CFG_ID}.parquet")
+    (bo.BREAKOUT / f"bo_book_summary_{CFG_ID}.json").write_text(json.dumps(out, indent=2, default=float))
+    rets.to_parquet(bo.BREAKOUT / f"bo_book_sleeve_returns_{CFG_ID}.parquet")
+    port.rename("ret").to_frame().to_parquet(bo.BREAKOUT / f"bo_book_portfolio_{CFG_ID}.parquet")
     print(f"\n=== BREAKOUT BOOK ({CFG_ID}, equal-risk over {len(dfs)} survivors, net of costs) ===")
     print(f"Sharpe {s['sharpe_ann']:+.2f}  maxDD {s['max_dd']:+.1%}  months+ {s['months_in_profit']:.0%}  "
           f"MC[P5 {mc.get('sharpe_p5', float('nan')):+.2f} P50 {mc.get('sharpe_p50', float('nan')):+.2f}]")

@@ -106,7 +106,7 @@ def main():
             print(f"    {uni:7s} ({r['n']:3d}): Sharpe {r['sharpe']:+.2f}  OOS {r['oos']:+.2f}  "
                   f"MC-P5 {r['mc_p5']:+.2f}  DD {r['max_dd']:+.1%}  placebo {r['placebo']:+.2f}", flush=True)
         print()
-    pd.DataFrame(rows).to_csv(bo.REPORTS / "bo_xs_big.csv", index=False)
+    pd.DataFrame(rows).to_csv(bo.BREAKOUT / "bo_xs_big.csv", index=False)
     print("BO XS-BIG OK")
 
 

@@ -225,7 +225,7 @@ in-sample artifact.
 | family | honest series | standalone Sharpe | corr to book |
 |---|---|---|---|
 | **vol-premium** | short-vol / VRP across 18 Cboe underlyings (incl. gold-miners), 2005+ ([docs/strategies/VOLPREM.md](docs/strategies/VOLPREM.md)) | 7.09 | +0.44 |
-| **breakout** | crypto trend+ML / PIT top-30 x-sect ([docs/strategies/BREAKOUT.md](docs/strategies/BREAKOUT.md)) | 1.38 | +0.54 |
+| **breakout** | crypto trend+ML / PIT top-30 x-sect ([docs/strategies/BREAKOUT.md](docs/strategies/BREAKOUT.md)) | 1.42 | +0.54 |
 | **BAB / low-vol** | beta-neutral top-25 crypto, betting-against-beta ([docs/strategies/BAB.md](docs/strategies/BAB.md)) | 1.29 | +0.51 |
 | **global-macro** | EM-FX + commodities TSMOM (`scripts/run_gmacro.py`) | 0.93 | +0.57 |
 | **x-sect momentum** | crypto residual (idio) + equity, top-100 liquid ([docs/strategies/XSECT.md](docs/strategies/XSECT.md)) | 0.85 | +0.41 |

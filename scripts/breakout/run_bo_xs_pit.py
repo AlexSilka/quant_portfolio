@@ -86,8 +86,8 @@ def main():
         print()
 
     df = pd.DataFrame(rows)
-    df.to_csv(bo.REPORTS / "bo_xs_pit.csv", index=False)
-    pd.DataFrame(series).to_parquet(bo.REPORTS / "bo_xs_pit_returns.parquet")
+    df.to_csv(bo.BREAKOUT / "bo_xs_pit.csv", index=False)
+    pd.DataFrame(series).to_parquet(bo.BREAKOUT / "bo_xs_pit_returns.parquet")
 
     # per-year of the PIT 4h book (the headline honest cross-sectional sleeve)
     net = series.get("4h_PIT_top30")

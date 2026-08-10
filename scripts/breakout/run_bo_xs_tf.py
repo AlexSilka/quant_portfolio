@@ -69,7 +69,7 @@ def main():
               f"DD {s['max_dd']:+.1%}  months+ {s['months_in_profit']:.0%}  placebo {summarise(netp,365)['sharpe_ann']:+.2f}",
               flush=True)
     if rows:
-        pd.DataFrame(rows).to_parquet(bo.REPORTS / "bo_xs_tf_returns.parquet")
+        pd.DataFrame(rows).to_parquet(bo.BREAKOUT / "bo_xs_tf_returns.parquet")
     print("\nBO XS-TF OK")
 
 

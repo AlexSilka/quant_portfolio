@@ -50,7 +50,7 @@ def main():
             print(f"    {sk+'_'+str(lb):18s}: Sharpe {r['sharpe']:+.2f}  OOS {r['sharpe_oos']:+.2f}  "
                   f"MC-P5 {r['mc_p5']:+.2f}  placebo {rp['sharpe'] if rp else float('nan'):+.2f}", flush=True)
         print()
-    pd.DataFrame(rows).to_csv(bo.REPORTS / "bo_xs_signals.csv", index=False)
+    pd.DataFrame(rows).to_csv(bo.BREAKOUT / "bo_xs_signals.csv", index=False)
     print("BO XS-SIGNALS OK")
 
 

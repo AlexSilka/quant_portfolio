@@ -16,18 +16,27 @@ import pandas as pd
 socket.setdefaulttimeout(12)
 
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
-from src.config import CAPITAL_USD, RAW_DIR, REPORTS_DIR, ROOT_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import (BINANCE_SPOT_TAKER_BPS, BREAKOUT_DIR, CAPITAL_USD,  # noqa: E402
+                        CRYPTO_HALF_SPREAD_BPS, IMPACT_K, RAW_DIR, REPORTS_DIR, ROOT_DIR,
+                        SEED, VOL_TARGET_ANNUAL)
 from src.labels.triple_barrier import triple_barrier_labels, trailing_vol  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 ROOT = ROOT_DIR                          # repo root, re-exported for callers (bo.ROOT anchors data paths)
-REPORTS = REPORTS_DIR                    # all breakout outputs land here, cwd-independent
-REPORTS.mkdir(exist_ok=True)
+REPORTS = REPORTS_DIR                    # reports ROOT — non-breakout callers build their own subpath
+BREAKOUT = BREAKOUT_DIR                  # the breakout family's sub-book: every bo_* artifact lands here
+BREAKOUT.mkdir(parents=True, exist_ok=True)
+# `reports/` is one folder per family and `run_master_book.py` reads breakout/bo_combined_portfolio
+# .parquet. The bo_* writers used to point at the reports ROOT while the artifacts sat in the
+# sub-folder, so re-running the breakout chain wrote files nobody read and the master book silently
+# kept scoring a stale series. Breakout writers use BREAKOUT; everyone else keeps REPORTS.
 
 SEED, CAP, TVOL = SEED, CAPITAL_USD, VOL_TARGET_ANNUAL
 CC = dict(commission_bps=5.0, half_spread_bps=1.0, impact_k=0.1, exec_lag=2)   # crypto perp taker
+SC = dict(commission_bps=BINANCE_SPOT_TAKER_BPS, half_spread_bps=CRYPTO_HALF_SPREAD_BPS,
+          impact_k=IMPACT_K, exec_lag=2)                                       # crypto spot taker (2x perp)
 EC = dict(commission_bps=1.0, half_spread_bps=2.0, impact_k=0.1, exec_lag=2)   # US equity
 FXC = dict(commission_bps=0.0, half_spread_bps=1.0, impact_k=0.1, exec_lag=2)  # FX
 CRYPTO_TF = {"5m": 288 * 365, "15m": 96 * 365, "1h": 24 * 365, "4h": 6 * 365, "1d": 365}
@@ -57,6 +66,7 @@ rng = np.random.default_rng(SEED)
 
 _TD_CACHE = RAW_DIR / "twelvedata"
 _UM = RAW_DIR / "futures/um"
+_SPOT = RAW_DIR / "spot/klines"
 _LO = pd.Timestamp(START + "-01", tz="UTC")
 _HI = pd.Timestamp(END + "-01", tz="UTC") + pd.offsets.MonthEnd(0) + pd.Timedelta(days=1)
 
@@ -82,6 +92,44 @@ def safe_funding(sym):
     """USD-M funding series (offline), or an empty series if not cached."""
     df = _read_months(_UM / "fundingRate" / sym)
     return df["last_funding_rate"] if "last_funding_rate" in df else pd.Series(dtype=float)
+
+
+def load_spot(sym, tf):
+    """Binance SPOT klines for the same symbol — identical schema to the perp cache, so this is a
+    drop-in price series. Spot reaches back to 2017-08 (perps list 2020-01) and pays no funding."""
+    px = _read_months(_SPOT / sym / tf)
+    return px if len(px) >= 500 else None
+
+
+def backtest_split(sym, tf, perp, posv, fund=None):
+    """Fill the LONG leg on spot and the SHORT leg on perps, and return the combined per-bar frame.
+
+    The two venues price the same position very differently and the difference is not symmetric.
+    Measured on the core-10 since 2020, a perp long pays 23.4%/yr in funding *conditional on this
+    book being long* — a trend book is long exactly when funding is extreme — against a 10.3%
+    unconditional average, while a perp short collects only 2.3% because funding has normalised by
+    the time the book flips. Spot has no funding and charges 2x the taker fee, which at ~8 round
+    turns a year is 40bps against ~1pp of avoided funding. So longs belong on spot and shorts on
+    perps, and neither venue alone can express that.
+
+    Only the FILL changes: the caller's signal, universe and sizing are untouched, so any difference
+    against a single-venue run is attributable to execution. Falls back to the perp fill when the
+    symbol has no spot history, which keeps the book's composition unchanged.
+    """
+    sp = load_spot(sym, tf)
+    if sp is None:
+        return backtest(perp["close"], posv, capital=CAP, funding=fund,
+                        adv=perp["quote_volume"].rolling(20).median().shift(1), **CC)
+    idx = perp.index.intersection(sp.index)
+    sp, pp, pv = sp.loc[idx], perp.loc[idx], posv.reindex(idx).fillna(0.0)
+    long_ = backtest(sp["close"], pv.clip(lower=0.0), capital=CAP, funding=None,
+                     adv=sp["quote_volume"].rolling(20).median().shift(1), **SC)
+    short = backtest(pp["close"], pv.clip(upper=0.0), capital=CAP, funding=fund,
+                     adv=pp["quote_volume"].rolling(20).median().shift(1), **CC)
+    return pd.DataFrame({"position": long_["position"] + short["position"],
+                         "cost": long_["cost"] + short["cost"],
+                         "funding": short["funding"],
+                         "net_ret": long_["net_ret"] + short["net_ret"]})
 
 
 def _td_symbol(sym):

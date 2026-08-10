@@ -43,8 +43,8 @@ def stats(s, label):
 
 
 def main():
-    ts = pd.read_parquet(bo.REPORTS / "bo_final_portfolio.parquet")["ret"].dropna()
-    pit = pd.read_parquet(bo.REPORTS / "bo_xs_pit_returns.parquet")
+    ts = pd.read_parquet(bo.BREAKOUT / "bo_final_portfolio.parquet")["ret"].dropna()
+    pit = pd.read_parquet(bo.BREAKOUT / "bo_xs_pit_returns.parquet")
     xs = pit[["1d_PIT_top30", "4h_PIT_top30", "1h_PIT_top30"]].mean(axis=1).dropna()  # XS sub-book
 
     ts_s, xs_s = rescale(ts), rescale(xs)
@@ -68,10 +68,10 @@ def main():
     print(f"marginal: TS alone {solo:+.2f} -> +XS {legs[-1]['sharpe']:+.2f} "
           f"({legs[-1]['sharpe'] - solo:+.2f} from a +{corr:.2f}-correlated leg)")
 
-    combined.rename("ret").to_frame().to_parquet(bo.REPORTS / "bo_combined_portfolio.parquet")
+    combined.rename("ret").to_frame().to_parquet(bo.BREAKOUT / "bo_combined_portfolio.parquet")
     pd.DataFrame({"time_series": ts_s, "cross_sectional": xs_s, "combined": combined}).to_parquet(
-        bo.REPORTS / "bo_combined_legs.parquet")
-    (bo.REPORTS / "bo_combined_summary.json").write_text(
+        bo.BREAKOUT / "bo_combined_legs.parquet")
+    (bo.BREAKOUT / "bo_combined_summary.json").write_text(
         json.dumps({"legs": legs, "corr_ts_xs": corr}, indent=2, default=float))
     print("\nBO COMBINED OK")
 

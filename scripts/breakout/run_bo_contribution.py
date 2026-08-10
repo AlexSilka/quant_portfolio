@@ -25,7 +25,7 @@ from src.metrics import summarise  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 
 PPY = 365
-R = bo.REPORTS
+R = bo.BREAKOUT
 
 # (label, file, column) — the SAME canonical honest series as scripts/run_master_book.py (kept in
 # sync so this breakout-local diagnostic matches the master book; run_master_book is the source of truth)

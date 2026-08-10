@@ -68,7 +68,7 @@ def main():
             print(f"    top-{n:3d} ({r['n']:3d} usable): Sharpe {r['sharpe']:+.2f}  OOS {r['oos']:+.2f}  "
                   f"MC-P5 {r['mc_p5']:+.2f}  DD {r['max_dd']:+.1%}", flush=True)
         print()
-    pd.DataFrame(rows).to_csv(bo.REPORTS / "bo_xs_liq.csv", index=False)
+    pd.DataFrame(rows).to_csv(bo.BREAKOUT / "bo_xs_liq.csv", index=False)
     print("BO XS-LIQ OK")
 
 

@@ -111,9 +111,9 @@ def main():
                       f"placebo {rp['sharpe'] if rp else float('nan'):+.2f}", flush=True)
 
     df = pd.DataFrame(rows)
-    df.to_csv(bo.REPORTS / "bo_xs.csv", index=False)
+    df.to_csv(bo.BREAKOUT / "bo_xs.csv", index=False)
     if best_net:
-        pd.DataFrame(best_net).to_parquet(bo.REPORTS / "bo_xs_returns.parquet")
+        pd.DataFrame(best_net).to_parquet(bo.BREAKOUT / "bo_xs_returns.parquet")
     # per-year for the single best (kind,cadence,signal) overall
     best = df.sort_values("sharpe", ascending=False).iloc[0]
     net = best_net[f"{best['kind']}_{best['cadence']}_{best['signal']}"]

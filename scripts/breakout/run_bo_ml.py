@@ -215,7 +215,7 @@ def main():
         bg, _ = book_stats(g)
         print(f"    {tf}: ungated Sharpe {bu['sharpe']:+.2f}  ->  gated {bg['sharpe']:+.2f}")
 
-    (bo.REPORTS / "bo_ml.json").write_text(json.dumps(results, indent=2, default=float))
+    (bo.BREAKOUT / "bo_ml.json").write_text(json.dumps(results, indent=2, default=float))
     best = max((k for k in results if k != "baseline_ungated"), key=lambda k: results[k]["sharpe"])
     print(f"\nincremental value: best gate = {best}  Sharpe {results[best]['sharpe']:+.2f} vs ungated "
           f"{b_ung['sharpe']:+.2f} ({results[best]['sharpe']-b_ung['sharpe']:+.2f}); "

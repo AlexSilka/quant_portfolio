@@ -59,7 +59,7 @@ risk parity (no per-leg *weighting* fitted), every one on a **survivorship-free 
 | [global-macro](scripts/run_gmacro.py) | trend on EM FX + commodities — asset classes no other family trades | +0.93 | 9% |
 | [x-sect momentum](docs/strategies/XSECT.md) | relative strength, market-neutral | +0.85 | 7% |
 | [BAB / low-vol](docs/strategies/BAB.md) | the leverage-constraint premium: long low-beta, short high-beta | +1.29 | 7% |
-| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.38 | 7% |
+| [breakout](docs/strategies/BREAKOUT.md) | channel breakouts held on a trailing stop, ML-gated on fast bars | +1.42 | 7% |
 | [crisis-alpha](scripts/run_crisis.py) | long-gamma managed futures — it pays when the others bleed | +0.38 | 4% |
 
 The short-vol leg carries **two regime gates**, ANDed, and they are what hold the worst month and the losing

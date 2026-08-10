@@ -9,9 +9,10 @@ Reproduce: `scripts/run_bo_*.py` (see [§10](#10-reproduce)). Figures: [reports/
 construction × instrument × timeframe with realistic costs (t+2 execution, liquidity-aware slippage,
 funding at every settlement), the honest result is:
 
-> A **frozen, pre-registered** book (10 largest crypto perps, no per-sleeve selection) on the
-> corrected construction nets **Sharpe ≈ 1.0** (Monte-Carlo 5th-pct **+0.40**), **max drawdown −3.7%**,
-> **break-even at ~10× base costs**, positive in **6 of 7 years including the 2022 crash**. The ML
+> A **frozen, pre-registered** book (the 10 largest crypto majors, no per-sleeve selection) on the
+> corrected construction, filled long-on-spot / short-on-perp ([§12](#12-venue-the-funding-bill-and-the-24-years-before-perps-existed)),
+> nets **Sharpe +1.12** (Monte-Carlo 5th-pct **+0.50**), **max drawdown −3.8%**,
+> **break-even at ~8× base costs**, positive in **6 of 7 years including the 2022 crash**. The ML
 > meta-label gate roughly **doubles the fast-timeframe Sharpe (0.41→1.01) and cuts its drawdown ~5×
 > (−13%→−3%)**. The strictly-held-out 2024-07→2026 block scores **+0.19** — because crypto itself
 > stopped trending (BTC buy-hold Sharpe 2024 +1.75 → 2025 +0.05 → 2026 −0.99), and the book correctly
@@ -19,8 +20,8 @@ funding at every settlement), the honest result is:
 >
 > Adding a **cross-sectional** breakout sleeve (a point-in-time top-30-liquid crypto universe, ranked by
 > 52-week-high nearness, long the most broken-out / short the least, dollar-neutral) and blending it with
-> the trend leg at **risk parity** gives the final squeeze: **Sharpe +1.40, MC-P5 +0.77, max DD −11.5%**,
-> positive every year 2020-2025 (2022 crash +1.11, trendless-2025 chop +0.86). The legs correlate **+0.10**
+> the trend leg at **risk parity** gives the final squeeze: **Sharpe +1.44, MC-P5 +0.82, max DD −11.5%**,
+> positive every year 2020-2025 (2022 crash +1.09, trendless-2025 chop +0.85). The legs correlate **+0.10**
 > — the cross-sectional leg earns from *dispersion*, so it is decorrelated from the trend leg and covers
 > its regime hole. Strict OOS +0.23 (dragged by the 2026 crypto downturn; both legs are honest about it).
 > No universe look-ahead: membership uses trailing volume only.
@@ -146,10 +147,14 @@ peak-Sharpe boost.
 Combining the honest legs — core-10 × 1d raw chandelier (non-ML trend capture) + 4h/1h ML-gated —
 equal-risk, 30 sleeves (`run_bo_final.py`):
 
-- **Sharpe +1.03**, max DD **−3.7%**, months-in-profit 51%, total +24%, **MC [P5 +0.40, P50 +1.02, P95 +1.64]**.
-- **Per-year:** 2020 +2.13, 2021 +2.67, 2022 **+0.39**, 2023 +1.37, 2024 +1.03, 2025 +0.29, 2026 −0.82.
+- **Sharpe +1.12**, max DD **−3.8%**, months-in-profit 51%, total +26%, **MC [P5 +0.50, P50 +1.10, P95 +1.71]**.
+- **Per-year:** 2020 +2.35, 2021 +2.99, 2022 **+0.35**, 2023 +1.42, 2024 +1.16, 2025 +0.28, 2026 −0.87.
   Positive through the 2022 crypto crash (it went short) — the signature of a real trend edge, not long-beta.
-- **Cost sensitivity:** 1× +1.03, 2× +0.92, 3× +0.81; **break-even ≈ 10.4× base cost** — very robust.
+- **Cost sensitivity:** 1× +1.12, 2× +0.96, 3× +0.80; **break-even ≈ 7.9× base cost**. Lower than the
+  all-perp book's 10.4× and not a regression: the long leg now pays the spot taker, so the base cost it
+  is a multiple *of* is larger. The absolute cost the book survives is higher, not lower.
+- Filled long-on-spot / short-on-perp per [§12](#12-venue-the-funding-bill-and-the-24-years-before-perps-existed);
+  the all-perp fill of the same signal scores +1.03 (MC-P5 +0.40, total +24%).
 - **Diversification:** sleeve-correlation mean **+0.08** (max +0.60) — the ML gate + multi-timeframe mix
   decorrelated the book from the +0.25 of the selected version. Best single-sleeve deflated Sharpe is
   0.10 at N≈1,160 trials — individually marginal; the book is a decorrelation effect (reported as such).
@@ -221,9 +226,9 @@ The look-ahead was worth **~0.3–0.7 Sharpe**; the honest sleeve is **~1.0–1.
 positive**, and its PIT 4h per-year is positive every year 2020-2025 (2022 +1.14, 2025 +0.73) — the
 regime-complementarity survives de-biasing. **Combined 50/50 with the time-series book** (correlation
 +0.13) at **risk parity** (`run_bo_combined.py`; each leg re-scaled to 15% vol on trailing vol, then
-equal-weighted): **Sharpe +1.40, MC-P5 +0.77, max DD −11.5%, months-in-profit 63%**, positive every year
-2020-2025 (2022 +1.11, 2025 +0.86), strict OOS **+0.23**. Marginal: trend leg alone +1.04 → +XS **+1.40**
-(+0.36 from a +0.10-correlated leg). This decorrelated two-leg crypto breakout book is the honest
+equal-weighted): **Sharpe +1.44, MC-P5 +0.82, max DD −11.5%, months-in-profit 62%**, positive every year
+2020-2025 (2022 +1.09, 2025 +0.85), strict OOS **+0.23**. Marginal: trend leg alone +1.12 → +XS **+1.44**
+(+0.32 from a +0.11-correlated leg). This decorrelated two-leg crypto breakout book is the honest
 deliverable — Sharpe ~1.4 net, robust MC 5th-pct, no universe look-ahead.
 
 **Why crypto and not equities — verified, not asserted (`run_bo_xs_signals.py`).** Running cross-sectional
@@ -251,12 +256,12 @@ trailing (PIT) vol and **equal-weighted (1/N, no performance-based selection)** 
 (breakout, a crypto-perp leg, lists from 2020). Breakout's honest series is the combined trend+ML / PIT
 cross-sectional squeeze above (`reports/breakout/bo_combined_portfolio.parquet`).
 
-- **Standalone (rescaled) Sharpe:** breakout **+1.38** — mid-pack among the eight (vol-premium **4.57**
+- **Standalone (rescaled) Sharpe:** breakout **+1.42** — mid-pack among the eight (vol-premium **4.57**
   anchors; trend 1.35, BAB 1.29, carry 1.27, gmacro 1.02, x-sect 0.89, crisis 0.49).
 - **Correlation to the book:** **+0.56** (mean *pairwise* cross-family correlation ≈ 0.06); breakout is a
   genuinely independent crypto source, not a trend-cluster duplicate.
 - **Master with vs without breakout:** Sharpe **3.52 → 3.50** — breakout's marginal (leave-one-out) add is
-  **≈ +0.02** (`breakout_delta_sharpe` in `reports/master_book_summary.json`); **vol-premium is the anchor** —
+  **≈ +0.03** (`breakout_delta_sharpe` in `reports/master_book_summary.json`); **vol-premium is the anchor** —
   removing *it* drops the book to **1.75**. Breakout earns its slot by decorrelation and crypto-regime
   coverage, not by lifting the headline Sharpe.
 - **Marginal-contribution curve** (added in standalone-descending order): vol-premium 4.57 → +breakout 4.49 →
@@ -420,6 +425,27 @@ Spot beats perp *despite* paying double the fee, because 8 round turns a year at
 while the funding it avoids is worth ~1pp of CAGR at this exposure. The split — long leg on spot, short
 leg on perps — is the venue-optimal execution and costs nothing extra to run; the incremental gain over
 all-spot is small (the short leg's borrow-vs-funding gap is ~5pp/yr on ~0.2 gross, ~45% of the time).
+
+**This is shipped.** `bo_common.backtest_split` fills the long leg on spot and the short leg on perps,
+and `run_bo_final.py` uses it. Only the fill moved — signal, universe, sizing and the ML gate are
+untouched, so the delta is execution and nothing else:
+
+| | Sharpe | MC-P5 | maxDD | total | OOS |
+|---|---|---|---|---|---|
+| time-series book, all-perp fill | +1.03 | +0.40 | −3.7% | +24% | +0.19 |
+| **time-series book, split fill** | **+1.12** | **+0.50** | −3.8% | +26% | +0.20 |
+| combined TS+XS sleeve, all-perp | +1.40 | +0.77 | −11.5% | — | +0.23 |
+| **combined TS+XS sleeve, split** | **+1.44** | **+0.82** | −11.5% | — | +0.23 |
+
+At the master book it is invisible — breakout is one of six families in a book where vol-premium is
+67% of P&L, so the five scored targets are unchanged (OOS 5/5, full 4/5) and breakout's leave-one-out
+contribution moves +0.027 → +0.033. The sleeve got better; the book did not notice. Both are reported
+because only quoting the first would be the flattering half.
+
+The **cross-sectional leg keeps the all-perp fill**, and not because it was checked and preferred: its
+harness (`run_bo_xs_tf.xs_daily`) charges a flat 6bps/side and **no funding at all**, so there is no
+funding for a venue move to save. Pricing that leg's funding is the prerequisite, and it would lower
+its published Sharpe, not raise it — a separate piece of work, named here rather than quietly skipped.
 
 **The history is the more valuable half.** 2017-08→2019-12 is data no version of this construction has
 been fitted on, and the early spot cross-section is *less* survivorship-biased than any perp universe:

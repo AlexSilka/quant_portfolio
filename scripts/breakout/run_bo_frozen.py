@@ -107,12 +107,12 @@ def main():
     print(f"\n[D] per-year Sharpe (top-30 frozen book): {per_year}")
 
     # persist the default frozen book for the report / downstream
-    top30_rets.to_parquet(bo.REPORTS / "bo_frozen_sleeve_returns.parquet")
-    port.rename("ret").to_frame().to_parquet(bo.REPORTS / "bo_frozen_portfolio.parquet")
+    top30_rets.to_parquet(bo.BREAKOUT / "bo_frozen_sleeve_returns.parquet")
+    port.rename("ret").to_frame().to_parquet(bo.BREAKOUT / "bo_frozen_portfolio.parquet")
     summary = {"core10_constructions": {k: book_metrics(v, k)[0] for k, v in core_rets.items()},
                "breadth": rows, "oos_split": {"in_sample": si, "oos": so},
                "per_year": per_year, "oos_start": str(OOS_START.date())}
-    (bo.REPORTS / "bo_frozen_summary.json").write_text(json.dumps(summary, indent=2, default=float))
+    (bo.BREAKOUT / "bo_frozen_summary.json").write_text(json.dumps(summary, indent=2, default=float))
     print("\nBO FROZEN OK")
 
 
