@@ -399,16 +399,16 @@ def _print_lift(label, lift):
     can only run where both series exist — on-chain starts 2020, so the 0% row is the book restricted to
     that overlap and will not match the headline scorecard measured over 2011-2026."""
     print(f"  {label} (overlap window {lift['window']}; the 0% row is the book on THAT window):")
-    print(f"    {'w':>5} {'Sharpe':>7} {'maxDD':>7} {'worst mo':>9} {'months+':>8} {'streak':>7} {'targets':>8}")
+    print(f"    {'w':>5} {'Sharpe':>7} {'CAGR':>7} {'maxDD':>7} {'worst mo':>9} {'months+':>8} {'streak':>7} {'targets':>8}")
     for w, c in lift.items():
         if w == "window":
             continue
         ctl = c.get("control")
         tail = ("" if not ctl else
-                f"   | rotated control: Sh {ctl['sharpe']:+.2f} DD {ctl['max_dd']:+.1%} "
+                f"   | rotated control: Sh {ctl['sharpe']:+.2f} CAGR {ctl['cagr']:+.1%} DD {ctl['max_dd']:+.1%} "
                 f"worst {ctl['worst_month']:+.2%} mo {ctl['months_in_profit']:.0%} "
                 f"targets {ctl['targets_median']:.1f}/5")
-        print(f"    {w:>5} {c['sharpe']:>+7.2f} {c['max_dd']:>+7.1%} {c['worst_month']:>+9.2%} "
+        print(f"    {w:>5} {c['sharpe']:>+7.2f} {c['cagr']:>+7.1%} {c['max_dd']:>+7.1%} {c['worst_month']:>+9.2%} "
               f"{c['months_in_profit']:>8.0%} {c['longest_losing_streak_mo']:>7d} {c['targets']:>7d}/5{tail}")
 
 

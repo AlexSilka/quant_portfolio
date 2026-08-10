@@ -169,7 +169,8 @@
         "longest_losing_streak_mo": 2,
         "total_return": 3.272,
         "n_obs": 1501,
-        "targets": 5
+        "targets": 5,
+        "cagr": 0.4242
       },
       "15%": {
         "sharpe": 3.74,
@@ -180,8 +181,10 @@
         "total_return": 2.62,
         "n_obs": 1501,
         "targets": 4,
+        "cagr": 0.3679,
         "control": {
           "sharpe": 3.83,
+          "cagr": 0.3681,
           "max_dd": -0.0489,
           "worst_month": -0.0328,
           "months_in_profit": 0.78,
@@ -198,8 +201,10 @@
         "total_return": 2.064,
         "n_obs": 1501,
         "targets": 4,
+        "cagr": 0.3134,
         "control": {
           "sharpe": 3.77,
+          "cagr": 0.3138,
           "max_dd": -0.0432,
           "worst_month": -0.0275,
           "months_in_profit": 0.8,
@@ -216,8 +221,10 @@
         "total_return": 1.447,
         "n_obs": 1501,
         "targets": 4,
+        "cagr": 0.2435,
         "control": {
           "sharpe": 3.245,
+          "cagr": 0.2438,
           "max_dd": -0.0447,
           "worst_month": -0.0242,
           "months_in_profit": 0.8,
@@ -246,7 +253,8 @@
       "longest_losing_streak_mo": 2,
       "total_return": 3.272,
       "n_obs": 1501,
-      "targets": 5
+      "targets": 5,
+      "cagr": 0.4242
     },
     "15%": {
       "sharpe": 3.64,
@@ -257,8 +265,10 @@
       "total_return": 2.282,
       "n_obs": 1501,
       "targets": 3,
+      "cagr": 0.3356,
       "control": {
         "sharpe": 3.54,
+        "cagr": 0.3354,
         "max_dd": -0.0519,
         "worst_month": -0.0352,
         "months_in_profit": 0.78,
@@ -275,8 +285,10 @@
       "total_return": 1.517,
       "n_obs": 1501,
       "targets": 3,
+      "cagr": 0.252,
       "control": {
         "sharpe": 3.12,
+        "cagr": 0.2516,
         "max_dd": -0.0553,
         "worst_month": -0.0317,
         "months_in_profit": 0.74,
@@ -293,8 +305,10 @@
       "total_return": 0.761,
       "n_obs": 1501,
       "targets": 2,
+      "cagr": 0.1477,
       "control": {
         "sharpe": 2.07,
+        "cagr": 0.1473,
         "max_dd": -0.0707,
         "worst_month": -0.0358,
         "months_in_profit": 0.66,

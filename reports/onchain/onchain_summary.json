@@ -274,7 +274,8 @@
         "longest_losing_streak_mo": 2,
         "total_return": 10.858,
         "n_obs": 2404,
-        "targets": 5
+        "targets": 5,
+        "cagr": 0.4563
       },
       "15%": {
         "sharpe": 3.61,
@@ -285,8 +286,10 @@
         "total_return": 7.336,
         "n_obs": 2404,
         "targets": 5,
+        "cagr": 0.3803,
         "control": {
           "sharpe": 3.68,
+          "cagr": 0.3805,
           "max_dd": -0.0741,
           "worst_month": -0.0492,
           "months_in_profit": 0.7975,
@@ -303,8 +306,10 @@
         "total_return": 4.844,
         "n_obs": 2404,
         "targets": 5,
+        "cagr": 0.3078,
         "control": {
           "sharpe": 3.48,
+          "cagr": 0.3081,
           "max_dd": -0.0651,
           "worst_month": -0.0427,
           "months_in_profit": 0.7975,
@@ -321,8 +326,10 @@
         "total_return": 2.623,
         "n_obs": 2404,
         "targets": 4,
+        "cagr": 0.2161,
         "control": {
           "sharpe": 2.73,
+          "cagr": 0.2164,
           "max_dd": -0.084,
           "worst_month": -0.0453,
           "months_in_profit": 0.7531,
@@ -362,7 +369,8 @@
           "longest_losing_streak_mo": 2,
           "total_return": 10.858,
           "n_obs": 2404,
-          "targets": 5
+          "targets": 5,
+          "cagr": 0.4563
         },
         "15%": {
           "sharpe": 3.7,
@@ -373,8 +381,10 @@
           "total_return": 7.834,
           "n_obs": 2404,
           "targets": 4,
+          "cagr": 0.3926,
           "control": {
             "sharpe": 3.78,
+            "cagr": 0.3928,
             "max_dd": -0.0693,
             "worst_month": -0.0487,
             "months_in_profit": 0.8101,
@@ -391,8 +401,10 @@
           "total_return": 5.563,
           "n_obs": 2404,
           "targets": 4,
+          "cagr": 0.3311,
           "control": {
             "sharpe": 3.7,
+            "cagr": 0.3314,
             "max_dd": -0.0624,
             "worst_month": -0.0406,
             "months_in_profit": 0.8101,
@@ -409,8 +421,10 @@
           "total_return": 3.397,
           "n_obs": 2404,
           "targets": 4,
+          "cagr": 0.2524,
           "control": {
             "sharpe": 3.13,
+            "cagr": 0.2528,
             "max_dd": -0.0608,
             "worst_month": -0.0331,
             "months_in_profit": 0.7848,

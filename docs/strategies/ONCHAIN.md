@@ -60,8 +60,9 @@ decisive "does on-chain beat price?" test). All numbers net of cost. Figure:
   a better-built momentum, in the same sense residual momentum was ([RESIDMOM.md](RESIDMOM.md)).
 - **And it still does not earn a slot: the book does not move.** Correlation to the deliverable book
   +0.13, and on the **full scorecard** — not Sharpe alone, which was never what binds this book — a 15%
-  weight reads Sharpe 3.71 → 3.70, max-DD −8.3% → **−6.8%**, worst month −5.76% → **−4.51%**,
-  months-in-profit 81% → **77%**: **5/5 → 4/5**. The tail improvement is real arithmetic and it is not
+  weight reads Sharpe 3.71 → 3.70, **CAGR 45.6% → 39.3%**, max-DD −8.3% → **−6.8%**, worst month
+  −5.76% → **−4.51%**, months-in-profit 81% → **77%**: **5/5 → 4/5**. The ratio holds while the money
+  falls by six points — which is exactly what a Sharpe-only reading cannot show. The tail improvement is real arithmetic and it is not
   the signal's doing. Rotating the same sleeve to random dates — identical vol, skew and
   autocorrelation, alignment destroyed — gives Sharpe 3.78, max-DD −6.9%, worst month −4.87%, months
   **81%** and keeps **5/5**. The control beats the real thing on every axis, so what looks like a tail

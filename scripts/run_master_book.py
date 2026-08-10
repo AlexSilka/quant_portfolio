@@ -246,9 +246,15 @@ def book_lift(sleeve, book, weights=(0.0, 0.15, 0.30, 0.50), n_control=40):
     s = s * (b.std() / s.std()) if s.std() > 0 else s
     out = {"window": f"{b.index.min().date()}..{b.index.max().date()}"}
     rng = np.random.default_rng(SEED)
+    yrs = (b.index[-1] - b.index[0]).days / 365.25
     for w in weights:
-        card = scorecard((1.0 - w) * b + w * s)
+        blend = (1.0 - w) * b + w * s
+        card = scorecard(blend)
         card["targets"] = n_targets(card)
+        # CAGR belongs next to the ratio and is the thing the ratio hides: blending swaps a slice of a
+        # high-Sharpe book for a lower-Sharpe one at matched vol, so the ratio can hold while the money
+        # falls. A sleeve that leaves Sharpe flat and costs ten points of compound return has not helped.
+        card["cagr"] = round(float((1.0 + blend).prod() ** (1.0 / yrs) - 1.0), 4) if yrs > 0 else 0.0
         # Diluting a book with ANY weakly-correlated series cuts its drawdown and worst month and costs
         # Sharpe — that is arithmetic, not a sleeve earning its slot. The control keeps the sleeve's own
         # path exactly (rotation preserves vol, skew and autocorrelation) and destroys only its alignment
@@ -258,12 +264,14 @@ def book_lift(sleeve, book, weights=(0.0, 0.15, 0.30, 0.50), n_control=40):
             arr = s.to_numpy()
             for k in rng.integers(1, len(arr) - 1, size=n_control):
                 rot = pd.Series(np.roll(arr, int(k)), index=s.index)
-                c = scorecard((1.0 - w) * b + w * rot)
+                rb = (1.0 - w) * b + w * rot
+                c = scorecard(rb)
                 c["targets"] = n_targets(c)
+                c["cagr"] = float((1.0 + rb).prod() ** (1.0 / yrs) - 1.0) if yrs > 0 else 0.0
                 draws.append(c)
             card["control"] = {
                 k: round(float(np.median([d[k] for d in draws])), 4)
-                for k in ("sharpe", "max_dd", "worst_month", "months_in_profit")}
+                for k in ("sharpe", "cagr", "max_dd", "worst_month", "months_in_profit")}
             card["control"]["targets_median"] = float(np.median([d["targets"] for d in draws]))
             card["beats_control_targets"] = bool(card["targets"] > card["control"]["targets_median"])
         out[f"{int(w * 100)}%"] = card
