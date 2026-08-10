@@ -761,7 +761,16 @@ rule's 3.73), so the VIX signal — legitimate point-in-time macro (§9) — is 
 charged**: the same rule with the gate multiplied onto finished P&L instead of run through the sleeves reads
 **4.05 full / 3.99 OOS** and would *overshoot* the ≤4.0 Sharpe band — that gap is the vega spread the gate really
 crosses, ~27 switches/yr, and it is paid, not assumed away. Two curve segments beat one: the long segment alone
-catches 4 of the leg's 10 worst days, both together catch 9 (`make volprem` → `volprem_gates.csv`). The honest lesson, on
+catches 4 of the leg's 10 worst days, both together catch 9 (`make volprem` → `volprem_gates.csv`).
+**Read the last column before crediting the VIX rule with the whole lift:** every row but the ungated one also
+carries the per-sleeve own-curve gate of §6d-quater, because that is how the leg ships, and the two rules do not
+rank the same way once separated: the long segment on its own leaves the book exactly where the ungated leg
+does (**3.26, 3/5**), so the 4.10 on its row is the per-sleeve gate's work, not the VIX rule's. Scored where a
+selection may look — 2011 to the day before the frozen block — the VIX rule alone clears **5 of 5** with two
+segments (Sharpe 3.64, months 82.7%, streak 2) against **3 of 5** with the long segment; adding the per-sleeve
+gate there *costs* a target (streak 2 → 3) while it buys the leg's tail (−33% → −16%). So the scored result does
+not depend on the rule that was found inside the block — the two-segment gate reaches it on data that stops
+before the block starts, and the per-sleeve gate is bought for the tail rather than for the scorecard. The honest lesson, on
 an ML-graded task, cuts against the grain: **the value is the VIX signal, not the model — a rule beats the ML.**
 This gate ships as part of the volprem strategy (`src/risk/vol_regime.py`, its `ret_gated` series), not as a book
 overlay; the per-sleeve verdict and this

@@ -132,7 +132,7 @@ def book_from(rets: dict) -> pd.Series:
     return vt(raw, PPY_BOOK)
 
 
-def gated_leg(src, sym, und, cls, ppy, gate: pd.Series) -> pd.Series:
+def gated_leg(src, sym, und, cls, ppy, gate: pd.Series, own_curve: bool = True) -> pd.Series:
     """One sleeve under BOTH regime gates, with the two things a gate costs kept honest:
 
       * the switch is PAID — flattening the swap and putting it back on crosses the same vega spread a
@@ -147,6 +147,10 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series) -> pd.Series:
     sell variance on metals, oil, duration, EM and single names. `own_curve_gate` gives each sleeve the
     same contango test on its OWN implied vol, so a metals sleeve stands down on a metals vol event even
     while the VIX curve is calm. They compose with AND: both must say contango.
+
+    `own_curve=False` drops the per-sleeve half. The shipped leg keeps both — the flag exists so a
+    candidate study can attribute a lift to the VIX rule it names, instead of scoring every VIX variant
+    with the per-sleeve gate silently attached and crediting the difference to the label.
     """
     iv = naive_dt(implied(src, sym))
     bars = underlying_bars(und, cls)
@@ -154,20 +158,22 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series) -> pd.Series:
     base = {"timed": False, "var_cap": 1e9, "bars": bars,
             "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5)}
     ungated = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
-    both = gate.reindex(px.index).ffill().fillna(0.0) * own_curve_gate(iv, px.index)
+    both = gate.reindex(px.index).ffill().fillna(0.0)
+    if own_curve:
+        both = both * own_curve_gate(iv, px.index)
     net = vp.short_vol_book(px, iv, ppy=ppy, gate=both, **base)["net"]
     scale = (TVOL / (ungated.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
     return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
 
 
-def gated_book(rets_ungated: dict, gate: pd.Series) -> pd.Series:
+def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> pd.Series:
     """The deployed (gated) book. The re-entry artifact bites a second time at book level — `vt` would
     re-target the equal-risk mean on ITS trailing vol, which the gated flat stretches deflate — so the
     book's scale is taken from the ungated book and applied to the gated one."""
     gat = {}
     for src, sym, und, cls, ppy in UNIVERSE:
         if sym in rets_ungated:
-            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate)
+            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate, own_curve=own_curve)
     raw_u = pd.DataFrame(rets_ungated).sort_index().mean(axis=1, skipna=True).dropna()
     raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
     scale = (TVOL / (raw_u.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)

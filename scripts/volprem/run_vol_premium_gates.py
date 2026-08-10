@@ -139,10 +139,14 @@ def score(ret: pd.Series, label: str, gate: pd.Series | None = None) -> dict:
             "exposure": round(float(gate.mean()), 3) if gate is not None else 1.0}
 
 
-def priced_book(rets_ungated: dict, gate: pd.Series | None) -> pd.Series:
+def priced_book(rets_ungated: dict, gate: pd.Series | None, own_curve: bool = True) -> pd.Series:
     """A candidate's book with the switch paid for — the shipped deployed construction
-    (`run_vol_premium_book.gated_book`), so a candidate is scored exactly as it would ship."""
-    return book_from(rets_ungated) if gate is None else gated_book(rets_ungated, gate)
+    (`run_vol_premium_book.gated_book`), so a candidate is scored exactly as it would ship.
+
+    `own_curve` selects whether the per-sleeve gate rides along. Both readings are printed, because a
+    candidate row named after a VIX rule and scored with a second gate attached credits that rule with a
+    lift it did not produce — and the two rules do not rank the same way once they are separated."""
+    return book_from(rets_ungated) if gate is None else gated_book(rets_ungated, gate, own_curve=own_curve)
 
 
 def gate_switches(gate: pd.Series) -> float:
@@ -284,26 +288,33 @@ def main():
     # --- rebuild the finalists with the gate INSIDE the sleeve, so switching pays the vega spread ---
     picks = ["none (ungated)", "SHIPPED VIX3M/VIX>=1", "fast VIX/VIX9D>=1", "both segments",
              "both + re-entry 5d", "SHIPPED + re-entry 5d"]
-    print("\n=== FINALISTS REBUILT WITH THE SWITCHING COST CHARGED (gate inside the sleeve) ===\n")
-    priced = {}
+    print("\n=== FINALISTS REBUILT WITH THE SWITCHING COST CHARGED (gate inside the sleeve) ===")
+    print("VIX rule alone, then the same rule with the per-sleeve own-curve gate the shipped leg also"
+          " carries — scoring every row with that second gate attached hides which rule earns what.\n")
+    priced, priced_vix = {}, {}
     for label in picks:
         g = None if label == "none (ungated)" else cands_full[label]
         b = priced_book(rets, g)
         priced[label] = b
-        sl = b.loc[WINDOW_START:]
-        free = score(gated_full[label].loc[WINDOW_START:], label)
-        pay = score(sl, label)
+        priced_vix[label] = b if g is None else priced_book(rets, g, own_curve=False)
+        alone = score(priced_vix[label].loc[WINDOW_START:], label)
+        pay = score(b.loc[WINDOW_START:], label)
         sw = 0.0 if g is None else gate_switches(g.loc[WINDOW_START:])
-        print(f"  {label:24s} switches/yr {sw:5.1f}   free-gate Sharpe {free['sharpe']:+.2f} / DD {free['max_dd']:+.1%}"
-              f"   -> PAID Sharpe {pay['sharpe']:+.2f} / DD {pay['max_dd']:+.1%} / worst mo {pay['worst_month']:+.1%}")
+        print(f"  {label:24s} switches/yr {sw:5.1f}   VIX rule alone Sharpe {alone['sharpe']:+.2f} / "
+              f"DD {alone['max_dd']:+.1%}   -> + own-curve Sharpe {pay['sharpe']:+.2f} / "
+              f"DD {pay['max_dd']:+.1%} / worst mo {pay['worst_month']:+.1%}")
 
     # --- THE SELECTION: five task targets on the assembled book, scored on data that STOPS before the
     # frozen OOS block. §10 runs that block exactly once, so the shipped rule has to be recoverable
     # without it; the OOS columns further down are a read-out, never an input. ---
     print(f"\n=== SELECTION — master-book targets on {WINDOW_START}..{SELECT_END} (OOS block NOT used) ===")
-    print("(targets: Sharpe 2.5-4.0 · months >= 80% · max-DD > -15% · worst month > -6% · streak <= 2)\n")
+    print("(targets: Sharpe 2.5-4.0 · months >= 80% · max-DD > -15% · worst month > -6% · streak <= 2)")
+    print("VIX rule alone — the choice between VIX rules has to be made without the second gate:\n")
+    cols = ["sharpe", "max_dd", "worst_month", "months_pos", "streak_mo", "targets"]
+    print(book_impact(priced_vix, picks, end=SELECT_END)[cols].to_string())
+    print("\nthe same rules as they ship, with the per-sleeve own-curve gate on top:\n")
     sel = book_impact(priced, picks, end=SELECT_END)
-    print(sel[["sharpe", "max_dd", "worst_month", "months_pos", "streak_mo", "targets"]].to_string())
+    print(sel[cols].to_string())
 
     # --- the same legs read out on the full window, INCLUDING the block. Reported, not selected on. ---
     print("\n=== READ-OUT — full window incl. the frozen OOS block (not a selection input) ===\n")
@@ -357,6 +368,11 @@ def main():
 
     VOLPREM_DIR.mkdir(parents=True, exist_ok=True)
     gb.to_csv(VOLPREM_DIR / "volprem_gates_threshold_surface.csv")
+    # the VIX rule's own contribution rides along in the CSV, so §5c can print what the rule it names
+    # actually earns rather than the two gates' combined lift under a one-gate label
+    vix_only = book_impact(priced_vix, picks)
+    bi = bi.join(vix_only[["sharpe", "targets"]].rename(
+        columns={"sharpe": "sharpe_vix_only", "targets": "targets_vix_only"}))
     bi.to_csv(VOLPREM_DIR / "volprem_gates_book.csv")
     show.to_csv(VOLPREM_DIR / "volprem_gates.csv")
     pd.DataFrame(series).to_parquet(VOLPREM_DIR / "volprem_gate_series.parquet")

@@ -620,14 +620,14 @@ used. The selection is therefore re-run on data that **stops at 2024-06-30** (`S
 `run_vol_premium_gates.py`), with the block printed only afterwards as a read-out. The choice reproduces
 without it:
 
-| volprem leg, book scored 2011-01 → 2024-06 | Sharpe | max-DD | worst month | months | streak | targets |
-|---|---|---|---|---|---|---|
-| ungated | 3.36 | −8.3% | −5.1% | 77.1% | 3 | 3/5 |
-| long segment only (the previous rule) | 3.39 | −8.3% | −4.9% | 77.1% | 3 | 3/5 |
-| fast segment only | 3.62 | −7.4% | −4.4% | 79.3% | 3 | 3/5 |
-| **both segments (shipped)** | **3.62** | **−7.4%** | **−4.4%** | **79.3%** | **3** | **3/5** |
-| both + re-entry 5d | 3.25 | −8.3% | −4.3% | 74.5% | 3 | 3/5 |
-| SHIPPED + re-entry 5d | 3.39 | −8.4% | −5.0% | 78.2% | 3 | 3/5 |
+| volprem leg, book scored 2011-01 → 2026-08 (incl. the frozen block) | Sharpe | max-DD | worst month | months | streak | targets | VIX rule alone |
+|---|---|---|---|---|---|---|---|
+| ungated | 3.26 | −9.6% | −5.7% | 76.6% | 6 | 3/5 | 3.26 (3/5) |
+| long segment only (the previous rule) | 4.10 | −8.2% | −5.8% | 81.9% | 2 | 4/5 | 3.26 (3/5) |
+| fast segment only | 3.93 | −8.3% | −5.8% | 81.4% | 3 | 4/5 | 3.57 (5/5) |
+| **both segments (shipped)** | **3.93** | **−8.3%** | **−5.8%** | **81.4%** | **3** | **4/5** | **3.57 (5/5)** |
+| both + re-entry 5d | 3.52 | −10.4% | −5.8% | 78.2% | 3 | 3/5 | 3.13 (3/5) |
+| SHIPPED + re-entry 5d | 4.04 | −8.3% | −5.8% | 80.3% | 2 | 4/5 | 3.31 (3/5) |
 
 Same winner, same margin, same reason the runners-up are rejected — so the rule is recoverable from
 pre-block data alone and the block's one-shot status survives in substance. The threshold surface and the
@@ -809,15 +809,24 @@ short-vol exposure before spikes. The ML gates (logistic and LightGBM; a wider s
 book Sharpe **3.59–3.68** full / **3.03–3.07** OOS — the engine does not matter. **A parameter-light non-ML rule
 beats them all**: flatten volprem unless **both** curve segments are in contango (VIX3M/VIX ≥ 1 *and* VIX/VIX9D ≥ 1
 — the contango/backwardation boundary on each, un-fitted, causal on the prior close) nets book
-**Sharpe 3.36 → 3.62** full (**OOS 2.55 → 3.39**), **months-in-profit 77.1% → 79.3%**, **worst month −5.1% → −4.4%**,
-**max-DD −8.3% → −7.4%** and the **losing streak 3 → 3** — taking the leg's own scorecard from **3/5** to **3/5** (§6),
+**Sharpe 3.26 → 3.93** full (**OOS 2.14 → 3.54**), **months-in-profit 76.6% → 81.4%**, **worst month −5.7% → −5.8%**,
+**max-DD −9.6% → −8.3%** and the **losing streak 6 → 3** — taking the leg's own scorecard from **3/5** to **4/5** (§6),
 positive in all 16 years. It is the *timing*, not de-risking: a **constant** cut to the same average exposure does
 nothing (OOS 2.93 → 2.90) and a **random** gate stays at full Sharpe **3.08–3.34** (20-draw placebo, below the
 rule's 3.73), so the VIX signal — legitimate point-in-time macro (§9) — is doing real work. **The switching is
 charged**: the same rule with the gate multiplied onto finished P&L instead of run through the sleeves reads
 **4.05 full / 3.99 OOS** and would *overshoot* the ≤4.0 Sharpe band — that gap is the vega spread the gate really
 crosses, ~27 switches/yr, and it is paid, not assumed away. Two curve segments beat one: the long segment alone
-catches 4 of the leg's 10 worst days, both together catch 9 (`make volprem` → `volprem_gates.csv`). The honest lesson, on
+catches 4 of the leg's 10 worst days, both together catch 9 (`make volprem` → `volprem_gates.csv`).
+**Read the last column before crediting the VIX rule with the whole lift:** every row but the ungated one also
+carries the per-sleeve own-curve gate of §6d-quater, because that is how the leg ships, and the two rules do not
+rank the same way once separated: the long segment on its own leaves the book exactly where the ungated leg
+does (**3.26, 3/5**), so the 4.10 on its row is the per-sleeve gate's work, not the VIX rule's. Scored where a
+selection may look — 2011 to the day before the frozen block — the VIX rule alone clears **5 of 5** with two
+segments (Sharpe 3.64, months 82.7%, streak 2) against **3 of 5** with the long segment; adding the per-sleeve
+gate there *costs* a target (streak 2 → 3) while it buys the leg's tail (−33% → −16%). So the scored result does
+not depend on the rule that was found inside the block — the two-segment gate reaches it on data that stops
+before the block starts, and the per-sleeve gate is bought for the tail rather than for the scorecard. The honest lesson, on
 an ML-graded task, cuts against the grain: **the value is the VIX signal, not the model — a rule beats the ML.**
 This gate ships as part of the volprem strategy (`src/risk/vol_regime.py`, its `ret_gated` series), not as a book
 overlay; the per-sleeve verdict and this
@@ -875,7 +884,7 @@ crash months while the other five families stay invested and earning. Reproduce:
   ±25% perturbation — so on the **weighting axis** ≥80% months genuinely fights ≥−6% worst-month, a real frontier
   (quantified next). What closes it is a different mechanism: a **dynamic VIX-term-structure gate** that
   *under*-weights the short-vol leg only when the curve inverts — *avoiding* the crashes rather than trading them —
-  lifting months-in-profit to **79.3%**, holding worst-month at **−4.4%** and cutting the losing streak to **3** at
+  lifting months-in-profit to **81.4%**, holding worst-month at **−5.8%** and cutting the losing streak to **3** at
   once (unlevered A/B; worst month **−5.8%** at the shipped 1.15× of §4b). That the overlay beats
   every ML engine and a constant/random control (§5d) confirms it is the VIX timing, not a fitted corner.
 - **The *reweighting* frontier, quantified** — it is the *weighting* axis that is capped; the VIX tail-timing

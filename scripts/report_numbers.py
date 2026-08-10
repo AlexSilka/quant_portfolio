@@ -113,17 +113,22 @@ def _gate_table():
     label = {"none (ungated)": "ungated", "SHIPPED VIX3M/VIX>=1": "long segment only (the previous rule)",
              "fast VIX/VIX9D>=1": "fast segment only", "both segments": "**both segments (shipped)**",
              "both + re-entry 5d": "both + re-entry 5d"}
-    out = ["| volprem leg | Sharpe | max-DD | worst month | months | streak | targets |",
-           "|---|---|---|---|---|---|---|"]
+    # Every row but the ungated one is scored with the per-sleeve own-curve gate of §6d-quater on top of
+    # the VIX rule it is named after, because that is how the leg ships. The last column is the VIX rule
+    # on its own, so the lift is attributed to the rule that earned it.
+    out = ["| volprem leg | Sharpe | max-DD | worst month | months | streak | targets | VIX rule alone |",
+           "|---|---|---|---|---|---|---|---|"]
     vals = {}
     for r in rows:
         name = r["volprem leg"]
         shipped = name == "both segments"
         b = (lambda x: f"**{x}**") if shipped else (lambda x: x)
+        alone = (f"{float(r['sharpe_vix_only']):.2f} ({r['targets_vix_only']})"
+                 if r.get("sharpe_vix_only") else "—")
         out.append("| " + " | ".join([
             label.get(name, name), b(f"{float(r['sharpe']):.2f}"), b(_pc(float(r["max_dd"]))),
             b(_pc(float(r["worst_month"]))), b(_pcu(float(r["months_pos"]))), b(r["streak_mo"]),
-            b(r["targets"])]) + " |")
+            b(r["targets"]), b(alone)]) + " |")
         key = "gate_on" if shipped else ("gate_off" if name == "none (ungated)" else None)
         if key:
             vals[f"{key}_targets"] = r["targets"]
@@ -134,8 +139,11 @@ def _gate_table():
                          f"{key}_dd": _pc(float(r["max_dd"])),
                          f"{key}_streak": r["streak_mo"]})
     vals["gate_table"] = "\n".join(out)
+    # The CSV this reads is run_vol_premium_gates' full-window read-out — it carries the OOS columns,
+    # which that script only emits when the window is NOT truncated. Labelling it as the selection
+    # window would claim the frozen block was held out of numbers that include it.
     vals["gate_table"] = vals["gate_table"].replace(
-        "| volprem leg |", "| volprem leg, book scored 2011-01 → 2024-06 |", 1)
+        "| volprem leg |", "| volprem leg, book scored 2011-01 → 2026-08 (incl. the frozen block) |", 1)
     return vals
 
 
