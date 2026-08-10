@@ -45,7 +45,14 @@ def market_stress(index: pd.Index | None = None) -> pd.Series:
     crypto leg trades on days the Cboe and NYSE are shut, and on those days the last published reading
     is the only one that exists. The lag is taken on the CONSUMER's calendar, after the fill: lagging on
     the exchange calendar first would leave a 7-day leg reading Thursday's close all weekend, when
-    Friday's has been published and is the honest most-recent observation."""
+    Friday's has been published and is the honest most-recent observation.
+
+    That also fixes the contract: `index` must be a DAILY index. One bar of it is one bar of lag, so a
+    sparse index gets a correspondingly stale reading — a monthly one would be sized on last month's
+    market. Every caller here passes the book's own daily index.
+
+    Verified point-in-time both ways: truncating the source to rows strictly before a date reproduces
+    that date's reading exactly, and adding the date's own row does not move it."""
     global _CACHE
     if _CACHE is None:
         vix, vix3m = load_cboe_vol("VIX"), load_cboe_vol("VIX3M")
