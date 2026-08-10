@@ -23,7 +23,6 @@ change that reached the caller inside the pipeline and no further.
 | `drop(columns=["carry"])` on a book that dropped carry | `carry/make_carry_figures` | the figure had not been generated since §6d-ter |
 | `PER_FAMILY_CAP = 1.0 / 8 * 1.5` | `run_master_book` | written for an eight-family book, read as 1.13x equal weight against the 1.5x it claimed |
 | the headline checker enforcing a scorecard shape the README stopped using | `check_headline` | the guard against stale claims was itself stale, and failing on five counts that were all its own |
-| relative imports (`from .run_gate_coverage import`) | `run_gate_coverage`, `run_gate_ablation` | the only two files in the repo that cannot run as `python scripts/...`; their own siblings use the package-qualified form |
 | `OTHERS` — "the same as run_master_book.FAMILIES, minus trend" | `trend/run_trend_in_portfolio` | four ways from it: named carry, missed crisis/global-macro/BAB, pre-reorganisation paths, and volprem's UNGATED column — so the trend counterfactual was scored against a book that never existed |
 | the same `drop(columns=["carry"])`, one directory over | `carry/run_carry_portfolio` | second instance of one defect in one family, which is what a copied line looks like after the thing it copied from moves |
 
