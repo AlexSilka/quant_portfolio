@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from src.backtest.engine import backtest, vol_target  # noqa: E402
+import scripts.run_master_book as mb  # noqa: E402  the assembler weights the book, not a flat mean
 from src.config import CAPITAL_USD, FIGURES_DIR, REPORTS_DIR, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
@@ -78,7 +79,11 @@ def main():
 
     # (5) portfolio blend: master book (ex-carry) vs +carry
     a = ax[1, 1]
-    book = pd.read_parquet(REPORTS_DIR / "master_book_legs.parquet").drop(columns=["carry"]).mean(axis=1)
+    # The book this is compared against is whatever the book trades — carry is no longer in it (§6d-ter),
+    # so dropping it by name raised KeyError. And the blend has to be the assembler's weighting, not a
+    # flat mean, or the baseline prices the hedge slot at a share the book does not hold it at.
+    _legs = pd.read_parquet(REPORTS_DIR / "master_book_legs.parquet")
+    book = mb.book_stack(_legs.drop(columns=[c for c in ("carry",) if c in _legs.columns]))
     if carry_net.index.tz is not None:
         book.index = book.index.tz_localize(carry_net.index.tz)
     idx = carry_net.index.intersection(book.index)
