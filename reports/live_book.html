@@ -1,0 +1,196 @@
+<meta charset="utf-8">
+<title>Live book — the portfolio to actually run</title>
+<style>
+:root {
+  --ground:#eef2f4; --surface:#ffffff; --sunk:#dde5ea; --line:#d3dde3;
+  --text:#0d151a; --muted:#5b6f7c; --accent:#9a6b18; --accent-soft:#f0e2c6;
+  --critical:#bb3f37; --good:#2c7a58;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0b1014; --surface:#121a20; --sunk:#182430; --line:#22303a;
+    --text:#e3ecf1; --muted:#8298a6; --accent:#e0a53f; --accent-soft:#2a2113;
+    --critical:#e2685f; --good:#57ad86;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0b1014; --surface:#121a20; --sunk:#182430; --line:#22303a;
+  --text:#e3ecf1; --muted:#8298a6; --accent:#e0a53f; --accent-soft:#2a2113;
+  --critical:#e2685f; --good:#57ad86;
+}
+*{box-sizing:border-box}
+body { margin:0; background:var(--ground); color:var(--text); font-family:var(--sans);
+  line-height:1.55; padding:clamp(20px,4vw,56px) clamp(16px,4vw,40px); }
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+h1 { font-family:var(--mono); font-size:clamp(21px,2.6vw,30px); font-weight:600; letter-spacing:-.02em;
+  margin:0; text-wrap:balance; }
+.eyebrow { font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 10px; }
+.lede { margin:10px 0 0; color:var(--muted); max-width:66ch; }
+h2 { font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 14px; font-weight:600; }
+section{display:block}
+.headline { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+  background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.hcell{background:var(--surface);padding:16px 18px}
+.hcell .k { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); }
+.hcell .v { font-family:var(--mono); font-size:clamp(22px,3vw,30px); font-weight:600; margin-top:8px;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.hcell .n{font-size:11.5px;color:var(--muted);margin-top:5px}
+.v.up{color:var(--accent)} .v.down{color:var(--critical)}
+.ladder{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.rung { appearance:none; text-align:left; cursor:pointer; font:inherit; color:inherit; position:relative;
+  background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:13px 14px 12px;
+  display:flex; flex-direction:column; gap:5px; transition:border-color .12s, background .12s; }
+.rung:hover{border-color:var(--accent)}
+.rung:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rung.is-on{border-color:var(--accent);background:var(--accent-soft)}
+.rung-x { font-family:var(--mono); font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; }
+.rung-ret { font-family:var(--mono); font-size:14px; color:var(--accent); font-variant-numeric:tabular-nums; }
+.rung-dd { font-family:var(--mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.rung-tag { position:absolute; top:-8px; right:10px; font-family:var(--mono); font-size:9px;
+  letter-spacing:.12em; text-transform:uppercase; background:var(--accent); color:var(--ground);
+  padding:2px 7px; border-radius:99px; }
+.legs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:18px}
+.leg{display:flex;flex-direction:column;gap:8px}
+.leg-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.leg-name{font-family:var(--mono);font-size:13.5px;font-weight:600}
+.leg-share{font-family:var(--mono);font-size:13.5px;color:var(--accent);font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--sunk);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.leg-note{margin:0;font-size:12.5px;color:var(--muted)}
+.cap{margin:12px 0 0;font-size:12.5px;color:var(--muted);max-width:74ch}
+.years{display:flex;gap:5px;align-items:flex-end;overflow-x:auto;padding-bottom:2px}
+.yr{flex:1 0 34px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.yr-bar{height:96px;width:100%;display:flex;align-items:flex-end;background:var(--sunk);border-radius:4px;overflow:hidden}
+.yr-bar i{display:block;width:100%;background:var(--accent);border-radius:4px 4px 0 0}
+.yr-bar i.neg{background:var(--critical)}
+.yr-v{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.yr-y{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.yr-n { font-family:var(--mono); font-size:9px; color:var(--muted); border:1px solid var(--line);
+  border-radius:99px; padding:0 5px; line-height:1.5; }
+.yr[data-full] .yr-n{border-color:var(--accent);color:var(--accent)}
+.note { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px;
+  background:var(--surface); padding:15px 18px; }
+.note h3 { font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+  margin:0 0 8px; color:var(--text); }
+.note p{margin:0 0 10px;font-size:13.5px;color:var(--muted);max-width:74ch}
+.note p:last-child{margin-bottom:0}
+.note b{color:var(--text);font-weight:600}
+code{font-family:var(--mono);font-size:.92em;color:var(--text)}
+.foot { border-top:1px solid var(--line); padding-top:16px; font-size:12px; color:var(--muted);
+  font-family:var(--mono); }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Live book &middot; not the test-task deliverable</p>
+    <h1>Four legs, one dial, and what each setting actually costs</h1>
+    <p class="lede">The same research as the master book with the five scored targets taken out, and one
+    question in their place: which legs would you put your own money in, and at what size. Window opens
+    2011-01-03 &mdash; the first day both segments of the short-vol gate exist. No book-level drawdown ladder,
+    no daily-loss breaker: those guaranteed a mandate that no longer applies, and they are what stops
+    leverage working.</p>
+  </header>
+
+  <section>
+    <h2>Pick the dial</h2>
+    <div class="ladder" role="radiogroup" aria-label="Leverage"><button class="rung" data-rung="1.0" role="radio" aria-checked="false"><span class="rung-x">1&times;</span><span class="rung-ret">+78%</span><span class="rung-dd">−9% drawdown</span></button><button class="rung" data-rung="1.5" role="radio" aria-checked="false"><span class="rung-x">1.5&times;</span><span class="rung-ret">+136%</span><span class="rung-dd">−13% drawdown</span></button><button class="rung is-on" data-rung="2.0" role="radio" aria-checked="true"><span class="rung-x">2&times;</span><span class="rung-ret">+212%</span><span class="rung-dd">−18% drawdown</span><span class=rung-tag>suggested</span></button><button class="rung" data-rung="2.5" role="radio" aria-checked="false"><span class="rung-x">2.5&times;</span><span class="rung-ret">+311%</span><span class="rung-dd">−22% drawdown</span></button><button class="rung" data-rung="3.0" role="radio" aria-checked="false"><span class="rung-x">3&times;</span><span class="rung-ret">+440%</span><span class="rung-dd">−26% drawdown</span></button><button class="rung" data-rung="4.0" role="radio" aria-checked="false"><span class="rung-x">4&times;</span><span class="rung-ret">+823%</span><span class="rung-dd">−34% drawdown</span></button></div>
+  </section>
+
+  <section>
+    <h2>What that setting gives you &mdash; 2011-01-03 to 2026-08-05</h2>
+    <div class="headline">
+      <div class="hcell"><div class="k">Return</div><div class="v up" id="m-cagr"></div>
+        <div class="n">a year, compounded</div></div>
+      <div class="hcell"><div class="k">Max drawdown</div><div class="v down" id="m-dd"></div>
+        <div class="n">peak to trough, whole window</div></div>
+      <div class="hcell"><div class="k">Worst month</div><div class="v down" id="m-wm"></div>
+        <div class="n">worst day <span id="m-wd"></span></div></div>
+      <div class="hcell"><div class="k">Volatility</div><div class="v" id="m-vol"></div>
+        <div class="n">Sharpe <span id="m-sh"></span> &middot; months up <span id="m-mp"></span></div></div>
+      <div class="hcell"><div class="k">P&amp;L on $500,000</div><div class="v up" id="m-pnl"></div>
+        <div class="n">not reinvested &middot; <span id="m-pnly"></span> a year</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is in it &mdash; share of P&amp;L since all four legs list</h2>
+    <ul class="legs"><li class="leg"><div class="leg-top"><span class="leg-name">vol-premium</span><span class="leg-share">57%</span></div><div class="bar"><i style="width:57%"></i></div><p class="leg-note">Short variance across 18 Cboe underlyings, standing down whenever either the shared VIX curve or the sleeve's own curve inverts. Carries the book and its concentration risk.</p></li><li class="leg"><div class="leg-top"><span class="leg-name">breakout</span><span class="leg-share">16%</span></div><div class="bar"><i style="width:16%"></i></div><p class="leg-note">Donchian break with a chandelier trail and an ML confidence gate, crypto perps, long on spot and short on perp so the funding bill is collected rather than paid.</p></li><li class="leg"><div class="leg-top"><span class="leg-name">BAB</span><span class="leg-share">15%</span></div><div class="bar"><i style="width:15%"></i></div><p class="leg-note">Betting-against-beta, beta-neutral, the concentrated top-25 crypto book — long low-beta against short high-beta with Frazzini-Pedersen leg scaling.</p></li><li class="leg"><div class="leg-top"><span class="leg-name">cross-sectional</span><span class="leg-share">12%</span></div><div class="bar"><i style="width:12%"></i></div><p class="leg-note">Cross-sectional momentum on the liquid crypto and equity cross-sections, dollar-neutral, ranked each bar on trailing liquidity rather than a fixed list.</p></li></ul>
+  </section>
+
+  <section>
+    <h2>Year by year &mdash; bar height is the year&rsquo;s return, the count under it is legs live</h2>
+    <div class="years"><div class="yr" data-year="2011"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">11</span><span class="yr-n">1</span></div><div class="yr" data-year="2012"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">12</span><span class="yr-n">2</span></div><div class="yr" data-year="2013"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">13</span><span class="yr-n">2</span></div><div class="yr" data-year="2014"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">14</span><span class="yr-n">2</span></div><div class="yr" data-year="2015"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">15</span><span class="yr-n">2</span></div><div class="yr" data-year="2016"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">16</span><span class="yr-n">2</span></div><div class="yr" data-year="2017"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">17</span><span class="yr-n">2</span></div><div class="yr" data-year="2018"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">18</span><span class="yr-n">2</span></div><div class="yr" data-year="2019"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">19</span><span class="yr-n">2</span></div><div class="yr" data-year="2020"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">20</span><span class="yr-n">4</span></div><div class="yr" data-year="2021"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">21</span><span class="yr-n">4</span></div><div class="yr" data-year="2022"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">22</span><span class="yr-n">4</span></div><div class="yr" data-year="2023"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">23</span><span class="yr-n">4</span></div><div class="yr" data-year="2024"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">24</span><span class="yr-n">4</span></div><div class="yr" data-year="2025"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">25</span><span class="yr-n">4</span></div><div class="yr" data-year="2026"><div class="yr-bar"><i></i></div><span class="yr-v"></span><span class="yr-y">26</span><span class="yr-n">4</span></div></div>
+    <p class="cap">Four legs only from 2020. Before that the two crypto legs do not list yet and this is
+    vol-premium plus the cross-sectional book, which is why the early years are not evidence for the
+    portfolio as drawn above.</p>
+  </section>
+
+  <section class="note">
+    <h3>Read this before the headline</h3>
+    <p><b>Nine of these fifteen years are not this book.</b> Breakout and BAB list in 2020; before that it
+    is vol-premium plus the cross-sectional leg. Measured only where all four are live, 2020 onward, the
+    book returns <b><span id="m-s20"></span> a year</b> against <span id="m-full"></span> for the full
+    window, at Sharpe <span id="m-s20sh"></span> instead of <span id="m-fullsh"></span>. The first number
+    is the honest one, and it is the one to plan against.</p>
+    <p><b>One leg is more than half the P&amp;L.</b> Vol-premium is short variance: it earns steadily and
+    loses suddenly. Its worst day ungated is &minus;76.4%; the two regime gates it ships with take that to
+    &minus;10.0%, and across eight dislocations from 2008 to the 2025 tariff shock the gated leg loses more
+    than 4% in exactly one &mdash; 2008, before the curve data the gate needs existed. That is the risk
+    this book is really carrying.</p>
+    <p><b>The compounded multiple is arithmetic, not a result.</b> At these rates the balance passes the
+    vol-premium leg's vega capacity &mdash; low tens of millions &mdash; around year eight, and leaves the
+    order size the cost model charges for. The dollar figure above is deliberately the un-reinvested one.</p>
+    <p><b>Leverage is a real dial, not a free one.</b> Sharpe does not improve with it; only the return and
+    the pain do, in proportion. Every rung above is the same book, sized differently.</p>
+  </section>
+
+  <p class="foot">Generated from <code>reports/lab/live_book.json</code> by
+  <code>scripts/make_live_report.py</code> &middot; 15.6 years &middot;
+  rebuild with <code>python scripts/run_live_book.py</code></p>
+</div>
+<script>
+const SWEEP = {"1.0":{"cagr":0.7766,"sharpe":5.31,"ret_sum":9.0587,"max_dd":-0.0888,"worst_month":-0.0545,"worst_day":-0.0748,"vol":0.1094,"months_in_profit":0.8191,"years":15.5866,"growth_x":7768.8411,"per_year":{"2011":1.1245,"2012":1.1326,"2013":0.8532,"2014":0.758,"2015":1.2626,"2016":0.5723,"2017":1.5809,"2018":0.4312,"2019":1.2418,"2020":0.6316,"2021":0.785,"2022":0.2615,"2023":0.7186,"2024":0.5098,"2025":0.732,"2026":0.0821},"since_2020":{"cagr":0.5485,"sharpe":4.26,"ret_sum":2.9202,"max_dd":-0.0888,"worst_month":-0.0545,"worst_day":-0.0748,"vol":0.1039,"months_in_profit":0.8125,"years":6.5927,"growth_x":17.8655}},"1.5":{"cagr":1.3567,"sharpe":5.31,"ret_sum":13.588,"max_dd":-0.1323,"worst_month":-0.083,"worst_day":-0.1122,"vol":0.1641,"months_in_profit":0.8191,"years":15.5866,"growth_x":635149.7263,"per_year":{"2011":2.0702,"2012":2.1018,"2013":1.5119,"2014":1.3213,"2015":2.3845,"2016":0.9617,"2017":3.1194,"2018":0.7056,"2019":2.3393,"2020":1.0691,"2021":1.3756,"2022":0.4113,"2023":1.2444,"2024":0.8497,"2025":1.2703,"2026":0.1232},"since_2020":{"cagr":0.9188,"sharpe":4.26,"ret_sum":4.3803,"max_dd":-0.1323,"worst_month":-0.083,"worst_day":-0.1122,"vol":0.1559,"months_in_profit":0.8125,"years":6.5927,"growth_x":73.4321}},"2.0":{"cagr":2.1161,"sharpe":5.31,"ret_sum":18.1174,"max_dd":-0.1753,"worst_month":-0.1124,"worst_day":-0.1496,"vol":0.2187,"months_in_profit":0.8191,"years":15.5866,"growth_x":49402966.1971,"per_year":{"2011":3.4121,"2012":3.4993,"2013":2.395,"2014":2.0566,"2015":4.0439,"2016":1.4392,"2017":5.5473,"2018":1.0274,"2019":3.9569,"2020":1.6111,"2021":2.1534,"2022":0.5748,"2023":1.9236,"2024":1.2618,"2025":1.9682,"2026":0.164},"since_2020":{"cagr":1.3709,"sharpe":4.26,"ret_sum":5.8403,"max_dd":-0.1753,"worst_month":-0.1124,"worst_day":-0.1496,"vol":0.2078,"months_in_profit":0.8125,"years":6.5927,"growth_x":296.2524}},"2.5":{"cagr":3.1072,"sharpe":5.31,"ret_sum":22.6467,"max_dd":-0.2177,"worst_month":-0.1425,"worst_day":-0.187,"vol":0.2734,"months_in_profit":0.8191,"years":15.5866,"growth_x":3656421820.9887,"per_year":{"2011":5.3055,"2012":5.5092,"2013":3.5752,"2014":3.0138,"2015":6.4896,"2016":2.0229,"2017":9.3623,"2018":1.4036,"2019":6.3334,"2020":2.2789,"2021":3.1752,"2022":0.7526,"2023":2.799,"2024":1.7603,"2025":2.8704,"2026":0.2046},"since_2020":{"cagr":1.9212,"sharpe":4.26,"ret_sum":7.3004,"max_dd":-0.2177,"worst_month":-0.1425,"worst_day":-0.187,"vol":0.2598,"months_in_profit":0.8125,"years":6.5927,"growth_x":1173.0674}},"3.0":{"cagr":4.3963,"sharpe":5.31,"ret_sum":27.1761,"max_dd":-0.2595,"worst_month":-0.1735,"worst_day":-0.2244,"vol":0.3281,"months_in_profit":0.8191,"years":15.5866,"growth_x":257532353682.8423,"per_year":{"2011":7.9621,"2012":8.392,"2013":5.1482,"2014":4.2564,"2015":10.081,"2016":2.7337,"2017":15.3319,"2018":1.8425,"2019":9.8129,"2020":3.0965,"2021":4.5142,"2022":0.9452,"2023":3.9242,"2024":2.3623,"2025":4.0338,"2026":0.2448},"since_2020":{"cagr":2.589,"sharpe":4.26,"ret_sum":8.7605,"max_dd":-0.2595,"worst_month":-0.1735,"worst_day":-0.2244,"vol":0.3118,"months_in_profit":0.8125,"years":6.5927,"growth_x":4558.6355}},"4.0":{"cagr":8.2268,"sharpe":5.31,"ret_sum":36.2347,"max_dd":-0.3415,"worst_month":-0.2379,"worst_day":-0.2991,"vol":0.4375,"months_in_profit":0.8138,"years":15.5866,"growth_x":1101171214993221.4,"per_year":{"2011":16.8128,"2012":18.3997,"2013":10.0074,"2014":7.9416,"2015":22.9971,"2016":4.6391,"2017":39.0701,"2018":2.9444,"2019":22.2742,"2020":5.2931,"2021":8.5463,"2022":1.377,"2023":7.2118,"2024":3.9603,"2025":7.449,"2026":0.3235},"since_2020":{"cagr":4.3712,"sharpe":4.26,"ret_sum":11.6807,"max_dd":-0.3415,"worst_month":-0.2379,"worst_day":-0.2991,"vol":0.4157,"months_in_profit":0.8125,"years":6.5927,"growth_x":65041.3476}}};
+const CAP = 500000;
+const NLEGS = 4;
+const pct = (x, dp = 1) => (x >= 0 ? "+" : "\u2212") + Math.abs(x * 100).toFixed(dp) + "%";
+const usd = x => (Math.abs(x) >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : "$" + Math.round(x).toLocaleString());
+function show(r) {
+  const s = SWEEP[r];
+  document.getElementById("m-cagr").textContent = pct(s.cagr, 0);
+  document.getElementById("m-dd").textContent = pct(s.max_dd, 1);
+  document.getElementById("m-wm").textContent = pct(s.worst_month, 1);
+  document.getElementById("m-wd").textContent = pct(s.worst_day, 1);
+  document.getElementById("m-vol").textContent = (s.vol * 100).toFixed(1) + "%";
+  document.getElementById("m-sh").textContent = s.sharpe.toFixed(2);
+  document.getElementById("m-mp").textContent = Math.round(s.months_in_profit * 100) + "%";
+  // the un-reinvested figure is the sum of returns on fixed capital, which scales with the dial
+  const pnl = CAP * s.ret_sum;
+  document.getElementById("m-pnl").textContent = usd(pnl);
+  document.getElementById("m-pnly").textContent = usd(pnl / s.years);
+  const py = s.per_year, ymax = Math.max(...Object.values(py).map(Math.abs)) || 1;
+  document.querySelectorAll(".yr").forEach(el => {
+    const v = py[el.dataset.year];
+    const bar = el.querySelector("i");
+    bar.style.height = Math.max(2, 100 * Math.abs(v) / ymax).toFixed(0) + "%";
+    bar.classList.toggle("neg", v < 0);
+    el.querySelector(".yr-v").textContent = Math.round(v * 100) + "%";
+    el.toggleAttribute("data-full", +el.querySelector(".yr-n").textContent === NLEGS);
+  });
+  document.getElementById("m-s20").textContent = pct(s.since_2020.cagr, 0);
+  document.getElementById("m-s20sh").textContent = s.since_2020.sharpe.toFixed(2);
+  document.getElementById("m-full").textContent = pct(s.cagr, 0);
+  document.getElementById("m-fullsh").textContent = s.sharpe.toFixed(2);
+  document.querySelectorAll(".rung").forEach(b => {
+    const on = b.dataset.rung === r;
+    b.classList.toggle("is-on", on);
+    b.setAttribute("aria-checked", on ? "true" : "false");
+  });
+}
+document.querySelectorAll(".rung").forEach(b => b.addEventListener("click", () => show(b.dataset.rung)));
+show("2.0");
+</script>

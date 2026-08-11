@@ -11,6 +11,12 @@ drawdown, monthly heatmap, rolling Sharpe, exposure, correlations, edge map. If 
 identical page is committed and self-contained: open [reports/dashboard.html](reports/dashboard.html) (no server,
 no network).
 
+**▶ The same research sized for return, not for the brief's targets:**
+https://claude.ai/code/artifact/fed98b71-71df-4ccd-82aa-7f4908e406d3 — four earners, no hedge slot and no
+book overlay, leverage as a dial (`make live`, committed at [reports/live_book.html](reports/live_book.html)).
+It is a *different book*, not a re-cut of this one, and it is the honest answer to "what would you run with
+your own money" rather than to "what clears §11".
+
 ---
 
 ## The result in one page

@@ -1,4 +1,4 @@
-.PHONY: attribution gate-ablation gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab crisis seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger lint
+.PHONY: attribution gate-ablation gate-coverage integrity setup reproduce clean smoke smoke-math carry carry-wide volprem trend xs breakout overnight lottery bab crisis seasonal onchain residmom master composition risk-budget ml-contribution ml-portfolio longgamma discovery figures cscv selection-bias wf features sessions ledger live lint
 
 PY := .venv/bin/python
 
@@ -229,10 +229,16 @@ lint:
 	.venv/bin/ruff check .
 	$(PY) scripts/render_report.py --check
 	$(PY) scripts/make_report.py --check
+	$(PY) scripts/make_live_report.py --check
 
 # Rebuild REPORT.md and README.md from scripts/report_assets/ + the measured numbers.
 report:
 	$(PY) scripts/render_report.py
+
+# The return-first book (no scored targets, no §8 overlay, leverage a dial) and its own one-page sheet.
+live:
+	$(PY) scripts/run_live_book.py
+	$(PY) scripts/make_live_report.py
 
 # §9 per family: cost as a share of gross P&L, by re-running each family with its cost model off. ~5 min.
 family-costs:

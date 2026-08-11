@@ -69,9 +69,16 @@ def stats(s: pd.Series) -> dict:
     dd = eq / eq.cummax() - 1
     mo = (1 + s).resample("ME").prod() - 1
     return {"cagr": float(eq.iloc[-1] ** (1 / yrs) - 1), "sharpe": mb.scorecard(s)["sharpe"],
+            # sum of returns, i.e. P&L on FIXED capital with nothing reinvested — the figure that stays
+            # inside the capacity the cost model is calibrated to, unlike the compounded multiple
+            "ret_sum": float(s.sum()),
             "max_dd": float(dd.min()), "worst_month": float(mo.min()), "worst_day": float(s.min()),
             "vol": float(s.std() * np.sqrt(mb.ppy_of(s))), "months_in_profit": float((mo > 0).mean()),
             "years": yrs, "growth_x": float(eq.iloc[-1])}
+
+
+def per_year_of(s: pd.Series) -> dict[int, float]:
+    return {int(y): round(float((1 + g).prod() - 1), 4) for y, g in s.groupby(s.index.year)}
 
 
 def main() -> None:
@@ -97,11 +104,10 @@ def main() -> None:
           f"— arithmetic, not a result)")
 
     print(f"\n{'year':>6s} {'return':>9s} {'max DD':>8s} {'worst mo':>9s} {'legs':>5s}")
-    per_year = {}
+    per_year = per_year_of(b)
     for y, g in b.groupby(b.index.year):
         eq = (1 + g).cumprod()
         m = (1 + g).resample("ME").prod() - 1
-        per_year[int(y)] = round(float(eq.iloc[-1] - 1), 4)
         print(f"{y:6d} {100 * (eq.iloc[-1] - 1):8.1f}% {100 * (eq / eq.cummax() - 1).min():7.1f}% "
               f"{100 * m.min():8.1f}% {int(df.loc[g.index].notna().sum(axis=1).max()):5d}")
 
@@ -116,8 +122,13 @@ def main() -> None:
     print(f"\n{'leverage':>9s} {'return':>9s} {'max DD':>8s} {'worst mo':>9s} {'worst day':>10s} {'vol':>7s}")
     sweep = {}
     for x in (1.0, 1.5, 2.0, 2.5, 3.0, 4.0):
-        sx = stats(book(df, x))
-        sweep[f"{x:.1f}"] = {k: round(v, 4) for k, v in sx.items()}
+        bx = book(df, x)
+        sx = stats(bx)
+        # the per-year and 2020+ cuts are recorded per rung: compounding is not linear in the dial, so a
+        # reader cannot rescale one rung's year from another's, and the report page lets them move it
+        sweep[f"{x:.1f}"] = {k: round(v, 4) for k, v in sx.items()} | {
+            "per_year": per_year_of(bx),
+            "since_2020": {k: round(v, 4) for k, v in stats(book(full, x)).items()}}
         print(f"{x:9.1f} {100 * sx['cagr']:8.1f}% {100 * sx['max_dd']:7.1f}% {100 * sx['worst_month']:8.1f}% "
               f"{100 * sx['worst_day']:9.1f}% {100 * sx['vol']:6.1f}%")
 
@@ -127,6 +138,10 @@ def main() -> None:
         {"window": [str(b.index.min().date()), str(b.index.max().date())], "legs": list(df.columns),
          "leverage": lev, "overlay": None, "stats": {k: round(v, 4) for k, v in st.items()},
          "per_year": per_year, "leverage_sweep": sweep,
+         "legs_live_per_year": {int(y): int(df.loc[g.index].notna().sum(axis=1).max())
+                                for y, g in b.groupby(b.index.year)},
+         "pnl_share_2020": {c: round(float(v), 4) for c, v in
+                            (full.sum() / full.sum().sum()).sort_values(ascending=False).items()},
          "since_all_legs_2020": {k: round(v, 4) for k, v in stats(book(full, lev)).items()}}, indent=2))
     print(f"\nwrote {LAB_DIR / 'live_book.parquet'} and live_book.json")
 
