@@ -42,29 +42,33 @@ def equity_symbols() -> tuple[list[str], list[str]]:
 
 
 BARS_PER_DAY = {"1d": 1, "4h": 6, "1h": 24, "15m": 96, "5m": 288}
-MIN_DAILY_USD = 5e6      # tradable-universe floor on median daily $-volume
-MAX_NAMES = 300          # cap panel width so the big universe stays tractable
+MIN_BARS = 300           # data sufficiency only: fewer bars than this cannot produce a ranked signal
+# There is deliberately NO liquidity floor and NO width cap here any more. Both used to select on
+# FULL-SAMPLE median dollar-volume — the 300 most liquid of whatever happened to be on disk — which is a
+# hindsight cut twice over: it reads the whole history to decide, and it re-decides retroactively every
+# time more symbols are downloaded. Rebuilding the panel that way moved the leg on 4,612 of 4,869 days.
+# The tradability filter the book actually needs already exists one layer down and is point-in-time:
+# `src.sleeves.xsect.liquidity_mask` masks each bar to names above a TRAILING 30-day median dollar-volume
+# floor, lagged. Ranking only the tradable subset is its job; the panel's job is to not pre-decide.
 
 
 def _record_universe(tag: str, keep: list, liq: dict) -> None:
-    """Write the selected names to a TRACKED file, beside the git-ignored panel they describe.
+    """Write the panel's membership to a TRACKED file, beside the git-ignored panel itself.
 
-    The panel lives in data/cache/, which is git-ignored, so the universe a published result was built
-    on left no record anywhere — and the selection is a ranked cut: `keep` is the MAX_NAMES most liquid
-    of whatever perps happen to be on disk, ranked on FULL-SAMPLE median volume. Download more symbols
-    and the cut changes retroactively, rewriting the leg's whole history. That is how a rebuild during
-    an audit moved the book's scored block by two targets with no code change and nothing to diff.
+    The panel lives in data/cache/, so what a published result was computed on left no record anywhere.
+    That mattered while membership was a decision: the old rule kept the 300 most liquid of whatever was
+    on disk, ranked on FULL-SAMPLE volume, so downloading more symbols re-decided the universe
+    retroactively and moved the leg on 4,612 of 4,869 days with nothing to diff.
 
-    This does not fix the selection — a full-sample rank over a growing disk is still a hindsight
-    universe, and the honest fix is for the panel to stop pre-filtering and let the strategy's own
-    TRAILING rank decide. It makes the input visible: the file is committed, so the next rebuild that
-    moves a number shows exactly which names moved with it."""
+    Membership is no longer a decision — every symbol with enough bars is in, and tradability is settled
+    per bar by `liquidity_mask`. The file stays because "which names existed on disk when this ran" is
+    still the one input that cannot be reconstructed from the repository afterwards."""
     XS_DIR.mkdir(parents=True, exist_ok=True)
     (XS_DIR / f"{tag}_universe.json").write_text(json.dumps({
-        "selected": keep, "n_selected": len(keep), "n_eligible": len(liq),
-        "capped": len(liq) > MAX_NAMES, "max_names": MAX_NAMES, "min_daily_usd": MIN_DAILY_USD,
-        "rank": "full-sample median daily $-volume (NOT point-in-time)",
-        "median_daily_usd": {s: round(liq[s], 1) for s in keep},
+        "selected": keep, "n_selected": len(keep), "min_bars": MIN_BARS,
+        "rule": "every symbol on disk with enough bars; NO full-sample liquidity cut",
+        "tradability_filter": "src.sleeves.xsect.liquidity_mask — trailing 30d median $-volume, lagged",
+        "median_daily_usd": {x: round(liq[x], 1) for x in keep},
     }, indent=1))
 
 
@@ -80,13 +84,10 @@ def build_crypto(interval: str) -> None:
         except Exception as e:
             log.warning("xs: skipping crypto %s (%s)", s, e)
             continue
-        if len(px) < 300:
+        if len(px) < MIN_BARS:
             continue
-        daily_usd = float(px["quote_volume"].median()) * bpd
-        if daily_usd < MIN_DAILY_USD:
-            continue
-        close[s], advol[s], liq[s] = px["close"], px["quote_volume"], daily_usd
-    keep = sorted(liq, key=liq.get, reverse=True)[:MAX_NAMES]
+        close[s], advol[s], liq[s] = px["close"], px["quote_volume"], float(px["quote_volume"].median()) * bpd
+    keep = sorted(close)                       # everything with enough data; the trailing mask selects
     _dump(f"crypto_{interval}", {s: close[s] for s in keep}, {s: advol[s] for s in keep})
     _record_universe(f"crypto_{interval}", keep, liq)
 
