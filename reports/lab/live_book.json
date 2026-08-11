@@ -1,0 +1,122 @@
+{
+  "window": [
+    "2011-01-03",
+    "2026-08-05"
+  ],
+  "legs": [
+    "volprem",
+    "xs_momentum",
+    "breakout",
+    "bab"
+  ],
+  "leverage": 2.0,
+  "overlay": null,
+  "stats": {
+    "cagr": 2.1161,
+    "sharpe": 5.31,
+    "max_dd": -0.1753,
+    "worst_month": -0.1124,
+    "worst_day": -0.1496,
+    "vol": 0.2187,
+    "months_in_profit": 0.8191,
+    "years": 15.5866,
+    "growth_x": 49402966.1971
+  },
+  "per_year": {
+    "2011": 3.4121,
+    "2012": 3.4993,
+    "2013": 2.395,
+    "2014": 2.0566,
+    "2015": 4.0439,
+    "2016": 1.4392,
+    "2017": 5.5473,
+    "2018": 1.0274,
+    "2019": 3.9569,
+    "2020": 1.6111,
+    "2021": 2.1534,
+    "2022": 0.5748,
+    "2023": 1.9236,
+    "2024": 1.2618,
+    "2025": 1.9682,
+    "2026": 0.164
+  },
+  "leverage_sweep": {
+    "1.0": {
+      "cagr": 0.7766,
+      "sharpe": 5.31,
+      "max_dd": -0.0888,
+      "worst_month": -0.0545,
+      "worst_day": -0.0748,
+      "vol": 0.1094,
+      "months_in_profit": 0.8191,
+      "years": 15.5866,
+      "growth_x": 7768.8411
+    },
+    "1.5": {
+      "cagr": 1.3567,
+      "sharpe": 5.31,
+      "max_dd": -0.1323,
+      "worst_month": -0.083,
+      "worst_day": -0.1122,
+      "vol": 0.1641,
+      "months_in_profit": 0.8191,
+      "years": 15.5866,
+      "growth_x": 635149.7263
+    },
+    "2.0": {
+      "cagr": 2.1161,
+      "sharpe": 5.31,
+      "max_dd": -0.1753,
+      "worst_month": -0.1124,
+      "worst_day": -0.1496,
+      "vol": 0.2187,
+      "months_in_profit": 0.8191,
+      "years": 15.5866,
+      "growth_x": 49402966.1971
+    },
+    "2.5": {
+      "cagr": 3.1072,
+      "sharpe": 5.31,
+      "max_dd": -0.2177,
+      "worst_month": -0.1425,
+      "worst_day": -0.187,
+      "vol": 0.2734,
+      "months_in_profit": 0.8191,
+      "years": 15.5866,
+      "growth_x": 3656421820.9887
+    },
+    "3.0": {
+      "cagr": 4.3963,
+      "sharpe": 5.31,
+      "max_dd": -0.2595,
+      "worst_month": -0.1735,
+      "worst_day": -0.2244,
+      "vol": 0.3281,
+      "months_in_profit": 0.8191,
+      "years": 15.5866,
+      "growth_x": 257532353682.8423
+    },
+    "4.0": {
+      "cagr": 8.2268,
+      "sharpe": 5.31,
+      "max_dd": -0.3415,
+      "worst_month": -0.2379,
+      "worst_day": -0.2991,
+      "vol": 0.4375,
+      "months_in_profit": 0.8138,
+      "years": 15.5866,
+      "growth_x": 1101171214993221.4
+    }
+  },
+  "since_all_legs_2020": {
+    "cagr": 1.3709,
+    "sharpe": 4.26,
+    "max_dd": -0.1753,
+    "worst_month": -0.1124,
+    "worst_day": -0.1496,
+    "vol": 0.2078,
+    "months_in_profit": 0.8125,
+    "years": 6.5927,
+    "growth_x": 296.2524
+  }
+}
