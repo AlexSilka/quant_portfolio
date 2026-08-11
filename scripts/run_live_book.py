@@ -81,6 +81,20 @@ def per_year_of(s: pd.Series) -> dict[int, float]:
     return {int(y): round(float((1 + g).prod() - 1), 4) for y, g in s.groupby(s.index.year)}
 
 
+def arith_of(s: pd.Series) -> dict:
+    """The un-reinvested reading the report page uses: P&L as a fraction of FIXED capital.
+
+    Kept beside the compounded one rather than instead of it because the two answer different questions —
+    compounded is the stricter risk convention, arithmetic is the money a desk running a fixed book takes
+    home — and because arithmetic is exactly linear in leverage, which is what makes the dial readable.
+    """
+    yrs = (s.index[-1] - s.index[0]).days / 365.25
+    pnl = s.cumsum()
+    return {"arith_ret": round(float(s.sum()) / yrs, 4),
+            "arith_dd": round(float((pnl - pnl.cummax()).min()), 4),
+            "arith_wm": round(float(s.resample("ME").sum().min()), 4)}
+
+
 def main() -> None:
     lev = float(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_LEVERAGE
     df = legs()
@@ -126,7 +140,7 @@ def main() -> None:
         sx = stats(bx)
         # the per-year and 2020+ cuts are recorded per rung: compounding is not linear in the dial, so a
         # reader cannot rescale one rung's year from another's, and the report page lets them move it
-        sweep[f"{x:.1f}"] = {k: round(v, 4) for k, v in sx.items()} | {
+        sweep[f"{x:.1f}"] = {k: round(v, 4) for k, v in sx.items()} | arith_of(bx) | {
             "per_year": per_year_of(bx),
             "since_2020": {k: round(v, 4) for k, v in stats(book(full, x)).items()}}
         print(f"{x:9.1f} {100 * sx['cagr']:8.1f}% {100 * sx['max_dd']:7.1f}% {100 * sx['worst_month']:8.1f}% "
@@ -134,6 +148,9 @@ def main() -> None:
 
     LAB_DIR.mkdir(parents=True, exist_ok=True)
     b.rename("ret").to_frame().to_parquet(LAB_DIR / "live_book.parquet")
+    # the leg matrix too: the page draws per-leg attribution from the series rather than from a summary,
+    # so a leg's share can never be a number typed next to a chart built from something else
+    df.to_parquet(LAB_DIR / "live_legs.parquet")
     (LAB_DIR / "live_book.json").write_text(json.dumps(
         {"window": [str(b.index.min().date()), str(b.index.max().date())], "legs": list(df.columns),
          "leverage": lev, "overlay": None, "stats": {k: round(v, 4) for k, v in st.items()},

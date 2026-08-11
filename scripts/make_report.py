@@ -247,8 +247,13 @@ def multiline_svg(curves, w, h, bold=None):
     return _svg(w, h, "".join(p))
 
 
-def bars_svg(items, w, h, pct=False):
+def bars_svg(items, w, h, pct=False, show_val=False, sub=None, split=None, rotate=True):
+    """Categorical bars. `show_val` prints each value on the bar so the chart reads without hovering,
+    `sub` adds a second line under each x-label, `split` draws a divider before a labelled index, and
+    `rotate` tilts the x-labels for narrow charts — the defaults reproduce the plain chart exactly."""
     l, r, t, b = 46, 12, 14, 48
+    b += 14 if sub else 0
+    t += 18 if show_val else 0
     vals = [v for _, v in items] + [0.0]
     vmax, vmin = max(vals), min(vals)
     span = (vmax - vmin) or 1.0
@@ -267,8 +272,21 @@ def bars_svg(items, w, h, pct=False):
         val = f"{v * 100:.0f}%" if pct else _n(v, 2)
         p.append(f'<rect class="{cls}" x="{cx - bw / 2:.1f}" y="{yy:.1f}" width="{bw:.1f}" '
                  f'height="{hh:.1f}" rx="2.5" data-tip="{lab}: {val}"/>')
-        p.append(f'<text class="ax" x="{cx:.0f}" y="{h - 12}" text-anchor="end" '
-                 f'transform="rotate(-40 {cx:.0f} {h - 12})">{lab}</text>')
+        if show_val:
+            p.append(f'<text class="lbl" x="{cx:.0f}" y="{(yy - 7) if v >= 0 else (yy + hh + 15):.1f}" '
+                     f'text-anchor="middle">{val}</text>')
+        ly = h - 12 - (14 if sub else 0)
+        anc = ' text-anchor="end" transform="rotate(-40 %.0f %d)"' % (cx, ly) if rotate else ' text-anchor="middle"'
+        p.append(f'<text class="ax" x="{cx:.0f}" y="{ly}"{anc}>{lab}</text>')
+        if sub:
+            p.append(f'<text class="ax" x="{cx:.0f}" y="{h - 10}" text-anchor="middle" '
+                     f'style="opacity:.7">{sub[i]}</text>')
+    if split:
+        i, note = split
+        sx = l + i * step
+        p.append(f'<line class="cross" x1="{sx:.1f}" y1="{t - 12}" x2="{sx:.1f}" y2="{h - b + 4}" '
+                 f'style="opacity:1"/>')
+        p.append(f'<text class="ax" x="{sx + 7:.1f}" y="{t - 4}" text-anchor="start">{note}</text>')
     return _svg(w, h, "".join(p))
 
 

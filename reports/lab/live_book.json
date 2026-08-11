@@ -53,6 +53,9 @@
       "months_in_profit": 0.8191,
       "years": 15.5866,
       "growth_x": 7768.8411,
+      "arith_ret": 0.5812,
+      "arith_dd": -0.09,
+      "arith_wm": -0.0529,
       "per_year": {
         "2011": 1.1245,
         "2012": 1.1326,
@@ -95,6 +98,9 @@
       "months_in_profit": 0.8191,
       "years": 15.5866,
       "growth_x": 635149.7263,
+      "arith_ret": 0.8718,
+      "arith_dd": -0.135,
+      "arith_wm": -0.0793,
       "per_year": {
         "2011": 2.0702,
         "2012": 2.1018,
@@ -137,6 +143,9 @@
       "months_in_profit": 0.8191,
       "years": 15.5866,
       "growth_x": 49402966.1971,
+      "arith_ret": 1.1624,
+      "arith_dd": -0.18,
+      "arith_wm": -0.1058,
       "per_year": {
         "2011": 3.4121,
         "2012": 3.4993,
@@ -179,6 +188,9 @@
       "months_in_profit": 0.8191,
       "years": 15.5866,
       "growth_x": 3656421820.9887,
+      "arith_ret": 1.453,
+      "arith_dd": -0.225,
+      "arith_wm": -0.1322,
       "per_year": {
         "2011": 5.3055,
         "2012": 5.5092,
@@ -221,6 +233,9 @@
       "months_in_profit": 0.8191,
       "years": 15.5866,
       "growth_x": 257532353682.8423,
+      "arith_ret": 1.7436,
+      "arith_dd": -0.27,
+      "arith_wm": -0.1586,
       "per_year": {
         "2011": 7.9621,
         "2012": 8.392,
@@ -263,6 +278,9 @@
       "months_in_profit": 0.8138,
       "years": 15.5866,
       "growth_x": 1101171214993221.4,
+      "arith_ret": 2.3247,
+      "arith_dd": -0.3601,
+      "arith_wm": -0.2115,
       "per_year": {
         "2011": 16.8128,
         "2012": 18.3997,
