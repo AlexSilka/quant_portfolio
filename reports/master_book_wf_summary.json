@@ -11,15 +11,15 @@
     "end": "2026-08-05"
   },
   "headline_final_block_oos": {
-    "sharpe": 3.58,
-    "max_dd": -0.0497,
-    "months_in_profit": 0.8077,
+    "sharpe": 3.66,
+    "max_dd": -0.0471,
+    "months_in_profit": 0.8462,
     "n_obs": 766,
     "start": "2024-07-01",
     "end": "2026-08-05"
   },
   "master_window_2016_oos": {
-    "sharpe": 3.91,
+    "sharpe": 3.92,
     "max_dd": -0.0758,
     "months_in_profit": 0.8264,
     "n_obs": 3425,
@@ -40,17 +40,17 @@
       "end": "2026-08-05"
     },
     "invvol_anchored_Q": {
-      "sharpe": 3.48,
+      "sharpe": 3.49,
       "max_dd": -0.155,
-      "months_in_profit": 0.7942,
+      "months_in_profit": 0.7984,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "meanvar_anchored_Q": {
-      "sharpe": 6.16,
+      "sharpe": 6.17,
       "max_dd": -0.2134,
-      "months_in_profit": 0.8642,
+      "months_in_profit": 0.8683,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
@@ -72,9 +72,9 @@
       "end": "2026-08-05"
     },
     "invvol_rolling2y_Q": {
-      "sharpe": 3.52,
+      "sharpe": 3.53,
       "max_dd": -0.155,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.8066,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
@@ -99,30 +99,30 @@
   },
   "window_robustness": {
     "full_21y_2005": {
-      "sharpe": 4.2,
+      "sharpe": 4.21,
       "max_dd": -0.1434,
       "months_in_profit": 0.8,
       "worst_month": -0.0497,
       "longest_losing_streak_mo": 12,
-      "total_return": 4829.586,
+      "total_return": 4879.653,
       "n_obs": 6581
     },
     "15y_2011": {
-      "sharpe": 4.45,
-      "max_dd": -0.0656,
+      "sharpe": 4.46,
+      "max_dd": -0.0658,
       "months_in_profit": 0.8564,
       "worst_month": -0.0405,
       "longest_losing_streak_mo": 2,
-      "total_return": 387.332,
+      "total_return": 391.357,
       "n_obs": 4892
     },
     "10y_2016": {
-      "sharpe": 4.28,
-      "max_dd": -0.0656,
+      "sharpe": 4.29,
+      "max_dd": -0.0658,
       "months_in_profit": 0.843,
       "worst_month": -0.0405,
       "longest_losing_streak_mo": 2,
-      "total_return": 43.752,
+      "total_return": 44.186,
       "n_obs": 3425
     }
   },

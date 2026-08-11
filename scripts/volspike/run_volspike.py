@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 from src import bo_common as bo  # noqa: E402
-from src.config import RAW_DIR  # noqa: E402
+from src.config import VOLSPIKE_DIR, RAW_DIR  # noqa: E402
 from src.sleeves import volume_spike as vs  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.backtest.engine import positions_from_events  # noqa: E402
@@ -222,7 +222,8 @@ def wf():
     pl_full = [summarise(pl_books[i], PPY)["sharpe_ann"] for i in pl_books]
     print(f"     PLACEBO (random-entry) full-sample Sharpe: min {min(pl_full):+.2f} max {max(pl_full):+.2f} "
           f"median {np.median(pl_full):+.2f}  -> real max {max(full.values()):+.2f} vs placebo max {max(pl_full):+.2f}")
-    pd.concat([prim.rename("volspike_wf_oos")], axis=1).to_parquet(bo.REPORTS / "volspike_wf_oos.parquet")
+    pd.concat([prim.rename("volspike_wf_oos")], axis=1).to_parquet(
+        VOLSPIKE_DIR / "volspike_wf_oos.parquet")   # the family sub-book, which is where the report reads it
     return prim, best_is, books
 
 
