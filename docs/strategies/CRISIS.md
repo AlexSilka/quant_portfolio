@@ -25,12 +25,13 @@ unit of turnover.
   standalone Sharpe to **+0.66** and CAGR to **+9.2%** — and takes COVID from **+13.9% to +0.9%** and the
   2011 sell-off from **+11.6% to −4.1%**. The response function damps an already-extended trend, and a
   crash *is* an extended trend. A leg selected on its own ratio would have shipped and stopped hedging.
-- **What was mis-set is the SIZE.** Held flat at one equal-risk slot the leg costs the book ~8pp of CAGR
-  and, since the vol-premium leg gained its regime gate, *lengthens* the losing streak it was bought to
-  shorten. Ramping the slot on market stress — a quarter slot when nothing is moving, a slot and a half
-  when the VIX curve inverts or the S&P is 12% off its trailing-year high — buys the **same average
-  protection at the times it pays**. That is what ships (`run_master_book.HEDGE_SLOT`,
-  [`src/risk/stress.py`](../../src/risk/stress.py)).
+- **What was mis-set is the SIZE, and fixing it is what ships.** Ramping the slot on market stress — a
+  quarter slot when nothing is moving, a slot and a half when the VIX curve inverts or the S&P is 12% off
+  its trailing-year high — buys the **same average protection at the times it pays**, and beats both of
+  its controls in all five sub-windows. Against the flat slot it is better on every metric that measures
+  the book: CAGR **49.5% → 57.0%** full and **41.5% → 47.2%** on the frozen block, worst month **−5.72% →
+  −5.10%**, losing streak **3 → 2**, months-in-profit **81.4% → 84.6%**, drawdown **−8.3% → −7.7%**
+  (`run_master_book.HEDGE_SLOT`, [`src/risk/stress.py`](../../src/risk/stress.py)).
 
 ---
 
@@ -91,9 +92,9 @@ structure (VIX/VIX3M, 0.90 calm → 1.05 inverted) and the S&P's drawdown from i
 
 | the slot at the same average weight | full window: CAGR / worst month | frozen block: CAGR |
 |---|---|---|
-| ramped on market stress | **+58.6%** / **−5.10%** | **+45.4%** |
-| the same ramp, rotated to the wrong days | +55.1% / −6.55% | +43.5% |
-| held flat at the ramp's own average | +54.6% / −6.20% | +42.2% |
+| ramped on market stress | **+57.0%** / **−5.10%** | **+47.2%** |
+| the same ramp, rotated to the wrong days | +53.6% / −6.55% | +45.4% |
+| held flat at the ramp's own average | +53.2% / −6.20% | +44.2% |
 
 The rotated ramp lands on the flat one — it re-sizes as often and as violently, just not when it matters
 — so the **timing** is what pays, not the smaller average. The gain holds in **all five** sub-windows of
@@ -105,12 +106,17 @@ drawdown is not stress for *this* book — correlation +0.09, and the book earns
 than 20% off its high against +4.7% otherwise, same worst month either way. Including it raised the
 hedge's average weight by a third and moved neither the worst month nor the drawdown.
 
-## 4. What it costs, stated
+## 4. The one thing it "costs"
 
-The full-window Sharpe rises past the brief's 4.0 ceiling, so that window now fails a target it used to
-pass — and it used to pass it *because* a Sharpe-0.5 leg was dragging the ratio down. Holding a weak leg
-to flatter a ratio is not a risk control. All four risk targets clear on both windows, and the frozen
-block the brief scores keeps all five.
+Book Sharpe rises past the brief's 2.5–4.0 band (3.66 → 4.06). That is a *ceiling*, not a risk, and an
+earlier version of this work held the hedge flat to stay under it — which is holding a weak leg to flatter
+a ratio, and is not a risk control. Every metric that measures the book rather than a threshold improves.
+
+The prior question, for a book run for return, is whether this leg belongs at all: at **+0.50** standalone
+it is the weakest earner in the set, and dropping it along with global-macro takes the portfolio from
+49.5% a year to **88.9%** at the same leverage. That book is `scripts/run_live_book.py`, and it does not
+hold crisis. This leg earns its slot in a portfolio that wants the crash payoff; it does not earn one in a
+portfolio that wants the most money.
 
 ## 5. Reproduce
 

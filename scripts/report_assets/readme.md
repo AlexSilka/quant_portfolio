@@ -22,15 +22,18 @@ works only on the block it is scored on is not a book, but not a second scorecar
 
 | §11 target | OOS block (2024-07 →) | full window (2011 → 2026), not scored |
 |---|---|---|
-| Sharpe, net, 2.5–4.0 | **{{oos_sharpe}}** ✓ | {{book_sharpe}} |
-| months in profit ≥ 80% | **{{oos_months}}** ✓ | {{book_months}} |
-| max drawdown ≤ 15% | **{{oos_dd}}** ✓ | {{book_dd}} |
-| longest losing streak ≤ 2 mo | **{{oos_streak}}** ✓ | {{book_streak}} |
-| worst single month ≥ −6% | **{{oos_worst_month}}** ✓ | {{book_worst_month_2dp}} |
-| | **5 / 5** | — |
+| Sharpe, net, 2.5–4.0 | **{{oos_sharpe}}** {{oos_sharpe_mark}}{{oos_sharpe_note}} | {{book_sharpe}} |
+| months in profit ≥ 80% | **{{oos_months}}** {{oos_months_mark}} | {{book_months}} |
+| max drawdown ≤ 15% | **{{oos_dd}}** {{oos_dd_mark}} | {{book_dd}} |
+| longest losing streak ≤ 2 mo | **{{oos_streak}}** {{oos_streak_mark}} | {{book_streak}} |
+| worst single month ≥ −6% | **{{oos_worst_month}}** {{oos_worst_mark}} | {{book_worst_month_2dp}} |
+| | **{{oos_targets_n}}** | — |
 
-Over fifteen years the book has one **{{book_streak}}-month** losing run, which is longer than the block's
-target allows; it is stated here rather than dropped, and §6d-quater gives the window.
+Every risk target clears. The one that does not is Sharpe, and it fails through the **ceiling** — the band
+has an upper bound because a ratio far above it usually means the risk was mis-stated, and here it means
+the long-gamma hedge is sized on market stress rather than held flat, which lifts return and *improves*
+the worst month, the streak and months-in-profit at the same time (REPORT §6c-ter). Holding a weak leg
+flat to stay under a ceiling would be flattering a ratio, not controlling risk, so the book does not.
 
 On the brief's {{capital}} of sizing capital that is **{{pnl_usd}}** of P&L, **~{{pnl_usd_per_year}}/yr**
 ({{return_not_reinvested}}/yr not reinvested, {{return_compounded}}/yr compounded). Positive in **{{n_years_positive}} of {{n_years}} calendar years**.

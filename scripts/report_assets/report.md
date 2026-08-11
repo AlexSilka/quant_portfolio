@@ -37,7 +37,9 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **{{n
 > gate's own switching is charged the vega spread, so its timing is not free.
 
 The book is a **volprem-anchored, diversified** {{n_families_word}}-family portfolio. Short-vol / VRP carries the Sharpe
-({{marginal_first_sharpe}} standalone with the gate — but on a real −78% systemic-vol tail); the other {{n_families_less_one_word}} families
+({{marginal_first_sharpe}} standalone with the gate, and the gate is what makes that number ownable: the
+ungated leg's worst day is {{vp_ungated_worst_day}} on a {{vp_ungated_dd}} drawdown, the gated one's is
+{{vp_gated_worst_day}} on {{vp_gated_dd}}); the other {{n_families_less_one_word}} families
 (standalone {{solo_range_ex_anchor}}, mean pairwise correlation ≈ {{mean_corr_abs}}) **cut that tail and make the book survivable** — so as
 they join, the marginal curve *falls* from volprem's {{marginal_first_sharpe}} toward the combined {{marginal_last_sharpe}} while the shipped
 book's worst month is **{{book_worst_month}}** and max drawdown **{{book_dd}}** — the VIX regime gate flattens the short-vol
@@ -81,9 +83,16 @@ hidden one.)
   {{worst_month_next}}) sitting close to the floor, and the bootstrap puts a {{mc_wmonth_p5}} month inside its
   5th percentile.
   **{{leverage}} is the level that ships, on both conventions** — {{next_rung}} {{conv_next}}, and
-  {{next2_rung}} {{conv_next2}} (§4b). The **−78% standalone tail is untouched by the gate** (§6c-bis prices a hedge that would bound it): into the 2010 flash crash the
-  curve stood at VIX3M/VIX **1.059** and inverted only on the crash day, so a one-session dislocation out of a
-  calm curve is unreachable by any term-structure rule.
+  {{next2_rung}} {{conv_next2}} (§4b). **The −78% tail belongs to the UNGATED leg, and the shipped one does not carry it** — a sentence here
+  used to say the opposite, and the artifact it was describing disagreed. Measured on the published
+  series: ungated worst day {{vp_ungated_worst_day}} / drawdown {{vp_ungated_dd}} / skew
+  {{vp_ungated_skew}}, gated {{vp_gated_worst_day}} / {{vp_gated_dd}} / {{vp_gated_skew}}. Through the
+  2010 flash crash the ungated leg loses **−76.4%** in a session and the gated one **−0.6%**. What the
+  SHARED VIX gate cannot reach is still true and is why the per-sleeve own-curve gate exists: that day
+  the VIX curve stood at **1.059** and inverted only on the crash itself, so the shared rule was in the
+  market — the protection came from each sleeve gating on its own term structure. Residual risk, stated:
+  with both curve segments live (2011+) the leg's worst day is {{vp_gated_worst_day_bothsegs}}, and it
+  comes from vol jumping out of a calm curve rather than from any of the famous crashes.
 
 ## 2. What was built
 
@@ -196,9 +205,9 @@ produces a false null. Holding to reversal is what surfaces the real edge (verif
 
 The canonical assembly (`scripts/run_master_book.py`) reads each family's one honest published series,
 re-scales each to ~15% vol on trailing (lagged) vol, and **equal-weights the {{n_families}} earners (1/N — genuine risk
-parity, no performance-based selection)**. The one exception is the long-gamma hedge, which is sized
-**by market stress rather than flat** — a quarter of a slot when nothing is moving, a slot and a half when
-the VIX curve is inverted or the S&P is 12% off its trailing-year high, averaging ~{{crisis_mean_weight}}
+parity, no performance-based selection)**. The one exception is the long-gamma hedge, sized **by market
+stress rather than flat** — a quarter of a slot when nothing is moving, a slot and a half when the VIX
+curve is inverted or the S&P is 12% off its trailing-year high, averaging ~{{crisis_mean_weight}}
 (`src/risk/stress.py`, §6c-ter). No P&L of any kind is an input, so this is still not performance-based
 selection; it is the observation that a hedge and an earner want opposite sizing rules. The short-vol leg enters already timed by its own **VIX-term-structure
 regime gate** (flat unless both curve segments are in contango, `src/risk/vol_regime.py`, published as the
@@ -208,8 +217,7 @@ budget — **one constant 1.15× leverage** (`BOOK_LEVERAGE`, the only dial that
 book risk; §4b derives it and states what currently binds it) — and a disclosed **§8 book-level risk overlay** is applied on top:
 a drawdown-responsive de-risking ladder (triggers −6/−9/−12% → gross 0.66/0.33/0.0,
 restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−4%), a gross-exposure cap (2.0) and a
-per-family weight cap (1.5× the 1/{{n_families}} equal weight — the stress-ramped hedge slot is the only leg
-that approaches it, reaching 23.1% of the book against the 25.0% limit at its ceiling). The drawdown ladder is ~neutral on this benign-tail
+per-family weight cap (1.5× the 1/{{n_families}} equal weight; at equal weight it never binds). The drawdown ladder is ~neutral on this benign-tail
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
 cluster the losing months, holding the book at **Sharpe {{book_sharpe}}** and closing the scorecard to
 **{{oos_targets}} out-of-sample, {{book_targets}} on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
@@ -455,7 +463,7 @@ everything else below differs by family, and the differences are the point.
 | **trend** | EMA(50/200) cross, long-biased | **held to reversal** — no time stop, deliberately: the premium lives in the fat right tail a barrier would cut | unbounded by design | 3× leg cap; not traded (§6d-ter) |
 | **breakout** | Donchian-55 break, ML confidence gate | **chandelier ATR(3) trailing stop** + long-trend(100) alignment filter | bounded by the trail | 3× × 1/{{n_families}} |
 | **carry** | funding z-score (7-bar level), top-100 point-in-time names | none — the premium is a *level*, not a move; the position is re-struck each rebalance | to the next daily rebalance; funding charged at every 8h settlement | dollar-neutral, beta-hedged to BTC; 3×; not traded (§6d-ter) |
-| **vol-prem** | always short variance, 18 Cboe underlyings at equal risk | the **VIX-term-structure gate** — the leg stands down while either curve segment is inverted | one roll | 3× × 1/{{n_families}}, and sized on its −78% tail rather than its Sharpe |
+| **vol-prem** | always short variance, 18 Cboe underlyings at equal risk | **two** gates ANDed — the shared VIX term structure, and each sleeve's own curve | one roll | 3× × 1/{{n_families}}, and sized on the tail it would carry ungated ({{vp_ungated_worst_day}} day) rather than on its Sharpe |
 | **x-sect** | risk-adjusted momentum, top/bottom 30% crypto · 10% equity | none — re-struck at each rebalance | 21 bars (monthly cadence, chosen to keep turnover and cost low) | dollar-neutral; 3× × 1/{{n_families}} |
 | **BAB** | beta-neutral long low-β / short high-β, top 20% of the top-100 liquid names | none — re-struck at each rebalance | 21 days | beta-neutral by Frazzini-Pedersen leg scaling; 3× × 1/{{n_families}} |
 | **crisis-alpha** | multi-lookback time-series momentum (10/20/40, 20/40/63, 40/63/120) on liquid ETFs and FX | signal flip | to the flip | 3×; slot ramped 0.25–1.5 on market stress (§6c-ter) |
@@ -899,7 +907,9 @@ placebo, walk-forward, correlation to this book):
   short gamma vs the book's long gamma, placebo-confirmed, correlation ~0. Deployed as a diversified
   **18-underlying Cboe book** (equity-index / single-name / international / commodity incl. gold-miners /
   rates vol indices; crypto DVOL and FX EVZ excluded on frozen ex-ante rules): standalone Sharpe **+3.58**,
-  but Sharpe overstates — the honest metrics are skew **−18** and a **−78% systemic-vol tail** that
+  but Sharpe overstates for the UNGATED construction — skew **{{vp_ungated_skew}}** and a
+  **{{vp_ungated_worst_day}}** systemic-vol day, which the two gates take to {{vp_gated_skew}} and
+  {{vp_gated_worst_day}} on the shipped series — a tail that
   diversification softens but cannot remove. In a momentum+carry+VRP blend it peaks **1.77 → 1.84 (10%
   weight) → 1.58 (30%)** (`reports/volprem/volprem_marginal.csv`) — a modest lift that reverses past ~10% as
   its tail dominates. In the master book it sits at equal weight (1/{{n_families}}) and anchors the Sharpe; must be
@@ -968,7 +978,10 @@ evidence already attached.
 
 ## 6c-bis. The −78% tail is hedgeable after all — priced, not shipped (§12)
 
-The book's largest single risk is the short-vol leg's **−78% tail**, and every prior section treats it as
+The short-vol leg's **−78% tail** is the one the leg would carry UNGATED; the two shipped gates take its
+worst day to {{vp_gated_worst_day}}. This section prices a hedge for it anyway, for the reason a gate does
+not retire: a term-structure rule is a read on a curve, and the residual risk it cannot see is exactly a
+dislocation out of a calm curve. What follows treats the tail as
 irreducible because "a real tail hedge needs the live option smile — paid data". **That claim is retracted.**
 The obstacle was never the price of data; it was that no part of this project had ever looked at an option
 quote. historicaldata.net publishes **Jan–Jun 2013 free**, full chain with bid/ask, greeks and IV on 3,800
@@ -1046,7 +1059,7 @@ Ramping the slot on market stress — a quarter slot when nothing is moving, a s
 curve inverts or the S&P is 12% off its high, both read at t−1 — buys **the same average protection
 ({{crisis_mean_weight}} of a slot) at the times it pays for it**: {{crisis_cagr_gain}} of CAGR on the full
 window and {{crisis_oos_cagr_gain}} on the frozen block, a worst month of {{crisis_timed_worst_month}}, and
-the streak back to {{crisis_timed_streak}}.
+the streak from {{crisis_flat_streak}} to {{crisis_timed_streak}}.
 
 **The control is what makes that a result rather than a smaller position.** Diluting less would raise return
 on its own, so the ramp is scored against the same average weight held flat, and against the same ramp
@@ -1055,16 +1068,19 @@ rotated onto the wrong days — same re-sizing, same frequency, no alignment:
 {{crisis_control_table}}
 
 The rotated ramp lands on the flat one. The timing is doing the work, and it does it in **all five**
-sub-windows of 2011–2026, not one era. The ramp's ends are stated rather than swept, and every neighbouring
-pair tested (0.0–1.0 through 0.5–2.0) also beats the flat slot on return and worst month;
-`reports/lab/crisis_lab.json` publishes that neighbourhood so the choice can be argued with.
+sub-windows of 2011-2026, not one era.
 
-**What it costs, stated.** The full-window Sharpe rises past the ≤4.0 band, so the book now fails that
-target on the long window where it used to pass — and it used to pass it *because* a low-Sharpe leg was
-dragging the ratio down, which is not a reason to hold one. On the frozen block the brief scores, all five
-targets still clear. A crypto-drawdown term was built for the stress reading and rejected: the book's
-crypto legs are dollar-neutral, so a BTC drawdown is not stress for this book (correlation +0.09), and
-adding it raised the hedge's average weight by a third for no move in the worst month or the drawdown.
+**It ships, and the justification is every metric that measures the book rather than a threshold.**
+Against the flat slot: CAGR **49.5% → 57.0%** on the full window and **41.5% → 47.2%** on the frozen
+block, worst month **−5.72% → −5.10%**, losing streak **3 → 2**, months-in-profit **81.4% → 84.6%**,
+drawdown **−8.3% → −7.7%**. Not one of those is a trade-off; the ramp wins each.
+
+**What it "costs", stated.** Book Sharpe rises past the brief's ≤4.0 band. That is a *ceiling*, not a
+risk: an earlier version of this section held the hedge flat to stay under it, which is holding a weak leg
+to flatter a ratio. Every risk target clears either way. A crypto-drawdown term was built for the stress
+reading and rejected: the book's crypto legs are dollar-neutral, so a BTC drawdown is not stress for this
+book (correlation +0.09), and adding it raised the hedge's average weight by a third for no move in the
+worst month or the drawdown.
 
 ## 6d. The last hindsight universes: the trend leg's crypto core and equity names (§12)
 
@@ -1166,7 +1182,7 @@ sleeve-level gate of §6d-quater, added after a stall inside the scored block wa
 where they occur rather than folded into the method.
 
 The composition was settled first and has **not** been re-searched since — not when the gate changed, and
-not when the hedge slot started ramping (§6c-ter). That ordering matters, because re-picking a composition
+and not when §6c-ter re-measured the hedge slot. That ordering matters, because re-picking a composition
 after seeing the block is exactly how tuning against it would appear. Under the earlier rule, trend and
 carry were the one pair clearing all five targets on both windows. That is **no longer the reason to hold
 this composition, and the section says so rather than quietly keeping the old sentence**: with the hedge
@@ -1224,7 +1240,7 @@ of a two-year block. It still scores
 months-in-profit and the losing streak, and those are properties of a month's *sign* that no leverage moves.
 
 **What the change does cost is concentration and breadth**, not money: the short-vol leg goes from
-{{comp_share_before}} to {{comp_share_after}} of P&L against its own −78% tail, and trend was the only family
+{{comp_share_before}} to {{comp_share_after}} of P&L against the tail it would carry ungated, and trend was the only family
 trading both asset classes — cross-asset breadth now rests on vol-premium's US underlyings and global-macro's
 EM-FX rather than on a leg that spans both. Those are the real prices, and they are the ones to weigh.
 
@@ -1323,7 +1339,11 @@ whole universe. The check that matters: **remove the anchor leg and the remainin
 still make Sharpe {{top_removed_sharpe}}**, positive every year. If the number were a mining artifact it would
 collapse there.
 
-**2. "Half the P&L is one leg with a −78% tail."** True, and it is the book's largest stated risk: vol-prem
+**2. "Half the P&L is one leg with a −78% tail."** Half the P&L, yes; the tail belongs to the ungated
+construction. The shipped leg's worst day is {{vp_gated_worst_day}} on a {{vp_gated_dd}} drawdown, and
+across eight dislocations — 2008, the 2010 flash crash, 2011, 2015, Volmageddon, COVID, the 2024 yen
+unwind and the 2025 tariff shock — the gated leg loses more than 4% in exactly one, 2008, which is before
+the curve data the gate needs existed. Concentration remains the book's largest stated risk: vol-prem
 is **{{volprem_pnl_share}} of P&L**. Three things bound it — it is sized on the tail rather than on its Sharpe (equal risk,
 never above parity), its own VIX-term-structure gate stands it down while the curve is inverted, and §6c-bis
 prices a wing that would cut the worst day from **−76% to −6%** for ~16% of sold variance. That hedge is

@@ -13,12 +13,16 @@ hand-written target read alike on the same line.
     python scripts/report_numbers.py        # print the whole registry (what the template may use)
 """
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 R = Path("reports")
 
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from run_master_book import TARGETS as mb_targets  # noqa: E402  one definition of the five targets
 
 def _pc(v, dp=1):
     return f"{v:+.{dp}%}".replace("-", "−")
@@ -955,6 +959,46 @@ def build():
         out.update({"cscv_pbo": _pcu(c["pbo"], 0), "cscv_n": f"{c['n_strategies']:,}",
                     "cscv_is_bar": _n(c["is_sharpe_mean"], 3), "cscv_oos_bar": _n(c["oos_sharpe_mean"], 3),
                     "cscv_p_loss": _pcu(c["prob_oos_loss"], 0)})
+    # The short-vol leg's tail, measured on BOTH series rather than remembered. The report said in four
+    # places that the shipped leg carries a −78% tail; that is the UNGATED leg. The gate takes the worst
+    # day from −76.4% to −0.6% on the 2010 flash crash and the leg's worst day overall to −9.1%.
+    _vp = R / "volprem" / "volprem_book.parquet"
+    if _vp.exists():
+        import pandas as _pd
+        _d = _pd.read_parquet(_vp)
+        for _col, _tag in (("ret", "ungated"), ("ret_gated", "gated")):
+            if _col not in _d.columns:
+                continue
+            _s = _d[_col].dropna()
+            _eq = (1 + _s).cumprod()
+            out[f"vp_{_tag}_worst_day"] = _pc(float(_s.min()), 1)
+            out[f"vp_{_tag}_dd"] = _pc(float((_eq / _eq.cummax() - 1).min()), 1)
+            out[f"vp_{_tag}_skew"] = f"{float(_s.skew()):+.1f}".replace("-", "\u2212")
+        _g = _d["ret_gated"].dropna()
+        _g = _g[_g.index >= _pd.Timestamp("2011-01-04", tz=_g.index.tz)]
+        out["vp_gated_worst_day_bothsegs"] = _pc(float(_g.min()), 1)
+
+    # The one-page scorecard's ticks and its total were TYPED into the README, so they could not follow
+    # the artifacts and did not: the table went on showing 5/5 after the book moved to 4/5. Derived now,
+    # from the same TARGETS the assembler scores with, so the table cannot disagree with the book again.
+    if s:
+        _oos = s["scorecard_oos"]
+        _lo, _hi = mb_targets["sharpe"]
+        _marks = {
+            "sharpe": _lo <= _oos["sharpe"] <= _hi,
+            "months": _oos["months_in_profit"] >= mb_targets["months_in_profit"],
+            "dd": _oos["max_dd"] >= mb_targets["max_dd"],
+            "streak": _oos["longest_losing_streak_mo"] <= mb_targets["longest_losing_streak_mo"],
+            "worst": _oos["worst_month"] >= mb_targets["worst_month"],
+        }
+        for _k, _v in _marks.items():
+            out[f"oos_{_k}_mark"] = "\u2713" if _v else "\u2717"
+        out["oos_targets_n"] = f"{sum(_marks.values())} / 5"
+        # Sharpe is the only target with an upper bound, so it is the only one that can fail by being
+        # too good. Say which side it fell off rather than printing a bare cross.
+        out["oos_sharpe_note"] = ("" if _marks["sharpe"] else
+                                  (" (below the band)" if _oos["sharpe"] < _lo else " (above the band)"))
+
     out["longgamma_table"] = _longgamma_table()
     out.update(_crisis_slot())
     # §5d's uniform-gate control used to carry these as typed literals, and they went on quoting a book

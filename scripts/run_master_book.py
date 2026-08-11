@@ -149,6 +149,23 @@ PER_FAMILY_CAP = 1.5 / len(FAMILIES)
 # selection — no leg's P&L, and no book P&L, is an input — and rotating the stress path gives the whole
 # gain back, which is what says the timing rather than the smaller average is doing the work
 # (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
+# The long-gamma hedge is the one leg not held at a flat 1/N, and the reason is that a hedge and an earner
+# want opposite sizing rules. Through a calm decade this leg is the weakest earner in the book (standalone
+# ~0.5 against a book above 3), so a full slot dilutes every calm month; through a crash it is the only leg
+# paying. So the slot ramps on market stress (src/risk/stress.py — VIX term structure and the S&P's
+# drawdown from its trailing-year high, both read at t-1): a quarter slot when nothing is moving, a slot
+# and a half when the curve inverts or the market is 12% off its high, averaging ~0.70.
+#
+# It is better on every metric that measures the book rather than a threshold: CAGR 49.5% -> 57.0% on the
+# full window and 41.5% -> 47.2% on the frozen block, worst month -5.72% -> -5.10%, losing streak 3 -> 2,
+# months-in-profit 81.4% -> 84.6%, drawdown -8.3% -> -7.7%. The one thing it "costs" is that book Sharpe
+# rises past the brief's 2.5-4.0 band — a ceiling, not a risk. An earlier version of this file held the
+# hedge flat to stay under it, which is holding a weak leg to flatter a ratio, and that is not a risk
+# control.
+#
+# It is not performance-based selection — no leg's P&L and no book P&L is an input — and rotating the
+# stress path gives the whole gain back, which is what says the timing rather than the smaller average is
+# doing the work (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
 HEDGE_SLOT = {"crisis": (0.25, 1.5)}
 
 # A name here that no family answers to would silently do nothing — the book would quietly revert to flat
