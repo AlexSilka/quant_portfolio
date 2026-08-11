@@ -19,10 +19,11 @@ scripts/volprem/run_vol_premium.py`. Artifacts: `reports/volprem/volprem_*.{csv,
   measure the realised leg decides whether you even see it*: on the naive close-to-close leg crypto
   looked positive (BTC +1.36), but under the honest OHLC leg (intraday path + gap) **crypto short-vol
   is negative** and the premium lives in the equity-index / commodity / rates cross-section (§2c).
-- **Where it is real (honest OHLC leg):** **EM +3.11, Russell +2.84, gold +2.41, bonds +2.38, China
-  +2.20** carry the book; **crypto is negative** (BTC −0.41, ETH −0.86), FX (EVZ) is ruinous, and the
-  big equity indices (VIX, VXD, OVX) bring −99% single-day tails. Equity/commodity/rates give
-  2005–2011 histories vs crypto's 2021.
+- **Where it is real (honest OHLC leg):** **EM +3.11, Dow +2.86, Russell +2.84, S&P +2.79, gold +2.41,
+  bonds +2.38, oil +2.21, gold-miners +2.06** carry the book on Sharpe — but half of them earn *and*
+  blow up: VIX→SPY, VXD→DIA, VXN→QQQ, OVX→USO and VXEWZ→EWZ each carry a −99/−100% single-day tail, so
+  a high Sharpe here is never a reason to hold one alone. **Crypto is negative** (BTC −0.41, ETH −0.86)
+  and FX (EVZ) is ruinous. Equity/commodity/rates give 2005–2011 histories vs crypto's 2021.
 - **It is deployed as a diversified BOOK, never one asset.** Across **18 Cboe underlyings** with clean
   OHLC (VIX/VXN/RVX/VXD/VXEFA, VXAPL/AZN/GOG/GS/IBM, VXEEM/EWZ/FXI, OVX/GVZ/VXSLV/VXGDX, VXTLT), the equal-risk
   book nets **Sharpe +3.58, maxDD −78%, skew −18, 84% profitable months** (15 of the 18 live through
@@ -120,15 +121,16 @@ is measured after that repair; it cost the book **0.14 Sharpe on the full window
 where the manufactured legs had been padding the calm stretch that the OOS block mostly is.
 
 **Run it as a book, not one asset.** Under the honest OHLC realised leg the per-sleeve picture is brutal
-(`reports/volprem/volprem_book_sleeves.csv`): the legs that carry the book are **gold-miners +3.32, EM +3.11, Russell +2.84, gold
-+2.41, bonds +2.38, China +2.20**, while several equity-index legs (VIX→SPY, VXD→DIA, OVX→USO) carry
-**−99% single-day drawdowns** on flash-crash days. The deployable form is the equal-risk **book** across
+(`reports/volprem/volprem_book_sleeves.csv`): the legs that carry the book are **EM +3.11, Dow +2.86, Russell +2.84,
+S&P +2.79, gold +2.41, bonds +2.38, oil +2.21, gold-miners +2.06**, while several of those same legs
+(VIX→SPY, VXD→DIA, VXN→QQQ, OVX→USO, VXEWZ→EWZ) carry **−99/−100% single-day drawdowns** on flash-crash
+days — earning and ruinous are the same legs, which is the case for the book and against any one of them. The deployable form is the equal-risk **book** across
 the 18, which stays positive only because these catastrophes fall on *different* dates:
 
 | | Sharpe | maxDD | skew | months+ | span |
 |---|---|---|---|---|---|
 | **diversified book (18 legs; 15 live 2022-24)** | **+3.58** | **−78%** | **−18** | 84% | 2005–2026 |
-| average single sleeve | ~+1.4 | ~−82% | — | — | — |
+| average single sleeve | ~+1.8 | ~−81% | — | — | — |
 | placebo book (fair strike, no premium) | **−1.73** | — | — | — | — |
 
 - **Diversification is the whole game.** Book Sharpe +3.58 vs a single-sleeve average ~+1.8, and the
@@ -137,8 +139,9 @@ the 18, which stays positive only because these catastrophes fall on *different*
 - **Crypto short-vol does not survive honest accounting.** A reversal from the close-to-close view
   (which showed BTC +1.36): crypto's intraday path is too violent for a delta-hedged short. This is why
   the crypto-only baseline (§2) is superseded by this cross-asset book.
-- **Cross-asset breadth is what works.** EM / Russell / gold / bonds carry the book; the equity-index
-  and crypto legs mostly bring tail. Breadth over *uncorrelated* crashes — not equity breadth, whose
+- **Cross-asset breadth is what works.** EM / gold / bonds / gold-miners earn without the −99% tail; the
+  equity-index legs earn a comparable Sharpe but bring that tail with it, and crypto brings only tail.
+  Breadth over *uncorrelated* crashes — not equity breadth, whose
   vol spikes are systemic (2008, Mar-2020 hit every equity leg at once) — is what keeps it alive.
 - **The tail is the true risk, and it is −78%, not the −50% close-to-close showed.** Verified on real
   events: the 2010 Flash-Crash alone was a −47% book day (SPY closed −3% but ranged 11% intraday).
@@ -310,8 +313,8 @@ disclosed −78% tail, because a headline resting on a 2.2× margin from a proxy
   −78%, skew −8.7 → −18). Trust the −18 skew and −78% DD, never the Sharpe.
 - **Crypto and FX are excluded, not in the book.** Crypto short-vol is structurally negative under the
   honest leg (BTC −0.41, ETH −0.86 — its intraday path is unhedgeable), and the free EURUSD OHLC is
-  corrupt (EVZ discontinued 2025-03). The book is carried by EM / Russell / gold / bonds; equity-index
-  legs bring mostly tail.
+  corrupt (EVZ discontinued 2025-03). The book is carried by EM / gold / bonds / gold-miners plus the
+  equity-index legs, and it is those equity legs that bring the −99% tail with their return.
 - **Universe is gated by free implied-vol indices with clean data** (18 Cboe underlyings deployed). No free
   per-name-beyond-Cboe or altcoin IV, and crypto/FX excluded per above.
 - **What did not work (kept, not hidden):** single-asset deployment (several sleeves ruin at −99/−100%);
