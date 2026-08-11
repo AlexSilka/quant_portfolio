@@ -12,11 +12,11 @@ universe,equity,top100,0.52,0.38,-0.053,-0.061,,
 universe,equity,top200,0.54,0.46,-0.094,-0.104,,
 universe,equity,topall,0.51,0.64,-0.123,-0.125,,
 timeframe,crypto,1d,0.42,0.57,-0.005,-0.001,0.37,0.77
-timeframe,crypto,4h,0.27,0.54,-0.002,0.001,1.01,0.1
-timeframe,crypto,1h,0.59,0.63,0.004,0.005,1.05,0.25
-timeframe,crypto,15m,0.5,0.76,0.004,0.007,0.78,0.75
-timeframe,fx,1d,-0.12,-0.03,0.346,-0.155,0.13,-0.19
-timeframe,fx,4h,0.11,-0.04,0.371,-0.403,0.06,-0.13
+timeframe,crypto,4h,0.2,0.44,0.001,0.003,0.98,-0.07
+timeframe,crypto,1h,0.54,0.5,0.005,0.006,1.07,-0.02
+timeframe,crypto,15m,0.51,0.55,0.006,0.01,0.83,0.29
+timeframe,fx,1d,-0.02,0.09,0.385,-0.137,0.09,0.1
+timeframe,fx,4h,0.12,-0.13,0.346,-0.253,0.01,-0.25
 timeframe,fx,1h,-0.35,-0.28,0.336,-0.27,0.03,-0.53
 skip,crypto,sk0,,0.57,,,,
 skip,crypto,sk1,,0.37,,,,

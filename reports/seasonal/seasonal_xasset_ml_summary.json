@@ -27,7 +27,7 @@
         "2025": -0.35,
         "2026": -0.34
       },
-      "corr_to_book": -0.1
+      "corr_to_book": -0.107
     },
     "crypto_turn_of_month": {
       "n_instances": 79,
@@ -45,7 +45,7 @@
         "2025": 1.35,
         "2026": -0.82
       },
-      "corr_to_book": -0.154
+      "corr_to_book": -0.155
     },
     "stocks_turn_of_month": {
       "n_instances": 200,
@@ -73,7 +73,7 @@
         "2025": 1.01,
         "2026": -0.08
       },
-      "corr_to_book": -0.022
+      "corr_to_book": -0.012
     }
   },
   "B1_conditional_pre_fomc_ml": {

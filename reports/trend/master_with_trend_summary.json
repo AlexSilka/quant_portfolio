@@ -1,45 +1,80 @@
 {
   "trend_block_sharpe": 0.923,
   "families": [
-    "trend"
+    "trend",
+    "volprem",
+    "xs_momentum",
+    "breakout",
+    "crisis",
+    "gmacro",
+    "bab"
   ],
   "window": [
-    "2012-01-03",
-    "2026-08-04"
+    "2020-01-02",
+    "2026-07-31"
   ],
   "master_trend": {
-    "sharpe": 0.889,
-    "max_dd": -0.3125,
-    "months_in_profit": 0.568,
-    "total_return": 4.908,
-    "mc_p5": 0.45427534717593265,
-    "mc_p50": 0.8789607169259401
+    "sharpe": 4.631,
+    "max_dd": -0.0587,
+    "months_in_profit": 0.785,
+    "total_return": 4.727,
+    "mc_p5": 3.745556169517436,
+    "mc_p50": 4.605134275366833
   },
-  "trend_corr_to_others": {},
-  "trend_mean_corr": NaN,
-  "master_without_trend_sharpe": 0.0,
+  "trend_corr_to_others": {
+    "volprem": 0.11,
+    "xs_momentum": 0.0,
+    "breakout": -0.03,
+    "crisis": 0.12,
+    "gmacro": -0.01,
+    "bab": 0.29
+  },
+  "trend_mean_corr": 0.08,
+  "master_without_trend_sharpe": 4.92,
   "marginal": [
     {
       "n": 1,
+      "added": "volprem",
+      "sharpe": 7.529
+    },
+    {
+      "n": 2,
+      "added": "xs_momentum",
+      "sharpe": 6.836
+    },
+    {
+      "n": 3,
+      "added": "breakout",
+      "sharpe": 5.934
+    },
+    {
+      "n": 4,
+      "added": "bab",
+      "sharpe": 5.659
+    },
+    {
+      "n": 5,
+      "added": "gmacro",
+      "sharpe": 5.645
+    },
+    {
+      "n": 6,
       "added": "trend",
-      "sharpe": 0.889
+      "sharpe": 5.236
+    },
+    {
+      "n": 7,
+      "added": "crisis",
+      "sharpe": 4.631
     }
   ],
   "per_year": {
-    "2012": 0.74,
-    "2013": 1.96,
-    "2014": 0.42,
-    "2015": 0.16,
-    "2016": 0.55,
-    "2017": 2.83,
-    "2018": -0.33,
-    "2019": 1.21,
-    "2020": 1.7,
-    "2021": 1.73,
-    "2022": -2.88,
-    "2023": 1.88,
-    "2024": 1.15,
-    "2025": 0.06,
-    "2026": 0.54
+    "2020": 4.64,
+    "2021": 5.37,
+    "2022": 3.45,
+    "2023": 6.17,
+    "2024": 4.17,
+    "2025": 5.23,
+    "2026": 2.23
   }
 }

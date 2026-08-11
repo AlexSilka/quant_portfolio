@@ -50,15 +50,15 @@
     {
       "tf": "4h",
       "bars": 14424,
-      "skew_short": 0.196,
-      "skew_long": -0.463,
-      "max_short": -0.334
+      "skew_short": 0.123,
+      "skew_long": -0.386,
+      "max_short": -0.369
     },
     {
       "tf": "1h",
       "bars": 57696,
-      "skew_short": 0.042,
-      "skew_long": -0.293
+      "skew_short": -0.131,
+      "skew_long": -0.214
     }
   ],
   "funding_charged": {
@@ -115,24 +115,22 @@
     "best_book": "equity_midsmall_skew_short",
     "best_sharpe": 0.109,
     "n_trials": 31,
-    "deflated_sharpe": 0.158,
-    "crypto_surface_best": 0.196
+    "deflated_sharpe": 0.174,
+    "crypto_surface_best": 0.123
   },
   "corr_to_book": {
-    "book": -0.109,
-    "trend_momentum": -0.053,
-    "carry": -0.064,
-    "volprem": 0.001,
+    "book": -0.108,
+    "volprem": -0.012,
     "xs_momentum": -0.342,
-    "breakout": -0.031,
+    "breakout": -0.032,
     "crisis": 0.027,
     "gmacro": 0.016,
     "bab": 0.038
   },
   "book_lift_by_weight": {
-    "0%": 3.761,
-    "15%": 3.72,
-    "30%": 3.475
+    "0%": 4.042,
+    "15%": 4.001,
+    "30%": 3.742
   },
   "orthogonality_vs_lowvol": {
     "lowvol_proxy": {
@@ -145,7 +143,7 @@
       "column": "crypto_dollar_beta",
       "corr": 0.138,
       "beta": 0.135,
-      "alpha_ann": -0.053,
+      "alpha_ann": -0.054,
       "resid_sharpe": 0.0
     }
   },

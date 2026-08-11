@@ -108,21 +108,19 @@
       "idio_on_raw_beta": 0.798
     },
     "corr_to_book": {
-      "book": 0.189,
-      "trend_momentum": -0.02,
-      "carry": 0.024,
-      "volprem": -0.023,
-      "xs_momentum": 0.533,
-      "breakout": 0.238,
+      "book": 0.241,
+      "volprem": -0.008,
+      "xs_momentum": 0.532,
+      "breakout": 0.239,
       "crisis": -0.011,
       "gmacro": -0.017,
       "bab": -0.073
     },
     "book_lift_by_weight": {
-      "0%": 3.761,
-      "15%": 3.686,
-      "30%": 3.453,
-      "50%": 2.81
+      "0%": 4.042,
+      "15%": 3.921,
+      "30%": 3.636,
+      "50%": 2.929
     }
   },
   "equity": {
@@ -244,21 +242,19 @@
       "idio_on_raw_beta": 0.757
     },
     "corr_to_book": {
-      "book": 0.287,
-      "trend_momentum": 0.209,
-      "carry": -0.033,
-      "volprem": 0.001,
+      "book": 0.275,
+      "volprem": 0.0,
       "xs_momentum": 0.61,
-      "breakout": 0.031,
+      "breakout": 0.032,
       "crisis": 0.05,
       "gmacro": 0.025,
       "bab": 0.037
     },
     "book_lift_by_weight": {
-      "0%": 3.299,
-      "15%": 3.165,
-      "30%": 2.9,
-      "50%": 2.302
+      "0%": 4.252,
+      "15%": 4.07,
+      "30%": 3.713,
+      "50%": 2.913
     }
   },
   "fx": {
@@ -378,10 +374,8 @@
       "idio_on_raw_beta": 0.842
     },
     "corr_to_book": {
-      "book": 0.125,
-      "trend_momentum": -0.036,
-      "carry": -0.029,
-      "volprem": -0.006,
+      "book": 0.165,
+      "volprem": 0.011,
       "xs_momentum": 0.102,
       "breakout": 0.003,
       "crisis": 0.183,
@@ -389,10 +383,10 @@
       "bab": 0.024
     },
     "book_lift_by_weight": {
-      "0%": 3.691,
-      "15%": 3.553,
-      "30%": 3.236,
-      "50%": 2.438
+      "0%": 4.624,
+      "15%": 4.424,
+      "30%": 4.004,
+      "50%": 3.007
     }
   }
 }

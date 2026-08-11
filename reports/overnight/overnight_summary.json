@@ -11,67 +11,67 @@
     "cost_bps_per_side": 3.0
   },
   "data_integrity": {
-    "artifact_name_days_over_50pct": 543,
+    "artifact_name_days_over_50pct": 143,
     "inf_name_days": 0,
-    "overnight_only_reversal_sharpe_RAW": -0.108
+    "overnight_only_reversal_sharpe_RAW": -3.557
   },
   "sharpe": {
-    "overnight_only": -3.13,
-    "hold_24h": -0.574,
-    "plain_c2c_reference": -0.393
+    "overnight_only": -3.171,
+    "hold_24h": -0.568,
+    "plain_c2c_reference": -0.496
   },
   "overnight_only_mc": {
-    "sharpe_p5": -3.614918922342449,
-    "sharpe_p50": -3.1369803529572127,
-    "sharpe_p95": -2.6496103172555396
+    "sharpe_p5": -3.6530894802549656,
+    "sharpe_p50": -3.1855751818282743,
+    "sharpe_p95": -2.692964169683939
   },
-  "overnight_only_maxdd": -0.997,
+  "overnight_only_maxdd": -0.998,
   "per_year": {
     "2016": -7.31,
-    "2017": -5.89,
-    "2018": -5.11,
-    "2019": -6.63,
-    "2020": -0.51,
-    "2021": -3.75,
-    "2022": -2.37,
-    "2023": -4.55,
-    "2024": -0.96,
-    "2025": -0.76,
-    "2026": 1.01
+    "2017": -5.83,
+    "2018": -5.21,
+    "2019": -6.27,
+    "2020": -0.5,
+    "2021": -3.87,
+    "2022": -2.5,
+    "2023": -4.79,
+    "2024": -0.85,
+    "2025": -1.06,
+    "2026": 0.88
   },
   "skip_robustness": {
-    "0": -3.13,
-    "1": -2.751,
-    "2": -2.718,
-    "3": -2.689
+    "0": -3.171,
+    "1": -2.851,
+    "2": -2.759,
+    "3": -2.732
   },
   "placebo": {
-    "real_sharpe": -3.13,
-    "placebo_mean": -5.538,
-    "placebo_p95": -4.99,
+    "real_sharpe": -3.171,
+    "placebo_mean": -5.527,
+    "placebo_p95": -4.967,
     "real_pctile_vs_placebo": 100.0,
     "placebo_fdr_at_0.5": 0.0
   },
   "cost_sensitivity": {
-    "1x": -3.13,
-    "2x": -6.331,
-    "3x": -9.345
+    "1x": -3.171,
+    "2x": -6.353,
+    "3x": -9.349
   },
   "breakeven_cost_mult": 0.1,
   "corr_to_book": {
-    "book": 0.07,
-    "crypto\u00b7trend": 0.081,
-    "crypto\u00b7x-sect": -0.016,
-    "crypto\u00b7carry": 0.039,
-    "equity\u00b7trend": 0.028,
-    "equity\u00b7x-sect": 0.142,
-    "sector\u00b7pairs": -0.074
+    "book": 0.14,
+    "volprem": 0.046,
+    "xs_momentum": 0.087,
+    "breakout": 0.045,
+    "crisis": 0.166,
+    "gmacro": 0.071,
+    "bab": 0.023
   },
   "book_lift_by_weight": {
-    "0%": 0.847,
-    "15%": 0.287,
-    "30%": -0.443,
-    "50%": -1.561
+    "0%": 4.559,
+    "15%": 3.848,
+    "30%": 2.803,
+    "50%": 0.92
   },
   "etf_aggregate": {
     "SPY": {

@@ -633,12 +633,12 @@ without it:
 
 | volprem leg, book scored 2011-01 → 2026-08 (incl. the frozen block) | Sharpe | max-DD | worst month | months | streak | targets | VIX rule alone |
 |---|---|---|---|---|---|---|---|
-| ungated | 3.26 | −9.6% | −5.7% | 76.6% | 6 | 3/5 | 3.26 (3/5) |
-| long segment only (the previous rule) | 4.10 | −8.2% | −5.8% | 81.9% | 2 | 4/5 | 3.26 (3/5) |
-| fast segment only | 3.93 | −8.3% | −5.8% | 81.4% | 3 | 4/5 | 3.57 (5/5) |
-| **both segments (shipped)** | **3.93** | **−8.3%** | **−5.8%** | **81.4%** | **3** | **4/5** | **3.57 (5/5)** |
-| both + re-entry 5d | 3.52 | −10.4% | −5.8% | 78.2% | 3 | 3/5 | 3.13 (3/5) |
-| SHIPPED + re-entry 5d | 4.04 | −8.3% | −5.8% | 80.3% | 2 | 4/5 | 3.31 (3/5) |
+| ungated | 3.29 | −9.6% | −5.7% | 76.6% | 6 | 3/5 | 3.29 (3/5) |
+| long segment only (the previous rule) | 4.13 | −8.3% | −5.7% | 81.4% | 2 | 4/5 | 3.29 (3/5) |
+| fast segment only | 3.96 | −8.3% | −5.7% | 81.4% | 3 | 4/5 | 3.60 (5/5) |
+| **both segments (shipped)** | **3.96** | **−8.3%** | **−5.7%** | **81.4%** | **3** | **4/5** | **3.59 (5/5)** |
+| both + re-entry 5d | 3.55 | −10.4% | −5.7% | 78.2% | 3 | 3/5 | 3.16 (3/5) |
+| SHIPPED + re-entry 5d | 4.06 | −8.3% | −5.7% | 80.3% | 2 | 4/5 | 3.34 (3/5) |
 
 Same winner, same margin, same reason the runners-up are rejected — so the rule is recoverable from
 pre-block data alone and the block's one-shot status survives in substance. The threshold surface and the
@@ -822,7 +822,7 @@ short-vol exposure before spikes. The ML gates (logistic and LightGBM; a wider s
 book Sharpe **3.59–3.68** full / **3.03–3.07** OOS — the engine does not matter. **A parameter-light non-ML rule
 beats them all**: flatten volprem unless **both** curve segments are in contango (VIX3M/VIX ≥ 1 *and* VIX/VIX9D ≥ 1
 — the contango/backwardation boundary on each, un-fitted, causal on the prior close) nets book
-**Sharpe 3.26 → 3.93** full (**OOS 2.14 → 3.54**), **months-in-profit 76.6% → 81.4%**, **worst month −5.7% → −5.8%**,
+**Sharpe 3.29 → 3.96** full (**OOS 2.17 → 3.58**), **months-in-profit 76.6% → 81.4%**, **worst month −5.7% → −5.7%**,
 **max-DD −9.6% → −8.3%** and the **losing streak 6 → 3** — taking the leg's own scorecard from **3/5** to **4/5** (§6),
 positive in all 16 years. It is the *timing*, not de-risking: a **constant** cut to the same average exposure does
 nothing (OOS 2.93 → 2.90) and a **random** gate stays at full Sharpe **3.08–3.34** (20-draw placebo, below the
@@ -897,7 +897,7 @@ crash months while the other five families stay invested and earning. Reproduce:
   ±25% perturbation — so on the **weighting axis** ≥80% months genuinely fights ≥−6% worst-month, a real frontier
   (quantified next). What closes it is a different mechanism: a **dynamic VIX-term-structure gate** that
   *under*-weights the short-vol leg only when the curve inverts — *avoiding* the crashes rather than trading them —
-  lifting months-in-profit to **81.4%**, holding worst-month at **−5.8%** and cutting the losing streak to **3** at
+  lifting months-in-profit to **81.4%**, holding worst-month at **−5.7%** and cutting the losing streak to **3** at
   once (unlevered A/B; worst month **−5.1%** at the shipped 1.15× of §4b). That the overlay beats
   every ML engine and a constant/random control (§5d) confirms it is the VIX timing, not a fitted corner.
 - **The *reweighting* frontier, quantified** — it is the *weighting* axis that is capped; the VIX tail-timing

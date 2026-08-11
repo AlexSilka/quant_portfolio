@@ -1,9 +1,9 @@
 variant,sharpe,max_dd,oos_sharpe,ret_2026_pct,skew
 always-short (ungated),4.231,-0.4286,1.675,6.14,-5.41
-+ VIX term structure (SHIPPED),5.175,-0.3306,4.257,-4.02,-5.19
++ VIX term structure alone,5.175,-0.3306,4.257,-4.02,-5.19
 + per-sleeve timed (implied > realised),3.662,-0.4115,1.626,13.31,-5.83
 + per-sleeve own term structure,7.361,-0.176,6.295,17.07,-1.5
-+ own term structure AND VIX,7.081,-0.1578,6.489,16.03,-1.28
++ own term structure AND VIX (SHIPPED),7.081,-0.1578,6.489,16.03,-1.28
 "own term structure, +1d extra lag",6.551,-0.1707,5.922,16.8,-2.88
 "own term structure, +2d extra lag",5.752,-0.2358,4.9,15.33,-4.56
 "own term structure, +5d extra lag",5.703,-0.2129,3.197,13.85,-2.95
