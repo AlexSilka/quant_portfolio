@@ -22,7 +22,7 @@ reasons that reading is wrong are corrected here:
 Verdict recorded by the run: 60 stays. At matched risk the whole 10–120 range is a plateau worth ~2%
 relative, the gain is not robust across blocks, and on the master book a shorter window pushes
 months-in-profit below its target. The 2020-04-18 blow-up it was meant to fix is identical at every
-window from 20 to 90 — that failure is the 3x cap, not the lookback.
+window from 20 to 90 — that failure is the ceiling, not the lookback.
 
     python scripts/run_volwindow_lab.py    ->  reports/lab/volwindow.json
 """
@@ -39,7 +39,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.run_live_book as lb  # noqa: E402
 import scripts.run_master_book as mb  # noqa: E402
-from src.config import LAB_DIR, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import LAB_DIR, VOL_SCALE_CAP, VOL_TARGET_ANNUAL  # noqa: E402
 
 WINDOWS = [10, 20, 30, 40, 60, 90, 120, 250]
 SHIPPED = 60
@@ -50,7 +50,7 @@ OOS = pd.Timestamp(str(mb.OOS_START)[:10])
 def scale_at(net: pd.Series, window: int) -> pd.Series:
     """`_scale` with the lookback exposed. The 3x cap, the one-bar lag and the zero warm-up fill are held
     identical, so the sweep moves exactly one thing."""
-    return (VOL_TARGET_ANNUAL / (net.rolling(window).std() * np.sqrt(mb.PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    return (VOL_TARGET_ANNUAL / (net.rolling(window).std() * np.sqrt(mb.PPY))).clip(upper=VOL_SCALE_CAP).shift(1).fillna(0.0)
 
 
 def arm(labels: list[str], window: int, start: str, leverage: float):
@@ -106,7 +106,7 @@ def sweep(labels: list[str], start: str, leverage: float, tag: str, score: bool)
         be = 1e4 * (st["ret"] - s0["ret"]) / dt if dt > 0 else None
         row = st | {"own_vol": own, "resize_turnover_yr": turn, "blocks": blk,
                     "blocks_beating_shipped": wins, "break_even_bps": be,
-                    "pct_days_at_cap": float((sc >= 2.999).to_numpy().mean()),
+                    "pct_days_at_cap": float((sc >= VOL_SCALE_CAP - 1e-3).to_numpy().mean()),
                     }
         if score:
             row["targets_full"], row["targets_oos"] = targets_hit(b), targets_hit(b[b.index >= OOS])

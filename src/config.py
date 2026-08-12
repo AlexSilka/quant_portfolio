@@ -98,6 +98,22 @@ SEED = 7
 VOL_TARGET_ANNUAL = 0.15          # annualised vol target per return stream — the per-sleeve sizing knob
                                   # (also the master book's per-leg risk-parity target: run_master_book
                                   # rescale() reads THIS, it has no target of its own)
+VOL_SCALE_CAP = 2.5               # ceiling on the vol-target multiplier. A leg coming out of a quiet
+                                  # stretch is sized off a trailing estimate that has not seen the next
+                                  # shock yet, and without a ceiling it meets that shock at whatever
+                                  # leverage the calm implied. The ceiling therefore bounds the tail by
+                                  # construction rather than by fit: at the same book volatility, 2.5
+                                  # takes the live book's worst day from -15.0% to -12.4% and its worst
+                                  # month from -10.6% to -9.5%, earns the same, trades LESS (17x against
+                                  # 19x of re-sizing a year), and wins 4 of 5 sub-periods. Lower still
+                                  # keeps helping the tail but starts defeating the target itself — a
+                                  # genuinely quiet leg can no longer reach 15% — and 2.0 puts the master
+                                  # book's worst month past -6%.
+                                  # This is the BOOK-ASSEMBLY ceiling, applied to a family's finished
+                                  # series. Sleeves carry their own internal leverage caps as part of a
+                                  # construction that was validated with them in place; those are a
+                                  # different knob that happens to share a number, and folding them in
+                                  # here would silently re-open every family's series.
 BOOK_LEVERAGE = 1.15              # the assembled book's constant leverage — the only dial that sets book
                                   # risk (the risk-parity stack runs at ~9.1% annualised vol on its own,
                                   # so this is ~10.5%). Measured in run_risk_budget.py

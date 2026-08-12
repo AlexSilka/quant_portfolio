@@ -17,12 +17,13 @@
       "reproduces_published_series": true
     },
     "BAB": {
-      "gross_pnl": 1.772,
-      "net_pnl": 1.7441,
-      "cost_share_of_gross_pnl": 0.0157,
-      "breakeven_cost_mult": 63.6,
+      "gross_pnl": 1.6909,
+      "net_pnl": 1.6628,
+      "cost_share_of_gross_pnl": 0.0166,
+      "breakeven_cost_mult": 60.1,
       "cost_fragile": false,
-      "reproduces_published_series": true
+      "reproduces_published_series": false,
+      "note": "re-run total return +1.663 vs published +1.744 (4.7% apart)"
     },
     "carry": {
       "gross_pnl": 1.6958,
@@ -41,8 +42,8 @@
       "source": "breakout/bo_final_summary.json"
     },
     "x-sect": {
-      "breakeven_cost_mult": 7.2,
-      "cost_share_of_gross_pnl": 0.1389,
+      "breakeven_cost_mult": 7.6000000000000005,
+      "cost_share_of_gross_pnl": 0.1316,
       "cost_fragile": false,
       "source": "xs/xs_summary.json"
     },

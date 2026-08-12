@@ -40,7 +40,10 @@ STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_rep
          # the return-first book rides the same family series, so it re-runs here or its page quietly keeps
          # quoting the previous run — its own --check only proves the page matches its JSON, not the families
          ("run_live_book.py",), ("make_live_report.py",),
-         ("render_report.py",), ("make_report.py",))
+         # make_report BEFORE render_report: it writes master_book_cost_levels.json, which report_numbers
+         # resolves §9 from. Rendered first, REPORT.md quotes the PREVIOUS run's cost levels and every gate
+         # still passes, because each checker only compares its own output to its own inputs.
+         ("make_report.py",), ("render_report.py",))
 
 
 def main() -> None:

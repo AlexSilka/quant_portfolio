@@ -40,7 +40,8 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from src.config import BOOK_LEVERAGE, CAPITAL_USD, OOS_START, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import (BOOK_LEVERAGE, CAPITAL_USD, OOS_START, SEED, VOL_SCALE_CAP,  # noqa: E402
+                        VOL_TARGET_ANNUAL)
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.risk.stress import hedge_weight  # noqa: E402
@@ -216,8 +217,14 @@ def load(label, file, col):
 
 
 def _scale(net, target=VOL_TARGET_ANNUAL):
-    """Trailing (lagged) vol-target scale factor — the leg's risk-parity weight, computable-at-bar."""
-    return (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    """Trailing (lagged) vol-target scale factor — the leg's risk-parity weight, computable-at-bar.
+
+    The 60-bar lookback was swept 10-250 and stays: shorter arms only look better before their burn-in,
+    risk and re-sizing cost are matched, and none of them touches the failure a faster estimate is
+    supposed to fix. The ceiling is the lever that does — it bounds how much leverage a quiet stretch can
+    hand a leg just before a shock, so it caps the tail by construction. `scripts/run_volwindow_lab.py`
+    holds the evidence for both."""
+    return (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=VOL_SCALE_CAP).shift(1).fillna(0.0)
 
 
 def rescale(net, target=VOL_TARGET_ANNUAL):
