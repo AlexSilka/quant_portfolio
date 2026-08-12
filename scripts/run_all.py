@@ -37,6 +37,9 @@ ROOT = Path(__file__).resolve().parents[1]
 STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
          ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
          ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",), ("make_oos_ledger.py",), ("make_figures.py",),
+         # the return-first book rides the same family series, so it re-runs here or its page quietly keeps
+         # quoting the previous run — its own --check only proves the page matches its JSON, not the families
+         ("run_live_book.py",), ("make_live_report.py",),
          ("render_report.py",), ("make_report.py",))
 
 
