@@ -99,7 +99,16 @@ def main():
     book = build_final()
     rets = pd.DataFrame({k: v[0] for k, v in book.items()}).sort_index()
     costs = pd.DataFrame({k: v[1] for k, v in book.items()}).reindex(index=rets.index, columns=rets.columns).fillna(0.0)
-    port = rets.fillna(0.0).mean(axis=1)
+
+    def equal_weight(R):
+        """Equal weight over the sleeves that have STARTED — a sleeve whose perp has not listed yet is
+        not in the denominator. `fillna(0).mean()` divided by the full column count on every bar, so the
+        early years were the same book scaled down by however many sleeves were still to come, which is
+        a leg diluted by its own future. A started sleeve that stops printing is held at zero, the same
+        rule `run_master_book.hold_started` applies one layer up."""
+        started = R.notna().cummax()
+        return R.where(R.notna(), 0.0).where(started).mean(axis=1)
+    port = equal_weight(rets)
     s = summarise(port, 365)
     mc = bootstrap_sharpe(port, 365, 2000, bo.SEED)
     print(f"=== FINAL BREAKOUT BOOK (PIT top-10; 1d raw + 4h/1h walk-forward-gated; {rets.shape[1]} sleeves) ===")
@@ -131,7 +140,7 @@ def main():
 
     # cost sensitivity + break-even (§9): net_m = ret - (m-1)*cost (cost already charged once at 1x)
     def port_at(m):
-        return (rets.fillna(0.0) - (m - 1.0) * costs).mean(axis=1)
+        return equal_weight(rets - (m - 1.0) * costs.where(rets.notna()))
     levels = []
     for m, lab in [(1.0, "1x base"), (2.0, "2x base"), (3.0, "3x base")]:
         pm = port_at(m); sm = summarise(pm, 365)

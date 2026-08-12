@@ -1,23 +1,68 @@
 {
-  "re_run_here": {},
+  "re_run_here": {
+    "crisis-alpha": {
+      "gross_pnl": 1.4137,
+      "net_pnl": 0.5211,
+      "cost_share_of_gross_pnl": 0.6314,
+      "breakeven_cost_mult": 1.6,
+      "cost_fragile": true,
+      "reproduces_published_series": true,
+      "in_book": false
+    },
+    "global-macro": {
+      "gross_pnl": 1.2151,
+      "net_pnl": 1.0514,
+      "cost_share_of_gross_pnl": 0.1348,
+      "breakeven_cost_mult": 7.4,
+      "cost_fragile": false,
+      "reproduces_published_series": true,
+      "in_book": false
+    },
+    "BAB": {
+      "gross_pnl": 1.4368,
+      "net_pnl": 1.3698,
+      "cost_share_of_gross_pnl": 0.0466,
+      "breakeven_cost_mult": 21.4,
+      "cost_fragile": false,
+      "reproduces_published_series": true,
+      "in_book": false
+    },
+    "carry": {
+      "gross_pnl": 1.6958,
+      "net_pnl": 1.303,
+      "cost_share_of_gross_pnl": 0.2316,
+      "breakeven_cost_mult": 4.3,
+      "cost_fragile": false,
+      "reproduces_published_series": true,
+      "in_book": false
+    }
+  },
   "from_deep_dives": {
     "breakout": {
-      "breakeven_cost_mult": 4.300000000000001,
-      "cost_share_of_gross_pnl": 0.2326,
+      "breakeven_cost_mult": 5.1000000000000005,
+      "cost_share_of_gross_pnl": 0.1961,
       "cost_fragile": false,
       "source": "breakout/bo_final_summary.json",
       "in_book": true
     },
     "x-sect": {
-      "error": "TypeError: float() argument must be a string or a real number, not 'NoneType'",
+      "breakeven_cost_mult": 7.0,
+      "cost_share_of_gross_pnl": 0.1429,
+      "cost_fragile": false,
       "source": "xs/xs_summary.json",
       "in_book": true
     },
     "vol-prem": {
       "sharpe_at_cost_mult": {
-        "5": -0.55
+        "0": 4.76,
+        "1": 4.0,
+        "2": 3.2,
+        "3": 2.39,
+        "5": 0.85
       },
+      "breakeven_cost_mult": null,
       "cost_fragile": false,
+      "construction": "deployed (gated)",
       "source": "volprem/volprem_cost_robustness.csv",
       "in_book": true
     },
@@ -27,15 +72,15 @@
       },
       "cost_fragile": false,
       "source": "trend/trend_book_blend_summary.json",
-      "in_book": false
+      "in_book": true
     }
   },
   "book_n_families": 4,
   "book_legs_without_share": [
-    "volprem",
-    "xs_momentum"
+    "trend_momentum",
+    "volprem"
   ],
-  "n_cost_fragile": 0,
+  "n_cost_fragile": 1,
   "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
-  "book_id": "d8e2b00de6ec"
+  "book_id": "965802a34c58"
 }

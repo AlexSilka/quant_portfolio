@@ -1,6 +1,6 @@
 # Calendar / session — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline; the canonical assembler is `scripts/run_master_book.py` (not the older `build_book.py`).
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** Calendar and session effects are a standard feature family. This is the
 strategy sleeve that trades it, run through the same funnel as every other family (vol-target 15%,
@@ -132,7 +132,7 @@ Correlation of the overnight-only book to the deliverable book is **+0.07** (to 
 |---|---|---|---|---|
 | book Sharpe | 0.85 | 0.29 | −0.44 | −1.56 |
 
-So the correct portfolio decision is to **exclude it** — which the canonical `run_master_book.py` does (it is not among the eight families). The
+So the correct portfolio decision is to **exclude it** — which the canonical `run_master_book.py` does (it is not among the traded families). The
 sleeve is documented, not traded.
 
 ## 6. Honest verdict & ceiling

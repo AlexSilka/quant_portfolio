@@ -1,89 +1,89 @@
 {
   "classical": {
-    "dollar_neutral": 0.183,
-    "beta_neutral_FP": 0.77,
-    "beta_rank_via_ml_path": 0.796
+    "dollar_neutral": 0.157,
+    "beta_neutral_FP": 0.639,
+    "beta_rank_via_ml_path": 0.685
   },
   "ml": [
     {
       "model": "ridge",
       "featset": "beta_only",
-      "oos_sharpe": 0.001,
-      "oos_sharpe_dollar": -0.256
+      "oos_sharpe": 0.247,
+      "oos_sharpe_dollar": -0.291
     },
     {
       "model": "ridge",
       "featset": "risk",
-      "oos_sharpe": -0.042,
-      "oos_sharpe_dollar": -0.146
+      "oos_sharpe": 0.079,
+      "oos_sharpe_dollar": -0.19
     },
     {
       "model": "ridge",
       "featset": "all",
-      "oos_sharpe": 0.429,
-      "oos_sharpe_dollar": 0.249
+      "oos_sharpe": 0.882,
+      "oos_sharpe_dollar": 0.484
     },
     {
       "model": "lasso",
       "featset": "beta_only",
-      "oos_sharpe": 0.12,
-      "oos_sharpe_dollar": -0.137
+      "oos_sharpe": 0.066,
+      "oos_sharpe_dollar": -0.354
     },
     {
       "model": "lasso",
       "featset": "risk",
-      "oos_sharpe": -0.136,
-      "oos_sharpe_dollar": -0.288
+      "oos_sharpe": 0.01,
+      "oos_sharpe_dollar": -0.239
     },
     {
       "model": "lasso",
       "featset": "all",
-      "oos_sharpe": 0.306,
-      "oos_sharpe_dollar": 0.152
+      "oos_sharpe": 0.676,
+      "oos_sharpe_dollar": 0.413
     },
     {
       "model": "rf",
       "featset": "beta_only",
-      "oos_sharpe": -0.125,
-      "oos_sharpe_dollar": -0.38
+      "oos_sharpe": -0.529,
+      "oos_sharpe_dollar": -0.601
     },
     {
       "model": "rf",
       "featset": "risk",
-      "oos_sharpe": -0.326,
-      "oos_sharpe_dollar": -0.379
+      "oos_sharpe": -0.505,
+      "oos_sharpe_dollar": -0.439
     },
     {
       "model": "rf",
       "featset": "all",
-      "oos_sharpe": -0.047,
-      "oos_sharpe_dollar": -0.244
+      "oos_sharpe": 0.101,
+      "oos_sharpe_dollar": -0.14
     },
     {
       "model": "hgb",
       "featset": "beta_only",
-      "oos_sharpe": -0.41,
-      "oos_sharpe_dollar": -0.361
+      "oos_sharpe": -0.109,
+      "oos_sharpe_dollar": -0.266
     },
     {
       "model": "hgb",
       "featset": "risk",
-      "oos_sharpe": -0.526,
-      "oos_sharpe_dollar": -0.568
+      "oos_sharpe": -0.759,
+      "oos_sharpe_dollar": -0.872
     },
     {
       "model": "hgb",
       "featset": "all",
-      "oos_sharpe": -0.018,
-      "oos_sharpe_dollar": -0.057
+      "oos_sharpe": 0.355,
+      "oos_sharpe_dollar": 0.28
     }
   ],
   "best": {
     "config": "ridge:all",
-    "oos_sharpe": 0.429,
-    "mc_p5": -0.19470816874324376,
-    "deflated_sharpe": 0.47,
+    "oos_sharpe": 0.882,
+    "mc_p5": 0.2777998671604644,
+    "deflated_sharpe": 0.583,
     "n_trials": 12
   },
-  "verdict": "ML WORSE than classical (overfit)"
+  "verdict": "ML BEATS classical"
 }

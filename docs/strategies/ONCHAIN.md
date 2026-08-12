@@ -1,6 +1,6 @@
 # On-chain / network signals (crypto) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS). Any master-book Sharpe quoted below (e.g. a 3.77 "book drag" baseline) is the book *snapshot at the time this family was evaluated*, not the current headline.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** H3 from [HYPOTHESES.md](../HYPOTHESES.md): on-chain data (exchange flows, stablecoin supply,
 active-address growth, chain cash flows, valuation ratios) carries information **not present in price** — the one

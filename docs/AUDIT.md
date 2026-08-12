@@ -109,3 +109,83 @@ Two cheap habits close most of it:
 
 And one warning about doing it: check what touches a metered feed first. Running everything at once is
 what turned a dormant caching bug into an exhausted rate limit.
+
+---
+
+# The third audit: what the numbers were, not what the scripts did
+
+The first two passes ran the scripts and swept the copies. This one asked a different question — is
+every number the shipped legs print *earned* — and it started from a specific suspicion: that the two
+earlier passes, both of which had made legs earn less, had double-charged commission somewhere.
+
+**They had not.** Every stitch was checked: the sleeve backtest, the family blender, the book's own
+rebalance charge, the overlay. Nothing is charged twice. Alongside that, seven of the eight published
+family series rebuild byte-identically from their own code; the Binance funding archive covers every
+perp the legs trade, so no leg holds a perpetual for free; the drawdown ladder, the daily-loss breaker
+and every vol scaler read `t-1` only; and the NaN branch in the held-turnover model — which would
+charge a full round trip for a data gap — fires zero times on the two crypto panels it was measured on
+(the x-sect cross-section and BAB's top-25).
+
+What the audit found instead runs the other way.
+
+## Costs nothing was charging
+
+| what traded for free | where | why it was invisible |
+|---|---|---|
+| the vol target itself | every leg that scales a FINISHED series — x-sect, vol-prem, BAB, carry, global-macro, crisis, the breakout blend | multiplying a net series by a lagged leverage is exact for the P&L, so the accounting looks closed; the *change* in that leverage is an order over the book's whole gross, every bar, placed after the sleeve's cost model has stopped watching |
+| the drift back onto a held book weight, at the assembly layer | `run_master_book.book_turnover` | the legs had already started charging it one level down, so the book was the only layer still counting `Σ\|Δw\|` |
+| the re-weighting inside a family blend | breakout's two-leg blend, the x-sect combine | the same shape again, one level below the book |
+
+The fix is two functions in `src/risk/sizing.py` — `resize_cost` and `held_weight_turnover` — and every
+layer that moves weights now calls one of them. The rate is the sleeve's own where the sleeve names
+instruments, the book rebalance rate where the layer moves whole sleeves, and vega points for the
+variance swap, which pays the same spread to be re-sized as it pays to be rolled.
+
+## A cost key with two signs in it
+
+`xs_backtest` and `bab_backtest` summed trading cost and carry into one `cost`. The crypto
+cross-section COLLECTS more funding on its short book than it pays in commission, so its "cost" was
+negative — and every consumer that scales cost to ask *what if execution were worse* was scaling the
+credit the wrong way. The published cost ladder improved at a higher multiple and the break-even came
+back as "never", which reached the §9 table as an error string where a number belonged.
+
+Trading and holding are separate keys now. `net` is unchanged to 1e-16: this was never a P&L error,
+only an attribution one — which is exactly why nothing caught it.
+
+## Three claims that had outlived their construction
+
+* **breakout blended at equal notional and called it risk parity.** Its two legs' volatilities differ
+  by an order of magnitude, so the blend was one leg. Weighted by trailing inverse vol now, with the
+  achieved risk shares published beside it so the claim cannot drift again.
+* **BAB winsorised its crypto panel at a magnitude threshold.** A daily return is bounded below at
+  −100% and unbounded above, so such a filter can only ever delete gains — and this book is short the
+  high-beta names, so those gains are its losses. Every name-day it removed was a real squeeze with
+  billions of dollars of volume behind it. Perps have no splits; the filter is off there and the equity
+  panels keep theirs.
+* **global-macro is named for EM FX and commodities**, and its own funding rule retires the FX half.
+  The run publishes the classes it actually built.
+
+## Two scorecards for one book
+
+The composition search — the one choice in this deliverable made against the scorecard rather than
+before it — assembled its candidates with a local copy of the assembly that had drifted: no
+`hold_started`, no rebalance charge. The shipped composition therefore scored one thing in the search
+and another in the book's own artifact, on the same day, from the same series. Both go through
+`run_master_book.book_from_legs` now and the two agree to 1e-18.
+
+The same shape, twice more: the §9 cost table filed the traded trend leg as *not held* because it
+looked it up under a name the assembler does not use, and the OOS trade ledger dropped that leg's fills
+for the same reason.
+
+## The pattern, and what it changes about writing this repo
+
+The first audit's pattern was *a correction that never propagated outside the pipeline*. This one's is
+narrower and more uncomfortable: **the numbers a comment carries are the least maintained thing in the
+repository.** The block above `FAMILIES` claimed trend and carry were not in the book while the list
+directly underneath it held trend, and quoted a final-block scorecard that disagreed with the JSON the
+same script writes on every run.
+
+So no measured number is written into a Python comment any more, and the prose that named legs by hand
+— which families are traded, which are validated and not held, which are live before 2020, how long the
+window is — is resolved from the artifacts at render time. A comment states the mechanism and the
+reason; if a sentence needs a number to be true, it belongs in a file something regenerates.

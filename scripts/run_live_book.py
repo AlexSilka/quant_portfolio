@@ -1,7 +1,7 @@
 """The book as it would actually be run — return-first, from the date its risk control exists.
 
-This is NOT the test-task deliverable. That one is `run_master_book.py`: eight validated families, six
-traded at equal risk, a §8 drawdown ladder on top, and a constant 1.15x sized to a −15% drawdown mandate.
+This is NOT the test-task deliverable. That one is `run_master_book.py`: the validated families held at
+equal risk, a §8 drawdown ladder on top, and a constant leverage sized to a −15% drawdown mandate.
 Everything there is shaped by a scorecard. This is the same research with the scorecard removed and one
 question in its place: which of these legs would you put your own money in, and at what size.
 
@@ -15,15 +15,16 @@ Three differences from the deliverable, each with its reason.
   public CSV feed truncates it at 2009-09-18 — recovering those two years needs a source this project
   does not use, and it would not help anyway while VIX9D does not exist.
 
-  COMPOSITION — volprem, breakout, BAB, x-sect. Crisis-alpha and global-macro are dropped: both earn
-  ~0.5-0.9 standalone and existed to buy risk targets that no longer bind, and dropping them takes the
-  book from 49.5% a year to 88.9% at the deliverable's own leverage. Carry stays out for the same reason
-  it was dropped there — it does not add at this size — and trend stays out on its own merits.
+  COMPOSITION — the master book's families minus any hedge slot, DERIVED from `mb.FAMILIES` below rather
+  than typed here. A typed list is how this file once asked for a leg the composition had dropped and ran
+  a different book than either file described; and a docstring naming legs is the same trap one line up,
+  so the legs are printed by the run instead of named here. The families a hedge slot would hold are the
+  exception: they exist to buy risk targets that this book does not have.
 
-  NO §8 OVERLAY — the drawdown ladder (−6/−9/−12% → two-thirds/one-third/flat) and the daily-loss breaker
-  guarantee a mandate that no longer exists, and they are not free: they cut after a loss and restore
-  after a recovery, which on a mean-reverting equity curve sells low and buys back higher. Measured, they
-  are what stops leverage working — at 3x they turn 422% a year into 181%.
+  NO §8 OVERLAY — the drawdown ladder and the daily-loss breaker guarantee a mandate that no longer
+  exists, and they are not free: they cut after a loss and restore after a recovery, which on a
+  mean-reverting equity curve sells low and buys back higher. The leverage sweep this script prints is
+  where that shows up — the overlay is what stops leverage working, measured on the rungs.
 
     python scripts/run_live_book.py [leverage]     ->  reports/lab/live_book.parquet
 """
@@ -82,7 +83,7 @@ def book(df: pd.DataFrame, leverage: float, scales: pd.DataFrame | None = None) 
     here at the same blended rate the master book uses."""
     b = mb.book_stack(df) * leverage
     if scales is not None:
-        turn = mb.book_turnover(mb.book_weights(df, scales)) * leverage
+        turn = mb.book_turnover(mb.book_weights(df, scales), df) * leverage
         b = b - turn * (BOOK_REBALANCE_BPS / 1e4)
     return b.dropna()
 

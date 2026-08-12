@@ -34,6 +34,7 @@ from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
 from src.sleeves.xsect import top_n_liquid, vol_target, xs_backtest  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from scripts.bab.run_bab_portfolio import WINSOR  # noqa: E402  one winsor rule per family
 
 REP, CACHE = REPORTS_DIR, CACHE_DIR / "xs"
 SEED, PPY, COST, TVOL, TOPN, REBAL, HORIZON = SEED, 365, 6.0, VOL_TARGET_ANNUAL, 100, 21, 21
@@ -129,7 +130,7 @@ def _ml_book(score_panel, C, A, beta, *, neutral="beta"):
 
 
 def main():
-    C = bab.winsorize_panel(pd.read_parquet(CACHE / "crypto_1d_close.parquet"), 1.0)
+    C = bab.winsorize_panel(pd.read_parquet(CACHE / "crypto_1d_close.parquet"), WINSOR)
     A = pd.read_parquet(CACHE / "crypto_1d_adv.parquet").reindex_like(C)
     if C.index.tz is None:
         C.index = C.index.tz_localize("UTC"); A.index = A.index.tz_localize("UTC")

@@ -22,7 +22,7 @@ your own money" rather than to "what clears §11".
 A **{{n_families_word}}-family book** at a constant **{{leverage}} leverage** (~{{book_vol}} annualised vol): the
 {{n_families}} earners at equal risk, and the one long-gamma hedge sized by market stress instead of held flat
 (a quarter slot when nothing is moving, a slot and a half when the VIX curve inverts — REPORT §6c-ter).
-§11 scores the five targets on the **final out-of-sample block**, so that is the scorecard. The 15-year
+§11 scores the five targets on the **final out-of-sample block**, so that is the scorecard. The {{window_years_word}}-year
 column is the same book measured over the longer window — supporting evidence, reported because a book that
 works only on the block it is scored on is not a book, but not a second scorecard and not counted as one.
 
@@ -45,19 +45,15 @@ On the brief's {{capital}} of sizing capital that is **{{pnl_usd}}** of P&L, **~
 ({{return_not_reinvested}}/yr not reinvested, {{return_compounded}}/yr compounded). Positive in **{{n_years_positive}} of {{n_years}} calendar years**.
 Mean pairwise correlation between families **≈ {{mean_corr_abs}}**.
 
-**The composition was fixed before the sleeve-level gate below, and has not been re-picked since.** Trend
-and carry were dropped under the earlier rule — the one pair, of the {{comp_n_configs}} single- and
-double-removal configurations, that then cleared all five targets on both windows. With the gate in place
-{{comp_n_passing_word}} configurations clear both; six clear the scored block, and the shipped book is one of
-them while the eight-family book is not ({{comp_base_targets_oos}} on the block — {{comp_base_miss_oos}}).
-Re-running the search now would mean choosing a composition against the block §10 says to run exactly once,
-so the search is published as the denominator (§6d-ter) and the composition is left where it was. Neither
-dropped leg is weak on its own terms (carry's standalone Sharpe is {{comp_carry_solo}}, the
-{{comp_carry_rank}} of the eight). **Return went up, not down**: {{comp_d_cagr_full}} of CAGR on the full
-window and {{comp_d_cagr_oos}} on the block, since six legs at equal risk run hotter than eight. What it costs
-is **concentration and breadth**: the short-vol leg's share of P&L up from {{comp_share_before}} to
-{{comp_share_after}}, and no family left that spans both asset classes. The eight-family alternative is one
-line away in `scripts/run_master_book.py`.
+**The composition was fixed before the sleeve-level gate below, and has not been re-picked since.** The
+book holds {{families_traded}}; {{families_validated_not_held}} clear their own validation and are not held.
+Of the {{comp_n_configs}} configurations the search enumerates, {{comp_n_passing_word}} clear all five
+targets on both windows — every one of them assembled by the same code that assembles the book, so no
+candidate is scored on a portfolio the deliverable would not ship. Re-running the search now would mean
+choosing a composition against the block §10 says to run exactly once, so the search is published as the
+denominator (§6d-ter) and the composition is left where it was. What the choice costs is
+**concentration and breadth**: the short-vol leg's share of P&L up from {{comp_share_before}} to
+{{comp_share_after}}. Any other composition is one line away in `scripts/run_master_book.py`.
 
 **The {{n_families_word}} sources** — each developed in its own deep-dive, combined at genuine equal-weight
 risk parity (no per-leg weighting *fitted*: the hedge slot follows market state, never anyone's P&L), every

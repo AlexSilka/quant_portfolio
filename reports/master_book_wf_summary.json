@@ -3,125 +3,125 @@
   "headline_config": "equal_anchored_Q",
   "full_history": true,
   "headline_wf_oos": {
-    "sharpe": 3.76,
-    "max_dd": -0.1113,
+    "sharpe": 3.86,
+    "max_dd": -0.1053,
     "months_in_profit": 0.7547,
-    "n_obs": 4053,
+    "n_obs": 4015,
     "start": "2013-06-18",
     "end": "2026-08-04"
   },
   "headline_final_block_oos": {
-    "sharpe": 3.55,
-    "max_dd": -0.0449,
-    "months_in_profit": 0.7692,
+    "sharpe": 3.76,
+    "max_dd": -0.0373,
+    "months_in_profit": 0.8077,
     "n_obs": 763,
     "start": "2024-07-01",
     "end": "2026-08-04"
   },
   "master_window_2016_oos": {
-    "sharpe": 3.56,
-    "max_dd": -0.1113,
+    "sharpe": 3.65,
+    "max_dd": -0.1053,
     "months_in_profit": 0.7603,
-    "n_obs": 3267,
+    "n_obs": 3229,
     "start": "2016-08-01",
     "end": "2026-08-04"
   },
   "window_cadence_invariance_range": [
-    3.76,
-    3.8
+    3.85,
+    3.86
   ],
   "configs": {
     "equal_anchored_Q": {
-      "sharpe": 3.76,
-      "max_dd": -0.1113,
+      "sharpe": 3.86,
+      "max_dd": -0.1053,
       "months_in_profit": 0.7547,
-      "n_obs": 4053,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     },
     "invvol_anchored_Q": {
-      "sharpe": 3.67,
-      "max_dd": -0.1353,
-      "months_in_profit": 0.7484,
-      "n_obs": 4053,
+      "sharpe": 3.56,
+      "max_dd": -0.1072,
+      "months_in_profit": 0.7358,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     },
     "meanvar_anchored_Q": {
-      "sharpe": 4.68,
-      "max_dd": -0.1644,
-      "months_in_profit": 0.7925,
-      "n_obs": 4053,
+      "sharpe": 4.63,
+      "max_dd": -0.1474,
+      "months_in_profit": 0.7736,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     },
     "equal_rolling2y_Q": {
-      "sharpe": 3.76,
-      "max_dd": -0.1113,
+      "sharpe": 3.86,
+      "max_dd": -0.1053,
       "months_in_profit": 0.7547,
-      "n_obs": 4053,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     },
     "equal_anchored_A": {
-      "sharpe": 3.8,
-      "max_dd": -0.1344,
-      "months_in_profit": 0.7484,
-      "n_obs": 4053,
+      "sharpe": 3.85,
+      "max_dd": -0.1053,
+      "months_in_profit": 0.7547,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     },
     "invvol_rolling2y_Q": {
-      "sharpe": 3.66,
-      "max_dd": -0.1372,
-      "months_in_profit": 0.7484,
-      "n_obs": 4053,
+      "sharpe": 3.56,
+      "max_dd": -0.1092,
+      "months_in_profit": 0.7421,
+      "n_obs": 4015,
       "start": "2013-06-18",
       "end": "2026-08-04"
     }
   },
   "stress": {
     "2018 Volmageddon": {
-      "sharpe": -2.14,
-      "max_dd": -0.0524,
+      "sharpe": -2.22,
+      "max_dd": -0.0526,
       "n_legs": 2
     },
     "COVID crash": {
-      "sharpe": -5.05,
-      "max_dd": -0.0602,
-      "n_legs": 3
+      "sharpe": -3.72,
+      "max_dd": -0.0822,
+      "n_legs": 2
     }
   },
   "window_robustness": {
     "full_21y_2005": {
-      "sharpe": 3.93,
-      "max_dd": -0.0835,
-      "months_in_profit": 0.7784,
-      "worst_month": -0.0507,
+      "sharpe": 3.99,
+      "max_dd": -0.0911,
+      "months_in_profit": 0.7727,
+      "worst_month": -0.0533,
       "longest_losing_streak_mo": 3,
-      "total_return": 283.964,
-      "n_obs": 4418
+      "total_return": 440.208,
+      "n_obs": 4380
     },
     "15y_2011": {
-      "sharpe": 3.93,
-      "max_dd": -0.0835,
-      "months_in_profit": 0.7784,
-      "worst_month": -0.0507,
+      "sharpe": 3.99,
+      "max_dd": -0.0911,
+      "months_in_profit": 0.7727,
+      "worst_month": -0.0533,
       "longest_losing_streak_mo": 3,
-      "total_return": 283.964,
-      "n_obs": 4418
+      "total_return": 440.208,
+      "n_obs": 4380
     },
     "10y_2016": {
-      "sharpe": 3.66,
-      "max_dd": -0.0835,
+      "sharpe": 3.69,
+      "max_dd": -0.0911,
       "months_in_profit": 0.7603,
-      "worst_month": -0.0503,
+      "worst_month": -0.0522,
       "longest_losing_streak_mo": 3,
-      "total_return": 31.703,
-      "n_obs": 3267
+      "total_return": 38.44,
+      "n_obs": 3229
     }
   },
   "note": "Book-level walk-forward with periodic allocation re-fit (\u00a710), over ALL available data (2005+ for the non-crypto legs; the crypto legs only from 2020). Equal-weight needs no fit, so its walk-forward equals the full post-burn-in track \u2014 the a-priori book is OOS across the whole history, incl. the 2008 GFC. The 2y final block (OOS_START) is the separate run-once \u00a711 holdout. Caveat: pre-~2019 crisis/gmacro are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",
   "seed": 7,
-  "book_id": "d8e2b00de6ec"
+  "book_id": "965802a34c58"
 }

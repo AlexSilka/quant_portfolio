@@ -1,6 +1,6 @@
 # Betting-against-beta / low-volatility — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS). The **crypto beta-neutral top-25** book is the BAB family in it (§5); the equity and FX legs did not survive (§3b).
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** H1 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): the leverage-constraint
 premium (Frazzini-Pedersen 2014) — long low-beta, short high-beta — run through the same funnel as every

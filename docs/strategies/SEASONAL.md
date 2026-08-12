@@ -1,6 +1,6 @@
 # Calendar seasonality (H4) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the six-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.91** full / **3.54** OOS); every book number below is measured against that series, and each lift table carries its own 0%-weight baseline so the comparison stays readable if the book moves.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** HYPOTHESES.md **H4**: two documented, calendar-deterministic effects — the **pre-FOMC
 announcement drift** (Lucca-Moench 2015) and the **turn-of-month** effect (Lakonishok-Smidt 1988) —

@@ -112,7 +112,15 @@ FAMILIES = (("crisis-alpha", crisis), ("global-macro", gmacro), ("BAB", bab), ("
 # over all eight while calling them "the book's legs" is simply false. Tagged at the source, where both
 # names are known, rather than re-derived by whoever reads the file.
 BOOK_LABEL = {"crisis-alpha": "crisis", "global-macro": "gmacro", "BAB": "bab", "carry": "carry",
-              "breakout": "breakout", "x-sect": "xs_momentum", "vol-prem": "volprem", "trend": "trend"}
+              "breakout": "breakout", "x-sect": "xs_momentum", "vol-prem": "volprem",
+              "trend": "trend_momentum"}
+# Every display name here must answer to a family the assembler could hold, or `_in_book` silently says
+# "no" and the §9 table files a traded leg under "measured but NOT held". That is what "trend" -> "trend"
+# did: the assembler calls it `trend_momentum`, so the one word that had to match did not.
+_STRAY = set(BOOK_LABEL.values()) - {"crisis", "gmacro", "bab", "carry", "breakout", "xs_momentum",
+                                     "volprem", "trend_momentum"}
+if _STRAY:
+    raise ValueError(f"BOOK_LABEL maps to family ids nothing answers to: {sorted(_STRAY)}")
 
 
 def _in_book(label: str) -> bool:
@@ -133,7 +141,12 @@ def main():
         except Exception as exc:
             log.warning("family costs: could not read the previous pass (%s) — re-running everything",
                         type(exc).__name__)
-    todo = FAMILIES if "--all" in sys.argv else tuple((l, f) for l, f in FAMILIES if _in_book(l))
+    # Re-run everything this file knows how to re-run when there is no previous pass to carry forward.
+    # The filter used to be "only families the book holds", and the four families this file can re-run
+    # are exactly the four the book does not — so the default pass measured NOTHING and the table shipped
+    # with an empty `re_run_here`.
+    todo = (FAMILIES if ("--all" in sys.argv or not prev)
+            else tuple((l, f) for l, f in FAMILIES if _in_book(l) or l not in prev))
     carried = [l for l, _ in FAMILIES if (l, dict(FAMILIES)[l]) not in todo and l in prev]
     if carried:
         print(f"carried from the last --all pass (not in the book): {', '.join(carried)}")
@@ -168,9 +181,19 @@ def main():
             print(f"  ! {label}: {path} unreadable ({type(exc).__name__}: {exc})")   # the §9 range on the page
             carried[label] = {"error": f"{type(exc).__name__}: {exc}", "source": path}
     try:
-        vp = pd.read_csv(R / "volprem" / "volprem_cost_robustness.csv").iloc[-1]
-        carried["vol-prem"] = {"sharpe_at_cost_mult": {str(int(vp["cost_mult"])): float(vp["sharpe"])},
-                               "cost_fragile": False, "source": "volprem/volprem_cost_robustness.csv"}
+        # the DEPLOYED column, not the research book's: the leg the book holds is the gated one, and it
+        # pays a different spread bill because every gate switch crosses the same spread a roll does.
+        # `cost_fragile` is read off the ladder rather than asserted — the flag used to be a hard-coded
+        # False sitting next to a row that had gone negative.
+        vp = pd.read_csv(R / "volprem" / "volprem_cost_robustness.csv")
+        col = "sharpe_deployed" if "sharpe_deployed" in vp.columns else "sharpe"
+        ladder = {str(int(m)): float(s) for m, s in zip(vp["cost_mult"], vp[col])}
+        dead = [m for m, s in zip(vp["cost_mult"], vp[col]) if m > 0 and s <= 0.0]
+        carried["vol-prem"] = {"sharpe_at_cost_mult": ladder,
+                               "breakeven_cost_mult": float(min(dead)) if dead else None,
+                               "cost_fragile": bool(dead and min(dead) < 3.0),
+                               "construction": "deployed (gated)" if col == "sharpe_deployed" else "research book",
+                               "source": "volprem/volprem_cost_robustness.csv"}
     except Exception as exc:
         print(f"  ! vol-prem: volprem_cost_robustness.csv unreadable ({type(exc).__name__}: {exc})")
         carried["vol-prem"] = {"error": f"{type(exc).__name__}: {exc}",

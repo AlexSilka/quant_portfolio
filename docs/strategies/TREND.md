@@ -1,6 +1,6 @@
 # Trend-Following Deep-Dive
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS, mean cross-family corr 0.06). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated* (the book grew as families were added, and gmacro became the 7th); the canonical headline is REPORT.md.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Dashboard:** [trend_dashboard.html](../../reports/trend/trend_dashboard.html) · **Reproduce:** `python scripts/trend/run_all_trend.py`
 · **Code:** `src/sleeves/trend_lab.py`, `scripts/trend/*` · **Sibling deep-dives:** breakout, cross-sectional, carry, mean-reversion
@@ -9,7 +9,7 @@
 
 ## 0. TL;DR
 
-Trend-following is one of the eight families in the shipped book and the most **broadly robust** price
+Trend-following is one of the families in the shipped book and the most **broadly robust** price
 premium in it — the only family that spans **both** asset classes (crypto + US equities) and it works at
 every mid timeframe. (It is not the book's Sharpe anchor — that is short-vol; trend is ~11% of P&L and
 earns its slot on decorrelation.) This deep-dive rebuilds it from scratch across every entry, exit,
@@ -59,7 +59,7 @@ trend death) and whipsaws at sharp reversals — no construction fixes the absen
 ## 1. What the trend sleeve is, and what this deep-dive adds
 
 The shipped trend sleeve is one line — `src/sleeves/momentum.py`, an EMA fast/slow crossover held to
-reversal (`+1` when EMA-50 > EMA-200). Trend is one of the eight families in the master book and the only
+reversal (`+1` when EMA-50 > EMA-200). Trend is one of the families in the master book and the only
 one that spans **both** asset classes (crypto + US equities), so it is the natural breadth leg. This
 deep-dive is not rescuing a null (as the cross-sectional study did) nor confirming a death (as
 mean-reversion did) — it is finding **how far the trend premium can honestly be pushed**, and decomposing
@@ -427,7 +427,7 @@ trailing liquidity choose them at each bar.
 `reports/trend/trend_block_returns.parquet` (standalone Sharpe ~0.89 on the shipped point-in-time universe) and enters the master book as one
 equal-risk leg. Trend is **decorrelated from every other family** (carry −0.08, vol-prem +0.04,
 cross-sectional −0.11, breakout −0.07; mean ≈ −0.06 across the eight) — a genuine diversifier. In the
-shipped eight-family book it contributes **~11% of P&L**, lifts the portfolio **+0.28 Sharpe** over the book
+shipped master book it contributes **~11% of P&L**, lifts the portfolio **+0.28 Sharpe** over the book
 without it, and keeps the master **positive every calendar year 2011–2026**, carrying the years trend alone
 struggles (2022, 2025) on the other families. An earlier five-family integration snapshot shows the same
 mechanism:
@@ -438,7 +438,7 @@ mechanism:
 | with this improved trend block | +2.26 | −7.1% | +1.52 |
 
 Swapping the improved block for the old 0.84-Sharpe leg lifted that book **+0.20 Sharpe (2.06 → 2.26) at
-−2.9pp drawdown** — the same diversification mechanism the eight-family book runs on. The honest route
+−2.9pp drawdown** — the same diversification mechanism the master book runs on. The honest route
 toward the target is the same either way: **not a bigger trend book, but trend as one decorrelated leg among
 independent premia.**
 

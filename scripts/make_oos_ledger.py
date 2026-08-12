@@ -50,14 +50,15 @@ def main():
           f"book Sharpe {sh:+.2f}, net P&L ${led['book_pnl_usd'].sum():,.0f} on ${CAPITAL_USD:,}")
 
     # combined per-trade OOS log from families that keep one
-    # A per-trade log belongs in the BOOK's record only if the book holds that family. Trend keeps the
-    # repo's only instrument-level log and the book dropped trend, so this list is derived from the
-    # assembler rather than typed — otherwise the next composition change republishes another family's
-    # fills as the book's, which is exactly what happened here.
+    # A per-trade log belongs in the BOOK's record only if the book holds that family, so the test is
+    # derived from the assembler rather than typed — otherwise a composition change republishes another
+    # family's fills as the book's. The name on the left has to be the assembler's own family id: it was
+    # "trend" against a book that calls the leg `trend_momentum`, so the one leg with an instrument-level
+    # log was filed as "not held" by a book that holds it.
     import scripts.run_master_book as mb
     held = {lab for lab, _, _ in mb.FAMILIES}
     trade_logs = []
-    for name, path in [("trend", R / "trend" / "trend_oos_trade_log.csv")]:
+    for name, path in [("trend_momentum", R / "trend" / "trend_oos_trade_log.csv")]:
         if name not in held:
             print(f"  - {name}: has a per-trade log but the book does not hold it — not the book's record")
             continue

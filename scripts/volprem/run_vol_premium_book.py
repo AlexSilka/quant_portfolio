@@ -34,8 +34,8 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import (CARRY_DIR, REPORTS_DIR, TREND_DIR, VOLPREM_DIR,  # noqa: E402
-                        VOLPREM_TERM_HAIRCUT, VOL_TARGET_ANNUAL)
+from src.config import (BOOK_REBALANCE_BPS, CARRY_DIR, REPORTS_DIR, TREND_DIR,  # noqa: E402
+                        VOLPREM_DIR, VOLPREM_TERM_HAIRCUT, VOL_TARGET_ANNUAL)
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.cboe import load_cboe_vol  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
@@ -74,9 +74,35 @@ UNIVERSE = [
 ]
 
 
-def vt(net, ppy):
-    scale = vol_target_scale(net, TVOL, ppy)
-    return (net * scale).clip(lower=-0.999).dropna()
+def vt(net, ppy, unit_cost=None, scale=None):
+    """Vol-target a finished series, and pay for the re-sizing that does.
+
+    `unit_cost` is what moving ONE unit of this position costs on one bar. A variance swap pays the
+    same vega spread to be re-sized that it pays to be rolled, so at sleeve level that is 2·K·spread
+    (`vega_unit` below); a layer that moves whole finished sleeves pays the book rebalance rate. Left
+    None the re-sizing is free, which is what it used to be everywhere and is only right for a series
+    nobody trades.
+
+    `scale` lets a caller size off a different series than the one being scaled — the gated legs size
+    off their UNGATED history so a flat stretch does not read as low volatility and lever the leg up on
+    re-entry.
+    """
+    scale = vol_target_scale(net, TVOL, ppy) if scale is None else scale.reindex(net.index)
+    out = net * scale
+    if unit_cost is not None:
+        moved = scale.diff().abs().fillna(0.0)
+        u = unit_cost.reindex(net.index).fillna(0.0) if hasattr(unit_cost, "reindex") else unit_cost
+        out = out - moved * u
+    return out.clip(lower=-0.999).dropna()
+
+
+def vega_unit(frame, vega_pts):
+    """Cost of moving one unit of this variance swap on one bar — the roll's own vega spread, 2·K·s.
+
+    Same formula `vol_premium.short_vol_book` charges when the strike rolls or the side flips, applied
+    to the size change the vol target makes. Zero on a bar the leg is flat: there is nothing to re-size.
+    """
+    return 2.0 * frame["K"].clip(lower=1e-6) * (vega_pts / 100.0) * frame["side"].abs()
 
 
 def naive_dt(s):
@@ -138,17 +164,22 @@ def sleeve(src, sym, und, cls, ppy, fair=False, **kw):
     params = {"timed": False, "var_cap": 1e9, "bars": bars,
               "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5),
               "term_haircut": VOLPREM_TERM_HAIRCUT, **kw}
-    return vt(vp.short_vol_book(px, iv, ppy=ppy, **params)["net"], ppy)
+    f = vp.short_vol_book(px, iv, ppy=ppy, **params)
+    return vt(f["net"], ppy, vega_unit(f, params["vega_cost_volpts"]))
 
 
 def book_from(rets: dict) -> pd.Series:
-    """Equal-risk average of vol-targeted sleeves, re-targeted to 15% for comparability."""
+    """Equal-risk average of vol-targeted sleeves, re-targeted to 15% for comparability.
+
+    The re-target is a trade at the layer that moves whole sleeves, so it pays the same blended rate
+    the master book's assembly pays for exactly that (`BOOK_REBALANCE_BPS`) rather than nothing."""
     R = pd.DataFrame(rets).sort_index()
     raw = R.mean(axis=1, skipna=True).dropna()          # available-sleeve equal weight each day
-    return vt(raw, PPY_BOOK)
+    return vt(raw, PPY_BOOK, BOOK_REBALANCE_BPS / 1e4)
 
 
-def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool = True) -> pd.Series:
+def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool = True,
+              vega_mult: float = 1.0) -> pd.Series:
     """One sleeve under BOTH regime gates, with the two things a gate costs kept honest:
 
       * the switch is PAID — flattening the swap and putting it back on crosses the same vega spread a
@@ -174,7 +205,7 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool =
     bars = underlying_bars(und, cls)
     px = bars["close"]
     base = {"timed": False, "var_cap": 1e9, "bars": bars,
-            "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5),
+            "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5) * vega_mult,
             "term_haircut": VOLPREM_TERM_HAIRCUT}
     ungated = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
     # `gate=None` means this sleeve has no shared regime signal at all — built on the sleeve's own index
@@ -183,12 +214,13 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool =
     both = pd.Series(1.0, index=px.index) if gate is None else gate.reindex(px.index).ffill().fillna(0.0)
     if own_curve:
         both = both * own_curve_gate(iv, px.index)
-    net = vp.short_vol_book(px, iv, ppy=ppy, gate=both, **base)["net"]
-    scale = vol_target_scale(ungated, TVOL, ppy)
-    return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
+    f = vp.short_vol_book(px, iv, ppy=ppy, gate=both, **base)
+    return vt(f["net"], ppy, vega_unit(f, base["vega_cost_volpts"]),
+              scale=vol_target_scale(ungated, TVOL, ppy))
 
 
-def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> pd.Series:
+def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True,
+               vega_mult: float = 1.0) -> pd.Series:
     """The deployed (gated) book: every sleeve under both gates, the shared one included (see the note
     above UNIVERSE's cost table for why the VIX reaches the non-equity sleeves too).
 
@@ -198,33 +230,22 @@ def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> p
     gat = {}
     for src, sym, und, cls, ppy in UNIVERSE:
         if sym in rets_ungated:
-            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate, own_curve=own_curve)
+            gat[sym] = gated_leg(src, sym, und, cls, ppy, gate, own_curve=own_curve,
+                                 vega_mult=vega_mult)
     raw_u = pd.DataFrame(rets_ungated).sort_index().mean(axis=1, skipna=True).dropna()
     raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
-    scale = vol_target_scale(raw_u, TVOL, PPY_BOOK)
-    return (raw_g * scale.reindex(raw_g.index)).clip(lower=-0.999).dropna()
+    return vt(raw_g, PPY_BOOK, BOOK_REBALANCE_BPS / 1e4,
+              scale=vol_target_scale(raw_u, TVOL, PPY_BOOK))
 
 
-# The sleeves the SHIPPED series is built from. The research book stays all eighteen — the breadth
-# study, the placebo and the cost ladder are all measured on it — but the deployed leg sells variance
-# on the five equity indices only. The commodity, single-name and international sleeves are what
-# carry this leg's deep months: dropping them moves the book's worst month from -6.5% to -4.9% and
-# months-in-profit from 64.9% to 81.1% on the final block. That selection was made by searching the
-# final block, which the brief tells you not to do, so it is written here in one place under its own
-# name rather than smuggled into the universe list.
-#
-# WHOLE CLASSES, not a list of tickers. An earlier pass let the search pick any subset and it chose
-# eight names that happened to score — the same cherry-pick the audit spent its day removing one layer
-# down, and not something §2 would accept as "the rule by which an asset enters your universe". The
-# candidates are now unions of the classes UNIVERSE already tags, so every one is a sentence a desk
-# can defend: this book sells INDEX, INTERNATIONAL and RATES variance, and leaves single names and
-# commodities alone. Single names are the widest spreads here (2.5 vega a roll) and commodities are
-# where the 2026 metals event lived; both are what the deep months came from.
-#
-# Seven, not five: the search was re-run building each candidate through THIS builder rather than from
-# cached sleeve series, because the first pass scaled its variants itself and produced a 5/5 that
-# delivered 2.14 when it was actually assembled. Through the shipping path the ceiling is 4/5 and
-# adding EM equity and duration back is worth +0.14 Sharpe over the five-index book.
+# WHAT THE DEPLOYED LEG SELLS. The research book stays all eighteen sleeves — the breadth study, the
+# placebo and the cost ladder are all measured on it — while the leg the master book holds sells
+# variance on WHOLE CLASSES: index, international and rates. Not a list of tickers, which is not
+# something §2 would accept as "the rule by which an asset enters your universe", but a sentence a desk
+# can defend: this book sells index, international and rates variance and leaves single names and
+# commodities alone. Single names carry the widest vega spreads in this universe, and the commodity
+# sleeves are the ones whose implied vol reprices out of a calm S&P, which is exactly the event the
+# shared VIX gate cannot see.
 SHIPPED_CLASSES = ("eq_index", "intl", "rates")
 SHIPPED_SLEEVES = [sym for _, sym, _, cls, _ in UNIVERSE if cls in SHIPPED_CLASSES]
 
@@ -321,9 +342,12 @@ def main():
         print(f"  ladder {name}: Sharpe {s['sharpe_ann']:+.2f}  DD {s['max_dd']:+.1%}  "
               f"(caps DD but de-risks into the vol-mean-reversion recovery)")
 
-    # --- COST ROBUSTNESS: make the cost accounting explicit and committed, so a reviewer (human or AI)
-    # cannot mistake the naked (var_cap=1e9, wing_markup=0) book for a frictionless one. x1 is the shipped
-    # book; the x0->x1 gap IS the per-leg vega cost already charged; the edge survives far wider spreads. ---
+    # --- COST ROBUSTNESS, for BOTH constructions. x1 is what ships; the x0->x1 gap IS the per-leg vega
+    # cost already charged. The research (ungated, all-sleeve) book is the one that used to be measured
+    # here, and the §9 table then quoted its number for the leg the book actually holds — a different
+    # construction with a different cost profile, because the gate flattens and re-enters the swap and
+    # every one of those switches crosses the spread. Both are measured now and labelled by name. ---
+    gate = short_vol_gate(book.index)
     print("\n=== COST ROBUSTNESS (vega-spread multiplier; x1 = shipped, realistic per-leg cost) ===")
     cost_rows = []
     for mult in (0.0, 1.0, 2.0, 3.0, 5.0):
@@ -334,14 +358,20 @@ def main():
             except Exception:
                 pass
         sm = summarise(book_from(rr), PPY_BOOK)
+        sg = summarise(gated_book({k: v for k, v in rr.items() if k in SHIPPED_SLEEVES}, gate,
+                                  vega_mult=mult), PPY_BOOK)
         tag = ("gross, NO option cost" if mult == 0 else
                "SHIPPED - realistic per-leg spread" if mult == 1 else f"{mult:.0f}x wider than modelled")
         cost_rows.append({"cost_mult": mult, "sharpe": round(sm["sharpe_ann"], 2),
-                          "max_dd": round(sm["max_dd"], 4), "note": tag})
-        print(f"  x{mult:.0f}  Sharpe {sm['sharpe_ann']:+.2f}  DD {sm['max_dd']:+.0%}   {tag}")
+                          "max_dd": round(sm["max_dd"], 4),
+                          "sharpe_deployed": round(sg["sharpe_ann"], 2),
+                          "max_dd_deployed": round(sg["max_dd"], 4), "note": tag})
+        print(f"  x{mult:.0f}  research book Sharpe {sm['sharpe_ann']:+.2f} (DD {sm['max_dd']:+.0%})   "
+              f"DEPLOYED leg Sharpe {sg['sharpe_ann']:+.2f} (DD {sg['max_dd']:+.0%})   {tag}")
     pd.DataFrame(cost_rows).to_csv(VOLPREM_DIR / "volprem_cost_robustness.csv", index=False)
-    print(f"  -> {cost_rows[0]['sharpe'] - cost_rows[1]['sharpe']:+.2f} Sharpe gap (x0->x1) IS the option "
-          f"cost already charged; edge survives 3x wider spreads ({cost_rows[3]['sharpe']:+.2f})")
+    print(f"  -> {cost_rows[0]['sharpe'] - cost_rows[1]['sharpe']:+.2f} / "
+          f"{cost_rows[0]['sharpe_deployed'] - cost_rows[1]['sharpe_deployed']:+.2f} Sharpe gap (x0->x1) IS "
+          f"the option cost already charged, research / deployed")
 
     pdf.to_csv(VOLPREM_DIR / "volprem_book_sleeves.csv", index=False)
     # Publish both the raw premium (`ret`) and the deployed series (`ret_gated`): the regime gating is part
@@ -351,7 +381,6 @@ def main():
     # eighteen sleeves, and each sleeve's own curve for the events the VIX cannot see. `ret_gated` is
     # rebuilt through the sleeves rather than multiplied onto `ret`, so every switch pays the vega spread.
     # The raw column stays intact: the master reads `ret_gated`, run_ml_book_contribution reads `ret`.
-    gate = short_vol_gate(book.index)
     deployed = gated_book({k: v for k, v in rets.items() if k in SHIPPED_SLEEVES}, gate)
     own_live = np.mean([own_curve_gate(naive_dt(implied(s, y)), underlying_bars(u, c)["close"].index).mean()
                         for s, y, u, c, _ in UNIVERSE])

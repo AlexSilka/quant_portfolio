@@ -166,6 +166,10 @@ def bab_backtest(px: pd.DataFrame, weights: pd.DataFrame, *, exec_lag: int = 2,
         imp_cost = pd.Series(0.0, index=w.index)
     model = resolve_carry(carry, px, borrow_bps_annual=borrow_bps_annual, where="bab_backtest")
     carry_pnl = model.pnl(w, ppy)
-    cost = lin_cost + imp_cost - carry_pnl                 # carry_pnl is signed: a short can collect
-    return {"net": gross_ret - cost, "gross": gross_ret, "turnover": turn,
-            "carry": -carry_pnl, "cost": cost, "weights": w}
+    # trading and holding are separate keys, for the reason spelled out in `xsect.xs_backtest`: a book
+    # that COLLECTS funding has a negative combined "cost", and anything that scales cost to stress
+    # execution then scales the credit the wrong way. net is the same number either way.
+    cost = lin_cost + imp_cost
+    carry_cost = -carry_pnl                                # signed: a short can collect
+    return {"net": gross_ret - cost - carry_cost, "gross": gross_ret, "turnover": turn,
+            "carry": carry_cost, "cost": cost, "weights": w}

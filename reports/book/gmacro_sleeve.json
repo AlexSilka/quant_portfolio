@@ -1,0 +1,12 @@
+{
+  "classes": [
+    "commodities"
+  ],
+  "dropped_emfx": [
+    "USD/TRY",
+    "USD/BRL",
+    "USD/INR",
+    "USD/PLN",
+    "USD/CNH"
+  ]
+}

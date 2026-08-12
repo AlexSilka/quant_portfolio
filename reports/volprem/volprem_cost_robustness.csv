@@ -1,6 +1,6 @@
-cost_mult,sharpe,max_dd,note
-0.0,1.31,-0.7731,"gross, NO option cost"
-1.0,0.93,-0.7696,SHIPPED - realistic per-leg spread
-2.0,0.55,-0.7773,2x wider than modelled
-3.0,0.17,-0.8215,3x wider than modelled
-5.0,-0.55,-0.9893,5x wider than modelled
+cost_mult,sharpe,max_dd,sharpe_deployed,max_dd_deployed,note
+0.0,1.29,-0.7734,4.76,-0.1544,"gross, NO option cost"
+1.0,0.85,-0.7701,4.0,-0.2282,SHIPPED - realistic per-leg spread
+2.0,0.41,-0.7977,3.2,-0.3288,2x wider than modelled
+3.0,-0.02,-0.8731,2.39,-0.4143,3x wider than modelled
+5.0,-0.82,-0.9973,0.85,-0.6554,5x wider than modelled

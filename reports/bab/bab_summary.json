@@ -8,7 +8,7 @@
       "top_n": 100,
       "exec_lag": 2,
       "cost_bps_per_side": 6.0,
-      "winsor": 1.0,
+      "winsor": Infinity,
       "window": [
         "2020-01-01",
         "2026-07-31"
@@ -16,87 +16,85 @@
       "ppy": 365
     },
     "data_integrity": {
-      "artifact_name_days": 24,
+      "artifact_name_days": 0,
       "inf_name_days": 0,
-      "beta_neutral_sharpe_RAW": 0.677,
-      "beta_neutral_sharpe_CLEAN": 0.771
+      "beta_neutral_sharpe_RAW": 0.635,
+      "beta_neutral_sharpe_CLEAN": 0.635
     },
     "sign": {
-      "dollar_neg_beta": 0.188,
-      "dollar_pos_beta": -0.179
+      "dollar_neg_beta": 0.174,
+      "dollar_pos_beta": -0.243
     },
     "sharpe": {
-      "dollar_neutral_beta": 0.188,
-      "dollar_neutral_vol": 0.101,
-      "dollar_neutral_skew_lottery_ctrl": -0.09,
-      "beta_neutral_FP": 0.771
+      "dollar_neutral_beta": 0.174,
+      "dollar_neutral_vol": -0.419,
+      "dollar_neutral_skew_lottery_ctrl": -0.641,
+      "beta_neutral_FP": 0.635
     },
-    "dollar_book_residual_beta": -0.609,
-    "beta_neutral_net_beta": 0.028,
+    "dollar_book_residual_beta": -0.657,
+    "beta_neutral_net_beta": 0.037,
     "beta_neutral_mc": {
-      "sharpe_p5": 0.16836522856272226,
-      "sharpe_p50": 0.7946432455266518,
-      "sharpe_p95": 1.421521925033132
+      "sharpe_p5": 0.044076485336868615,
+      "sharpe_p50": 0.6399659724223214,
+      "sharpe_p95": 1.2838959514822967
     },
-    "beta_neutral_maxdd": -0.239,
+    "beta_neutral_maxdd": -0.293,
     "per_year": {
-      "2020": 2.17,
-      "2021": 1.56,
-      "2022": -0.37,
-      "2023": 1.21,
-      "2024": 1.15,
-      "2025": -0.01,
-      "2026": -2.17
+      "2020": 2.16,
+      "2021": 1.17,
+      "2022": -0.74,
+      "2023": 1.23,
+      "2024": 0.76,
+      "2025": -0.13,
+      "2026": -1.23
     },
     "placebo": {
-      "beta_neutral_real": 0.771,
-      "beta_neutral_placebo_mean": 0.087,
-      "beta_neutral_placebo_p95": 0.607,
-      "beta_neutral_real_pctile": 99.0,
-      "dollar_real": 0.188,
-      "dollar_real_pctile": 74.0,
-      "placebo_fdr_at_0.5": 0.08
+      "beta_neutral_real": 0.635,
+      "beta_neutral_placebo_mean": -1.22,
+      "beta_neutral_placebo_p95": -0.274,
+      "beta_neutral_real_pctile": 100.0,
+      "dollar_real": 0.174,
+      "dollar_real_pctile": 100.0,
+      "placebo_fdr_at_0.5": 0.0
     },
     "walk_forward": {
-      "in_sample_best": 0.937,
-      "wf_oos": 0.264,
+      "in_sample_best": 0.797,
+      "wf_oos": 0.094,
       "n_refits": 9,
       "n_grid_trials": 18,
-      "deflated_sharpe": 0.561
+      "deflated_sharpe": 0.493
     },
     "cost_sensitivity": {
-      "1x": 0.771,
-      "2x": 0.744,
-      "3x": 0.716
+      "1x": 0.635,
+      "2x": 0.577,
+      "3x": 0.52
     },
-    "breakeven_cost_mult_to_0.5": null,
+    "breakeven_cost_mult_to_0.5": 3.5,
     "orthogonalisation": {
-      "corr_beta_vol": 0.136,
-      "corr_beta_skew": 0.069,
-      "corr_vol_skew": 0.518,
-      "beta_on_skew_alpha_ann": 0.1324,
-      "beta_on_skew_alpha_t": 2.0,
-      "vol_on_skew_alpha_ann": 0.0243,
-      "vol_on_skew_alpha_t": 0.44,
-      "beta_on_vol_slope": 0.14,
-      "beta_on_vol_alpha_t": 1.96
+      "corr_beta_vol": 0.124,
+      "corr_beta_skew": 0.106,
+      "corr_vol_skew": 0.606,
+      "beta_on_skew_alpha_ann": 0.1225,
+      "beta_on_skew_alpha_t": 1.81,
+      "vol_on_skew_alpha_ann": -0.0052,
+      "vol_on_skew_alpha_t": -0.1,
+      "beta_on_vol_slope": 0.127,
+      "beta_on_vol_alpha_t": 1.78
     },
     "corr_to_book": {
-      "book": 0.299,
-      "volprem": 0.117,
-      "xs_momentum": -0.079,
-      "breakout": 0.068,
-      "crisis": 0.059,
-      "gmacro": 0.003,
-      "bab": 0.609
+      "book": 0.143,
+      "volprem": 0.036,
+      "xs_momentum": -0.11,
+      "trend_momentum": 0.382,
+      "breakout": 0.05
     },
     "book_lift_by_weight": {
-      "0%": 4.023,
-      "15%": 3.901,
-      "30%": 3.628,
-      "50%": 2.974
+      "0%": 3.172,
+      "15%": 3.158,
+      "30%": 3.013,
+      "50%": 2.518
     },
-    "beta_neutral_sharpe_BTC_market": 0.492
+    "beta_neutral_sharpe_BTC_market": 0.304
   },
   "equity": {
     "config": {
@@ -117,93 +115,91 @@
     "data_integrity": {
       "artifact_name_days": 4,
       "inf_name_days": 0,
-      "beta_neutral_sharpe_RAW": 0.293,
-      "beta_neutral_sharpe_CLEAN": 0.27
+      "beta_neutral_sharpe_RAW": 0.275,
+      "beta_neutral_sharpe_CLEAN": 0.251
     },
     "sign": {
-      "dollar_neg_beta": -0.45,
-      "dollar_pos_beta": 0.388
+      "dollar_neg_beta": -0.488,
+      "dollar_pos_beta": 0.353
     },
     "sharpe": {
-      "dollar_neutral_beta": -0.45,
-      "dollar_neutral_vol": -0.454,
-      "dollar_neutral_skew_lottery_ctrl": -0.466,
-      "beta_neutral_FP": 0.27
+      "dollar_neutral_beta": -0.488,
+      "dollar_neutral_vol": -0.495,
+      "dollar_neutral_skew_lottery_ctrl": -0.538,
+      "beta_neutral_FP": 0.251
     },
     "dollar_book_residual_beta": -1.23,
     "beta_neutral_net_beta": 0.027,
     "beta_neutral_mc": {
-      "sharpe_p5": -0.09978968611246741,
-      "sharpe_p50": 0.276298687655004,
-      "sharpe_p95": 0.6440652727255437
+      "sharpe_p5": -0.1182659599571917,
+      "sharpe_p50": 0.2577568144400898,
+      "sharpe_p95": 0.6254171010188957
     },
-    "beta_neutral_maxdd": -0.462,
+    "beta_neutral_maxdd": -0.467,
     "per_year": {
-      "2010": -0.09,
-      "2011": 2.14,
-      "2012": 0.68,
-      "2013": 1.02,
-      "2014": 0.78,
-      "2015": -1.16,
-      "2016": 0.81,
-      "2017": 0.74,
-      "2018": -0.45,
-      "2019": 0.9,
-      "2020": 0.41,
-      "2021": 0.97,
-      "2022": -0.24,
-      "2023": -1.4,
-      "2024": -0.35,
-      "2025": -0.87,
-      "2026": -0.12
+      "2010": -0.11,
+      "2011": 2.11,
+      "2012": 0.66,
+      "2013": 0.99,
+      "2014": 0.76,
+      "2015": -1.19,
+      "2016": 0.79,
+      "2017": 0.73,
+      "2018": -0.47,
+      "2019": 0.88,
+      "2020": 0.4,
+      "2021": 0.96,
+      "2022": -0.25,
+      "2023": -1.41,
+      "2024": -0.37,
+      "2025": -0.88,
+      "2026": -0.13
     },
     "placebo": {
-      "beta_neutral_real": 0.27,
-      "beta_neutral_placebo_mean": 0.524,
-      "beta_neutral_placebo_p95": 0.733,
-      "beta_neutral_real_pctile": 2.0,
-      "dollar_real": -0.45,
-      "dollar_real_pctile": 4.0,
-      "placebo_fdr_at_0.5": 0.58
+      "beta_neutral_real": 0.251,
+      "beta_neutral_placebo_mean": 0.431,
+      "beta_neutral_placebo_p95": 0.702,
+      "beta_neutral_real_pctile": 21.0,
+      "dollar_real": -0.488,
+      "dollar_real_pctile": 31.0,
+      "placebo_fdr_at_0.5": 0.36
     },
     "walk_forward": {
-      "in_sample_best": 0.449,
-      "wf_oos": 0.147,
+      "in_sample_best": 0.432,
+      "wf_oos": 0.122,
       "n_refits": 34,
       "n_grid_trials": 18,
-      "deflated_sharpe": 0.021
+      "deflated_sharpe": 0.014
     },
     "cost_sensitivity": {
-      "1x": 0.27,
-      "2x": 0.243,
-      "3x": 0.216
+      "1x": 0.251,
+      "2x": 0.214,
+      "3x": 0.178
     },
     "breakeven_cost_mult_to_0.5": 0.5,
     "orthogonalisation": {
       "corr_beta_vol": 0.191,
       "corr_beta_skew": 0.02,
       "corr_vol_skew": 0.163,
-      "beta_on_skew_alpha_ann": 0.044,
-      "beta_on_skew_alpha_t": 1.23,
-      "vol_on_skew_alpha_ann": -0.0607,
-      "vol_on_skew_alpha_t": -1.69,
+      "beta_on_skew_alpha_ann": 0.0412,
+      "beta_on_skew_alpha_t": 1.15,
+      "vol_on_skew_alpha_ann": -0.0654,
+      "vol_on_skew_alpha_t": -1.82,
       "beta_on_vol_slope": 0.188,
-      "beta_on_vol_alpha_t": 1.6
+      "beta_on_vol_alpha_t": 1.55
     },
     "corr_to_book": {
-      "book": -0.003,
-      "volprem": 0.066,
-      "xs_momentum": 0.042,
-      "breakout": 0.007,
-      "crisis": -0.035,
-      "gmacro": -0.056,
-      "bab": 0.015
+      "book": 0.177,
+      "volprem": 0.065,
+      "xs_momentum": 0.008,
+      "trend_momentum": 0.225,
+      "breakout": 0.031
     },
     "book_lift_by_weight": {
-      "0%": 4.361,
-      "15%": 4.349,
-      "30%": 4.13,
-      "50%": 3.299
+      "0%": 3.649,
+      "15%": 3.513,
+      "30%": 3.209,
+      "50%": 2.469
     }
   }
 }

@@ -48,13 +48,15 @@ from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.risk.stress import hedge_weight  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
 from src.book_id import fingerprint as book_fingerprint  # noqa: E402
-from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.risk.sizing import held_weight_turnover, vol_target_scale  # noqa: E402
 
 PPY = 365
-START_REPORT = "2011-01-01"        # 15-year reporting window — shows the strategy holds over a long span, not
-                                   # just the last decade. Pre-2016 leans on reconstructed crisis/gmacro signals
-                                   # (a strategy-logic backtest for those legs; only 2020+ is fully live), flagged
-                                   # in the report and dashboard. The §11 scorecard is still the frozen OOS block.
+START_REPORT = "2011-01-01"        # the reporting window opens as early as any two legs both exist, so the
+                                   # book is shown over a long span rather than the last decade. The early
+                                   # years are NOT the four-family book — the crypto legs list in 2020 and
+                                   # until then this is the long-history legs only, which the dashboard and
+                                   # REPORT state in the same breath as the headline. The §11 scorecard is
+                                   # the frozen OOS block either way.
 OOS = pd.Timestamp(OOS_START).tz_localize(None)   # frozen final OOS block boundary (2024-07-01)
 R = bo.REPORTS
 
@@ -64,122 +66,68 @@ LADDER_RESTORE = -0.04             # re-risk only once drawdown recovers above t
 DAILY_LOSS_LIMIT = -0.04           # circuit breaker: flatten the day AFTER a book loss worse than this
 GROSS_CAP = 2.0                    # max book gross exposure (leverage limit)
 
-# (label, file, column) — each family's honest published headline (avoid the capped fake-Sharpe VRP col)
+# (label, file, column) — the composition, and one line per leg saying what that leg IS.
+#
+# NO MEASURED NUMBERS LIVE IN THIS FILE. Every Sharpe, drawdown, CAGR and target count that used to be
+# written into these comments described a book that had since been rebuilt, and a comment is the one
+# artifact nothing recomputes: the block below claimed trend and carry were not in the book while the
+# list underneath it held trend, and quoted a final-block scorecard that disagreed with the JSON this
+# same script writes. Numbers belong in the artifacts that are regenerated with the book —
+# reports/master_book_summary.json, the rendered REPORT.md, the dashboard — and the reasoning belongs
+# here. If a statement here needs a number to be true, it is in the wrong file.
+#
+# HOW THE COMPOSITION WAS CHOSEN. §5 requires at least four structurally distinct families, and the
+# brief's closing line forbids tuning against the final block: "Do not tune against the final
+# out-of-sample block to reach a number." So every eligible subset is scored on the IN-SAMPLE window
+# only (scripts/run_composition_search.py publishes all of them, winners and losers, through this
+# module's own assembly), and ties are broken on breadth — an a-priori good, and what §5 asks for —
+# never on what the block would say. What the choice cost, and what the block then printed, is in
+# reports/book/composition_search.json and §6d-ter, measured.
 FAMILIES = [
-    # TREND IS NOT IN THE BOOK. It was, and its series is still built and published by
-    # scripts/trend/run_trend_in_portfolio.py — it is dropped here, not deleted, so the counterfactual
-    # stays reproducible (`run_trend_short_leg.py`, REPORT §6d-ter).
-    #
-    # Why it was dropped, stated because the SIX-family composition is the one thing in this book chosen
-    # against the scorecard rather than on a-priori grounds: with all eight the book scores 3/5 full and
-    # 4/5 OOS. Dropping trend fixes the full window (5/5) and does nothing for the block; dropping carry
-    # as well is what lifts the block's months-in-profit from 76.9% to 80.8%. Of 37 single- and
-    # double-removal configurations tested, exactly two reach 5/5 on both windows (trend+carry and
-    # trend+BAB) — and finding a passing configuration in a 37-way search is itself weak evidence, which
-    # §6d-ter states rather than hides. Nothing about either leg says drop me on its own merits.
-    #
-    # What the SIX-family book gives up, and the report says so in §6d-ter: trend was the ONLY family
-    # spanning both asset classes, and carry was the fourth-highest standalone of the eight (1.22).
-    # Three of the six that remain are crypto-only and the rest are vol/macro overlays, so "cross-asset"
-    # now rests on vol-prem's US underlyings and global-macro's EM-FX rather than on a leg that trades
-    # both. RETURN did not fall — CAGR 39.8% -> 43.9% full, 30.6% -> 34.5% on the block, because six legs
-    # at equal risk run hotter (vol 9.9% -> 11.1%). That is also why block Sharpe reads 3.32 -> 3.07; at
-    # matched risk the eight-family book edges it by 1.7pp of CAGR. The price is concentration (volprem
-    # 56% -> 64% of P&L) and breadth, not money.
-    # CARRY IS NOT IN THE BOOK either — dropped with trend, for the same stated reason and in the same
-    # breath: those two removals are the only pair (of 37 configurations tested) that clears all five
-    # targets on BOTH windows. Its series is still built and published by scripts/carry/*, so the
-    # counterfactual stays one line away. See docs/strategies/CARRY.md and REPORT §6d-ter.
-    # volprem leg = the DIVERSIFIED book across 18 Cboe underlyings with clean data (equity indices,
-    # single names, international, commodities incl. gold-miners VXGDX, rates; from 2005). Crypto, FX, and
-    # discontinued energy VXXLE are excluded on frozen ex-ante rules (crypto's intraday path is unhedgeable
-    # for short-vol; free EURUSD OHLC is corrupt; VXXLE ended 2022), not on Sharpe — and adding free vol
-    # indices lifts headline Sharpe but not the systemic -78% tail. Honest series, NET of per-leg vega
-    # spreads (COST_BY_CLASS index 1.0 / single 2.5 vol-pts/roll, realistic-to-conservative; the x0->x1
-    # gap in reports/volprem/volprem_cost_robustness.csv IS that charged cost). "Naked" (var_cap=1e9) =
-    # no bought tail hedge (full -78% tail), NOT costless. Realised leg is OHLC (path+gap),
-    # so its standalone Sharpe (~3.6) sits on a real -78% systemic-vol tail / -18 skew — it earns its slot
-    # by decorrelation, and its own tail argues for sitting at or below risk parity, not above. docs/strategies/VOLPREM.md.
-    # We read `ret_gated` — the deployed series with the VIX-backwardation regime gate that the strategy owns
-    # and publishes (raw `ret` stays available for the validation A/B). The gate is the strategy's timing
-    # signal, not a book-level risk overlay, so it lives in the volprem construction, not here.
+    # Short-vol / variance risk premium: a diversified book of capped variance swaps across the Cboe
+    # underlyings with clean OHLC. Crypto, FX and discontinued indices are excluded on frozen ex-ante
+    # rules (an unhedgeable intraday path; corrupt free OHLC; an index that stopped publishing), never on
+    # backtested Sharpe. Net of the per-leg vega spread, of the term-structure haircut, and of its own
+    # re-sizing; "naked" (no bought wing) means the systemic tail is UNHEDGED, not that it is free.
+    # `ret_gated` is the deployed series — the regime gate is this strategy's own timing signal, so it
+    # lives in the construction and pays the spread on every switch, not in the book's risk overlay.
+    # docs/strategies/VOLPREM.md.
     ("volprem", "volprem/volprem_book.parquet", "ret_gated"),
-    # x-sect leg = honest survivorship-free crypto+equity top-100 liquid momentum (standalone ~0.79).
-    # See docs/strategies/XSECT.md. (The BAB swap was tested and reverted — it traded smoothness for an
-    # unneeded Sharpe; x-sect is smoother. BAB stays a documented standalone source, docs/strategies/BAB.md.)
+    # Cross-sectional momentum on the survivorship-free top-N liquid crypto cross-section: long the
+    # winners, short the losers, dollar-neutral, funding charged from the venue's own archive.
+    # docs/strategies/XSECT.md.
     ("xs_momentum", "xs/xs_book.parquet", "ret"),
-    # global-macro leg = trend on EM FX + commodities — asset classes no other family trades. Only the
-    # OOS-validated edges are kept (per-strategy: EM-FX trend h1/h2 +0.85/+0.89, commodity trend +0.41/+0.83;
-    # xsect/reversal on these, and country-equity trend, were tested and dropped for no OOS edge). ~+0.13 to
-    # the book, so it diversifies genuinely — improves the worst month and Sharpe. See scripts/run_gmacro.py.
-    # THE COMPOSITION, chosen the way the brief allows and no other way. §5 requires at least four
-    # structurally distinct families, and the closing line forbids tuning against the final block:
-    # "Do not tune against the final out-of-sample block to reach a number." So all 163 eligible
-    # subsets were scored on the IN-SAMPLE window only. Several tie at 2/5 there; the tie is broken on
-    # breadth, which is an a-priori good and what §5 asks for, never on what the block would say.
-    #
-    # What that buys, stated because it is the deliverable's honest ceiling: 3/5 on the final block —
-    # Sharpe 2.62 (in band), drawdown -6.9%, worst month -4.4% all clear; months-in-profit 65% against
-    # 80% and a 3-month losing streak against 2 do not. 3/5 is also the BEST any of the 163 reaches, so
-    # nothing was given up by refusing to shop. In-sample score barely predicts the block at all
-    # (rank correlation +0.28), which is the finding behind the number.
-    #
-    # crisis-alpha, global-macro and carry are out on their own audited numbers (+0.38, +0.12, +0.30,
-    # the last with a drawdown past -100% at book leverage), and adding any of them lowers the block
-    # score rather than raising it. The frontier the brief asks for when targets are unreachable is in
-    # docs/AUDIT_LIVE_BOOK.md.
+    # Time-series trend on a point-in-time liquid crypto universe plus index ETFs and a point-in-time
+    # single-name equity book — the only leg here that spans both asset classes. docs/strategies/TREND.md.
     ("trend_momentum", "trend/trend_block_returns.parquet", "ret"),
+    # Channel breakouts: a time-series leg with a walk-forward ML confidence gate and a point-in-time
+    # cross-sectional leg, blended at equal RISK inside the family. docs/strategies/BREAKOUT.md.
     ("breakout", "breakout/bo_combined_portfolio.parquet", "ret"),
 ]
 
 
-# No family may exceed 1.5x equal risk weight. Derived from the family count rather than typed: it was
-# written as 1/8*1.5 for an eight-family book and stayed there when two legs were dropped, which read as
-# 1.13x equal weight rather than the 1.5x it claims. The hedge slot below is what can approach it now —
-# at its 1.5-slot ceiling that leg is 1.5/6.5 = 23.1% of the book against this 25.0% limit, so the ramp
-# sits inside the stated cap rather than quietly redefining it.
+# No family may exceed 1.5x equal risk weight. Derived from the family count rather than typed: written
+# out as a fraction for a book of a particular size, it stays behind when a leg leaves and then claims a
+# limit it is not enforcing.
 PER_FAMILY_CAP = 1.5 / len(FAMILIES)
 
-# Every family holds ONE equal-risk slot. The long-gamma hedge is the exception, and it is the only
-# weight in this book that is not a flat 1/N — stated here rather than buried in the assembly.
+# Every family holds ONE equal-risk slot. A long-gamma hedge is the exception the mechanism below exists
+# for, and it is the only weight in this book that would not be a flat 1/N.
 #
-# Why it is not flat. A hedge and an earner want opposite sizing rules. Through a calm decade the crisis
-# leg is the weakest earner in the book (standalone Sharpe ~0.6 against a book above 3), so a full slot
-# of it dilutes every calm month; through a crash it is the only leg paying. Held flat it cost 15pp of
-# CAGR to buy a worst month 2.4pp shallower, and — since the vol-premium leg gained its regime gate —
-# it also LENGTHENED the book's losing streak (2 months without it, 3 with) and cut months-in-profit
-# from 86% to 81%. The streak was the thing it was originally bought to fix; the gate now fixes it
-# better, and the hedge had gone from covering that failure to causing it.
+# Why a hedge is not held flat. A hedge and an earner want opposite sizing rules: through a calm decade a
+# crash hedge is the weakest earner in the book and dilutes every quiet month, and through a crash it is
+# the only leg paying. So its slot ramps on MARKET STRESS (src/risk/stress.py — the VIX term structure
+# and the S&P's drawdown from its trailing-year high, both read at t-1): a fraction of a slot when
+# nothing is moving, more than a slot when the curve inverts or the market is well off its high. It buys
+# the same average protection, concentrated at the times it pays for it. It is not performance-based
+# selection — no leg's P&L and no book P&L is an input — and rotating the stress path gives the whole
+# gain back, which is what says the timing rather than the smaller average is doing the work.
+# scripts/run_crisis_lab.py publishes the controls, the ramp's neighbourhood and what it is worth.
 #
-# So the slot is ramped on market stress (src/risk/stress.py — VIX term structure and the S&P's
-# drawdown from its trailing-year high, both read at t-1): a quarter slot when nothing is moving, a
-# slot and a half when the curve is inverted or the market is 12% off its high. The average is ~0.70,
-# so this buys the SAME average protection, at the times it pays for it. It is not performance-based
-# selection — no leg's P&L, and no book P&L, is an input — and rotating the stress path gives the whole
-# gain back, which is what says the timing rather than the smaller average is doing the work
-# (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
-# The long-gamma hedge is the one leg not held at a flat 1/N, and the reason is that a hedge and an earner
-# want opposite sizing rules. Through a calm decade this leg is the weakest earner in the book (standalone
-# ~0.5 against a book above 3), so a full slot dilutes every calm month; through a crash it is the only leg
-# paying. So the slot ramps on market stress (src/risk/stress.py — VIX term structure and the S&P's
-# drawdown from its trailing-year high, both read at t-1): a quarter slot when nothing is moving, a slot
-# and a half when the curve inverts or the market is 12% off its high, averaging ~0.70.
-#
-# It is better on every metric that measures the book rather than a threshold: CAGR 49.5% -> 57.0% on the
-# full window and 41.5% -> 47.2% on the frozen block, worst month -5.72% -> -5.10%, losing streak 3 -> 2,
-# months-in-profit 81.4% -> 84.6%, drawdown -8.3% -> -7.7%. The one thing it "costs" is that book Sharpe
-# rises past the brief's 2.5-4.0 band — a ceiling, not a risk. An earlier version of this file held the
-# hedge flat to stay under it, which is holding a weak leg to flatter a ratio, and that is not a risk
-# control.
-#
-# It is not performance-based selection — no leg's P&L and no book P&L is an input — and rotating the
-# stress path gives the whole gain back, which is what says the timing rather than the smaller average is
-# doing the work (scripts/run_crisis_lab.py publishes the controls and the ramp's neighbourhood).
-# Empty because the book no longer holds a hedge family. crisis-alpha was the only leg that ever
-# occupied this slot, and it is out of the composition: on the audited legs it scores +0.38 standalone
-# and adding it LOWERS the final block's target count rather than raising it. The mechanism stays —
-# a stress-ramped slot is the right shape for a hedge — so re-adding a long-gamma family is one line
-# here plus one in FAMILIES, and the import guard below still catches a name that answers to nothing.
+# Empty because the book holds no hedge family: crisis-alpha was the only leg that ever occupied this
+# slot and it is out of the composition. The mechanism stays — a stress-ramped slot is the right shape
+# for a hedge — so re-adding a long-gamma family is one line here plus one in FAMILIES, and the import
+# guard below still catches a name that answers to nothing.
 # Families that cleared their own validation and that the composition did NOT take. They are measured
 # here, on the book's window and at the book's per-leg risk, for one reason: the edge map used to print
 # a blank Sharpe for them, and a blank reads as "never tested" — which is the opposite of true. Being
@@ -187,7 +135,8 @@ PER_FAMILY_CAP = 1.5 / len(FAMILIES)
 # Nothing below enters the book: these series are scored, never stacked.
 VALIDATED_NOT_HELD = [
     ("carry",   "carry/carry_refined.parquet", "ret"),      # perp funding, dollar-neutral cross-section
-    ("gmacro",  "book/gmacro_sleeve.parquet",  "ret"),      # EM-FX + commodity trend
+    ("gmacro",  "book/gmacro_sleeve.parquet",  "ret"),      # macro trend; the live classes are published
+                                                            # in book/gmacro_sleeve.json by the run itself
     ("crisis",  "book/crisis_sleeve.parquet",  "ret"),      # managed-futures long gamma
     ("bab",     "bab/bab_book_c25.parquet",    "ret"),      # beta-neutral betting-against-beta, top-25
     # residual momentum is here rather than among the rejected families because it PASSES its own
@@ -249,12 +198,18 @@ def load(label, file, col):
 def _scale(net, target=VOL_TARGET_ANNUAL):
     """Trailing (lagged) vol-target scale factor — the leg's risk-parity weight, computable-at-bar.
 
+    Annualised on the LEG'S OWN observations per year, not a flat 365. Risk parity means every leg
+    carries the same annual risk, and a leg that prints on an exchange calendar carries √(365/252) less
+    of it than the nominal figure says — so sizing an exchange-calendar leg with √365 leaves it below the
+    target the crypto legs are held at, which is not parity, it is a quiet de-risking of whichever leg
+    happens to keep a shorter calendar. `ppy_of` is the same honest count the Sharpe uses.
+
     The 60-bar lookback was swept 10-250 and stays: shorter arms only look better before their burn-in,
     risk and re-sizing cost are matched, and none of them touches the failure a faster estimate is
     supposed to fix. The ceiling is the lever that does — it bounds how much leverage a quiet stretch can
     hand a leg just before a shock, so it caps the tail by construction. `scripts/run_volwindow_lab.py`
     holds the evidence for both."""
-    return vol_target_scale(net, target, PPY, cap=VOL_SCALE_CAP)
+    return vol_target_scale(net, target, ppy_of(net), cap=VOL_SCALE_CAP)
 
 
 def rescale(net, target=VOL_TARGET_ANNUAL):
@@ -422,14 +377,11 @@ def hold_started(df):
     """A leg that has started keeps its weight on the days its own market is shut, earning nothing,
     instead of the book renormalising onto whoever happens to be open.
 
-    Averaging over the legs that PRINT each day reads well until you price it. Crypto trades 365 days
-    and the Cboe and equity legs about 252, so on every US holiday the book silently doubled the crypto
-    weight and undid it the next morning — 89x of round-trip rebalancing a year in the live book and 118x
-    in the master, none of it charged anywhere, because each family's cost model only sees that family's
-    own trades. No desk resizes the whole book because the NYSE is shut; it holds. Holding is also better
-    on the metrics that were not the point: master Sharpe 4.31 -> 4.49, worst month -6.0% -> -4.7%,
-    drawdown -8.7% -> -7.8%, months-in-profit 83.5% -> 85.1%, and the assembly turnover it removes was
-    worth 2.6pp a year at the repo's own 2bps floor and 6.3pp at 5bps.
+    Averaging over the legs that PRINT each day reads well until you price it. Crypto trades 365 days a
+    year and the Cboe and equity legs about 252, so on every US holiday the book silently doubled the
+    crypto weight and undid it the next morning — round-trip rebalancing charged nowhere, because each
+    family's cost model only sees that family's own trades. No desk resizes the whole book because the
+    NYSE is shut; it holds.
 
     A leg is 'started' from its first print, so the union window is unchanged — legs still join in the
     year they list, they simply stop dropping back out on other markets' holidays."""
@@ -451,11 +403,19 @@ def book_weights(df, scales, slots=None):
     return (scales * slots).where(df.notna()).div(live, axis=0)
 
 
-def book_turnover(w):
-    """Book rebalancing turnover per day, round-trip (Σ|Δweight|), from the weights above. Unsmoothed
-    and unannualised — consumers annualise. Intra-sleeve turnover is charged inside every family's own
-    net returns and reported per-family in the deep-dives (§9); this is the assembly layer only."""
-    return w.fillna(0.0).diff().abs().sum(axis=1).rename("turnover")
+def book_turnover(w, legs=None):
+    """Book rebalancing turnover per day, round-trip, from the weights above. Unsmoothed and
+    unannualised — consumers annualise. Intra-sleeve turnover is charged inside every family's own net
+    returns and reported per-family in the deep-dives (§9); this is the assembly layer only.
+
+    Pass `legs` and the DRIFT is counted too, which is what the legs themselves now charge: a weight
+    held flat still has to be traded back onto, because the leg that earned more than the book is a
+    larger share of it by the close. `Σ|Δw|` alone sees only the bars the target moves, so the assembly
+    layer was charged less than it trades — the same shape `xsect.held_turnover` and `backtest.engine`
+    fixed one layer down. Left None it is the old target-only figure, for a caller that wants it."""
+    if legs is None:
+        return w.fillna(0.0).diff().abs().sum(axis=1).rename("turnover")
+    return held_weight_turnover(w, legs).rename("turnover")
 
 
 def describe(s, mc=True):
@@ -473,15 +433,15 @@ def describe(s, mc=True):
     return out
 
 
-def assemble(start=START_REPORT):
-    """The canonical leg matrix: every family's published series rescaled to the common per-leg vol
-    target. Returns (rescaled_legs, scale_factors) — the equal-weight mean of the legs IS the book.
+def assemble_from(raw: dict, start=START_REPORT):
+    """The canonical leg matrix for a given set of published series, rescaled to the common per-leg vol
+    target. Returns (rescaled_legs, scale_factors) — the slot-weighted mean of the legs IS the book.
 
-    UNION over the reporting window, not the intersection: crypto-perp legs (carry, breakout) only
-    exist from 2020, so `.dropna()` would collapse the 15-year book to 2020+. Average over the families
-    live each day (>=2), so 2011-2019 runs on trend/volprem/x-sect (+ reconstructed crisis/gmacro) and the
-    crypto-perp legs join in 2020."""
-    raw = {lab: load(lab, f, c) for lab, f, c in FAMILIES}
+    UNION over the reporting window, not the intersection: the crypto-perp legs only exist from 2020, so
+    `.dropna()` would collapse a 15-year book to 2020+. Average over the families live each day (>=2).
+
+    Takes the series as an argument so that a study over subsets of families — the composition search —
+    assembles its candidates through THIS function rather than through a copy of it."""
     raw = {k: v for k, v in raw.items() if v is not None}
     # Each leg's scale is computed on its OWN calendar, so the union below is where the gaps appear —
     # and a gap must carry the last scale, not drop to nothing. Held with the returns, the two agree and
@@ -495,6 +455,31 @@ def assemble(start=START_REPORT):
     return df[keep], scales[keep]
 
 
+def assemble(start=START_REPORT):
+    """`assemble_from` on the book's own composition."""
+    return assemble_from({lab: load(lab, f, c) for lab, f, c in FAMILIES}, start)
+
+
+def book_from_legs(df, scales, leverage=BOOK_LEVERAGE):
+    """THE book, from a leg matrix: slot-weighted mean, MINUS what the assembly layer's own trading
+    costs, then the §8 overlay — which pays for its own cutting and restoring as well.
+
+    Every consumer that scores a book goes through here. The composition search used to re-derive it and
+    got a different number for the same composition — no `hold_started`, no rebalance charge — so the
+    one choice in this deliverable made against the scorecard was made on a book that is not the one
+    that ships. One function, and that cannot happen.
+
+    Returns (managed, gross_stack, weights, gross_exposure, turnover, n_breaker_days)."""
+    slots = slot_weights(df)
+    w = book_weights(df, scales, slots)
+    turn = book_turnover(w, df)
+    raw_ew = book_stack(df, slots) - turn * (BOOK_REBALANCE_BPS / 1e4)
+    managed, gross, n_breaker = risk_overlay(raw_ew, leverage=leverage)
+    overlay_turn = gross.diff().abs().fillna(0.0)
+    managed = (managed - overlay_turn * (BOOK_REBALANCE_BPS / 1e4)).rename("ret")
+    return managed, raw_ew, w, gross, turn, n_breaker
+
+
 def main():
     df, scales = assemble()
     live = df.notna().sum(axis=1)
@@ -502,23 +487,14 @@ def main():
           f"({len(df)} days; {int(live.min())}-{int(live.max())} live/day)\n")
 
     # risk parity with no performance-based selection: every EARNER at 1/N, the long-gamma hedge at the
-    # stress-ramped slot above (HEDGE_SLOT) — a market-state rule, not a P&L one.
+    # stress-ramped slot above (HEDGE_SLOT) — a market-state rule, not a P&L one. The assembly layer
+    # trades, so the assembly layer pays: `book_from_legs` charges its re-weighting and the overlay's
+    # own cutting and restoring, and it is the ONE place any consumer assembles this book.
     slots = slot_weights(df)
-    w = book_weights(df, scales, slots)
-    turn = book_turnover(w)
+    managed, raw_ew, w, gross, turn, n_breaker = book_from_legs(df, scales)
     ann_turn = float(turn.mean() * PPY)
-    # The assembly layer trades, so the assembly layer pays. Each family charges its own trades inside
-    # its own series, but nothing was charging the layer above them — the vol-target resizing every leg
-    # daily and the hedge slot ramping with market stress. Left free it is a subsidy that grows with
-    # exactly the knobs one is most tempted to turn.
-    rebal = turn * (BOOK_REBALANCE_BPS / 1e4)
-    raw_ew = book_stack(df, slots) - rebal
-    managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
-    # and the overlay is a trade as well: cutting to a third of gross and restoring later moves two
-    # thirds of the book each way, at the same price as any other rebalance
     overlay_turn = gross.diff().abs().fillna(0.0)
-    managed = (managed - overlay_turn * (BOOK_REBALANCE_BPS / 1e4)).rename("ret")
-    ann_rebal_cost = float(rebal.mean() * PPY + overlay_turn.mean() * PPY * BOOK_REBALANCE_BPS / 1e4)
+    ann_rebal_cost = float((turn.mean() + overlay_turn.mean()) * PPY * BOOK_REBALANCE_BPS / 1e4)
     stack_vol = float(raw_ew.std(ddof=1) * np.sqrt(ppy_of(raw_ew)))
 
     print("=== GROSS PREMIUM STACK (equal-weight risk parity, no overlay, unlevered) ===")
@@ -643,6 +619,12 @@ def main():
         # scripts/check_freshness.py fails the build when a derived artifact still carries an older one
         "book_id": book_fingerprint(managed),
         "families": list(df.columns), "window": [str(df.index.min().date()), str(df.index.max().date())],
+        # which legs are live in which era, so the report can SAY which rather than name them by hand.
+        # The sentence "the pre-2020 window runs <legs>" was typed and went on naming legs the book had
+        # dropped years earlier, while the family COUNT beside it stayed right because that was derived.
+        "families_by_era": {
+            "pre_2020": [c for c in df.columns if df[c].first_valid_index() < pd.Timestamp("2020-01-01")],
+            "from_2020": [c for c in df.columns if df[c].first_valid_index() >= pd.Timestamp("2020-01-01")]},
         "oos_start": str(OOS.date()),
         "master": {**m, **{f"full_{k}": v for k, v in sc_full.items()}},
         "scorecard_full": sc_full, "scorecard_oos": sc_oos,

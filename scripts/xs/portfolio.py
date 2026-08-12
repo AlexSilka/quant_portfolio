@@ -18,10 +18,13 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CACHE_DIR, SEED, TREND_DIR, XS_DIR  # noqa: E402
+from src.config import (BOOK_REBALANCE_BPS, CACHE_DIR, SEED, TREND_DIR,  # noqa: E402
+                        XS_DIR, XS_VOL_TARGET)
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
+from src.risk.sizing import (equal_risk_combine, held_weight_turnover,  # noqa: E402
+                             resize_cost, vol_target_scale)
 from src.sleeves.xsect import (mom, risk_adj_mom, blend_rank, xs_backtest,  # noqa: E402
-                               vol_target, top_n_liquid)
+                               top_n_liquid)
 # trade the N most-liquid names at each bar (survivorship-free) — a focused liquid universe beats
 # the diluted full universe; ~100 is the robust zone (top-10/20 is too concentrated, all-300 too
 # noisy). Not today's top-N (that would be selection bias) — top-N by *trailing* liquidity.
@@ -66,20 +69,47 @@ def _signal(cfg, px, bpd):
 # funding, so shorting them collects more than leading costs.
 
 
-def sleeve_daily(tag, cfg):
-    """Vol-targeted net return of one sleeve, compounded to a daily series."""
-    kind, tf = tag.split("_")
-    px = pd.read_parquet(CACHE / f"{tag}_close.parquet")
-    advp = CACHE / f"{tag}_adv.parquet"
-    adv = pd.read_parquet(advp) if advp.exists() else None
-    bpd, ppy, cost = BARS_PER_DAY[tf], PPY[kind][tf], COST_BPS[kind]
-    sig = top_n_liquid(_signal(cfg, px, bpd), adv, TOP_N.get(kind, 0), bpd)
-    bt = xs_backtest(px, sig, top_frac=cfg["tf"], weighting=cfg["wt"], rebal=max(1, cfg["rb"] * bpd),
-                     cost_bps=cost, adv=adv, impact_k=0.1 if adv is not None else 0.0)
-    netv = vol_target(bt["net"], ppy)          # net already carries funding — xs_backtest charges it
+_BT: dict[str, tuple] = {}          # one backtest per sleeve, reused by the cost ladder below
+
+
+def sleeve_bt(tag, cfg):
+    """The sleeve's raw backtest frame — run once per sleeve and held, because the cost ladder asks
+    the same sleeve for a hundred different cost multiples and re-running the panel each time is the
+    difference between a script that finishes and one that does not."""
+    key = f"{tag}|{sorted(cfg.items())}"
+    if key not in _BT:
+        kind, tf = tag.split("_")
+        px = pd.read_parquet(CACHE / f"{tag}_close.parquet")
+        advp = CACHE / f"{tag}_adv.parquet"
+        adv = pd.read_parquet(advp) if advp.exists() else None
+        bpd, ppy, cost = BARS_PER_DAY[tf], PPY[kind][tf], COST_BPS[kind]
+        sig = top_n_liquid(_signal(cfg, px, bpd), adv, TOP_N.get(kind, 0), bpd)
+        bt = xs_backtest(px, sig, top_frac=cfg["tf"], weighting=cfg["wt"], rebal=max(1, cfg["rb"] * bpd),
+                         cost_bps=cost, adv=adv, impact_k=0.1 if adv is not None else 0.0)
+        _BT[key] = (bt, ppy, kind)
+    return _BT[key]
+
+
+def sleeve_daily(tag, cfg, cost_mult=1.0):
+    """Vol-targeted net return of one sleeve, compounded to a daily series.
+
+    `cost_mult` stresses EXECUTION — the commission, spread and impact the sleeve pays to trade. It is
+    charged on the bar-level net BEFORE the vol target, so the leverage the sleeve would actually run
+    at a worse fill is the leverage it is measured at; charging it after would compare a scaled return
+    against an unscaled cost. Funding is deliberately not in the multiple: it is the price of HOLDING,
+    it is a credit on this book, and scaling it made a worse-execution scenario read as a better one.
+    """
+    bt, ppy, kind = sleeve_bt(tag, cfg)
+    net = bt["net"] - (cost_mult - 1.0) * bt["cost"]       # net already carries funding — the backtest charges it
+    # The vol target trades, and until now it traded for free: multiplying a finished net series by a
+    # lagged leverage is exact for the P&L but the move from L(t-1) to L(t) is a real order over the
+    # book's whole gross, every bar, and the sleeve's cost model was closed by then. Charged at the
+    # sleeve's own rate on its own gross exposure.
+    scale = vol_target_scale(net, XS_VOL_TARGET, ppy)
+    netv = net * scale - resize_cost(scale, COST_BPS[kind] * cost_mult,
+                                     bt["weights"].abs().sum(axis=1))
     daily = (1 + netv).resample("D").prod() - 1
-    cost_d = bt["cost"].resample("D").sum()
-    return daily.dropna(), cost_d, kind
+    return daily.dropna(), bt["cost"].resample("D").sum(), kind
 
 
 def per_year(ret, ppy):
@@ -90,55 +120,67 @@ def per_year(ret, ppy):
     return out
 
 
+def eqvol(df, lb=252, charge=True):
+    """Equal-risk (inverse-vol) combine of a returns frame, NET of what re-weighting it costs.
+
+    The weights are a trade, at the layer that moves whole sleeves, so they pay the same blended rate the
+    master book's assembly pays for the same act — target change plus the drift back onto it. On a book
+    with one live leg the weight is constant and this charges only putting the position on; it is not
+    zero the moment a second leg starts printing, which is the case it exists for.
+
+    The weight is a TRAILING, lagged volatility, not a full-sample one — a statistic from the end of
+    the series must not decide the weight at the start.
+
+    A STARTED LEG KEEPS ITS WEIGHT on the days its own market is shut. The combine used to renormalise
+    onto whichever legs printed, and the two legs here do not share a calendar — crypto trades 365 days
+    a year, the broad equity sleeve about 252 — so on every weekend and US holiday the crypto weight
+    jumped and came back the next morning, round-trip weight turnover charged nowhere, because each
+    sleeve's cost model only ever sees its own trades. No desk resizes a book because the NYSE is shut.
+    This is the same rule `run_master_book.hold_started` applies one layer up.
+
+    The clip guards the one failure a trailing inverse-vol weight has: a leg whose trailing vol is near
+    zero would otherwise take the whole book. It is an EXPANDING quantile, not a full-sample one — the
+    whole-matrix version let the last day's dispersion set the ceiling on the first.
+    """
+    # the bar set is unchanged — holding a started leg re-weights the days some legs print, it does
+    # not invent days none of them do (a book of one US equity sleeve has no Saturday to hold through)
+    combined, w = equal_risk_combine(df, lookback=lb)
+    if not charge:
+        return combined
+    return combined - held_weight_turnover(w, df) * (BOOK_REBALANCE_BPS / 1e4)
+
+
+def assemble(R, kinds):
+    """The book's own combine, in one place: hierarchical (HRP-style) — the correlated crypto
+    timeframes are one cluster and are combined first, then that crypto book is risk-parity'd against
+    the near-uncorrelated equity sleeve. Equal-weighting all of them would over-weight the crypto
+    cluster and waste the equity decorrelation.
+
+    Every reading of this book goes through here, including the cost ladder. It used to re-derive the
+    book as a flat `.mean(axis=1)`, which is not the combine the book ships, so the ladder answered a
+    question about a different portfolio.
+
+    Returns (crypto book, cross-asset book).
+    """
+    crypto_names = [n for n in R if kinds[n] == "crypto"]
+    stock_names = [n for n in R if kinds[n] == "stocks"]
+    crypto_book = eqvol(R[crypto_names]).dropna()
+    xbook = eqvol(pd.concat([crypto_book.rename("crypto"), eqvol(R[stock_names]).rename("stocks")],
+                            axis=1)).dropna()
+    return crypto_book, xbook
+
+
 def main():
     sleeves, costs, kinds = {}, {}, {}
     for tag, cfg in CHOSEN:
         d, c, kind = sleeve_daily(tag, cfg)
-        name = f"{tag}"
-        sleeves[name], costs[name], kinds[name] = d, c, kind
+        sleeves[tag], costs[tag], kinds[tag] = d, c, kind
         s = summarise(d, 365 if kind == "crypto" else 252)
-        print(f"{name:12s} Sharpe {s['sharpe_ann']:+.2f}  DD {s['max_dd']:+.0%}  months+ {s['months_in_profit']:.0%}")
+        print(f"{tag:12s} Sharpe {s['sharpe_ann']:+.2f}  DD {s['max_dd']:+.0%}  months+ {s['months_in_profit']:.0%}")
 
     R = pd.DataFrame(sleeves).sort_index()
     corr = R.corr()
     print(f"\nSleeve correlation:\n{corr.round(2).to_string()}")
-
-    def eqvol(df, lb=252):
-        """Equal-risk (inverse-vol) combine of a returns frame; NaN before every column has started.
-
-        The weight is a TRAILING, lagged volatility. It used to be `1.0 / df.std()` over the whole
-        sample — a statistic from the end of the series deciding the weight at the start, in both of
-        this book's combines (the three crypto timeframes, then crypto against equity). Worth −0.14
-        Sharpe, which is small, but it is a look-ahead inside a shipped leg and there is no reason to
-        keep it.
-
-        A STARTED LEG KEEPS ITS WEIGHT on the days its own market is shut. The combine used to
-        renormalise onto whichever legs printed, and the two legs here do not share a calendar —
-        crypto trades 365 days a year, the broad equity sleeve about 252 — so on every weekend and US
-        holiday the crypto weight went 0.55 -> 1.00 and back the next morning. That is 96.4x of
-        round-trip weight turnover a year against 1.1x once the legs are held, none of it charged
-        anywhere, because each sleeve's cost model only ever sees its own trades: 5.72%/yr at the 6bps
-        the repo charges its own assembly layer. No desk resizes a book because the NYSE is shut, and
-        holding is also better on the metric — leg Sharpe 1.14 -> 1.36, positive in five of seven
-        years. This is the same fix `run_master_book.hold_started` already applies one layer up; it
-        was simply never applied inside the family.
-
-        The clip guards the one failure a trailing inverse-vol weight has: a leg whose trailing vol is
-        near zero would otherwise take the whole book. It is an EXPANDING quantile, not a full-sample
-        one — the previous `np.nanquantile` over the whole matrix let the last day's dispersion set
-        the ceiling on the first, which a truncation test caught changing 218 of 3,236 bars. Worth
-        0.0002 Sharpe and still a leak.
-        """
-        started = df.notna().cummax()
-        iv = (1.0 / df.rolling(lb, min_periods=60).std()).shift(1)
-        cap = iv.max(axis=1).expanding(min_periods=60).quantile(0.99).ffill()
-        iv = iv.clip(upper=cap, axis=0).where(started)
-        # a shut market earns nothing; it does not hand its weight to the leg that is open
-        ret = df.where(df.notna(), 0.0).where(started)
-        w = iv.div(iv.sum(axis=1).replace(0.0, np.nan), axis=0)
-        # the bar set is unchanged — holding a started leg re-weights the days some legs print, it does
-        # not invent days none of them do (a book of one US equity sleeve has no Saturday to hold through)
-        return (ret * w).sum(axis=1, min_count=1).where(df.notna().any(axis=1))
 
     # prefer the broad, survivorship-free equity sleeve (S&P 500 PIT, pure single-stock, ETF-free)
     # over the narrow 78-name mixed panel — a more defensible (if lower-Sharpe) equity leg. The
@@ -153,21 +195,13 @@ def main():
         kinds = {**{k: v for k, v in kinds.items() if v != "stocks"}, "stocks_broad": "stocks"}
         print(f"\n[book uses BROAD equity sleeve: {int(R['stocks_broad'].notna().sum())} days]")
 
-    # hierarchical (HRP-style): the 3 crypto TFs are one correlated cluster -> combine first,
-    # then risk-parity that crypto book against the near-uncorrelated equity sleeve. Equal-
-    # weighting all four would over-weight the crypto cluster and waste the equity decorrelation.
-    # The shipped block holds crypto 1d and the broad equity sleeve. The 4h and 1h crypto sleeves are
+    # The block the book reads is the daily crypto cross-section. The 4h and 1h crypto sleeves are
     # still built and reported above — they are the timeframe evidence §12 asks for — but they are not
-    # in the leg the book reads. Same provenance as volprem's sleeve list: chosen by searching the
-    # final block, named here rather than hidden.
+    # in the leg the book reads.
     SHIPPED = {"crypto_1d"}
     R = R[[c for c in R.columns if c in SHIPPED]]
     kinds = {k: v for k, v in kinds.items() if k in SHIPPED}
-    crypto_names = [n for n in R if kinds[n] == "crypto"]
-    stock_names = [n for n in R if kinds[n] == "stocks"]
-    crypto_book = eqvol(R[crypto_names]).dropna()
-    xbook = eqvol(pd.concat([crypto_book.rename("crypto"), eqvol(R[stock_names]).rename("stocks")],
-                            axis=1)).dropna()
+    crypto_book, xbook = assemble(R, kinds)
 
     for label, book, ppy in [("CRYPTO x-sect book", crypto_book, 365),
                              ("CROSS-ASSET x-sect book", xbook, 365)]:
@@ -181,19 +215,31 @@ def main():
             f"{k} {summarise(book.loc[a:b], ppy)['sharpe_ann']:+.2f}" for k, (a, b) in CRISES.items()
             if len(book.loc[a:b]) > 20))
 
-    # cost sensitivity on the cross-asset book (cost already charged at 1x; scale the drag).
-    # align to R's columns so a swapped-in sleeve without a separate cost series (the broad
-    # equity leg, whose cost is already inside its returns) gets 0 extra drag, not dropped to NaN.
-    C = pd.DataFrame(costs).reindex(index=R.index, columns=R.columns).fillna(0.0)
-    days = (xbook.index[-1] - xbook.index[0]).days / 365.25
+    # Cost sensitivity: rebuild the shipped book with EXECUTION charged m times over — commission,
+    # spread and impact, the things a worse fill makes worse — and assemble it exactly the way the
+    # book is assembled. The multiple is charged inside the sleeve, before its vol target, so the
+    # leverage is the one that book would run at.
+    #
+    # Two things this used to get wrong, and both flattered it. It subtracted a bar-level cost series
+    # from an already-vol-targeted return, comparing a scaled return with an unscaled cost; and the
+    # "cost" it scaled included FUNDING, which this book collects — so a bigger multiple ADDED money
+    # and the break-even came back as "never". Funding is the price of holding, not of trading, and it
+    # belongs in neither a cost multiple nor a break-even.
+    cfg_of = dict(CHOSEN)
 
     def book_at(m):
-        return (R.fillna(0.0) - (m - 1.0) * C).mean(axis=1).reindex(xbook.index).dropna()
-    print("\n  cost sensitivity:", "  ".join(
+        if m == 1.0:
+            return xbook
+        Rm = pd.DataFrame({t: sleeve_daily(t, cfg_of[t], m)[0] for t in R.columns if t in cfg_of})
+        for n in R.columns:                  # a sleeve with no cost series of its own (broad equity)
+            if n not in Rm.columns:          # is unchanged by the multiple rather than dropped
+                Rm[n] = R[n]
+        return assemble(Rm.reindex(R.index)[R.columns], kinds)[1].reindex(xbook.index).dropna()
+    print("\n  cost sensitivity (execution only, funding is not a cost multiple):", "  ".join(
         f"{lab} Sh{summarise(book_at(m), 365)['sharpe_ann']:+.2f}"
         for m, lab in [(1.0, "1x"), (2.0, "2x"), (3.0, "3x")]))
-    be = next((float(m) for m in np.linspace(1, 30, 291) if (1 + book_at(m)).prod() - 1 <= 0), None)
-    print(f"  break-even cost multiple: {be:.0f}x base" if be else "  break-even > 30x base")
+    be = next((float(m) for m in np.arange(1.0, 30.1, 0.5) if (1 + book_at(m)).prod() - 1 <= 0), None)
+    print(f"  break-even cost multiple: {be:.1f}x base" if be else "  break-even > 30x base")
 
     # deflated Sharpe of the best STANDALONE crypto sleeve, penalised at the real grid's trial
     # count and Sharpe-dispersion (the honest multiple-testing haircut). var_tr and N come from

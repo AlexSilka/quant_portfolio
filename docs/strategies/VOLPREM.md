@@ -1,6 +1,6 @@
 # Vol premium — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book, and its scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md) — restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry. Any master-book number quoted below is measured on the **unlevered** stack, or is a snapshot at the time this family was evaluated.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** Build and honestly evaluate a **short-volatility / variance-risk-premium (VRP)** sleeve —
 the source structurally *orthogonal* to the trend book (short gamma vs long gamma), chosen after
@@ -205,7 +205,7 @@ VRP is cleanly orthogonal — short gamma pays when trend bleeds in calm, and tr
 VRP's crash. Correlation to the momentum and carry books is **~0** (+0.03 / −0.02). That decorrelation,
 not the standalone Sharpe, is what earns it a slot.
 
-In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over eight families), the
+In the canonical master (`scripts/run_master_book.py`, equal-weight risk parity over the traded families), the
 honest 18-leg volprem book is the **top marginal contributor** (removing it drops the equal-weight stack from
 3.78 to **1.73**). But it also drives the portfolio's tail — the book's honest (jump-to-open) drawdown is **≈ −8%
 with volprem vs ≈ −6% on the flattered close-to-close accounting** (§4b). So it is a genuine co-engine *and*

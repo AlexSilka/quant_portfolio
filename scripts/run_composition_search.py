@@ -1,15 +1,16 @@
 """Which family composition clears all five §11 targets — the whole search, not just its winner.
 
-The book trades six families. That number is the one choice in this deliverable made *against* the
-scorecard rather than before it, so the search behind it is published in full rather than summarised by
-its result. Every other decision — equal weight, the frozen universes, the gate thresholds, the leverage
-— is fixed before its outcome is seen; this one is not, and a report that quotes only the surviving
+How many families the book trades is the one choice in this deliverable made *against* the scorecard
+rather than before it, so the search behind it is published in full rather than summarised by its
+result. Every other decision — equal weight, the frozen universes, the gate thresholds, the leverage —
+is fixed before its outcome is seen; this one is not, and a report that quotes only the surviving
 configuration is hiding the denominator.
 
-So: take the eight validated families, run every single- and double-removal, and score all five targets
-on both windows. The output records each configuration, how many targets it meets, and what the passing
-ones cost — because "two of thirty-seven pass" is the honest headline, and the ratio only exists if the
-thirty-seven are counted.
+So: take every validated family, run every removal down to the size of the drop the book actually makes,
+and score all five targets on both windows. The output records each configuration, how many targets it
+meets, and what the passing ones cost — because "n of N pass" is the honest headline, and the ratio only
+exists if the N are counted. Each candidate is assembled by `run_master_book` itself, so a configuration
+cannot be scored on a book the deliverable would not ship.
 
 Removal only. Adding a family the deep-dives rejected would be a second search on top of this one, and
 the point of publishing the denominator is not to enlarge it.
@@ -73,16 +74,20 @@ def misses(c: dict) -> list[str]:
 
 
 def frame(legs: dict[str, pd.Series]) -> pd.DataFrame:
-    """The rescaled leg matrix on the book's own window — run_master_book.assemble, for a leg subset."""
-    df = pd.DataFrame({k: mb.rescale(v) for k, v in legs.items()}).sort_index()
-    df = df[df.index >= pd.Timestamp(mb.START_REPORT)]
-    return df[df.notna().sum(axis=1) >= 2]
+    """The rescaled leg matrix on the book's own window, for a leg subset — the assembler's own step.
+
+    It used to be a local re-implementation, and it drifted from the thing it claimed to be: no
+    `hold_started`, so every subset renormalised onto whichever legs printed on a US holiday. Scored
+    that way the shipped composition read 2/5 full and 4/5 on the block while the book it describes
+    reads 3/5 and 5/5 — two scorecards for one book, and the composition was chosen on the wrong one."""
+    return mb.assemble_from(legs)[0]
 
 
 def book(legs: dict[str, pd.Series]) -> pd.Series:
-    """The canonical assembly, restricted to a subset of families — same rescale, same overlay, same
-    leverage. Nothing here may differ from run_master_book except which columns enter the mean."""
-    return mb.risk_overlay(mb.book_stack(frame(legs)).dropna(), leverage=mb.BOOK_LEVERAGE)[0]
+    """The canonical assembly, restricted to a subset of families — literally the function the master
+    book calls, so nothing here CAN differ from it except which columns enter the mean."""
+    df, scales = mb.assemble_from(legs)
+    return mb.book_from_legs(df, scales)[0].dropna()
 
 
 def ret(s: pd.Series) -> dict:

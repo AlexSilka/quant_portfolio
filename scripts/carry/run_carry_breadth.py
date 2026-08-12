@@ -8,6 +8,7 @@ illiquid tail (smaller coins have wider spreads); (c) per-year, so we see where 
 
     python scripts/carry/run_carry_breadth.py
 """
+import sys
 import warnings
 
 import numpy as np
@@ -16,13 +17,13 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, RAW_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import CACHE_DIR, CARRY_DIR, RAW_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 from src.log import get_logger  # noqa: E402
-from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.risk.sizing import resize_cost, vol_target_scale  # noqa: E402
 
 log = get_logger("carry.breadth")
 
@@ -31,9 +32,17 @@ START, END = "2020-01", "2026-07"
 rng = np.random.default_rng(SEED)
 
 
-def vt(net):
+def vt(net, gross=None):
+    """Vol-target, and pay for the re-sizing. Scaling a finished net series by a lagged leverage is
+    exact for the P&L, but moving from L(t-1) to L(t) trades the book's whole gross every bar and the
+    sleeve's cost model was closed by then — `src/risk/sizing.resize_cost`. `gross` is the book's own
+    Σ|w| (a dollar-neutral book runs ~2.0); left None nothing is charged, which is only right for a
+    series nobody trades."""
     scale = vol_target_scale(net, TVOL, PPY)
-    return (net * scale).dropna()
+    out = net * scale
+    if gross is not None:
+        out = out - resize_cost(scale, CB, gross.reindex(scale.index).fillna(0.0))
+    return out.dropna()
 
 
 def per_year(net):
@@ -41,8 +50,26 @@ def per_year(net):
             for y, g in net.groupby(net.index.year) if g.dropna().std(ddof=1) > 0}
 
 
-def load_all():
-    """Every symbol with both 1d klines and funding cached -> close, dollar-volume, daily funding."""
+PANEL = CACHE_DIR / "carry" / f"breadth_panel_{START}_{END}.parquet"
+
+
+def load_all(refresh: bool = "--refresh" in sys.argv):
+    """Every symbol with both 1d klines and funding cached -> close, dollar-volume, daily funding.
+
+    SNAPSHOTTED, because this universe is not a function of the code. It is every symbol that has a
+    directory in the archive at the moment the script runs, and the archive grows: a perp whose first
+    month lands between two runs joins with its WHOLE history, which moves every cross-sectional rank
+    before it as well as after. That is why the published series did not reproduce when the same code was
+    re-run on the same window — not a stale artifact, a moving input.
+
+    So the panel is built once and committed to the cache, and every later run reads it. Refreshing it
+    is `--refresh`, a deliberate act with a visible diff, rather than a side effect of the archive
+    having published a new month while nobody was looking.
+    """
+    if PANEL.exists() and not refresh:
+        P = pd.read_parquet(PANEL)
+        C = P.xs("close", axis=1, level=0)
+        return C, P.xs("dvol", axis=1, level=0).reindex(C.index), P.xs("fund", axis=1, level=0).reindex(C.index)
     kdir = RAW_DIR / "futures/um/klines"
     fdir = RAW_DIR / "futures/um/fundingRate"
     # crypto-native only: drop stablecoins, tokenized gold and synthetic index perps (different asset class)
@@ -62,6 +89,9 @@ def load_all():
     C = pd.DataFrame(close).sort_index()
     V = pd.DataFrame(dvol).reindex(C.index)
     fd = carry_xs.funding_daily(pd.DataFrame(fund)).reindex(C.index)
+    PANEL.parent.mkdir(parents=True, exist_ok=True)
+    pd.concat({"close": C, "dvol": V, "fund": fd}, axis=1).to_parquet(PANEL)
+    log.info("carry: wrote the panel snapshot (%d symbols, %d bars) -> %s", C.shape[1], len(C), PANEL)
     return C, V, fd
 
 
@@ -91,7 +121,8 @@ def main():
         if n > C.shape[1]:
             continue
         elig = carry_xs.pit_eligible(V, n)
-        net = vt(run_carry(C, fd, sig_full, elig, beta_ret=btc)[0])
+        _n, _bk = run_carry(C, fd, sig_full, elig, beta_ret=btc)
+        net = vt(_n, _bk['gross'])
         s = summarise(net, PPY)
         p5 = bootstrap_sharpe(net, PPY, 500, SEED).get("sharpe_p5", np.nan) if s["sharpe_ann"] > 0.2 else np.nan
         rows.append({"N": n, "sharpe": round(s["sharpe_ann"], 2), "mc_p5": round(p5, 2) if p5 == p5 else np.nan,
@@ -101,7 +132,8 @@ def main():
     # ---- survivorship test: PIT (delisted included) vs current-listed-only, same top-100 ----
     print("\n=== survivorship test (top-100) ===")
     elig100 = carry_xs.pit_eligible(V, 100)
-    pit = vt(run_carry(C, fd, sig_full, elig100, beta_ret=btc)[0])
+    _n, _bk = run_carry(C, fd, sig_full, elig100, beta_ret=btc)
+    pit = vt(_n, _bk['gross'])
     # "Still trading" has to mean traded, not quoted. Binance's archive keeps emitting daily bars for a
     # settled contract — 123 perps here carry a frozen last price at zero volume, FTM/BAL/AGIX for 407
     # days — so a non-NaN final close counts dead names as survivors and *understates* the very bias
@@ -110,8 +142,9 @@ def main():
     traded_recently = V.tail(30).fillna(0.0).sum() > 0
     survivors = C.columns[C.iloc[-1].notna() & traded_recently.reindex(C.columns).fillna(False)]
     C_surv = C[survivors]
-    surv_only = vt(run_carry(C_surv, fd[survivors], carry_xs.signal_level(fd[survivors], 7),
-                             carry_xs.pit_eligible(V[survivors], 100), beta_ret=btc)[0])
+    _n, _bk = run_carry(C_surv, fd[survivors], carry_xs.signal_level(fd[survivors], 7),
+                        carry_xs.pit_eligible(V[survivors], 100), beta_ret=btc)
+    surv_only = vt(_n, _bk["gross"])
     print(f"  PIT (incl. delisted):     Sharpe {summarise(pit, PPY)['sharpe_ann']:+.2f}  DD {summarise(pit, PPY)['max_dd']:+.0%}")
     print(f"  current-listed only:      Sharpe {summarise(surv_only, PPY)['sharpe_ann']:+.2f}  DD {summarise(surv_only, PPY)['max_dd']:+.0%}")
     print(f"  -> survivorship inflation: {summarise(surv_only, PPY)['sharpe_ann'] - summarise(pit, PPY)['sharpe_ann']:+.2f} Sharpe")
@@ -119,7 +152,8 @@ def main():
     # ---- cost stress on the wide universe (illiquid tail = wider spreads) ----
     print("\n=== cost stress (top-100 PIT) ===")
     for cb in [6, 12, 20, 30]:
-        net = vt(run_carry(C, fd, sig_full, elig100, cost_bps=cb, beta_ret=btc)[0])
+        _n, _bk = run_carry(C, fd, sig_full, elig100, cost_bps=cb, beta_ret=btc)
+        net = vt(_n, _bk['gross'])
         print(f"  {cb:2d} bps/side: Sharpe {summarise(net, PPY)['sharpe_ann']:+.2f}")
 
     best = max(rows, key=lambda r: r["sharpe"]) if rows else None

@@ -1,6 +1,6 @@
 # Residual / idiosyncratic momentum (H5) — deep-dive findings
 
-> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the eight-family equal-weight master book in [REPORT.md](../../REPORT.md) (Sharpe **3.72** full / **3.77** OOS; this family's residual-momentum construction now ships as the crypto x-sect leg — §0). Any master-book Sharpe quoted below is the book *snapshot at the time this family was evaluated*, not the current headline.
+> **Canonical-book note.** Single-family deep-dive. The shipped portfolio is the equal-weight master book assembled by `scripts/run_master_book.py`; its composition, scorecard, leverage and target verdict live in [REPORT.md](../../REPORT.md), which is RENDERED from the artifacts and so cannot disagree with the run. Restated here they would go stale the next time the book is re-run, which is exactly what happened to the numbers this line used to carry — so this page quotes none of them. Any master-book figure below is a snapshot from when this family was evaluated, and is labelled as one.
 
 **Scope.** H5 of the research backlog ([HYPOTHESES.md](../HYPOTHESES.md)): residual (idiosyncratic) momentum
 — rank on the momentum of each name's **market-beta residual**, standardised by residual vol

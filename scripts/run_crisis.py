@@ -33,9 +33,9 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
-from src.config import BOOK_DIR  # noqa: E402
+from src.config import BOOK_DIR, BOOK_REBALANCE_BPS  # noqa: E402
 from src.metrics import summarise  # noqa: E402
-from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.risk.sizing import resize_cost, vol_target_scale  # noqa: E402
 from src.sleeves.trend_lab import tsmom_panel  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
@@ -106,8 +106,12 @@ def _panel(syms, loader):
 
 
 def _vol_target(x, ppy, target=0.15, lb=60):
+    """Vol-target a finished book, and pay for the re-sizing it does. This layer moves a whole tranche
+    or class book rather than named instruments (`tsmom_panel` already charges the per-asset scaler
+    inside its own positions), so it pays the blended book-rebalance rate — the same one the master
+    book's assembly pays for exactly this act. `src/risk/sizing.resize_cost`."""
     lev = vol_target_scale(x, target, ppy, lookback=lb)
-    return (x * lev).dropna()
+    return (x * lev - resize_cost(lev, BOOK_REBALANCE_BPS)).dropna()
 
 
 CCY = {"USD": "US", "EUR": "EZ", "JPY": "JP", "GBP": "GB", "CHF": "CH", "AUD": "AU",

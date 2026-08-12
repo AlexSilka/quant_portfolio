@@ -230,10 +230,19 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
     # so a book of perps is charged funding whether or not its author remembered that it is one.
     model = resolve_carry(carry, px, borrow_bps_annual=borrow_bps_annual, where="xs_backtest")
     carry_pnl = model.pnl(w, ppy)
-    cost = commission + spread + impact - carry_pnl        # carry_pnl is signed: a short can collect
-    net = gross_ret - cost
+    # `cost` is the cost of TRADING and nothing else; `carry` is the cost of HOLDING, kept beside it.
+    # They were summed into one key, and the sum has the wrong sign whenever a book COLLECTS carry —
+    # which this crypto cross-section does, collecting more funding on its short book than it pays in
+    # commission. Its "cost" was therefore negative, and every consumer that scales cost to ask "what
+    # if execution were worse" was scaling the funding credit the wrong way: the cost ladder read BETTER
+    # at a higher multiple and the break-even came back as "never". Two costs with opposite signs cannot
+    # share a key. `engine.backtest` and
+    # `carry_xs.xs_book` already keep them apart; this is the same convention, and net is unchanged.
+    cost = commission + spread + impact
+    carry_cost = -carry_pnl                               # signed: a short can collect
+    net = gross_ret - cost - carry_cost
     return {"net": net, "gross": gross_ret, "turnover": turn, "commission": commission,
-            "spread": spread, "impact": impact, "carry": -carry_pnl, "cost": cost, "weights": w}
+            "spread": spread, "impact": impact, "carry": carry_cost, "cost": cost, "weights": w}
 
 
 def liquidity_mask(signal: pd.DataFrame, adv: pd.DataFrame | None, daily_floor: float,

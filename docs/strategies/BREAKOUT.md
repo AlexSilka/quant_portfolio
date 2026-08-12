@@ -455,7 +455,7 @@ untouched, so the delta is execution and nothing else:
 | combined TS+XS sleeve, all-perp | +1.40 | +0.77 | −11.5% | — | +0.23 |
 | **combined TS+XS sleeve, split** | **+1.44** | **+0.82** | −11.5% | — | +0.23 |
 
-At the master book it is invisible — breakout is one of six families in a book where vol-premium is
+At the master book it is invisible — breakout is one of the families in a book where vol-premium is
 67% of P&L, so the five scored targets are unchanged (OOS 5/5, full 4/5) and breakout's leave-one-out
 contribution moves +0.027 → +0.033. The sleeve got better; the book did not notice. Both are reported
 because only quoting the first would be the flattering half.

@@ -43,6 +43,22 @@ def _word(n):
             9: "nine", 10: "ten", 11: "eleven", 12: "twelve"}.get(n, str(n))
 
 
+# family id -> the name the prose uses. One map, so a page and a paragraph cannot disagree about what a
+# leg is called.
+_SHORT = {"trend_momentum": "trend", "carry": "carry", "volprem": "short-vol / VRP",
+          "xs_momentum": "cross-sectional momentum", "bab": "betting-against-beta", "breakout": "breakout",
+          "crisis": "crisis-alpha", "gmacro": "global-macro", "residmom": "residual momentum"}
+
+
+def _english(items):
+    """"a, b and c" — a list of names written as a sentence, so the prose can be generated rather than
+    typed. A typed list of legs is the single most reliable thing in this repo to go stale."""
+    items = [str(i) for i in items]
+    if not items:
+        return ""
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
 def _ordinal(n):
     """"fourth-highest", not "four-highest" — a rank is a different word from a count."""
     return {1: "highest", 2: "second-highest", 3: "third-highest", 4: "fourth-highest",
@@ -353,8 +369,21 @@ def _family_costs():
                    f"{'**yes**' if fragile else 'no'} |")
     return {"family_cost_table": "\n".join(out),
             "n_family_cost_fragile": str(len(frag)),
+            # how many legs the table actually has a share for — "one of the eight" was typed beside a
+            # table whose row count is a property of what could be re-run, not of the research
+            "n_family_cost_measured": _word(len(rows)),
             "family_cost_fragile_names": ", ".join(frag) if frag else "none",
-            "family_cost_worst": rows[0][0], "family_cost_worst_share": _pcu(rows[0][1])}
+            "family_cost_worst": rows[0][0], "family_cost_worst_share": _pcu(rows[0][1]),
+            # the worst leg's OWN break-even, not the threshold it is judged against — the prose used to
+            # type the threshold (3.0x) next to a table printing the leg's real figure
+            "family_cost_worst_be": f"{rows[0][2]:.1f}×" if rows[0][2] else "beyond the range tested",
+            # the legs that publish a Sharpe AT a cost multiple instead of a break-even, written out from
+            # the artifact — the sentence used to type both the leg names and their numbers
+            "family_cost_by_multiple": "; ".join(
+                f"{name} {min(v['sharpe_at_cost_mult'].items(), key=lambda kv: -float(kv[0]))[1]:.2f} at "
+                f"{min(v['sharpe_at_cost_mult'].items(), key=lambda kv: -float(kv[0]))[0]}×"
+                for src in (d.get("re_run_here") or {}, d.get("from_deep_dives") or {})
+                for name, v in src.items() if v.get("sharpe_at_cost_mult")) or "none"}
 
 
 # §11's five targets, as tests rather than prose — so "meets all five" is a computed verdict and cannot
@@ -821,6 +850,12 @@ def build():
             "top_removed_sharpe": _n(s["top_removed"]["sharpe"]),
             "n_families": str(len(s["families"])),
             "window": f"{s['window'][0][:4]}–{s['window'][1][:4]}",
+            # the span in words, so "a 15-year window (2011 → 2026)" stops being typed beside a window
+            # that starts in a different year. Both halves come from the same artifact.
+            "window_span": (lambda a, b: f"{_word(round((pd.Timestamp(b) - pd.Timestamp(a)).days / 365.25))}"
+                            f"-year window ({a[:4]} → {b[:4]})")(*s["window"]),
+            "window_years_word": _word(round((pd.Timestamp(s["window"][1])
+                                              - pd.Timestamp(s["window"][0])).days / 365.25)),
             "capital": f"${s.get('sizing_capital_usd', 0) // 1000:,.0f}k",
             "mc_sharpe_p5": _n(m["mc_p5"]), "mc_sharpe_p50": _n(m["mc_p50"]), "mc_sharpe_p95": _n(m["mc_p95"]),
             "mc_dd_p5": _pc(bb.get("maxdd_p5", m.get("mc_maxdd_p5", float("nan")))),
@@ -838,6 +873,17 @@ def build():
             "n_families_word": _word(len(s["families"])),
             "n_families_word_cap": _word(len(s["families"])).capitalize(),
             "n_families_less_one_word": _word(len(s["families"]) - 1),
+            # WHICH families, not just how many. The prose used to name them — "trend and carry are
+            # dropped", "the pre-2020 window runs trend, vol-premium, cross-sectional equity, crisis and
+            # global-macro" — and both sentences outlived the composition they described while the count
+            # beside them stayed correct, because only the count was derived. Names are derived now too.
+            "families_traded": _english([_SHORT.get(f, f) for f in s["families"]]),
+            "families_validated_not_held": _english(
+                [_SHORT.get(f, f) for f in s.get("standalone_sharpe", {}) if f not in s["families"]]),
+            "families_pre_2020": _english([_SHORT.get(f, f) for f in (s.get("families_by_era") or {})
+                                           .get("pre_2020", [])]) or "the long-history legs",
+            "families_from_2020": _english([_SHORT.get(f, f) for f in (s.get("families_by_era") or {})
+                                            .get("from_2020", [])]) or "the crypto legs",
             # the standalone spread of everything except the anchor — "the other five families run 0.4-1.4"
             "solo_range_ex_anchor": (lambda v: f"{min(v):.1f}–{max(v):.1f}")(
                 [x for k, x in s["standalone_sharpe"].items()

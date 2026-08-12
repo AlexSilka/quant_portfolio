@@ -27,9 +27,10 @@ from src.metrics import summarise  # noqa: E402
 from src.sleeves import bab  # noqa: E402
 from src.sleeves.xsect import top_n_liquid, vol_target, xs_backtest  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from scripts.bab.run_bab_portfolio import WINSOR  # noqa: E402  one winsor rule per family
 
 CACHE = CACHE_DIR / "xs"
-COST, WINSOR, TVOL = 6.0, 1.0, VOL_TARGET_ANNUAL
+COST, TVOL = 6.0, VOL_TARGET_ANNUAL
 BETA_LB_D, TOPFRAC, REBAL_D, EXEC_LAG, IMPACT_K = 90, 0.2, 21, 2, 0.1
 BPD = {"1d": 1, "4h": 6, "1h": 24, "15m": 96, "5m": 288}
 PPY = {tf: 365 * b for tf, b in BPD.items()}

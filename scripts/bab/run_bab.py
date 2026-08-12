@@ -42,9 +42,12 @@ BETA_LB, VOL_LB, SKEW_LB = 90, 60, 60
 TOPFRAC, REBAL, TOPN, EXEC_LAG, IMPACT_K = 0.2, 21, 100, 2, 0.1
 
 ASSETS = {  # ppy, per-side cost bps, cache tag, market-proxy col for a robustness beta, winsor floor
-    # winsor is a-priori: a >50% one-day move on a top-100-liquid US stock is ~always a data artifact
+    # winsor is a-priori, and it is an EQUITY rule: a >50% one-day move on a top-100-liquid US stock is
+    # almost always a mis-adjusted split. Perps have no splits, and a magnitude filter on a return that
+    # is bounded below at -100% and unbounded above can only ever delete gains — which on a book short
+    # the high-beta names are its losses. Off for crypto; ∞ returns are dropped either way.
     # (99.99th |ret| pctile ≈ 28%); crypto's 99.99th ≈ 100%, so only >100% (liquidation/print) is clipped.
-    "crypto": dict(ppy=365, cost=6.0, tag="crypto_1d", mkt_col="BTCUSDT", winsor=1.0),
+    "crypto": dict(ppy=365, cost=6.0, tag="crypto_1d", mkt_col="BTCUSDT", winsor=float("inf")),
     "equity": dict(ppy=252, cost=3.0, tag="stocks_broad_1d", mkt_col=None, winsor=0.5),
 }
 

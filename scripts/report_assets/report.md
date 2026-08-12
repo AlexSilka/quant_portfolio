@@ -11,13 +11,13 @@ Every timeframe (5m→1d) and both asset classes are searched; each surviving ed
 its own deep-dive (discovery, ML, walk-forward, robustness) and the survivors are combined in **one
 canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **{{n_families_word}}-family master book**:
 
-> **{{n_families_word_cap}} families are traded.** Eight survive validation — trend, carry, short-vol / variance risk
-> premium, cross-sectional momentum, breakout, crisis-alpha, global-macro, and betting-against-beta — and
-> **trend and carry are dropped so the book clears all five targets**. That composition choice is made against
-> the scorecard rather than before it, which is stated in full with the search behind it in **§6d-ter**; it is
-> the only such choice here, and the eight-family book is one line away in `run_master_book.py`.
+> **{{n_families_word_cap}} families are traded** — {{families_traded}}. A further set clears the same
+> validation and is **not held** ({{families_validated_not_held}}): what that composition costs, and the whole
+> search behind it, is in **§6d-ter**.
+> That choice is the only one here made against the scorecard rather than before it, and every candidate in the
+> search is assembled by the same code that assembles the book.
 > The {{n_families_word}} are combined at **genuine equal-weight risk parity** (no fitted weights) on each family's honest,
-> **survivorship-free / point-in-time** series over a **15-year window (2011 → 2026)** — the short-vol leg
+> **survivorship-free / point-in-time** series over a **{{window_span}}** — the short-vol leg
 > timed out of the crashes by its own **VIX-term-structure regime gate** (flat unless **both** curve segments
 > are in contango), sized at a constant **{{leverage}}** (§4b), with a disclosed **§8 risk overlay** on top.
 > The book nets **Sharpe {{book_sharpe}}** at **{{book_dd}} max drawdown** — on the brief's **{{capital}}** sizing
@@ -26,7 +26,7 @@ canonical portfolio** (`scripts/run_master_book.py`). The deliverable is a **{{n
 > the window) — months-in-profit **{{book_months_round}}**, **positive in all {{n_years}} calendar years**.
 > **§11 scores the targets on the frozen out-of-sample block**, and there it clears **{{oos_targets}}** (2024-07→: Sharpe
 > **{{oos_sharpe}}**, months **{{oos_months}}**, max-DD **{{oos_dd}}**, worst month **{{oos_worst_month}}**, streak **{{oos_streak}}**).
-> On the **full 15-year window** it also clears **{{book_targets}}** (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD
+> On the **full {{window_years_word}}-year window** it also clears **{{book_targets}}** (Sharpe **{{book_sharpe}}**, months **{{book_months}}**, max-DD
 > **{{book_dd}}**, worst month **{{book_worst_month}}**, streak **{{book_streak}}**). What that changed, measured
 > in §6d-ter: **return went up**, not down — {{comp_d_cagr_full}} of CAGR on the full window,
 > {{comp_d_cagr_oos}} on the block — because six legs at equal risk run hotter than eight; the Sharpe reads
@@ -57,17 +57,17 @@ hidden one.)
   universe (point-in-time top-N by trailing liquidity, delisted names included), the trend leg included as of
   §6d: its crypto half was the last hard-coded list of today's majors, and replacing it with a point-in-time
   top-10 costs the book **0.04 Sharpe**; the curated-universe versions score higher but
-  are biased. Levels are quoted on the **15-year** window (2011 → 2026); each family joins as it lists,
-  averaged over the families live each day. The pre-2020 window runs the long-history legs (trend, vol-premium, cross-sectional equity, crisis, global-macro)
+  are biased. Levels are quoted on the **{{window_span}}**; each family joins as it lists,
+  averaged over the families live each day. The pre-2020 window runs the long-history legs ({{families_pre_2020}})
   on **real, liquid ETF / FX / index prices** (SPY / GLD / TLT / EM-FX, back to 2011 — the standard managed-futures
-  backtest); the crypto legs and BAB list from 2020. **The headline is window-robust** — the same book scored on
-  different reporting windows nets Sharpe **{{full_history_sharpe}} full-history / {{window_15y_sharpe}} 15-year / {{window_10y_sharpe}} 10-year**, so nothing hinges
+  backtest); {{families_from_2020}} list from 2020. **The headline is window-robust** — the same book scored on
+  different reporting windows nets Sharpe **{{full_history_sharpe}} full-history / {{window_15y_sharpe}} {{window_years_word}}-year / {{window_10y_sharpe}} 10-year**, so nothing hinges
   on the early window.
 - **Robust, not fitted.** The portfolio is robust because the families are decorrelated — measured
   (block-bootstrap MC-P5 **{{mc_sharpe_p5}}**), not asserted — and **positive in {{n_years_positive}} of {{n_years}} calendar years** 2011–26 (weakest {{weakest_year}} at {{weakest_year_sharpe}}).
   Against the task scorecard, the book scores **{{oos_targets}} out-of-sample and {{book_targets}} on the full window** — the final out-of-sample block
   (2024-07→, the window the brief scores: Sharpe **{{oos_sharpe}}**, months-in-profit **{{oos_months}}**, max-DD {{oos_dd}}, worst month
-  {{oos_worst_month}}, streak {{oos_streak}}) and the **full 15-year window** (Sharpe **{{book_sharpe}}**, months-in-profit **{{book_months}}**, max-DD {{book_dd}},
+  {{oos_worst_month}}, streak {{oos_streak}}) and the **full {{window_years_word}}-year window** (Sharpe **{{book_sharpe}}**, months-in-profit **{{book_months}}**, max-DD {{book_dd}},
   worst month {{book_worst_month}}, streak {{book_streak}}). Months-in-profit ≥80%, the worst month and the ≤2-month streak hold
   **not** by reweighting the short-vol leg — that route deepens the worst month past −6% and collapses under ±25%
   perturbation (the old, and correct, reweighting-ceiling) — but by a **VIX-term-structure regime gate** that
@@ -76,7 +76,7 @@ hidden one.)
   boundary on both segments, not a number picked from results — §5d/§6; the 5×5 surface around the two thresholds
   is a plateau). Nothing is fit against the OOS block — it is run once at the
   end; the crypto cross-sectional sleeve's **residual-momentum** construction is the H5 deep-dive's pre-registered
-  choice ([docs/strategies/RESIDMOM.md](docs/strategies/RESIDMOM.md)). The 15-year window is the larger-sample estimate.
+  choice ([docs/strategies/RESIDMOM.md](docs/strategies/RESIDMOM.md)). The {{window_years_word}}-year window is the larger-sample estimate.
 - **Where the margin is thin — stated, not buried.** The binding target is no longer the drawdown but the
   **worst month**: at **{{book_worst_month}}** against **−6%** it {{conv_shipped}} accounting conventions
   (fixed-$500k reads **{{fixed_worst_month_shipped}}**), but it is a single month ({{worst_month_when}}; the next worst is
@@ -153,14 +153,14 @@ A complete, reproducible pipeline, every stage runnable:
 {{family_cost_table}}
 
   \* carry's re-run reproduces the published series to 2.6% rather than exactly, so its share is
-  approximate. **{{n_family_cost_fragile}} of the eight is cost-fragile: {{family_cost_fragile_names}}**, which
-  pays {{family_cost_worst_share}} of its gross P&L in cost and breaks even at 3.0× — expected for a
+  approximate. **{{n_family_cost_fragile}} of the {{n_family_cost_measured}} measured is cost-fragile: {{family_cost_fragile_names}}**, which
+  pays {{family_cost_worst_share}} of its gross P&L in cost and breaks even at {{family_cost_worst_be}} — expected for a
   crash-hedge that trades to stay long gamma, and the reason its slot is ramped on market stress (§6c-ter)
   for what it does in the bad months rather than for its own P&L. Vol-prem and trend publish a Sharpe at a cost multiple instead of a
-  break-even (vol-prem 2.16 at 5× its vega spread, trend 0.87 at 3×); neither is fragile.
+  break-even ({{family_cost_by_multiple}}); neither is fragile.
 - **Sizing capital and what the dollar figures mean (§9).** The brief fixes **$500k of capital for sizing and
   cost calculations**, and the √-impact model is calibrated to exactly that order size, so the dollar figures are
-  quoted at that size with **P&L not reinvested**: **{{pnl_usd}}** over the 15-year window, **~{{pnl_usd_per_year}}/yr**, worst month
+  quoted at that size with **P&L not reinvested**: **{{pnl_usd}}** over the {{window_years_word}}-year window, **~{{pnl_usd_per_year}}/yr**, worst month
   **{{worst_month_usd}}**, deepest drawdown **{{dd_usd}}**. **The accounting convention no longer moves any target** — the
   scorecard is compounded (risk a constant fraction of capital, max-DD {{book_dd_2dp}}, worst month {{book_worst_month_2dp}}), while holding
   size fixed at $500k and taking percentages *of that same capital* gives **{{fixed_dd}}** and **{{fixed_worst_month}}**: ~0.2pp
@@ -220,7 +220,7 @@ restore −4% with hysteresis = stop/restart), a daily-loss circuit breaker (−
 per-family weight cap (1.5× the 1/{{n_families}} equal weight; at equal weight it never binds). The drawdown ladder is ~neutral on this benign-tail
 history (dormant insurance); the **VIX gate is the active risk layer** — it times the short-vol leg out of the crashes that
 cluster the losing months, holding the book at **Sharpe {{book_sharpe}}** and closing the scorecard to
-**{{oos_targets}} out-of-sample, {{book_targets}} on the full window** (§5d/§6). 15-year window 2011→2026; each family joins as it lists, averaged over those live each day. **Mean
+**{{oos_targets}} out-of-sample, {{book_targets}} on the full window** (§5d/§6). {{window_span}}; each family joins as it lists, averaged over those live each day. **Mean
 pairwise cross-family correlation is ≈ {{mean_corr_abs}}** — the corr-to-book column is naturally higher since each
 family is part of the book. **The decorrelation is stable out-of-sample** — the same matrix re-measured on two halves of the
 window and on the frozen block reads {{corr_stability}} — not an
@@ -248,7 +248,7 @@ in-sample artifact.
   **{{capital}}** sizing capital **{{pnl_usd}}** of P&L, **~{{pnl_usd_per_year}}/yr** — **{{return_not_reinvested}}/yr**
   not reinvested, **{{return_compounded}}/yr** compounded (§9) — max DD **{{book_dd}}**, months-in-profit
   **{{book_months}}**, worst month **{{book_worst_month}}**, streak **{{book_streak}}mo** — **{{book_targets_met}} on the
-  15-year window** ({{book_miss}});
+  {{window_years_word}}-year window** ({{book_miss}});
   block-bootstrap MC **[Sharpe P5 {{mc_sharpe_p5}}, P50 {{mc_sharpe_p50}}, P95 {{mc_sharpe_p95}}; max-DD P5 {{mc_dd_p5}}, P50 {{mc_dd_p50}}]**; mean
   pairwise cross-family correlation **{{mean_corr}}**. **On the final OOS block: Sharpe {{oos_sharpe}}, months-in-profit
   {{oos_months}}, max-DD {{oos_dd}}, worst {{oos_worst_month}}, streak {{oos_streak}}mo — {{oos_targets}}.**
@@ -551,7 +551,7 @@ The brief asks for **two distinct things**, and the book has both:
 
 - **A final out-of-sample block, held to the end and run exactly once** (§10/§11) — `OOS_START=2024-07-01`,
   the last ~2 years, never inspected until the end. **§11 scores the targets on this block and nothing else**,
-  so it is the deliverable's scorecard (Sharpe **{{oos_sharpe}}**, {{oos_targets}}); the 15-year window is reported
+  so it is the deliverable's scorecard (Sharpe **{{oos_sharpe}}**, {{oos_targets}}); the {{window_years_word}}-year window is reported
   alongside it because §10 asks for per-year/per-quarter metrics and §12 for a ceiling assessment — it is
   supporting evidence, never a second scorecard.
 - **A rolling & anchored walk-forward with periodic re-fitting** (§10) at the portfolio level
@@ -833,7 +833,7 @@ crash months while the other {{n_families_less_one_word}} families stay invested
   ({{return_not_reinvested}}/yr on the brief's {{capital}} at {{leverage}}, drawdown {{book_dd}},
   block-bootstrap MC-P5 **{{mc_sharpe_p5}}**) that meets **{{oos_targets_word}}** targets on the window the brief
   scores — the final out-of-sample block (Sharpe **{{oos_sharpe}}**) — and **{{book_targets_word}}** on the full
-  15-year window (Sharpe **{{book_sharpe}}**, missing on {{book_miss}}). Vol-premium anchors the Sharpe;
+  {{window_years_word}}-year window (Sharpe **{{book_sharpe}}**, missing on {{book_miss}}). Vol-premium anchors the Sharpe;
   {{n_families_less_one_word}} decorrelated sources cut its tail; a VIX-term-structure regime gate times the
   short-vol leg out of the crashes that used to break the worst month and cluster the losing months; and the
   crypto cross-sectional sleeve runs on **residual (idiosyncratic) momentum**, a better-built momentum that
@@ -924,7 +924,7 @@ placebo, walk-forward, correlation to this book):
 
 Together with **trend**, **breakout**, **cross-sectional momentum**, **crisis-alpha**, **global-macro** and
 **betting-against-beta / low-vol**, these give **eight structurally distinct sources** that survive validation;
-**{{n_families_word}} of them are traded** (§6d-ter drops trend and carry, and prices what that costs), and
+**{{n_families_word}} of them are traded** — {{families_traded}}; §6d-ter prices what leaving the rest out costs — and
 those {{n_families_word}} are what §4 assembles. Cross-sectional **reversal**, stat-arb **pairs**, the
 **calendar/session** family (both **overnight** and **pre-FOMC/turn-of-month**, H4) and **skewness/lottery
 (MAX)** families were tested for this role and rejected (§7, all real-but-beta or negative).
