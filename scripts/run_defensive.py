@@ -28,7 +28,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise  # noqa: E402
-from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.risk.sizing import vol_target_scale
+from src.sleeves.xsect import held_turnover  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 PPY = 252
@@ -62,7 +63,8 @@ def build_defensive(cost_bps=2.0, exec_lag=2, target=0.15) -> pd.Series:
         r = _px(a).pct_change() * sgn
         vt = (target / np.sqrt(PPY) / r.rolling(40).std()).clip(upper=3.0).shift(exec_lag)
         legs.append((vt * r).rename(a))
-        turns.append(vt.diff().abs())
+        # a single levered leg drifts too: hold p of NAV through r and it becomes p(1+r)/(1+p*r)
+        turns.append(held_turnover(vt.fillna(0.0).to_frame(a), r.fillna(0.0).to_frame(a))[a])
     basket = pd.concat(legs, axis=1).mean(axis=1)
     turn = pd.concat(turns, axis=1).mean(axis=1)
     basket = basket - turn.fillna(0.0) * cost_bps / 1e4

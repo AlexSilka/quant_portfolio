@@ -30,7 +30,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise  # noqa: E402
-from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.risk.sizing import vol_target_scale
+from src.sleeves.xsect import held_turnover  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 PPY = 252
@@ -62,7 +63,9 @@ def _class_trend(tickers, cost_bps=2.0, exec_lag=2, target=0.15) -> pd.Series:
     sig = sum(np.sign(px / px.shift(h) - 1.0) for h in HORIZONS) / len(HORIZONS)
     pos = (sig * (target / np.sqrt(PPY) / vol).clip(upper=3.0)).shift(exec_lag)
     gross = (pos * r).mean(axis=1)
-    turn = pos.diff().abs().mean(axis=1)
+    # `(pos * r)` prices a book put back on `pos` every bar, so the drift back onto it is a trade
+    # that `pos.diff()` never sees — `xsect.held_turnover`, the driver being the same r used above
+    turn = held_turnover(pos.fillna(0.0), r.reindex_like(pos).fillna(0.0)).mean(axis=1)
     return gross - turn.fillna(0.0) * cost_bps / 1e4
 
 
