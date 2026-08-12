@@ -190,6 +190,11 @@ VALIDATED_NOT_HELD = [
     ("gmacro",  "book/gmacro_sleeve.parquet",  "ret"),      # EM-FX + commodity trend
     ("crisis",  "book/crisis_sleeve.parquet",  "ret"),      # managed-futures long gamma
     ("bab",     "bab/bab_book_c25.parquet",    "ret"),      # beta-neutral betting-against-beta, top-25
+    # residual momentum is here rather than among the rejected families because it PASSES its own
+    # validation (placebo 93rd crypto / 99th equity, walk-forward beats raw momentum on both). What it
+    # fails is distinctness: no alpha over raw momentum (t +0.99), so holding it means holding momentum
+    # twice. Scored on the same basis as its neighbours instead of quoted off its own study.
+    ("residmom", "residmom/residmom_returns.parquet", "crypto_idio"),
 ]
 
 HEDGE_SLOT: dict[str, tuple[float, float]] = {}

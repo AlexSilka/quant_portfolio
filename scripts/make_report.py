@@ -31,7 +31,8 @@ OOS_TS = pd.Timestamp(OOS_START).tz_localize(None)  # frozen OOS boundary (tz-na
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 SHORT = {"trend_momentum": "trend", "carry": "carry", "volprem": "vol-prem",
          "xs_momentum": "x-sect", "bab": "BAB", "breakout": "breakout",
-         "crisis": "crisis-alpha", "gmacro": "global-macro"}   # family id -> display label
+         "crisis": "crisis-alpha", "gmacro": "global-macro",
+         "residmom": "residual-mom"}                           # family id -> display label
 STRESS = [("Q4 2018", "2018-10-01", "2018-12-31"),
           ("COVID crash Feb-Mar 2020", "2020-02-01", "2020-03-31"),
           ("2021 (bull)", "2021-01-01", "2021-12-31"),
@@ -396,11 +397,12 @@ def _honesty_card():
 # book legs each run; rejected ones from each deep-dive's own frozen artifact (two families carry no
 # saved summary, so their honest walk-forward headline is stated inline). This is the headline edge
 # map; the raw first-pass timeframe scan (the zoo) sits below it as supporting detail. ---
-# Every family that cleared its own validation, whether or not the book ended up holding it. Which
-# section a row lands in is decided at render time from `run_master_book.FAMILIES`, not typed here —
-# a family that leaves the composition used to keep sitting under "in the book" with an n/a Sharpe,
-# which is two wrong statements in one row: it is not in the book, and its Sharpe is not unknown.
-LIVE_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), where the edge is)
+# Every family whose Sharpe is measured on the BOOK's own basis — its published series rescaled to the
+# book's per-leg vol target over the book's window — so these rows are comparable with each other to
+# the decimal. Membership is the validation rule stated in the card's footnote: the construction clears
+# its own randomised placebo (or, for the hedge, pays in the events it is bought for). Which section a
+# row lands in is decided at render time from `run_master_book.FAMILIES`, never typed here.
+SCORED_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), where the edge is)
     ("volprem",        "multi-asset vol", "1d",           "index/single-name/commodity/rates VRP &mdash; the dominant sleeve"),
     ("trend_momentum", "crypto + equity", "1d / 4h",      "the repo&rsquo;s core premium; held to reversal"),
     ("breakout",       "crypto",          "1h / 4h / 1d", "channel breaks with an ML confidence gate"),
@@ -409,6 +411,7 @@ LIVE_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(
     ("xs_momentum",    "crypto + equity", "1d",           "survivorship-free top-100 momentum"),
     ("crisis",         "multi-asset ETF", "1d",           "managed-futures long gamma"),
     ("bab",            "crypto majors",   "1d",           "betting-against-beta / low-vol, beta-neutral top-25"),
+    ("residmom",       "crypto",          "1d",           "momentum on the residual after the market factor"),
 ]
 
 
@@ -420,8 +423,10 @@ NOT_HELD_WHY = {
     "gmacro": "real but thin net of cost &mdash; the diversification is there, the return is not",
     "crisis": "crash insurance: it pays in the tail and bleeds between them, buying drawdown with "
               "months in profit",
-    "bab":    "strongest of the four and genuinely tradeable, but it lives on the same crypto majors "
-              "the momentum legs already hold (+0.17 to the book, the closest here)",
+    "bab":    "strongest here and genuinely tradeable (placebo 100th pctile, deflated 1.00), but it "
+              "lives on the same crypto majors the momentum legs already hold",
+    "residmom": "clears its placebo (93rd crypto / 99th equity) and beats raw momentum walk-forward, "
+                "but carries no alpha over it (t +0.99) &mdash; the book would hold momentum twice",
 }
 
 
@@ -451,10 +456,9 @@ def _family_edge_card(summ, legs):
     timeframe finding and the tested overlays/variants that are not separate families are in the footnote."""
     ss = summ.get("standalone_sharpe", {})
     rejected = [  # (label, asset class, timeframe, honest Sharpe, why it is not in the book)
-        ("residual-mom",      "crypto",          "1d",           _dig("residmom/residmom_summary.json", "crypto", "head_to_head", "idio", "sharpe"),
-         "a better-built momentum (&Delta; +0.16 vs raw), not a new source"),
         ("seasonal FOMC/ToM", "equity",          "event",        _dig("seasonal/seasonal_summary.json", "combined", "combined_spy", "net_sharpe"),
-         "real but beta, not timing &rarr; sub-bar, drags the book"),
+         "inside its own placebo &mdash; 75th pctile, random event-timing prints +0.32 &mdash; so the "
+         "number is beta, not timing"),
         ("lottery / MAX",     "crypto",          "1d",           _dig("lottery/lottery_summary.json", "chosen_skew_short", "sharpe"),
          "inverted &mdash; momentum eats the skew premium"),
         ("x-sect reversal",   "crypto / equity", "1d",           -0.49,
@@ -465,7 +469,8 @@ def _family_edge_card(summ, legs):
         # the *pool's* OOS after it selects a config, and the pool contains adoption momentum, so it
         # reads positive for a family whose own headline is dead.
         ("on-chain",          "crypto",          "1d",           _dig("onchain/onchain_summary.json", "cross_section", "headline", "sharpe"),
-         "value is a coin-type tilt; exchange flows lose to random timing"),
+         "72nd pctile of its placebo, deflated 0.07 &mdash; value is a coin-type tilt, and exchange "
+         "flows lose to random timing"),
         ("chain fundamentals", "crypto L1/L2",   "1d",           _dig("onchain/fundamentals_summary.json", "headline", "sharpe"),
          "fee yield inverted (placebo 6th pctile); a standing tilt short BTC"),
         ("volume-spike",      "crypto alts",     "1h",           _pq_sharpe("volspike/volspike_wf_oos.parquet"),
@@ -495,10 +500,12 @@ def _family_edge_card(summ, legs):
         return "".join(rowhtml(SHORT.get(fid, fid), a, tf, ss.get(fid), why,
                                mark=("&#8224;" if fid == "volprem" else ""))
                        for fid, a, tf, why in sorted(rows, key=lambda r: -(ss.get(r[0]) or 0.0)))
-    live = _rows([r for r in LIVE_FAM if r[0] in held])
+    live = _rows([r for r in SCORED_FAM if r[0] in held])
     bench = _rows([(fid, a, tf, f"{why} &mdash; {NOT_HELD_WHY[fid]}" if fid in NOT_HELD_WHY else why)
-                   for fid, a, tf, why in LIVE_FAM if fid not in held])
-    rej = "".join(rowhtml(lab, a, tf, v, why) for lab, a, tf, v, why in rejected)
+                   for fid, a, tf, why in SCORED_FAM if fid not in held])
+    # sorted by Sharpe like the two groups above it, so one reading order runs down the whole card
+    rej = "".join(rowhtml(lab, a, tf, v, why)
+                  for lab, a, tf, v, why in sorted(rejected, key=lambda r: -(r[3] or 0.0)))
     # vol-prem's tail, measured rather than quoted: the leg as the book holds it (vol-targeted, gated), and
     # the standalone Cboe book behind it, whose OHLC-measured tail is the number the sizing respects.
     vp = legs["volprem"].dropna()
@@ -512,11 +519,16 @@ def _family_edge_card(summ, legs):
         + grp("In the book &mdash; where edge was found") + live
         + (grp("Validated, not held &mdash; real edge the composition did not take") + bench if bench else "")
         + grp("Tested, rejected &mdash; where edge was not") + rej
-        + '</table><p class="valline">Each Sharpe is the family&rsquo;s standalone result from its own '
-        'validated construction &mdash; held families from the master-book legs, rejected ones from their '
-        'deep-dive walk-forward. The middle group is neither: each one passed its own validation and was '
-        'left out on the composition search, so its edge is real and its Sharpe is measured, it simply did '
-        'not earn a slot. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
+        + '</table><p class="valline"><b>What puts a family above the line is its placebo, not its Sharpe.</b> '
+        'The top two groups are the constructions whose result clears their own randomised control &mdash; '
+        'signal replaced by noise, or positions rotated &mdash; at the 95th percentile or better; the hedge '
+        'clears on the events it is bought for rather than on a ratio. Everything below the line failed that '
+        'test or is negative net of cost, which is why a positive Sharpe appears there: seasonal&rsquo;s +0.31 '
+        'and on-chain&rsquo;s +0.15 sit inside distributions that random timing reproduces. The split between '
+        'the top two groups is composition alone. <b>Basis:</b> the first two groups are scored identically '
+        '&mdash; each family&rsquo;s published series at the book&rsquo;s per-leg risk over the book&rsquo;s '
+        'window, so they compare to the decimal; rejected families are quoted from their own deep-dive, whose '
+        'window and risk are their own. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
         f'it the leg prints skew {_n(vp_skew)} / {_pc(vp_dd)} drawdown, and the Cboe book behind it skew '
         '&minus;18 / a &minus;78% systemic tail. It is sized on that tail, not on Sharpe. Edge concentrates '
         'at <b>1d</b>; intraday decays to turnover &times; cost everywhere. Overlay studies and within-family '
