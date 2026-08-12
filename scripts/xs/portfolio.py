@@ -58,27 +58,12 @@ def _signal(cfg, px, bpd):
     return blend_rank([risk_adj_mom(px, max(2, int(lb * f)), sk) for f in (0.5, 1.0, 2.0)])
 
 
-def _funding_panel(cols, index):
-    """Perp funding accrued per bar, binned onto the panel's bar grid.
-
-    `xs_backtest` says it in its own docstring — "crypto perps pay funding, not borrow, so those
-    callers leave borrow_bps_annual=0 and charge funding separately" — and this caller never did.
-    Settlements are on an 8h grid, so each is summed into the bar it falls in; a plain reindex would
-    drop two of the three inside a 1d bar.
-
-    On this book funding is a CREDIT, which is the opposite of the obvious guess. Momentum is long
-    the winners, where funding is dearest — but measured on the names actually held, the SHORT book
-    (the losers) carries more: +8.6%/yr against the long book's +3.3% on 1d. Beaten-down alts keep
-    stubbornly positive funding, so shorting them collects more than leading costs.
-    """
-    from src import bo_common as bo
-    bar = index.to_series().diff().dropna().median()
-    f = {}
-    for s in cols:
-        fr = bo.safe_funding(s)
-        if len(fr):
-            f[s] = fr.sort_index().resample(bar, origin=index[0]).sum()
-    return pd.DataFrame(f).reindex(index).fillna(0.0).reindex(columns=cols).fillna(0.0) if f else None
+# Funding used to be assembled and subtracted here, by hand, because `xs_backtest` had nowhere to put
+# it. It lives in `src/backtest/carry` now and the backtest charges it itself — so this file both
+# stops carrying its own copy and stops being the only caller that remembered. On this book funding
+# is a CREDIT, which is the opposite of the obvious guess: momentum is long the winners, where funding
+# is dearest, but the SHORT book (the losers) carries more — beaten-down alts keep stubbornly positive
+# funding, so shorting them collects more than leading costs.
 
 
 def sleeve_daily(tag, cfg):
@@ -91,12 +76,7 @@ def sleeve_daily(tag, cfg):
     sig = top_n_liquid(_signal(cfg, px, bpd), adv, TOP_N.get(kind, 0), bpd)
     bt = xs_backtest(px, sig, top_frac=cfg["tf"], weighting=cfg["wt"], rebal=max(1, cfg["rb"] * bpd),
                      cost_bps=cost, adv=adv, impact_k=0.1 if adv is not None else 0.0)
-    net = bt["net"]
-    if kind == "crypto":                       # these legs trade perps; the equity leg pays borrow instead
-        F = _funding_panel(list(bt["weights"].columns), px.index)
-        if F is not None:
-            net = net - (bt["weights"] * F.reindex_like(bt["weights"]).fillna(0.0)).sum(axis=1)
-    netv = vol_target(net, ppy)
+    netv = vol_target(bt["net"], ppy)          # net already carries funding — xs_backtest charges it
     daily = (1 + netv).resample("D").prod() - 1
     cost_d = bt["cost"].resample("D").sum()
     return daily.dropna(), cost_d, kind

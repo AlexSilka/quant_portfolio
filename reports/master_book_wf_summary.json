@@ -3,46 +3,46 @@
   "headline_config": "equal_anchored_Q",
   "full_history": true,
   "headline_wf_oos": {
-    "sharpe": 3.84,
+    "sharpe": 3.82,
     "max_dd": -0.1453,
-    "months_in_profit": 0.7901,
+    "months_in_profit": 0.786,
     "n_obs": 6216,
     "start": "2006-06-15",
     "end": "2026-08-05"
   },
   "headline_final_block_oos": {
-    "sharpe": 3.58,
-    "max_dd": -0.0468,
-    "months_in_profit": 0.8462,
+    "sharpe": 3.5,
+    "max_dd": -0.0477,
+    "months_in_profit": 0.8077,
     "n_obs": 766,
     "start": "2024-07-01",
     "end": "2026-08-05"
   },
   "master_window_2016_oos": {
-    "sharpe": 3.91,
+    "sharpe": 3.88,
     "max_dd": -0.0761,
-    "months_in_profit": 0.8182,
+    "months_in_profit": 0.8099,
     "n_obs": 3425,
     "start": "2016-08-01",
     "end": "2026-08-05"
   },
   "window_cadence_invariance_range": [
-    3.84,
-    3.86
+    3.82,
+    3.85
   ],
   "configs": {
     "equal_anchored_Q": {
-      "sharpe": 3.84,
+      "sharpe": 3.82,
       "max_dd": -0.1453,
-      "months_in_profit": 0.7901,
+      "months_in_profit": 0.786,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "invvol_anchored_Q": {
-      "sharpe": 3.57,
+      "sharpe": 3.56,
       "max_dd": -0.1473,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.7984,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
@@ -50,31 +50,31 @@
     "meanvar_anchored_Q": {
       "sharpe": 6.28,
       "max_dd": -0.1906,
-      "months_in_profit": 0.8765,
+      "months_in_profit": 0.8724,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
     "equal_rolling2y_Q": {
-      "sharpe": 3.84,
+      "sharpe": 3.82,
+      "max_dd": -0.1453,
+      "months_in_profit": 0.786,
+      "n_obs": 6216,
+      "start": "2006-06-15",
+      "end": "2026-08-05"
+    },
+    "equal_anchored_A": {
+      "sharpe": 3.85,
       "max_dd": -0.1453,
       "months_in_profit": 0.7901,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
     },
-    "equal_anchored_A": {
-      "sharpe": 3.86,
-      "max_dd": -0.1453,
-      "months_in_profit": 0.7942,
-      "n_obs": 6216,
-      "start": "2006-06-15",
-      "end": "2026-08-05"
-    },
     "invvol_rolling2y_Q": {
-      "sharpe": 3.62,
+      "sharpe": 3.6,
       "max_dd": -0.1473,
-      "months_in_profit": 0.8025,
+      "months_in_profit": 0.7984,
       "n_obs": 6216,
       "start": "2006-06-15",
       "end": "2026-08-05"
@@ -99,34 +99,34 @@
   },
   "window_robustness": {
     "full_21y_2005": {
-      "sharpe": 4.2,
+      "sharpe": 4.18,
       "max_dd": -0.129,
-      "months_in_profit": 0.8,
+      "months_in_profit": 0.7962,
       "worst_month": -0.0468,
       "longest_losing_streak_mo": 12,
-      "total_return": 4212.995,
+      "total_return": 4014.83,
       "n_obs": 6581
     },
     "15y_2011": {
-      "sharpe": 4.42,
+      "sharpe": 4.4,
       "max_dd": -0.0634,
-      "months_in_profit": 0.8564,
+      "months_in_profit": 0.8508,
       "worst_month": -0.0405,
       "longest_losing_streak_mo": 2,
-      "total_return": 339.833,
+      "total_return": 323.805,
       "n_obs": 4892
     },
     "10y_2016": {
-      "sharpe": 4.28,
+      "sharpe": 4.25,
       "max_dd": -0.0634,
-      "months_in_profit": 0.843,
-      "worst_month": -0.0314,
+      "months_in_profit": 0.8347,
+      "worst_month": -0.0296,
       "longest_losing_streak_mo": 2,
-      "total_return": 41.163,
+      "total_return": 39.18,
       "n_obs": 3425
     }
   },
   "note": "Book-level walk-forward with periodic allocation re-fit (\u00a710), over ALL available data (2005+ for the non-crypto legs; the crypto legs only from 2020). Equal-weight needs no fit, so its walk-forward equals the full post-burn-in track \u2014 the a-priori book is OOS across the whole history, incl. the 2008 GFC. The 2y final block (OOS_START) is the separate run-once \u00a711 holdout. Caveat: pre-~2019 crisis/gmacro are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",
   "seed": 7,
-  "book_id": "aabc9e117eb9"
+  "book_id": "88bca48ddd8c"
 }

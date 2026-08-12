@@ -45,16 +45,10 @@ def adv_panel(cols, tf, win=20):
     return pd.DataFrame(qv).sort_index().rolling(win).median().shift(1) if qv else None
 
 
-def funding_panel(cols, index):
-    """Perp funding accrued per bar. Settlements are on an 8h grid, so each one is binned into the
-    bar it falls in and summed — a plain reindex would silently drop two of the three in a 1d bar."""
-    bar = index.to_series().diff().dropna().median()
-    f = {}
-    for s in cols:
-        fr = bo.safe_funding(s)
-        if len(fr):
-            f[s] = fr.sort_index().resample(bar, origin=index[0]).sum()
-    return pd.DataFrame(f).reindex(index).fillna(0.0) if f else None
+from src.backtest.carry import funding_panel  # noqa: E402,F401  (re-exported: callers import it here)
+# ^ was a fourth hand-rolled copy of the same 8h-settlement binning. One implementation now lives in
+# src/backtest/carry, where the panel backtests reach it too, so a book cannot hold perps uncharged
+# because its author did not know to build this.
 
 
 def xs_daily(pnl, sig, ppy_bar, rebal, adv=None, funding=None):

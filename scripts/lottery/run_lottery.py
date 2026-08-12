@@ -23,7 +23,8 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import BAB_DIR, CACHE_DIR, LOTTERY_DIR, RAW_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
+from src.backtest.carry import NoCarry, PerpFunding  # noqa: E402
+from src.config import BAB_DIR, CACHE_DIR, LOTTERY_DIR, REPORTS_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import lottery as lot  # noqa: E402
 from src.sleeves.xsect import top_n_liquid, vol_target, xs_backtest  # noqa: E402
@@ -51,30 +52,6 @@ def _load(tag, start):
         C.index, A.index = C.index.tz_localize("UTC"), A.index.tz_localize("UTC")
     C = C[C.index >= pd.Timestamp(start, tz="UTC")]
     return C, A.reindex(C.index)
-
-
-def _funding_daily(C):
-    """Per-name daily funding panel (Σ of the 8h settlements) aligned to the crypto close grid, from
-    the Binance USD-M fundingRate archive. A perp holder of weight w in a name funding f pays w·f each
-    settlement, so book funding P&L = −Σ(wᵢ·fᵢ) — same convention as src/sleeves/carry_xs. Returns
-    None if the archive is absent (keeps the sleeve runnable on a close-only checkout)."""
-    from src.sleeves.carry_xs import funding_daily
-    fdir = RAW_DIR / "futures/um/fundingRate"
-    if not fdir.exists():
-        return None
-    fund = {}
-    for s in C.columns:
-        files = sorted((fdir / s).glob("*.parquet"))
-        if files:
-            df = pd.concat([pd.read_parquet(p) for p in files]).sort_index()
-            if "last_funding_rate" in df.columns:
-                fund[s] = df["last_funding_rate"]
-    if not fund:
-        return None
-    F = pd.DataFrame(fund)
-    if F.index.tz is None:
-        F.index = F.index.tz_localize("UTC")
-    return funding_daily(F).reindex(C.index).reindex(columns=C.columns)
 
 
 def _raw_signal(which, C, lb):
@@ -111,8 +88,12 @@ def sleeve_net(C, A, sig_raw, sign, ppy, cost, *, tf=TFRAC, rb=REBAL, bpd=1, ext
     if extra_mask is not None:
         sig = sig.where(~extra_mask)
     sig = top_n_liquid(sig, A, TOPN, bpd, px=C if bpd == 1 else None)
+    # carry=NoCarry() is the deliberate half of the pair this sleeve reports: the headline stays on
+    # the funding-free number so it is apples-to-apples with the momentum/carry sibling books, which
+    # price funding as their own sleeve. The charged number is measured below off `bt["carry"]`, so
+    # both come from one implementation instead of a local copy of the funding panel.
     bt = xs_backtest(C, sig, top_frac=tf, weighting="equal", rebal=max(1, rb * bpd), cost_bps=cost,
-                     adv=A, impact_k=IMPACT, min_names=MINNAMES)
+                     adv=A, impact_k=IMPACT, min_names=MINNAMES, carry=NoCarry(), ppy=ppy)
     return vol_target(bt["net"], ppy, TVOL), bt
 
 
@@ -168,18 +149,16 @@ def main():
     # dollar-neutral book funding-neutral, or does it pay? The headline stays on the no-funding number
     # (apples-to-apples with the momentum/carry sibling books, which price funding as their own sleeve),
     # and the with-funding number is reported so the effect is charged and visible, never hidden. ──
-    FD = _funding_daily(C)
     funding = {}
-    if FD is not None:
-        for which, lb in [("skew", LB_SKEW), ("MAX", LB_MAX)]:
-            _, bt = sleeve_net(C, A, _raw_signal(which, C, lb), -1, ppy, cost)
-            fpnl = -(bt["weights"] * FD.reindex_like(bt["weights"])).sum(axis=1)   # +ve = book receives
-            s_with = _sh(vol_target(bt["net"] + fpnl, ppy, TVOL), ppy)
-            funding[which] = {"funding_pct_per_yr": round(float(fpnl.mean() * 365 * 100), 2),
-                              "short_high_sharpe_with_funding": round(s_with, 3)}
-        print(f"  funding charged (8h settlements): skew-short {funding['skew']['funding_pct_per_yr']:+.1f}%/yr "
-              f"-> Sharpe {headline['skew']['lottery_short_high']:+.2f} → {funding['skew']['short_high_sharpe_with_funding']:+.2f}  "
-              f"(a headwind — the dollar-neutral lottery book PAYS funding, deepening the dead verdict)")
+    for which, lb in [("skew", LB_SKEW), ("MAX", LB_MAX)]:
+        _, bt = sleeve_net(C, A, _raw_signal(which, C, lb), -1, ppy, cost)
+        fpnl = PerpFunding().pnl(bt["weights"], ppy)            # +ve = the book receives funding
+        s_with = _sh(vol_target(bt["net"] + fpnl, ppy, TVOL), ppy)
+        funding[which] = {"funding_pct_per_yr": round(float(fpnl.mean() * 365 * 100), 2),
+                          "short_high_sharpe_with_funding": round(s_with, 3)}
+    print(f"  funding charged (8h settlements): skew-short {funding['skew']['funding_pct_per_yr']:+.1f}%/yr "
+          f"-> Sharpe {headline['skew']['lottery_short_high']:+.2f} → {funding['skew']['short_high_sharpe_with_funding']:+.2f}  "
+          f"(a headwind — the dollar-neutral lottery book PAYS funding, deepening the dead verdict)")
 
     # ── construction surface: window × tail, both signals — is there ANY positive lottery region? ──
     surface, all_trials = {}, []

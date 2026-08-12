@@ -21,9 +21,21 @@ from .costs import funding_pnl, trade_cost_bps
 def backtest(prices: pd.Series, target_pos: pd.Series, *, capital: float,
              commission_bps: float, half_spread_bps: float, impact_k: float = 0.1,
              adv: pd.Series | None = None, funding: pd.Series | None = None,
-             exec_lag: int = 2) -> pd.DataFrame:
-    """Return a per-bar frame: position, ret, gross_ret, cost, funding, net_ret, equity."""
+             symbol: str | None = None, exec_lag: int = 2) -> pd.DataFrame:
+    """Return a per-bar frame: position, ret, gross_ret, cost, funding, net_ret, equity.
+
+    `symbol` is how a single-asset caller gets carry for free. The panel backtests read the venue off
+    the panel's own names; a bare price Series carries none, so funding here was an explicit argument
+    that a caller could simply not pass — and holding a perp for nothing is the defect
+    `src/backtest/carry` exists to make impossible. Naming the symbol resolves its funding from the
+    archive; passing `funding=` still wins, and a symbol the venue never settled funding on (an
+    equity, a spot pair) resolves to none, so it is always safe to name it.
+    """
     close = prices.sort_index()
+    if funding is None and symbol is not None:
+        from src.backtest.carry import perp_symbols, settlements
+        if symbol in perp_symbols():
+            funding = settlements(symbol)
     r = close.pct_change().fillna(0.0)
 
     # signal stamped at bar t is filled exec_lag bars later (default 2 = one bar AFTER the

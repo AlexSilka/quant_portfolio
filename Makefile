@@ -231,6 +231,7 @@ lint:
 	$(PY) scripts/make_report.py --check
 	$(PY) scripts/make_live_report.py --check
 	$(PY) scripts/check_freshness.py
+	$(PY) scripts/check_funding.py
 
 # Rebuild REPORT.md and README.md from scripts/report_assets/ + the measured numbers.
 report:

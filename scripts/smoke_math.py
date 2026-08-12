@@ -144,15 +144,54 @@ def test_borrow_cost() -> None:
     off = xs_backtest(px, signal, borrow_bps_annual=0.0, **kw)
     on = xs_backtest(px, signal, borrow_bps_annual=EQUITY_BORROW_BPS_ANNUAL, **kw)
 
-    assert (off["borrow"] == 0.0).all(), "no borrow charge when the rate is zero"
-    assert on["borrow"].sum() > 0.0, "a dollar-neutral book has a short leg → borrow must be charged"
+    assert (off["carry"] == 0.0).all(), "no borrow charge when the rate is zero"
+    assert on["carry"].sum() > 0.0, "a dollar-neutral book has a short leg → borrow must be charged"
     # only borrow changed → the whole net delta IS the borrow charge (subtracted, not double-counted)
-    assert np.allclose((off["net"] - on["net"]).to_numpy(), on["borrow"].to_numpy()), "net must drop by exactly the borrow"
+    assert np.allclose((off["net"] - on["net"]).to_numpy(), on["carry"].to_numpy()), "net must drop by exactly the borrow"
     assert np.allclose(off["gross"].to_numpy(), on["gross"].to_numpy()), "borrow must not touch gross return"
     # magnitude matches k·(short notional)/ppy on the executed (shifted) weights
     expected = on["weights"].clip(upper=0.0).abs().sum(axis=1) * (EQUITY_BORROW_BPS_ANNUAL / 1e4) / 252
-    assert np.allclose(expected.to_numpy(), on["borrow"].to_numpy()), "borrow must equal rate × short-notional / ppy"
-    print(f"  short-borrow  ✓  {EQUITY_BORROW_BPS_ANNUAL:.0f}bps/yr on shorts only; net drag={on['borrow'].sum():.2e}")
+    assert np.allclose(expected.to_numpy(), on["carry"].to_numpy()), "borrow must equal rate × short-notional / ppy"
+    print(f"  short-borrow  ✓  {EQUITY_BORROW_BPS_ANNUAL:.0f}bps/yr on shorts only; net drag={on['carry'].sum():.2e}")
+
+
+# ── carry is charged because the INSTRUMENT says so, not because the caller remembered ─────
+def test_carry_is_not_opt_in() -> None:
+    """The regression this exists to prevent: a book of perps backtested with no funding charge.
+
+    It happened three times — the x-sect leg, the lottery sleeve, BAB — because `xs_backtest` is
+    handed a price panel and cannot see a venue, so carry was the caller's job and callers forgot.
+    The test crosses the real boundary rather than asserting against a literal: it names symbols the
+    Binance funding archive actually covers, and requires the charge to equal that archive's rates on
+    the executed weights, with NOBODY having asked for it.
+    """
+    from src.backtest.carry import NoCarry, funding_panel, perp_symbols
+
+    perps = sorted(perp_symbols() & {"BTCUSDT", "ETHUSDT", "XRPUSDT", "ADAUSDT", "LTCUSDT", "LINKUSDT"})
+    assert len(perps) >= 6, f"funding archive is missing majors — got {perps}"
+    idx = pd.date_range("2023-01-01", periods=60, freq="D", tz="UTC")
+    rng = np.random.default_rng(SEED)
+    px = pd.DataFrame(100 * np.cumprod(1 + rng.standard_normal((60, len(perps))) * 0.01, axis=0),
+                      index=idx, columns=perps)
+    signal = pd.DataFrame(np.tile(np.arange(float(len(perps))), (60, 1)), index=idx, columns=perps)
+    kw = dict(top_frac=0.34, weighting="equal", min_names=6, ppy=365)
+
+    auto = xs_backtest(px, signal, **kw)                       # caller says NOTHING about carry
+    off = xs_backtest(px, signal, carry=NoCarry(), **kw)       # opting out is explicit
+    assert abs(auto["carry"]).sum() > 0.0, "a perp panel must be charged funding with no caller action"
+    assert (off["carry"] == 0.0).all(), "NoCarry() must charge nothing"
+    # the charge IS the archive: −Σ wᵢ·fᵢ on the executed weights, every 8h settlement binned per bar
+    f = funding_panel(perps, idx)
+    expected = (auto["weights"] * f.reindex_like(auto["weights"])).sum(axis=1)
+    assert np.allclose(expected.to_numpy(), auto["carry"].to_numpy()), "carry must equal Σ w·funding"
+    assert np.allclose((off["net"] - auto["net"]).to_numpy(), auto["carry"].to_numpy()), \
+        "net must move by exactly the carry — charged once, not twice"
+    # a panel of names the venue never settled funding on is cash: no carry unless a borrow rate is given
+    cash = px.rename(columns=dict(zip(perps, list("ABCDEF")[:len(perps)])))
+    csig = signal.rename(columns=dict(zip(perps, list("ABCDEF")[:len(perps)])))
+    assert (xs_backtest(cash, csig, **kw)["carry"] == 0.0).all(), "non-perp panel must not be charged funding"
+    yr = float(auto["carry"].sum()) / ((idx[-1] - idx[0]).days / 365.25)
+    print(f"  carry-default ✓  perp panel charged {yr:+.2%}/yr unasked; NoCarry() opts out; cash panel 0")
 
 
 # ── core: execution lag (no look-ahead), cost model, deflated Sharpe, purged CV ────────────
@@ -234,6 +273,7 @@ def main() -> None:
     test_drawdown_ladder()
     test_vol_managed()
     test_borrow_cost()
+    test_carry_is_not_opt_in()
     print("\nSMOKE MATH OK — every correctness-critical invariant holds")
 
 

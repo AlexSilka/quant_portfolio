@@ -38,7 +38,8 @@ ROOT = Path(__file__).resolve().parents[1]
 # optional: the trial count N is quoted in the report, in the README and on the dashboard, and it sets
 # the deflation haircut. Reproducing with the cheap 1h/4h/1d grid would overwrite the published zoo with
 # a smaller N and quietly weaken every multiple-testing number that cites it.
-STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
+STEPS = (("check_funding.py",),      # static, seconds: nothing may hold a perpetual for free
+         ("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
          ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
          ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",),
          # everything below is measured AGAINST the assembled book, so it runs after the book and before

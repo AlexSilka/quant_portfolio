@@ -79,7 +79,7 @@ def equity_xsect(report=False):
         yrs = (bt["net"].index[-1] - bt["net"].index[0]).days / 365.25
         print(f"  equity·x-sect cost/yr: commission {bt['commission'].sum()/yrs:.1%}"
               f"  half-spread {bt['spread'].sum()/yrs:.1%}  √-impact {bt['impact'].sum()/yrs:.1%}"
-              f"  borrow {bt['borrow'].sum()/yrs:.2%}"
+              f"  borrow {bt['carry'].sum()/yrs:.2%}"
               f"  (total {bt['cost'].sum()/yrs:.1%}, turnover {bt['turnover'].sum()/yrs:.0f}x/yr)")
     return _norm(vol_target(bt["net"], cfg.EQUITY_PPY, cfg.XS_VOL_TARGET).dropna())
 

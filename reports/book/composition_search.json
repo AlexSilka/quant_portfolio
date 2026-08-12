@@ -8,129 +8,128 @@
     "breakout": 1.48,
     "crisis": 0.46,
     "gmacro": 0.93,
-    "bab": 1.36,
+    "bab": 1.23,
     "trend_momentum": 0.89,
     "carry": 1.22
   },
   "vol_matched_eight": {
-    "leverage": 1.326,
+    "leverage": 1.324,
     "full": {
-      "sharpe": 4.28,
-      "max_dd": -0.075,
-      "months_in_profit": 0.7926,
-      "worst_month": -0.0435,
+      "sharpe": 4.26,
+      "max_dd": -0.0749,
+      "months_in_profit": 0.7872,
+      "worst_month": -0.0434,
       "longest_losing_streak_mo": 3,
-      "total_return": 1009.779,
+      "total_return": 955.493,
       "n_obs": 5282,
-      "cagr": 0.5587,
-      "pnl_usd_per_year": 224834.0,
-      "vol": 0.109
+      "cagr": 0.5532,
+      "pnl_usd_per_year": 223043.0,
+      "vol": 0.1086
     },
     "oos": {
-      "sharpe": 4.09,
-      "max_dd": -0.0545,
-      "months_in_profit": 0.7692,
-      "worst_month": -0.0152,
+      "sharpe": 4.0,
+      "max_dd": -0.0552,
+      "months_in_profit": 0.7308,
+      "worst_month": -0.0176,
       "longest_losing_streak_mo": 2,
-      "total_return": 1.154,
+      "total_return": 1.089,
       "n_obs": 766,
-      "cagr": 0.4426,
-      "pnl_usd_per_year": 185354.0,
-      "vol": 0.0906
+      "cagr": 0.4215,
+      "pnl_usd_per_year": 177910.0,
+      "vol": 0.0889
     },
     "targets_full": 2,
-    "targets_oos": 3
+    "targets_oos": 4
   },
   "cost_of_passing": {
     "sharpe_full": 0.06,
-    "sharpe_oos": -0.13,
-    "cagr_full": 0.0828,
-    "cagr_oos": 0.0789,
+    "sharpe_oos": -0.12,
+    "cagr_full": 0.081,
+    "cagr_oos": 0.0713,
     "cagr_full_vol_matched": -0.0033,
-    "cagr_oos_vol_matched": 0.011,
+    "cagr_oos_vol_matched": 0.0076,
     "volprem_pnl_share": [
-      0.576,
-      0.6517
+      0.5808,
+      0.6579
     ]
   },
   "configurations": {
     "all eight": {
       "full": {
-        "sharpe": 4.3,
+        "sharpe": 4.28,
         "max_dd": -0.0653,
-        "months_in_profit": 0.7926,
+        "months_in_profit": 0.7872,
         "worst_month": -0.0337,
         "longest_losing_streak_mo": 3,
-        "total_return": 415.708,
+        "total_return": 399.707,
         "n_obs": 5282,
-        "cagr": 0.4726,
-        "pnl_usd_per_year": 195695.0,
-        "vol": 0.0946
+        "cagr": 0.4689,
+        "pnl_usd_per_year": 194431.0,
+        "vol": 0.0944
       },
       "oos": {
-        "sharpe": 4.09,
-        "max_dd": -0.0473,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.0131,
+        "sharpe": 4.0,
+        "max_dd": -0.048,
+        "months_in_profit": 0.7308,
+        "worst_month": -0.0153,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.947,
+        "total_return": 0.898,
         "n_obs": 766,
-        "cagr": 0.3747,
-        "pnl_usd_per_year": 160718.0,
-        "vol": 0.0786
+        "cagr": 0.3578,
+        "pnl_usd_per_year": 154493.0,
+        "vol": 0.0772
       },
       "targets_full": 2,
-      "targets_oos": 3,
+      "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.30",
-        "months 79.3%",
+        "Sharpe 4.28",
+        "months 78.7%",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.09",
-        "months 76.9%"
+        "months 73.1%"
       ],
-      "volprem_pnl_share": 0.576,
+      "volprem_pnl_share": 0.5808,
       "dropped": [],
       "n_families": 8
     },
     "drop volprem": {
       "full": {
-        "sharpe": 1.56,
+        "sharpe": 1.54,
         "max_dd": -0.2319,
-        "months_in_profit": 0.5798,
+        "months_in_profit": 0.5745,
         "worst_month": -0.0978,
         "longest_losing_streak_mo": 13,
-        "total_return": 7.445,
+        "total_return": 7.062,
         "n_obs": 5282,
-        "cagr": 0.1467,
-        "pnl_usd_per_year": 70487.0,
-        "vol": 0.0935
+        "cagr": 0.1433,
+        "pnl_usd_per_year": 68989.0,
+        "vol": 0.0933
       },
       "oos": {
-        "sharpe": 2.36,
-        "max_dd": -0.0604,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.0252,
+        "sharpe": 2.22,
+        "max_dd": -0.0626,
+        "months_in_profit": 0.6923,
+        "worst_month": -0.0277,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.492,
+        "total_return": 0.445,
         "n_obs": 766,
-        "cagr": 0.2104,
-        "pnl_usd_per_year": 97187.0,
-        "vol": 0.0824
+        "cagr": 0.1921,
+        "pnl_usd_per_year": 89483.0,
+        "vol": 0.0805
       },
       "targets_full": 0,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.56",
-        "months 58.0%",
+        "Sharpe 1.54",
+        "months 57.5%",
         "max-DD -23.2%",
         "streak 13",
         "worst month -9.8%"
       ],
       "misses_oos": [
-        "Sharpe 2.36",
-        "months 76.9%"
+        "Sharpe 2.22",
+        "months 69.2%"
       ],
       "volprem_pnl_share": NaN,
       "dropped": [
@@ -140,39 +139,39 @@
     },
     "drop xs_momentum": {
       "full": {
-        "sharpe": 4.5,
+        "sharpe": 4.48,
         "max_dd": -0.0715,
         "months_in_profit": 0.7872,
         "worst_month": -0.0445,
         "longest_losing_streak_mo": 2,
-        "total_return": 975.635,
+        "total_return": 932.121,
         "n_obs": 5177,
-        "cagr": 0.5553,
-        "pnl_usd_per_year": 223441.0,
-        "vol": 0.1041
+        "cagr": 0.5508,
+        "pnl_usd_per_year": 221965.0,
+        "vol": 0.1038
       },
       "oos": {
-        "sharpe": 3.9,
-        "max_dd": -0.0504,
-        "months_in_profit": 0.7308,
-        "worst_month": -0.0257,
+        "sharpe": 3.83,
+        "max_dd": -0.0517,
+        "months_in_profit": 0.7692,
+        "worst_month": -0.0282,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.979,
+        "total_return": 0.921,
         "n_obs": 766,
-        "cagr": 0.3854,
-        "pnl_usd_per_year": 164826.0,
-        "vol": 0.0844
+        "cagr": 0.3658,
+        "pnl_usd_per_year": 157606.0,
+        "vol": 0.0821
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.50",
+        "Sharpe 4.48",
         "months 78.7%"
       ],
       "misses_oos": [
-        "months 73.1%"
+        "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6206,
+      "volprem_pnl_share": 0.6262,
       "dropped": [
         "xs_momentum"
       ],
@@ -180,41 +179,40 @@
     },
     "drop breakout": {
       "full": {
-        "sharpe": 4.29,
-        "max_dd": -0.0753,
-        "months_in_profit": 0.7872,
-        "worst_month": -0.0341,
+        "sharpe": 4.27,
+        "max_dd": -0.0656,
+        "months_in_profit": 0.7926,
+        "worst_month": -0.0338,
         "longest_losing_streak_mo": 3,
-        "total_return": 427.594,
+        "total_return": 413.726,
         "n_obs": 5282,
-        "cagr": 0.4753,
-        "pnl_usd_per_year": 196627.0,
-        "vol": 0.0952
+        "cagr": 0.4721,
+        "pnl_usd_per_year": 195563.0,
+        "vol": 0.095
       },
       "oos": {
-        "sharpe": 4.44,
-        "max_dd": -0.0499,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.017,
-        "longest_losing_streak_mo": 2,
-        "total_return": 1.1,
+        "sharpe": 4.35,
+        "max_dd": -0.0497,
+        "months_in_profit": 0.8462,
+        "worst_month": -0.0195,
+        "longest_losing_streak_mo": 1,
+        "total_return": 1.038,
         "n_obs": 766,
-        "cagr": 0.425,
-        "pnl_usd_per_year": 178798.0,
-        "vol": 0.0805
+        "cagr": 0.4048,
+        "pnl_usd_per_year": 171578.0,
+        "vol": 0.0788
       },
       "targets_full": 2,
-      "targets_oos": 3,
+      "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.29",
-        "months 78.7%",
+        "Sharpe 4.27",
+        "months 79.3%",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.44",
-        "months 76.9%"
+        "Sharpe 4.35"
       ],
-      "volprem_pnl_share": 0.6122,
+      "volprem_pnl_share": 0.6177,
       "dropped": [
         "breakout"
       ],
@@ -222,39 +220,40 @@
     },
     "drop crisis": {
       "full": {
-        "sharpe": 4.57,
+        "sharpe": 4.55,
         "max_dd": -0.0649,
-        "months_in_profit": 0.8138,
+        "months_in_profit": 0.8085,
         "worst_month": -0.0346,
         "longest_losing_streak_mo": 3,
-        "total_return": 612.2,
+        "total_return": 587.208,
         "n_obs": 5150,
-        "cagr": 0.5095,
-        "pnl_usd_per_year": 208102.0,
-        "vol": 0.0957
+        "cagr": 0.5055,
+        "pnl_usd_per_year": 206759.0,
+        "vol": 0.0955
       },
       "oos": {
-        "sharpe": 4.33,
-        "max_dd": -0.0493,
-        "months_in_profit": 0.8077,
-        "worst_month": -0.0135,
-        "longest_losing_streak_mo": 1,
-        "total_return": 1.035,
+        "sharpe": 4.23,
+        "max_dd": -0.0495,
+        "months_in_profit": 0.7692,
+        "worst_month": -0.0157,
+        "longest_losing_streak_mo": 2,
+        "total_return": 0.98,
         "n_obs": 766,
-        "cagr": 0.4037,
-        "pnl_usd_per_year": 171208.0,
-        "vol": 0.079
+        "cagr": 0.3857,
+        "pnl_usd_per_year": 164674.0,
+        "vol": 0.0778
       },
       "targets_full": 3,
-      "targets_oos": 4,
+      "targets_oos": 3,
       "misses_full": [
-        "Sharpe 4.57",
+        "Sharpe 4.55",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.33"
+        "Sharpe 4.23",
+        "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6034,
+      "volprem_pnl_share": 0.6086,
       "dropped": [
         "crisis"
       ],
@@ -262,38 +261,38 @@
     },
     "drop gmacro": {
       "full": {
-        "sharpe": 4.57,
+        "sharpe": 4.55,
         "max_dd": -0.1181,
-        "months_in_profit": 0.8191,
+        "months_in_profit": 0.8138,
         "worst_month": -0.1096,
         "longest_losing_streak_mo": 3,
-        "total_return": 1001.112,
+        "total_return": 957.692,
         "n_obs": 5263,
-        "cagr": 0.5579,
-        "pnl_usd_per_year": 224215.0,
-        "vol": 0.1021
+        "cagr": 0.5535,
+        "pnl_usd_per_year": 222784.0,
+        "vol": 0.1019
       },
       "oos": {
-        "sharpe": 3.93,
-        "max_dd": -0.0466,
+        "sharpe": 3.84,
+        "max_dd": -0.0473,
         "months_in_profit": 0.8462,
-        "worst_month": -0.0243,
+        "worst_month": -0.0268,
         "longest_losing_streak_mo": 1,
-        "total_return": 0.989,
+        "total_return": 0.932,
         "n_obs": 766,
-        "cagr": 0.3886,
-        "pnl_usd_per_year": 165981.0,
-        "vol": 0.0844
+        "cagr": 0.3695,
+        "pnl_usd_per_year": 158989.0,
+        "vol": 0.0827
       },
       "targets_full": 2,
       "targets_oos": 5,
       "misses_full": [
-        "Sharpe 4.57",
+        "Sharpe 4.55",
         "streak 3",
         "worst month -11.0%"
       ],
       "misses_oos": [],
-      "volprem_pnl_share": 0.6273,
+      "volprem_pnl_share": 0.633,
       "dropped": [
         "gmacro"
       ],
@@ -341,38 +340,36 @@
     },
     "drop trend_momentum": {
       "full": {
-        "sharpe": 4.41,
+        "sharpe": 4.4,
         "max_dd": -0.0726,
-        "months_in_profit": 0.8404,
+        "months_in_profit": 0.8351,
         "worst_month": -0.0462,
         "longest_losing_streak_mo": 2,
-        "total_return": 819.495,
+        "total_return": 789.411,
         "n_obs": 5042,
-        "cagr": 0.538,
-        "pnl_usd_per_year": 217820.0,
-        "vol": 0.1048
+        "cagr": 0.5343,
+        "pnl_usd_per_year": 216612.0,
+        "vol": 0.1046
       },
       "oos": {
-        "sharpe": 4.04,
-        "max_dd": -0.0498,
+        "sharpe": 3.95,
+        "max_dd": -0.0502,
         "months_in_profit": 0.8077,
-        "worst_month": -0.0135,
+        "worst_month": -0.016,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.099,
+        "total_return": 1.037,
         "n_obs": 766,
-        "cagr": 0.4249,
-        "pnl_usd_per_year": 179081.0,
-        "vol": 0.0885
+        "cagr": 0.4046,
+        "pnl_usd_per_year": 171862.0,
+        "vol": 0.087
       },
       "targets_full": 4,
-      "targets_oos": 4,
+      "targets_oos": 5,
       "misses_full": [
-        "Sharpe 4.41"
+        "Sharpe 4.40"
       ],
-      "misses_oos": [
-        "Sharpe 4.04"
-      ],
-      "volprem_pnl_share": 0.6198,
+      "misses_oos": [],
+      "volprem_pnl_share": 0.6254,
       "dropped": [
         "trend_momentum"
       ],
@@ -380,39 +377,39 @@
     },
     "drop carry": {
       "full": {
-        "sharpe": 4.23,
+        "sharpe": 4.21,
         "max_dd": -0.0653,
-        "months_in_profit": 0.7979,
+        "months_in_profit": 0.7926,
         "worst_month": -0.0337,
         "longest_losing_streak_mo": 2,
-        "total_return": 463.162,
+        "total_return": 442.471,
         "n_obs": 5282,
-        "cagr": 0.4828,
-        "pnl_usd_per_year": 199299.0,
-        "vol": 0.0977
+        "cagr": 0.4785,
+        "pnl_usd_per_year": 197823.0,
+        "vol": 0.0974
       },
       "oos": {
-        "sharpe": 3.97,
-        "max_dd": -0.0551,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.0133,
+        "sharpe": 3.89,
+        "max_dd": -0.0539,
+        "months_in_profit": 0.7308,
+        "worst_month": -0.0129,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.99,
+        "total_return": 0.931,
         "n_obs": 766,
-        "cagr": 0.3888,
-        "pnl_usd_per_year": 166039.0,
-        "vol": 0.0836
+        "cagr": 0.3691,
+        "pnl_usd_per_year": 158819.0,
+        "vol": 0.0816
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.23",
-        "months 79.8%"
+        "Sharpe 4.21",
+        "months 79.3%"
       ],
       "misses_oos": [
-        "months 76.9%"
+        "months 73.1%"
       ],
-      "volprem_pnl_share": 0.6034,
+      "volprem_pnl_share": 0.6087,
       "dropped": [
         "carry"
       ],
@@ -420,41 +417,41 @@
     },
     "drop volprem + xs_momentum": {
       "full": {
-        "sharpe": 1.48,
+        "sharpe": 1.44,
         "max_dd": -0.233,
-        "months_in_profit": 0.5745,
+        "months_in_profit": 0.5691,
         "worst_month": -0.0978,
         "longest_losing_streak_mo": 13,
-        "total_return": 7.783,
+        "total_return": 7.206,
         "n_obs": 5177,
-        "cagr": 0.1496,
-        "pnl_usd_per_year": 72107.0,
-        "vol": 0.1025
+        "cagr": 0.1446,
+        "pnl_usd_per_year": 69907.0,
+        "vol": 0.1021
       },
       "oos": {
-        "sharpe": 2.03,
-        "max_dd": -0.0652,
-        "months_in_profit": 0.6538,
-        "worst_month": -0.0272,
+        "sharpe": 1.91,
+        "max_dd": -0.0674,
+        "months_in_profit": 0.6154,
+        "worst_month": -0.0302,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.446,
+        "total_return": 0.397,
         "n_obs": 766,
-        "cagr": 0.1924,
-        "pnl_usd_per_year": 89962.0,
-        "vol": 0.0886
+        "cagr": 0.173,
+        "pnl_usd_per_year": 81648.0,
+        "vol": 0.0856
       },
       "targets_full": 0,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.48",
-        "months 57.5%",
+        "Sharpe 1.44",
+        "months 56.9%",
         "max-DD -23.3%",
         "streak 13",
         "worst month -9.8%"
       ],
       "misses_oos": [
-        "Sharpe 2.03",
-        "months 65.4%"
+        "Sharpe 1.91",
+        "months 61.5%"
       ],
       "volprem_pnl_share": NaN,
       "dropped": [
@@ -465,40 +462,41 @@
     },
     "drop volprem + breakout": {
       "full": {
-        "sharpe": 1.5,
+        "sharpe": 1.47,
         "max_dd": -0.2319,
-        "months_in_profit": 0.5904,
+        "months_in_profit": 0.5798,
         "worst_month": -0.0978,
         "longest_losing_streak_mo": 13,
-        "total_return": 6.643,
+        "total_return": 6.253,
         "n_obs": 5282,
-        "cagr": 0.1394,
-        "pnl_usd_per_year": 67263.0,
-        "vol": 0.093
+        "cagr": 0.1356,
+        "pnl_usd_per_year": 65563.0,
+        "vol": 0.0926
       },
       "oos": {
-        "sharpe": 2.51,
-        "max_dd": -0.0682,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.0357,
+        "sharpe": 2.36,
+        "max_dd": -0.0698,
+        "months_in_profit": 0.6923,
+        "worst_month": -0.0385,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.553,
+        "total_return": 0.486,
         "n_obs": 766,
-        "cagr": 0.2337,
-        "pnl_usd_per_year": 106847.0,
-        "vol": 0.085
+        "cagr": 0.2082,
+        "pnl_usd_per_year": 96263.0,
+        "vol": 0.0815
       },
       "targets_full": 0,
-      "targets_oos": 4,
+      "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.50",
-        "months 59.0%",
+        "Sharpe 1.47",
+        "months 58.0%",
         "max-DD -23.2%",
         "streak 13",
         "worst month -9.8%"
       ],
       "misses_oos": [
-        "months 76.9%"
+        "Sharpe 2.36",
+        "months 69.2%"
       ],
       "volprem_pnl_share": NaN,
       "dropped": [
@@ -509,38 +507,39 @@
     },
     "drop volprem + crisis": {
       "full": {
-        "sharpe": 1.91,
+        "sharpe": 1.88,
         "max_dd": -0.0984,
-        "months_in_profit": 0.5966,
-        "worst_month": -0.048,
+        "months_in_profit": 0.5852,
+        "worst_month": -0.0472,
         "longest_losing_streak_mo": 10,
-        "total_return": 10.489,
+        "total_return": 10.004,
         "n_obs": 4897,
-        "cagr": 0.1822,
-        "pnl_usd_per_year": 85710.0,
-        "vol": 0.0935
+        "cagr": 0.1787,
+        "pnl_usd_per_year": 84220.0,
+        "vol": 0.0932
       },
       "oos": {
-        "sharpe": 2.55,
-        "max_dd": -0.0622,
-        "months_in_profit": 0.7308,
-        "worst_month": -0.0331,
+        "sharpe": 2.37,
+        "max_dd": -0.0731,
+        "months_in_profit": 0.6538,
+        "worst_month": -0.0352,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.548,
+        "total_return": 0.482,
         "n_obs": 765,
-        "cagr": 0.2322,
-        "pnl_usd_per_year": 106163.0,
-        "vol": 0.0833
+        "cagr": 0.2068,
+        "pnl_usd_per_year": 95622.0,
+        "vol": 0.0806
       },
       "targets_full": 2,
-      "targets_oos": 4,
+      "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.91",
-        "months 59.7%",
+        "Sharpe 1.88",
+        "months 58.5%",
         "streak 10"
       ],
       "misses_oos": [
-        "months 73.1%"
+        "Sharpe 2.37",
+        "months 65.4%"
       ],
       "volprem_pnl_share": NaN,
       "dropped": [
@@ -551,39 +550,39 @@
     },
     "drop volprem + gmacro": {
       "full": {
-        "sharpe": 1.62,
+        "sharpe": 1.58,
         "max_dd": -0.095,
-        "months_in_profit": 0.608,
+        "months_in_profit": 0.6023,
         "worst_month": -0.0564,
         "longest_losing_streak_mo": 5,
-        "total_return": 8.151,
+        "total_return": 7.497,
         "n_obs": 5010,
-        "cagr": 0.1639,
-        "pnl_usd_per_year": 78219.0,
-        "vol": 0.0993
+        "cagr": 0.158,
+        "pnl_usd_per_year": 75650.0,
+        "vol": 0.0988
       },
       "oos": {
-        "sharpe": 2.01,
-        "max_dd": -0.0637,
-        "months_in_profit": 0.6538,
-        "worst_month": -0.0211,
+        "sharpe": 1.82,
+        "max_dd": -0.0694,
+        "months_in_profit": 0.6154,
+        "worst_month": -0.0265,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.441,
+        "total_return": 0.373,
         "n_obs": 765,
-        "cagr": 0.1908,
-        "pnl_usd_per_year": 89284.0,
-        "vol": 0.0888
+        "cagr": 0.1637,
+        "pnl_usd_per_year": 77656.0,
+        "vol": 0.0854
       },
       "targets_full": 2,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.62",
-        "months 60.8%",
+        "Sharpe 1.58",
+        "months 60.2%",
         "streak 5"
       ],
       "misses_oos": [
-        "Sharpe 2.01",
-        "months 65.4%"
+        "Sharpe 1.82",
+        "months 61.5%"
       ],
       "volprem_pnl_share": NaN,
       "dropped": [
@@ -639,40 +638,40 @@
     },
     "drop volprem + trend_momentum": {
       "full": {
-        "sharpe": 1.32,
+        "sharpe": 1.29,
         "max_dd": -0.2337,
         "months_in_profit": 0.5213,
         "worst_month": -0.0978,
         "longest_losing_streak_mo": 17,
-        "total_return": 5.791,
+        "total_return": 5.421,
         "n_obs": 5042,
-        "cagr": 0.1308,
-        "pnl_usd_per_year": 63797.0,
-        "vol": 0.1027
+        "cagr": 0.1267,
+        "pnl_usd_per_year": 61982.0,
+        "vol": 0.1023
       },
       "oos": {
-        "sharpe": 2.26,
-        "max_dd": -0.0648,
+        "sharpe": 2.09,
+        "max_dd": -0.0743,
         "months_in_profit": 0.7308,
-        "worst_month": -0.0214,
+        "worst_month": -0.0241,
         "longest_losing_streak_mo": 2,
-        "total_return": 0.551,
+        "total_return": 0.481,
         "n_obs": 766,
-        "cagr": 0.2332,
-        "pnl_usd_per_year": 107074.0,
-        "vol": 0.0946
+        "cagr": 0.2063,
+        "pnl_usd_per_year": 95921.0,
+        "vol": 0.0917
       },
       "targets_full": 0,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 1.32",
+        "Sharpe 1.29",
         "months 52.1%",
         "max-DD -23.4%",
         "streak 17",
         "worst month -9.8%"
       ],
       "misses_oos": [
-        "Sharpe 2.26",
+        "Sharpe 2.09",
         "months 73.1%"
       ],
       "volprem_pnl_share": NaN,
@@ -684,40 +683,40 @@
     },
     "drop volprem + carry": {
       "full": {
-        "sharpe": 1.5,
+        "sharpe": 1.47,
         "max_dd": -0.2319,
-        "months_in_profit": 0.5798,
+        "months_in_profit": 0.5745,
         "worst_month": -0.0978,
         "longest_losing_streak_mo": 13,
-        "total_return": 7.291,
+        "total_return": 6.879,
         "n_obs": 5282,
-        "cagr": 0.1453,
-        "pnl_usd_per_year": 70050.0,
-        "vol": 0.097
+        "cagr": 0.1416,
+        "pnl_usd_per_year": 68398.0,
+        "vol": 0.0966
       },
       "oos": {
-        "sharpe": 2.14,
-        "max_dd": -0.0671,
+        "sharpe": 2.02,
+        "max_dd": -0.0673,
         "months_in_profit": 0.6923,
-        "worst_month": -0.0339,
+        "worst_month": -0.0321,
         "longest_losing_streak_mo": 3,
-        "total_return": 0.46,
+        "total_return": 0.411,
         "n_obs": 766,
-        "cagr": 0.1979,
-        "pnl_usd_per_year": 92173.0,
-        "vol": 0.0862
+        "cagr": 0.1787,
+        "pnl_usd_per_year": 83939.0,
+        "vol": 0.0831
       },
       "targets_full": 0,
       "targets_oos": 2,
       "misses_full": [
-        "Sharpe 1.50",
-        "months 58.0%",
+        "Sharpe 1.47",
+        "months 57.5%",
         "max-DD -23.2%",
         "streak 13",
         "worst month -9.8%"
       ],
       "misses_oos": [
-        "Sharpe 2.14",
+        "Sharpe 2.02",
         "months 69.2%",
         "streak 3"
       ],
@@ -730,40 +729,40 @@
     },
     "drop xs_momentum + breakout": {
       "full": {
-        "sharpe": 4.44,
-        "max_dd": -0.0903,
-        "months_in_profit": 0.7926,
+        "sharpe": 4.42,
+        "max_dd": -0.0885,
+        "months_in_profit": 0.7872,
         "worst_month": -0.0472,
         "longest_losing_streak_mo": 2,
-        "total_return": 1022.57,
+        "total_return": 976.386,
         "n_obs": 5177,
-        "cagr": 0.56,
-        "pnl_usd_per_year": 225057.0,
-        "vol": 0.1063
+        "cagr": 0.5554,
+        "pnl_usd_per_year": 223561.0,
+        "vol": 0.106
       },
       "oos": {
-        "sharpe": 4.08,
-        "max_dd": -0.0569,
+        "sharpe": 4.02,
+        "max_dd": -0.0517,
         "months_in_profit": 0.7692,
-        "worst_month": -0.0324,
+        "worst_month": -0.0354,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.171,
+        "total_return": 1.095,
         "n_obs": 766,
-        "cagr": 0.4479,
-        "pnl_usd_per_year": 187245.0,
-        "vol": 0.0916
+        "cagr": 0.4236,
+        "pnl_usd_per_year": 178639.0,
+        "vol": 0.0887
       },
       "targets_full": 3,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 4.44",
-        "months 79.3%"
+        "Sharpe 4.42",
+        "months 78.7%"
       ],
       "misses_oos": [
-        "Sharpe 4.08",
+        "Sharpe 4.02",
         "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6629,
+      "volprem_pnl_share": 0.6693,
       "dropped": [
         "xs_momentum",
         "breakout"
@@ -772,41 +771,41 @@
     },
     "drop xs_momentum + crisis": {
       "full": {
-        "sharpe": 4.87,
-        "max_dd": -0.086,
-        "months_in_profit": 0.7926,
+        "sharpe": 4.85,
+        "max_dd": -0.0858,
+        "months_in_profit": 0.7979,
         "worst_month": -0.0499,
         "longest_losing_streak_mo": 4,
-        "total_return": 1713.643,
+        "total_return": 1629.555,
         "n_obs": 5039,
-        "cagr": 0.6125,
-        "pnl_usd_per_year": 241521.0,
-        "vol": 0.1053
+        "cagr": 0.6073,
+        "pnl_usd_per_year": 239895.0,
+        "vol": 0.1051
       },
       "oos": {
-        "sharpe": 4.17,
-        "max_dd": -0.0527,
-        "months_in_profit": 0.7308,
-        "worst_month": -0.0276,
+        "sharpe": 4.09,
+        "max_dd": -0.0539,
+        "months_in_profit": 0.7692,
+        "worst_month": -0.0302,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.076,
+        "total_return": 1.011,
         "n_obs": 766,
-        "cagr": 0.4173,
-        "pnl_usd_per_year": 176223.0,
-        "vol": 0.0843
+        "cagr": 0.396,
+        "pnl_usd_per_year": 168579.0,
+        "vol": 0.0824
       },
       "targets_full": 2,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 4.87",
-        "months 79.3%",
+        "Sharpe 4.85",
+        "months 79.8%",
         "streak 4"
       ],
       "misses_oos": [
-        "Sharpe 4.17",
-        "months 73.1%"
+        "Sharpe 4.09",
+        "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6527,
+      "volprem_pnl_share": 0.6589,
       "dropped": [
         "xs_momentum",
         "crisis"
@@ -815,39 +814,39 @@
     },
     "drop xs_momentum + gmacro": {
       "full": {
-        "sharpe": 4.92,
+        "sharpe": 4.9,
         "max_dd": -0.1181,
-        "months_in_profit": 0.8138,
+        "months_in_profit": 0.8085,
         "worst_month": -0.1096,
         "longest_losing_streak_mo": 2,
-        "total_return": 4103.945,
+        "total_return": 3893.59,
         "n_obs": 4995,
-        "cagr": 0.7054,
-        "pnl_usd_per_year": 270130.0,
-        "vol": 0.1172
+        "cagr": 0.6996,
+        "pnl_usd_per_year": 268425.0,
+        "vol": 0.1169
       },
       "oos": {
-        "sharpe": 3.78,
-        "max_dd": -0.0557,
+        "sharpe": 3.71,
+        "max_dd": -0.0515,
         "months_in_profit": 0.7692,
-        "worst_month": -0.0409,
+        "worst_month": -0.0439,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.041,
+        "total_return": 0.973,
         "n_obs": 766,
-        "cagr": 0.4059,
-        "pnl_usd_per_year": 172486.0,
-        "vol": 0.0912
+        "cagr": 0.3833,
+        "pnl_usd_per_year": 164247.0,
+        "vol": 0.0884
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.92",
+        "Sharpe 4.90",
         "worst month -11.0%"
       ],
       "misses_oos": [
         "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6806,
+      "volprem_pnl_share": 0.6873,
       "dropped": [
         "xs_momentum",
         "gmacro"
@@ -894,38 +893,40 @@
     },
     "drop xs_momentum + trend_momentum": {
       "full": {
-        "sharpe": 4.69,
+        "sharpe": 4.67,
         "max_dd": -0.0844,
-        "months_in_profit": 0.8085,
+        "months_in_profit": 0.8032,
         "worst_month": -0.0646,
         "longest_losing_streak_mo": 3,
-        "total_return": 3602.135,
+        "total_return": 3408.382,
         "n_obs": 4875,
-        "cagr": 0.6912,
-        "pnl_usd_per_year": 266141.0,
-        "vol": 0.1225
+        "cagr": 0.6852,
+        "pnl_usd_per_year": 264348.0,
+        "vol": 0.1222
       },
       "oos": {
-        "sharpe": 3.87,
-        "max_dd": -0.0537,
-        "months_in_profit": 0.8077,
-        "worst_month": -0.0284,
+        "sharpe": 3.8,
+        "max_dd": -0.0536,
+        "months_in_profit": 0.7692,
+        "worst_month": -0.0314,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.171,
+        "total_return": 1.096,
         "n_obs": 766,
-        "cagr": 0.448,
-        "pnl_usd_per_year": 187516.0,
-        "vol": 0.0968
+        "cagr": 0.4236,
+        "pnl_usd_per_year": 178910.0,
+        "vol": 0.0942
       },
       "targets_full": 2,
-      "targets_oos": 5,
+      "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.69",
+        "Sharpe 4.67",
         "streak 3",
         "worst month -6.5%"
       ],
-      "misses_oos": [],
-      "volprem_pnl_share": 0.6719,
+      "misses_oos": [
+        "months 76.9%"
+      ],
+      "volprem_pnl_share": 0.6785,
       "dropped": [
         "xs_momentum",
         "trend_momentum"
@@ -934,40 +935,40 @@
     },
     "drop xs_momentum + carry": {
       "full": {
-        "sharpe": 4.42,
+        "sharpe": 4.4,
         "max_dd": -0.0724,
-        "months_in_profit": 0.7979,
+        "months_in_profit": 0.7872,
         "worst_month": -0.0445,
         "longest_losing_streak_mo": 3,
-        "total_return": 1150.683,
+        "total_return": 1088.875,
         "n_obs": 5177,
-        "cagr": 0.5718,
-        "pnl_usd_per_year": 228955.0,
-        "vol": 0.1086
+        "cagr": 0.5663,
+        "pnl_usd_per_year": 227164.0,
+        "vol": 0.1082
       },
       "oos": {
-        "sharpe": 3.77,
-        "max_dd": -0.0584,
-        "months_in_profit": 0.7308,
-        "worst_month": -0.0187,
+        "sharpe": 3.72,
+        "max_dd": -0.0572,
+        "months_in_profit": 0.6923,
+        "worst_month": -0.0194,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.038,
+        "total_return": 0.967,
         "n_obs": 766,
-        "cagr": 0.4048,
-        "pnl_usd_per_year": 172097.0,
-        "vol": 0.0912
+        "cagr": 0.3812,
+        "pnl_usd_per_year": 163491.0,
+        "vol": 0.0878
       },
       "targets_full": 2,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.42",
-        "months 79.8%",
+        "Sharpe 4.40",
+        "months 78.7%",
         "streak 3"
       ],
       "misses_oos": [
-        "months 73.1%"
+        "months 69.2%"
       ],
-      "volprem_pnl_share": 0.6526,
+      "volprem_pnl_share": 0.6588,
       "dropped": [
         "xs_momentum",
         "carry"
@@ -976,39 +977,39 @@
     },
     "drop breakout + crisis": {
       "full": {
-        "sharpe": 4.56,
-        "max_dd": -0.0859,
-        "months_in_profit": 0.8191,
-        "worst_month": -0.0428,
+        "sharpe": 4.53,
+        "max_dd": -0.084,
+        "months_in_profit": 0.8245,
+        "worst_month": -0.0408,
         "longest_losing_streak_mo": 3,
-        "total_return": 627.967,
+        "total_return": 599.215,
         "n_obs": 5150,
-        "cagr": 0.512,
-        "pnl_usd_per_year": 208949.0,
-        "vol": 0.0964
+        "cagr": 0.5075,
+        "pnl_usd_per_year": 207438.0,
+        "vol": 0.0962
       },
       "oos": {
-        "sharpe": 4.68,
-        "max_dd": -0.0522,
-        "months_in_profit": 0.8077,
-        "worst_month": -0.0207,
+        "sharpe": 4.56,
+        "max_dd": -0.0523,
+        "months_in_profit": 0.8462,
+        "worst_month": -0.0239,
         "longest_losing_streak_mo": 1,
-        "total_return": 1.225,
+        "total_return": 1.155,
         "n_obs": 766,
-        "cagr": 0.4649,
-        "pnl_usd_per_year": 192668.0,
-        "vol": 0.0823
+        "cagr": 0.4428,
+        "pnl_usd_per_year": 185024.0,
+        "vol": 0.081
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.56",
+        "Sharpe 4.53",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.68"
+        "Sharpe 4.56"
       ],
-      "volprem_pnl_share": 0.6433,
+      "volprem_pnl_share": 0.6493,
       "dropped": [
         "breakout",
         "crisis"
@@ -1017,40 +1018,40 @@
     },
     "drop breakout + gmacro": {
       "full": {
-        "sharpe": 4.58,
+        "sharpe": 4.57,
         "max_dd": -0.1181,
-        "months_in_profit": 0.8138,
+        "months_in_profit": 0.8085,
         "worst_month": -0.1096,
         "longest_losing_streak_mo": 3,
-        "total_return": 1075.148,
+        "total_return": 1036.738,
         "n_obs": 5263,
-        "cagr": 0.565,
-        "pnl_usd_per_year": 226538.0,
-        "vol": 0.1028
+        "cagr": 0.5614,
+        "pnl_usd_per_year": 225363.0,
+        "vol": 0.1026
       },
       "oos": {
-        "sharpe": 4.3,
-        "max_dd": -0.0501,
+        "sharpe": 4.22,
+        "max_dd": -0.0491,
         "months_in_profit": 0.8462,
-        "worst_month": -0.0308,
+        "worst_month": -0.0338,
         "longest_losing_streak_mo": 1,
-        "total_return": 1.178,
+        "total_return": 1.105,
         "n_obs": 766,
-        "cagr": 0.4501,
-        "pnl_usd_per_year": 187796.0,
-        "vol": 0.0872
+        "cagr": 0.4267,
+        "pnl_usd_per_year": 179557.0,
+        "vol": 0.085
       },
       "targets_full": 2,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.58",
+        "Sharpe 4.57",
         "streak 3",
         "worst month -11.0%"
       ],
       "misses_oos": [
-        "Sharpe 4.30"
+        "Sharpe 4.22"
       ],
-      "volprem_pnl_share": 0.6706,
+      "volprem_pnl_share": 0.6771,
       "dropped": [
         "breakout",
         "gmacro"
@@ -1101,39 +1102,39 @@
     },
     "drop breakout + trend_momentum": {
       "full": {
-        "sharpe": 4.42,
-        "max_dd": -0.0993,
-        "months_in_profit": 0.8351,
+        "sharpe": 4.41,
+        "max_dd": -0.0975,
+        "months_in_profit": 0.8298,
         "worst_month": -0.0462,
         "longest_losing_streak_mo": 3,
-        "total_return": 866.041,
+        "total_return": 838.952,
         "n_obs": 5042,
-        "cagr": 0.5435,
-        "pnl_usd_per_year": 219625.0,
-        "vol": 0.1055
+        "cagr": 0.5403,
+        "pnl_usd_per_year": 218594.0,
+        "vol": 0.1053
       },
       "oos": {
-        "sharpe": 4.59,
-        "max_dd": -0.0453,
-        "months_in_profit": 0.8462,
-        "worst_month": -0.018,
-        "longest_losing_streak_mo": 1,
-        "total_return": 1.335,
+        "sharpe": 4.5,
+        "max_dd": -0.0464,
+        "months_in_profit": 0.8077,
+        "worst_month": -0.021,
+        "longest_losing_streak_mo": 2,
+        "total_return": 1.253,
         "n_obs": 766,
-        "cagr": 0.4991,
-        "pnl_usd_per_year": 204534.0,
-        "vol": 0.089
+        "cagr": 0.4738,
+        "pnl_usd_per_year": 195928.0,
+        "vol": 0.087
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.42",
+        "Sharpe 4.41",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.59"
+        "Sharpe 4.50"
       ],
-      "volprem_pnl_share": 0.662,
+      "volprem_pnl_share": 0.6684,
       "dropped": [
         "breakout",
         "trend_momentum"
@@ -1142,41 +1143,41 @@
     },
     "drop breakout + carry": {
       "full": {
-        "sharpe": 4.2,
-        "max_dd": -0.0944,
+        "sharpe": 4.18,
+        "max_dd": -0.0925,
         "months_in_profit": 0.7872,
         "worst_month": -0.0337,
         "longest_losing_streak_mo": 3,
-        "total_return": 487.971,
+        "total_return": 461.671,
         "n_obs": 5282,
-        "cagr": 0.4878,
-        "pnl_usd_per_year": 201044.0,
-        "vol": 0.0993
+        "cagr": 0.4825,
+        "pnl_usd_per_year": 199253.0,
+        "vol": 0.0989
       },
       "oos": {
-        "sharpe": 4.28,
-        "max_dd": -0.0571,
+        "sharpe": 4.21,
+        "max_dd": -0.0563,
         "months_in_profit": 0.7692,
-        "worst_month": -0.0138,
+        "worst_month": -0.0142,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.183,
+        "total_return": 1.107,
         "n_obs": 766,
-        "cagr": 0.4518,
-        "pnl_usd_per_year": 188445.0,
-        "vol": 0.088
+        "cagr": 0.4274,
+        "pnl_usd_per_year": 179838.0,
+        "vol": 0.0853
       },
       "targets_full": 2,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 4.20",
+        "Sharpe 4.18",
         "months 78.7%",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.28",
+        "Sharpe 4.21",
         "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6434,
+      "volprem_pnl_share": 0.6494,
       "dropped": [
         "breakout",
         "carry"
@@ -1185,40 +1186,40 @@
     },
     "drop crisis + gmacro": {
       "full": {
-        "sharpe": 4.82,
+        "sharpe": 4.8,
         "max_dd": -0.0715,
-        "months_in_profit": 0.8011,
+        "months_in_profit": 0.7955,
         "worst_month": -0.0458,
         "longest_losing_streak_mo": 3,
-        "total_return": 928.788,
+        "total_return": 885.793,
         "n_obs": 4869,
-        "cagr": 0.5978,
-        "pnl_usd_per_year": 236896.0,
-        "vol": 0.1027
+        "cagr": 0.5926,
+        "pnl_usd_per_year": 235263.0,
+        "vol": 0.1025
       },
       "oos": {
-        "sharpe": 4.03,
+        "sharpe": 3.92,
         "max_dd": -0.0489,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.0255,
-        "longest_losing_streak_mo": 1,
-        "total_return": 1.058,
+        "months_in_profit": 0.7308,
+        "worst_month": -0.0281,
+        "longest_losing_streak_mo": 2,
+        "total_return": 0.996,
         "n_obs": 763,
-        "cagr": 0.412,
-        "pnl_usd_per_year": 174453.0,
-        "vol": 0.0866
+        "cagr": 0.3914,
+        "pnl_usd_per_year": 167047.0,
+        "vol": 0.0853
       },
-      "targets_full": 3,
-      "targets_oos": 3,
+      "targets_full": 2,
+      "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.82",
+        "Sharpe 4.80",
+        "months 79.5%",
         "streak 3"
       ],
       "misses_oos": [
-        "Sharpe 4.03",
-        "months 76.9%"
+        "months 73.1%"
       ],
-      "volprem_pnl_share": 0.6493,
+      "volprem_pnl_share": 0.6557,
       "dropped": [
         "crisis",
         "gmacro"
@@ -1268,38 +1269,38 @@
     },
     "drop crisis + trend_momentum": {
       "full": {
-        "sharpe": 4.82,
-        "max_dd": -0.0724,
-        "months_in_profit": 0.8564,
+        "sharpe": 4.8,
+        "max_dd": -0.072,
+        "months_in_profit": 0.8457,
         "worst_month": -0.0507,
         "longest_losing_streak_mo": 2,
-        "total_return": 1678.568,
+        "total_return": 1597.918,
         "n_obs": 5013,
-        "cagr": 0.6104,
-        "pnl_usd_per_year": 240899.0,
-        "vol": 0.1065
+        "cagr": 0.6053,
+        "pnl_usd_per_year": 239309.0,
+        "vol": 0.1063
       },
       "oos": {
-        "sharpe": 4.33,
-        "max_dd": -0.0533,
-        "months_in_profit": 0.8462,
-        "worst_month": -0.0144,
+        "sharpe": 4.22,
+        "max_dd": -0.0535,
+        "months_in_profit": 0.8077,
+        "worst_month": -0.017,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.224,
+        "total_return": 1.154,
         "n_obs": 764,
-        "cagr": 0.4646,
-        "pnl_usd_per_year": 192865.0,
-        "vol": 0.089
+        "cagr": 0.4425,
+        "pnl_usd_per_year": 185221.0,
+        "vol": 0.0879
       },
       "targets_full": 4,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.82"
+        "Sharpe 4.80"
       ],
       "misses_oos": [
-        "Sharpe 4.33"
+        "Sharpe 4.22"
       ],
-      "volprem_pnl_share": 0.6439,
+      "volprem_pnl_share": 0.65,
       "dropped": [
         "crisis",
         "trend_momentum"
@@ -1308,39 +1309,39 @@
     },
     "drop crisis + carry": {
       "full": {
-        "sharpe": 4.52,
+        "sharpe": 4.5,
         "max_dd": -0.0649,
         "months_in_profit": 0.8138,
-        "worst_month": -0.0361,
+        "worst_month": -0.0346,
         "longest_losing_streak_mo": 2,
-        "total_return": 698.383,
+        "total_return": 664.958,
         "n_obs": 5150,
-        "cagr": 0.5223,
-        "pnl_usd_per_year": 212459.0,
-        "vol": 0.0987
+        "cagr": 0.5176,
+        "pnl_usd_per_year": 210875.0,
+        "vol": 0.0985
       },
       "oos": {
-        "sharpe": 4.25,
-        "max_dd": -0.0575,
+        "sharpe": 4.15,
+        "max_dd": -0.0559,
         "months_in_profit": 0.7692,
-        "worst_month": -0.0169,
+        "worst_month": -0.0165,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.097,
+        "total_return": 1.031,
         "n_obs": 766,
-        "cagr": 0.4241,
-        "pnl_usd_per_year": 178605.0,
-        "vol": 0.084
+        "cagr": 0.4027,
+        "pnl_usd_per_year": 170961.0,
+        "vol": 0.0823
       },
       "targets_full": 4,
       "targets_oos": 3,
       "misses_full": [
-        "Sharpe 4.52"
+        "Sharpe 4.50"
       ],
       "misses_oos": [
-        "Sharpe 4.25",
+        "Sharpe 4.15",
         "months 76.9%"
       ],
-      "volprem_pnl_share": 0.6336,
+      "volprem_pnl_share": 0.6394,
       "dropped": [
         "crisis",
         "carry"
@@ -1389,37 +1390,37 @@
     },
     "drop gmacro + trend_momentum": {
       "full": {
-        "sharpe": 4.96,
+        "sharpe": 4.94,
         "max_dd": -0.1181,
-        "months_in_profit": 0.8245,
+        "months_in_profit": 0.8138,
         "worst_month": -0.1096,
         "longest_losing_streak_mo": 2,
-        "total_return": 3520.738,
+        "total_return": 3370.647,
         "n_obs": 4856,
-        "cagr": 0.6887,
-        "pnl_usd_per_year": 265056.0,
-        "vol": 0.1158
+        "cagr": 0.684,
+        "pnl_usd_per_year": 263646.0,
+        "vol": 0.1155
       },
       "oos": {
-        "sharpe": 3.94,
+        "sharpe": 3.84,
         "max_dd": -0.0514,
-        "months_in_profit": 0.8462,
-        "worst_month": -0.0267,
-        "longest_losing_streak_mo": 1,
-        "total_return": 1.189,
+        "months_in_profit": 0.8077,
+        "worst_month": -0.0297,
+        "longest_losing_streak_mo": 2,
+        "total_return": 1.116,
         "n_obs": 764,
-        "cagr": 0.4538,
-        "pnl_usd_per_year": 189475.0,
-        "vol": 0.0962
+        "cagr": 0.4303,
+        "pnl_usd_per_year": 181236.0,
+        "vol": 0.0944
       },
       "targets_full": 3,
       "targets_oos": 5,
       "misses_full": [
-        "Sharpe 4.96",
+        "Sharpe 4.94",
         "worst month -11.0%"
       ],
       "misses_oos": [],
-      "volprem_pnl_share": 0.6797,
+      "volprem_pnl_share": 0.6865,
       "dropped": [
         "gmacro",
         "trend_momentum"
@@ -1428,39 +1429,39 @@
     },
     "drop gmacro + carry": {
       "full": {
-        "sharpe": 4.52,
+        "sharpe": 4.5,
         "max_dd": -0.1181,
-        "months_in_profit": 0.8085,
+        "months_in_profit": 0.8032,
         "worst_month": -0.1096,
         "longest_losing_streak_mo": 2,
-        "total_return": 1179.794,
+        "total_return": 1119.269,
         "n_obs": 5263,
-        "cagr": 0.5744,
-        "pnl_usd_per_year": 229662.0,
-        "vol": 0.1057
+        "cagr": 0.5691,
+        "pnl_usd_per_year": 227957.0,
+        "vol": 0.1054
       },
       "oos": {
-        "sharpe": 3.8,
-        "max_dd": -0.0577,
-        "months_in_profit": 0.7692,
-        "worst_month": -0.016,
+        "sharpe": 3.72,
+        "max_dd": -0.0564,
+        "months_in_profit": 0.7308,
+        "worst_month": -0.0214,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.04,
+        "total_return": 0.972,
         "n_obs": 766,
-        "cagr": 0.4055,
-        "pnl_usd_per_year": 172344.0,
-        "vol": 0.0907
+        "cagr": 0.3829,
+        "pnl_usd_per_year": 164105.0,
+        "vol": 0.0881
       },
       "targets_full": 3,
       "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.52",
+        "Sharpe 4.50",
         "worst month -11.0%"
       ],
       "misses_oos": [
-        "months 76.9%"
+        "months 73.1%"
       ],
-      "volprem_pnl_share": 0.66,
+      "volprem_pnl_share": 0.6664,
       "dropped": [
         "gmacro",
         "carry"
@@ -1545,36 +1546,38 @@
     },
     "drop trend_momentum + carry": {
       "full": {
-        "sharpe": 4.36,
+        "sharpe": 4.34,
         "max_dd": -0.0726,
-        "months_in_profit": 0.8457,
+        "months_in_profit": 0.8404,
         "worst_month": -0.0462,
         "longest_losing_streak_mo": 2,
-        "total_return": 976.506,
+        "total_return": 923.914,
         "n_obs": 5042,
-        "cagr": 0.5554,
-        "pnl_usd_per_year": 223638.0,
-        "vol": 0.1089
+        "cagr": 0.5499,
+        "pnl_usd_per_year": 221845.0,
+        "vol": 0.1086
       },
       "oos": {
-        "sharpe": 3.96,
-        "max_dd": -0.054,
-        "months_in_profit": 0.8462,
-        "worst_month": -0.0143,
+        "sharpe": 3.88,
+        "max_dd": -0.0542,
+        "months_in_profit": 0.7692,
+        "worst_month": -0.0139,
         "longest_losing_streak_mo": 2,
-        "total_return": 1.189,
+        "total_return": 1.112,
         "n_obs": 766,
-        "cagr": 0.4536,
-        "pnl_usd_per_year": 189386.0,
-        "vol": 0.0955
+        "cagr": 0.4291,
+        "pnl_usd_per_year": 180779.0,
+        "vol": 0.0931
       },
       "targets_full": 4,
-      "targets_oos": 5,
+      "targets_oos": 4,
       "misses_full": [
-        "Sharpe 4.36"
+        "Sharpe 4.34"
       ],
-      "misses_oos": [],
-      "volprem_pnl_share": 0.6517,
+      "misses_oos": [
+        "months 76.9%"
+      ],
+      "volprem_pnl_share": 0.6579,
       "dropped": [
         "trend_momentum",
         "carry"
@@ -1582,5 +1585,5 @@
       "n_families": 6
     }
   },
-  "book_id": "aabc9e117eb9"
+  "book_id": "88bca48ddd8c"
 }

@@ -17,6 +17,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.backtest.carry import resolve as resolve_carry
 from src.backtest.costs import panel_impact_cost
 
 
@@ -150,7 +151,8 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
                 cost_bps: float = 6.0, commission_bps: float | None = None,
                 half_spread_bps: float | None = None, vol_lb: int = 20, min_names: int = 6,
                 adv: pd.DataFrame | None = None, capital: float = 500_000.0,
-                impact_k: float = 0.0, borrow_bps_annual: float = 0.0, ppy: int = 252) -> dict:
+                impact_k: float = 0.0, borrow_bps_annual: float = 0.0, ppy: int = 252,
+                carry=None) -> dict:
     """Backtest a signal on a price panel; return net/gross return, turnover and the cost breakdown.
 
     Weights are formed each bar, optionally held for `rebal` bars (cadence), passed through a
@@ -163,6 +165,13 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
                      illiquid mid-cap tail pays its true wider cost instead of a flat spread.
     Pass `commission_bps`+`half_spread_bps` for the split (the honest form); a lone `cost_bps` is the
     legacy single-number path still used by the other sleeves' drivers.
+
+    The fourth cost is CARRY — what the position costs to hold rather than to trade. It used to be
+    the caller's job and callers forgot: this function is handed a price panel and cannot tell a
+    Binance perp from a cash equity, so it charged nothing and three separate books held perps for
+    years with no funding. `carry=None` now asks the instrument instead (`src/backtest/carry`), so
+    the default is a charge rather than a silence; pass `carry=NoCarry()` to state that a panel has
+    none. `borrow_bps_annual` still names the equity rate and is folded into the same model.
     """
     if commission_bps is not None or half_spread_bps is not None:
         commission_bps = commission_bps or 0.0
@@ -190,16 +199,14 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
         impact = panel_impact_cost(dw, rets.rolling(vol_lb).std(), adv, capital, impact_k)
     else:
         impact = pd.Series(0.0, index=w.index)
-    # borrow on the SHORT leg (equities): per-bar cost on short gross notional. Crypto perps pay funding,
-    # not borrow, so those callers leave borrow_bps_annual=0 and charge funding separately.
-    if borrow_bps_annual:
-        borrow = w.clip(upper=0.0).abs().sum(axis=1) * (borrow_bps_annual / 1e4) / ppy
-    else:
-        borrow = pd.Series(0.0, index=w.index)
-    cost = commission + spread + impact + borrow
+    # carry: what the position costs to HOLD. Resolved from the panel when the caller says nothing,
+    # so a book of perps is charged funding whether or not its author remembered that it is one.
+    model = resolve_carry(carry, px, borrow_bps_annual=borrow_bps_annual, where="xs_backtest")
+    carry_pnl = model.pnl(w, ppy)
+    cost = commission + spread + impact - carry_pnl        # carry_pnl is signed: a short can collect
     net = gross_ret - cost
     return {"net": net, "gross": gross_ret, "turnover": turn, "commission": commission,
-            "spread": spread, "impact": impact, "borrow": borrow, "cost": cost, "weights": w}
+            "spread": spread, "impact": impact, "carry": -carry_pnl, "cost": cost, "weights": w}
 
 
 def liquidity_mask(signal: pd.DataFrame, adv: pd.DataFrame | None, daily_floor: float,

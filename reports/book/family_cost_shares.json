@@ -19,13 +19,12 @@
       "in_book": true
     },
     "BAB": {
-      "gross_pnl": 1.6909,
-      "net_pnl": 1.6628,
-      "cost_share_of_gross_pnl": 0.0166,
-      "breakeven_cost_mult": 60.1,
+      "gross_pnl": 1.6011,
+      "net_pnl": 1.573,
+      "cost_share_of_gross_pnl": 0.0176,
+      "breakeven_cost_mult": 56.9,
       "cost_fragile": false,
-      "reproduces_published_series": false,
-      "note": "re-run total return +1.663 vs published +1.744 (4.7% apart)",
+      "reproduces_published_series": true,
       "in_book": true
     },
     "carry": {
@@ -76,5 +75,5 @@
   ],
   "n_cost_fragile": 1,
   "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
-  "book_id": "aabc9e117eb9"
+  "book_id": "88bca48ddd8c"
 }

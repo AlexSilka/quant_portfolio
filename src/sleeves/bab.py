@@ -27,6 +27,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.backtest.carry import resolve as resolve_carry
 from src.backtest.costs import panel_impact_cost
 
 
@@ -134,14 +135,20 @@ def net_book_beta(weights: pd.DataFrame, beta: pd.DataFrame) -> pd.Series:
 # ── prebuilt-weights backtest (shares xs_backtest's cost model, verbatim) ──────────────────
 def bab_backtest(px: pd.DataFrame, weights: pd.DataFrame, *, exec_lag: int = 2,
                  cost_bps: float = 6.0, vol_lb: int = 20, adv: pd.DataFrame | None = None,
-                 impact_k: float = 0.0, capital: float = 500_000.0) -> dict:
+                 impact_k: float = 0.0, capital: float = 500_000.0, ppy: float = 365,
+                 borrow_bps_annual: float = 0.0, carry=None) -> dict:
     """Net/gross/turnover/cost of a *prebuilt* weight book — for the beta-neutral construction.
 
     Identical execution and cost treatment to `xsect.xs_backtest` (delay `exec_lag` bars so a
     bar-t weight never fills at close(t); commission+half-spread on traded notional plus an optional
     √-impact term scaled to bar $-volume) — the only difference is that weights are supplied rather
-    than built from a signal, which is what the leg-scaled beta-neutral book requires. Same 5-field
-    return shape as xs_backtest so the caller vol-targets the net series identically.
+    than built from a signal, which is what the leg-scaled beta-neutral book requires. Same return
+    shape as xs_backtest so the caller vol-targets the net series identically.
+
+    That "identical treatment" used to stop at the trading costs: this book runs on the same USD-M
+    perp panel as the crypto x-sect legs and charged no funding at all, which is worth −1.4% a year
+    on the shipped top-25 construction. Carry is now resolved from the panel like everywhere else
+    (`src/backtest/carry`) rather than being something each caller has to remember.
     """
     rets = px.pct_change()
     w = weights.shift(exec_lag).fillna(0.0)
@@ -153,6 +160,8 @@ def bab_backtest(px: pd.DataFrame, weights: pd.DataFrame, *, exec_lag: int = 2,
         imp_cost = panel_impact_cost(dw, rets.rolling(vol_lb).std(), adv, capital, impact_k)
     else:
         imp_cost = pd.Series(0.0, index=w.index)
-    net = gross_ret - lin_cost - imp_cost
-    return {"net": net, "gross": gross_ret, "turnover": turn,
-            "cost": lin_cost + imp_cost, "weights": w}
+    model = resolve_carry(carry, px, borrow_bps_annual=borrow_bps_annual, where="bab_backtest")
+    carry_pnl = model.pnl(w, ppy)
+    cost = lin_cost + imp_cost - carry_pnl                 # carry_pnl is signed: a short can collect
+    return {"net": gross_ret - cost, "gross": gross_ret, "turnover": turn,
+            "carry": -carry_pnl, "cost": cost, "weights": w}

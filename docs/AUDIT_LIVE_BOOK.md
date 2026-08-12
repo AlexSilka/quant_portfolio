@@ -189,25 +189,62 @@ the **whole sample**.
 Worth knowing rather than fixing: the funding this leg collects (4.3–5.9% a year per crypto sleeve,
 because shorting beaten-down alts pays) is **9% of the leg's return**.
 
-## Finding 4 — BAB pays perp funding that nothing charges, and its artifact predates the panel it runs on
+## Finding 4 — BAB pays perp funding that nothing charges — FIXED, and fixed once for everyone
 
-`src/sleeves/bab.bab_backtest` has a commission term, a spread term and an impact term. It has no
-funding term and no borrow term, and `run_bab_portfolio._bab_net` does not add one. The panel it
+`src/sleeves/bab.bab_backtest` had a commission term, a spread term and an impact term. It had no
+funding term and no borrow term, and `run_bab_portfolio._bab_net` did not add one. The panel it
 trades — `data/cache/xs/crypto_1d_close.parquet` — is built by `build_panels.build_crypto` from
 `load_klines(..., market="um")`: Binance USD-M **perpetuals**, which settle funding three times a day.
 
-Charged on the weights actually held (100% of held name-days have a funding print in the cache):
+Separately, `reports/bab/bab_book_c25.parquet` was dated 2026-08-10 22:33 while the crypto panel had
+been rebuilt 2026-08-11 19:44 by the universe fix in `58f2340`, so the leg in the book had been
+computed on a panel that no longer existed — **correlation 0.960, 2 150 of 2 404 days differing**.
 
-| | Sharpe | total | funding |
+**Both are now closed, and the first one structurally.** This was the fourth patch of one hole: the
+x-sect leg was caught and patched, then the lottery sleeve, then BAB — leaving three separate
+hand-rolled copies of the same funding panel behind (`xs/portfolio._funding_panel`,
+`lottery/run_lottery._funding_daily`, `breakout/run_bo_xs_tf.funding_panel`) and a fourth strategy
+free to forget tomorrow. The root cause is that `xs_backtest` and `bab_backtest` model the **trade**
+but not the **instrument**: handed a price panel, they cannot tell a Binance perp from a cash equity,
+so carry became the caller's job and callers forgot.
+
+`src/backtest/carry.py` makes the instrument answer instead. `for_panel(px)` asks, per name, whether
+Binance ever settled funding on it — not a guess about how the ticker is spelled, but the fact
+itself, and self-maintaining. Both panel backtests call it when the caller passes nothing, so
+**forgetting now charges funding rather than charging nothing**, and logs that it did; opting out is
+`carry=NoCarry()`, which appears in a diff the way an omission never does. The three copies are gone.
+`scripts/smoke_math.test_carry_is_not_opt_in` locks the invariant against the real archive.
+
+Nineteen scripts across x-sect, BAB, residual momentum, on-chain, lottery and seasonal reach these
+two functions on crypto panels. All of them are charged now; none of them had to be edited.
+
+**Then the same question was asked of the whole repository rather than of the four legs**, because
+"is it fixed here" is not the question — "can it come back" is. There are 85 places that can hold a
+position: 46 through the panel backtests, 39 through the single-asset engine. The panel ones are
+closed by construction. Of the 39, thirty-one already pass `funding=`, five are equity/FX/vol, and
+three hold no perp at all — a synthetic series in the invariant tests, a shuffled-returns placebo
+whose two arms run through the same line, and the equity loop of the trend trade log. **Zero real
+gaps.** But the single-asset engine cannot be closed the way the panel one was: it is handed a bare
+price Series with no venue on it. Two things now cover that:
+
+  * `engine.backtest(..., symbol="BTCUSDT")` resolves the archive itself, so the convenient spelling
+    is also the correct one, and naming a non-perp is harmless;
+  * `scripts/check_funding.py` reads every call site — resolving `**kwargs` unpacking back to the
+    dict it came from, which a keyword scan misses and would otherwise report as 39 defects — and
+    fails the build on an uncharged crypto position. Waiving a site takes a named reason in `ALLOWED`.
+    It runs in `make lint` and is the first step of `run_all.py`, so it cannot rot the way the thing
+    it guards did.
+
+What it costs, on today's panel:
+
+| BAB top-25, beta-neutral | Sharpe | total | carry |
 |---|---|---|---|
-| as built | +1.44 | +377.1% | — |
-| net of funding | **+1.36** | +334.9% | **−1.41%/yr** (long leg −2.50%, short +1.09%) |
+| shipped artifact (old panel, uncharged) | +1.51 | +417.0% | — |
+| today's panel, uncharged | +1.44 | +377.1% | — |
+| **today's panel, funding charged (shipped now)** | **+1.37** | +336.1% | **+4.52%/yr** |
 
-Separately, `reports/bab/bab_book_c25.parquet` is dated 2026-08-10 22:33; the crypto panel was rebuilt
-2026-08-11 19:44 by the universe fix in `58f2340`. Rebuilding the leg on today's panel gives a
-different series — **correlation 0.960, 2 150 of 2 404 days differ**, Sharpe 1.51 → 1.44. The BAB leg
-in the live book is computed on a panel that no longer exists. It is the only one of the four that
-does not reproduce; volprem, breakout and x-sect all rebuild byte-exact. (`t3_funding.py`)
+The x-sect leg, which had been charging funding by hand, comes out **byte-identical** (max|diff|
+8e-17) — proof the charge moved rather than changed. (`t3_funding.py`, `src/backtest/carry.py`)
 
 ## Finding 5 — `run_all.py` rebuilds none of the four legs
 
