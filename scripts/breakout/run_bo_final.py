@@ -8,7 +8,7 @@
 Everything is on the POINT-IN-TIME liquid universe — the ten most liquid perps by trailing 30-day
 median dollar volume, lagged, over every name on disk including the delisted ones. It used to be a
 frozen `CORE10` typed from the 2026 mega-caps, and the gate used to be purged k-fold, which trains
-each fold on its whole complement. Both are removed; both are priced in docs/AUDIT_LIVE_BOOK.md.
+each fold on its whole complement. Both are removed.
 Reports the
 portfolio, Monte-Carlo, per-year and per-quarter metrics, the isolated crisis windows, the strict
 2024-07 held-out block, three cost levels + break-even, and the sleeve correlation matrix. Persists
@@ -54,8 +54,8 @@ def daily_ret_cost(sym, px, pos, tf, fund):
 def build_final():
     """Return {sleeve: (ret, cost)} for the combined book: 1d raw + 4h/1h ML-gated.
 
-    Two things this used to do that a desk could not have done, both now removed and both priced in
-    docs/AUDIT_LIVE_BOOK.md:
+    Two things this used to do that a desk could not have done, both now removed, and the cost of
+    removing each is measured in the arm this builder scores against:
 
       * it traded `CORE10` — the 2026 mega-cap list, typed once and applied from 2020-01. The
         universe is now point-in-time: the ten most liquid perps by trailing 30-day median dollar

@@ -99,7 +99,6 @@ gate at each sleeve's own duty cycle, added execution lag, and the whole thresho
 
 **Read next:** [REPORT.md](REPORT.md) for the full argument · [docs/APPROACH.md](docs/APPROACH.md) for rationale ·
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the build sequence ·
-[docs/AUDIT.md](docs/AUDIT.md) for what running every script found ·
 [scripts/run_master_book.py](scripts/run_master_book.py) is the one script that assembles the portfolio.
 
 ---
