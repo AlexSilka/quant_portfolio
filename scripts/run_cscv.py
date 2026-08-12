@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.validation.cscv import pbo_cscv  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 R = ROOT / "reports"
@@ -37,7 +38,7 @@ def main():
     print(f"  P(selected loses OOS)             = {res['prob_oos_loss']:.3f}")
     print(f"  IS Sharpe(sel) {res['is_sharpe_mean']:+.3f}/bar -> OOS {res['oos_sharpe_mean']:+.3f}/bar "
           f"(degradation)")
-    (R / "book" / "cscv_pbo.json").write_text(json.dumps(res, indent=2))
+    (R / "book" / "cscv_pbo.json").write_text(json.dumps(stamp(res), indent=2))
 
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.6))
     ax[0].hist(lam, bins=40, color="#4C78A8", edgecolor="white")

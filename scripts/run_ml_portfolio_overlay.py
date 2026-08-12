@@ -36,6 +36,7 @@ from scripts.run_master_book import (  # noqa: E402
     FAMILIES, book_stack, load, rescale, risk_overlay, scorecard, OOS, START_REPORT)
 from src.config import RAW_DIR, SEED  # noqa: E402
 from src import bo_common as bo  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 PPY, H = 365, 21          # book annualisation; forward regime horizon (~1 month, the streak's unit)
 
@@ -240,7 +241,7 @@ def main():
         print(f"  {'C alloc:' + k:32s} FULL {_row(cf)}\n  {'':32s}  OOS {_row(co)}")
         out[f"C alloc:{k}"] = {"full": cf, "oos": co}
 
-    (bo.REPORTS / "book" / "ml_portfolio_overlay.json").write_text(json.dumps(out, indent=2))
+    (bo.REPORTS / "book" / "ml_portfolio_overlay.json").write_text(json.dumps(stamp(out), indent=2))
     print(f"\nwrote {bo.REPORTS / 'book' / 'ml_portfolio_overlay.json'}")
     print("VERDICT: no portfolio-level ML tactic beats equal-weight + the surgical volprem VIX gate.")
 

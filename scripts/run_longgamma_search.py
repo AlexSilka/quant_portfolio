@@ -49,6 +49,7 @@ from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 from scripts.volprem.run_vol_premium_book import COST_BY_CLASS, naive_df, naive_dt, vt  # noqa: E402
 
 PPY = 365
@@ -221,7 +222,7 @@ def main():
     out["size_sweep"] = sweep
 
     LAB_DIR.mkdir(parents=True, exist_ok=True)
-    (LAB_DIR / "longgamma_search.json").write_text(json.dumps(out, indent=2, default=str))
+    (LAB_DIR / "longgamma_search.json").write_text(json.dumps(stamp(out), indent=2, default=str))
     print(f"\nwrote {LAB_DIR / 'longgamma_search.json'}")
 
 

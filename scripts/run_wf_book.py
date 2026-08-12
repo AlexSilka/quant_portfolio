@@ -33,6 +33,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src.config import OOS_START, SEED  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 try:                                                              # canonical family list + PIT loaders + overlay
     from scripts.run_master_book import (FAMILIES as _FAMILIES, book_stack as _book_stack,  # noqa: E402
                                  load as _load_fam, rescale as _rescale_fam,
@@ -201,7 +202,7 @@ def main():
               f"on reconstructed pre-2019 signals).")
 
     headline.to_frame().to_parquet(R / "master_book_wf.parquet")
-    (R / "master_book_wf_summary.json").write_text(json.dumps({
+    (R / "master_book_wf_summary.json").write_text(json.dumps(stamp({
         "burn_in_days": BURN_IN, "headline_config": "equal_anchored_Q", "full_history": full,
         "headline_wf_oos": hb, "headline_final_block_oos": hb_oos, "master_window_2016_oos": hb_2016,
         "window_cadence_invariance_range": [min(eq_vals), max(eq_vals)], "configs": rows, "stress": stress,
@@ -211,7 +212,7 @@ def main():
                 "equals the full post-burn-in track — the a-priori book is OOS across the whole history, incl. the 2008 "
                 "GFC. The 2y final block (OOS_START) is the separate run-once §11 holdout. Caveat: pre-~2019 crisis/gmacro "
                 "are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",
-        "seed": SEED}, indent=2, default=float))
+        "seed": SEED}), indent=2, default=float))
     print("\nartifacts -> reports/master_book_wf.parquet · master_book_wf_summary.json")
     print("WALK-FORWARD BOOK OK")
 

@@ -43,6 +43,7 @@ from scripts.run_master_book import (  # noqa: E402
     OOS, R, assemble, book_stack, ppy_of, risk_overlay, scorecard)
 from src.config import BOOK_LEVERAGE, SEED  # noqa: E402
 from src.validation.monte_carlo import mc_metrics  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 GRID = [round(x, 2) for x in np.arange(1.00, 2.001, 0.05)]
 LIMIT_POLICIES = ("book_equity", "risk_budget")
@@ -263,7 +264,7 @@ def main():
               f"  {'':12s} STRESS DD {st['stress_max_dd']:+.2%} worst month {st['stress_worst_month']:+.2%} "
               f"mo {st['stress_months_in_profit']:.1%} strk {st['stress_streak']}")
 
-    (R / "book" / "risk_budget.json").write_text(json.dumps({
+    (R / "book" / "risk_budget.json").write_text(json.dumps(stamp({
         "stack_vol": {"full": round(stack_vol, 4), "pre_oos": round(pre_vol, 4), "oos": round(oos_vol, 4)},
         "leverage": BOOK_LEVERAGE, "book_vol": round(BOOK_LEVERAGE * pre_vol, 4), "limits": "book_equity",
         "selective_leverage": selective,
@@ -274,7 +275,7 @@ def main():
                   "date": str(wide["volprem"].loc[EVENT[0]:EVENT[1]].idxmin().date()),
                   "leg_day_loss_at_book_weight": round(leg_day, 4),
                   "book_day_loss_unlevered": round(book_day, 4)},
-        "mc_reps": MC_REPS, "grid": rows}, indent=2, default=float))
+        "mc_reps": MC_REPS, "grid": rows}), indent=2, default=float))
     print(f"\nartifacts -> {R / 'book' / 'risk_budget.json'}, {R / 'book' / 'risk_budget_grid.csv'}")
     print("RISK BUDGET OK")
 

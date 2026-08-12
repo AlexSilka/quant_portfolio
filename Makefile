@@ -230,6 +230,7 @@ lint:
 	$(PY) scripts/render_report.py --check
 	$(PY) scripts/make_report.py --check
 	$(PY) scripts/make_live_report.py --check
+	$(PY) scripts/check_freshness.py
 
 # Rebuild REPORT.md and README.md from scripts/report_assets/ + the measured numbers.
 report:

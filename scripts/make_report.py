@@ -960,25 +960,48 @@ def main():
     tl_note = ""
     if tlp.exists():
         tl = pd.read_csv(tlp)
-        n_tr = len(pd.read_csv(trp)) if trp.exists() else 0
+        # count only fills from families the book holds. The file on disk may predate a composition
+        # change, and a page that reports another family's fills as the book's is worse than one that
+        # reports none — this book is return-composed, so its own record IS the daily rebalance ledger.
+        n_tr, fams = 0, set()
+        if trp.exists():
+            tr = pd.read_csv(trp)
+            held = {lab for lab, _, _ in mb_families()}
+            tr = tr[tr["family"].isin(held)] if "family" in tr else tr.iloc[0:0]
+            n_tr, fams = len(tr), set(tr["family"].unique()) if "family" in tr else set()
+        fills = (f' &middot; <b>{n_tr:,}</b> instrument fills from {", ".join(sorted(fams))} '
+                 f'(<code>master_book_oos_trades.csv</code>)' if n_tr else
+                 ' &middot; no leg publishes instrument-level fills, so the rebalance ledger is the record')
         tl_note = (f'<p class="valline">OOS log (§13): <b>{len(tl):,}</b> daily rebalances '
-                   f'{tl["date"].min()}&rarr;{tl["date"].max()} &middot; <b>{n_tr:,}</b> instrument fills &mdash; '
-                   f'<code>master_book_oos_ledger.csv</code>, <code>master_book_oos_trades.csv</code>.</p>')
+                   f'{tl["date"].min()}&rarr;{tl["date"].max()}{fills} &mdash; '
+                   f'<code>master_book_oos_ledger.csv</code>.</p>')
     # §9/§12 per family: measured by re-running each family with its cost model off (measure_family_costs)
     fcp = REP / "book" / "family_cost_shares.json"
     fam_cost_txt = ""
     if fcp.exists():
         fc = json.loads(fcp.read_text())
+        # only the legs the book actually holds: measure_family_costs also measures the families the
+        # research covered and the book dropped, and quoting their range as "the book's legs" is false
         shares = {k: v for src in (fc.get("re_run_here") or {}, fc.get("from_deep_dives") or {})
-                  for k, v in src.items() if "cost_share_of_gross_pnl" in v}
+                  for k, v in src.items() if "cost_share_of_gross_pnl" in v and v.get("in_book")}
         frag = [k for k, v in shares.items() if v.get("cost_fragile")]
         if shares:
             worst = max(shares, key=lambda k: shares[k]["cost_share_of_gross_pnl"])
+            # "the N legs" read as the size of the book, and it is not: a leg whose deep-dive publishes a
+            # Sharpe at a cost multiple instead of a share has no place in this range, and saying so is
+            # what stops a narrower range from looking like a smaller book
+            n_book = fc.get("book_n_families") or len(shares)
+            miss = fc.get("book_legs_without_share") or []
+            of_n = (f'{len(shares)} of the book&rsquo;s {n_book} legs' if len(shares) < n_book
+                    else f'all {n_book} of the book&rsquo;s legs')
+            tail = (f' ({_and([SHORT.get(m, m) for m in miss])} '
+                    f'publish{"es" if len(miss) == 1 else ""} a Sharpe at a cost multiple, not a share)'
+                    if miss else '')
             fam_cost_txt = (
                 f' Measured per family by re-running each construction with its cost model switched off: '
-                f'the {len(shares)} legs pay between '
+                f'{of_n} pay between '
                 f'{min(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} and '
-                f'{max(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} of gross P&amp;L in cost, '
+                f'{max(v["cost_share_of_gross_pnl"] for v in shares.values()):.1%} of gross P&amp;L in cost{tail}, '
                 + (f'and <b>{len(frag)} is cost-fragile ({", ".join(frag)}, break-even '
                    f'{shares[worst]["breakeven_cost_mult"]:.1f}&times;)</b> &mdash; a crash hedge that trades '
                    f'to stay long gamma, held for what it does in the bad months rather than for its own P&amp;L.'
@@ -1025,6 +1048,12 @@ def main():
 
 
 ASSETS = Path(__file__).resolve().parent / "report_assets"  # dashboard.html/.css/.js live here
+
+
+def mb_families():
+    """The book's current composition, read from the assembler so a page cannot describe an old one."""
+    import scripts.run_master_book as mb
+    return mb.FAMILIES
 
 
 def _asset(name):

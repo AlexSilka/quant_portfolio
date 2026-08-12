@@ -30,6 +30,7 @@ from src.backtest.engine import backtest, positions_from_events, vol_target  # n
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, precompute as bo_precompute, proba_cache, models  # noqa: E402
 from scripts.trend.run_trend_ml import (  # noqa: E402
     precompute as tr_precompute, proba_cache as tr_proba_cache, gated_book, sized_book)
@@ -313,7 +314,7 @@ def main():
                      ("uniform_and_aligned", uniform_and_aligned), ("volregime_overlay", volregime)]:
         print(f"... {name}", flush=True)
         out[name] = fn()
-    (R / "book" / "ml_book_contribution.json").write_text(json.dumps(out, indent=2, default=float))
+    (R / "book" / "ml_book_contribution.json").write_text(json.dumps(stamp(out), indent=2, default=float))
     print(json.dumps(out, indent=2, default=float))
     print("\nML BOOK CONTRIBUTION OK -> reports/book/ml_book_contribution.json")
 

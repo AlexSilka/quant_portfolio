@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.config import BOOK_DIR, REPORTS_DIR  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 R = REPORTS_DIR
 TOL = 0.02        # the re-run must reproduce the published series' total return to within 2%
@@ -100,6 +101,19 @@ def carry():
 
 FAMILIES = (("crisis-alpha", crisis), ("global-macro", gmacro), ("BAB", bab), ("carry", carry))
 
+# Display name -> the label the book assembles under. Every family researched is measured here, including
+# the ones the book does not hold, because §9 documents the research and not only the shipped legs. But a
+# reader has to be able to tell which is which: the book dropped trend and carry, and a cost range quoted
+# over all eight while calling them "the book's legs" is simply false. Tagged at the source, where both
+# names are known, rather than re-derived by whoever reads the file.
+BOOK_LABEL = {"crisis-alpha": "crisis", "global-macro": "gmacro", "BAB": "bab", "carry": "carry",
+              "breakout": "breakout", "x-sect": "xs_momentum", "vol-prem": "volprem", "trend": "trend"}
+
+
+def _in_book(label: str) -> bool:
+    import scripts.run_master_book as mb
+    return BOOK_LABEL.get(label, label) in {lab for lab, _, _ in mb.FAMILIES}
+
 
 def main():
     out = {}
@@ -129,14 +143,17 @@ def main():
             v = float(json.loads((R / path).read_text())[key])
             carried[label] = {"breakeven_cost_mult": v, "cost_share_of_gross_pnl": round(1.0 / v, 4),
                               "cost_fragile": v < 3.0, "source": path}
-        except Exception:
-            pass
+        except Exception as exc:      # named, not swallowed: a leg that vanishes here silently narrows
+            print(f"  ! {label}: {path} unreadable ({type(exc).__name__}: {exc})")   # the §9 range on the page
+            carried[label] = {"error": f"{type(exc).__name__}: {exc}", "source": path}
     try:
         vp = pd.read_csv(R / "volprem" / "volprem_cost_robustness.csv").iloc[-1]
         carried["vol-prem"] = {"sharpe_at_cost_mult": {str(int(vp["cost_mult"])): float(vp["sharpe"])},
                                "cost_fragile": False, "source": "volprem/volprem_cost_robustness.csv"}
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"  ! vol-prem: volprem_cost_robustness.csv unreadable ({type(exc).__name__}: {exc})")
+        carried["vol-prem"] = {"error": f"{type(exc).__name__}: {exc}",
+                               "source": "volprem/volprem_cost_robustness.csv"}
     tr = R / "trend" / "trend_book_blend_summary.json"
     if tr.exists():
         cl = (json.loads(tr.read_text()).get("cost_levels") or {})
@@ -144,12 +161,28 @@ def main():
             carried["trend"] = {"sharpe_at_cost_mult": {"3": float(cl["3x"])}, "cost_fragile": False,
                                 "source": "trend/trend_book_blend_summary.json"}
 
+    for d in (out, carried):
+        for label, rec in d.items():
+            rec["in_book"] = _in_book(label)
+    have_share = {k for d in (out, carried) for k, v in d.items()
+                  if v.get("in_book") and "cost_share_of_gross_pnl" in v}
+    import scripts.run_master_book as mb
+    book_n = len({lab for lab, _, _ in mb.FAMILIES})
+    no_share = sorted({BOOK_LABEL.get(k, k) for d in (out, carried) for k, v in d.items() if v.get("in_book")}
+                      - {BOOK_LABEL.get(k, k) for k in have_share})
+    if no_share:
+        print(f"  book legs without a cost SHARE (they publish a Sharpe at a cost multiple instead): "
+              f"{', '.join(no_share)}")
+    dropped = sorted(k for d in (out, carried) for k, v in d.items() if not v["in_book"])
+    if dropped:                       # named, because a silent extra leg is how a false headline is born
+        print(f"  measured but NOT held by the book: {', '.join(dropped)} (tagged in_book=false)")
     measured = {k: v for k, v in out.items() if "cost_share_of_gross_pnl" in v}
     doc = {"re_run_here": out, "from_deep_dives": carried,
+           "book_n_families": book_n, "book_legs_without_share": no_share,
            "n_cost_fragile": sum(1 for v in list(measured.values()) + list(carried.values())
                                  if v.get("cost_fragile")),
            "method": "same construction re-run with its cost model off; share = 1 - net/gross total return"}
-    (BOOK_DIR / "family_cost_shares.json").write_text(json.dumps(doc, indent=2, default=float))
+    (BOOK_DIR / "family_cost_shares.json").write_text(json.dumps(stamp(doc), indent=2, default=float))
     print(f"\n{len(measured)} families re-run, {len(carried)} carried from deep-dives, "
           f"{doc['n_cost_fragile']} cost-fragile -> reports/book/family_cost_shares.json")
     print("FAMILY COSTS OK")

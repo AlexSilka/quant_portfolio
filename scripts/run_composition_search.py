@@ -30,6 +30,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import scripts.run_master_book as mb  # noqa: E402
 from src.config import CAPITAL_USD, OOS_START  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 OOS = pd.Timestamp(OOS_START).tz_localize(None)
 
@@ -169,7 +170,7 @@ def main():
                "volprem_pnl_share": [base["volprem_pnl_share"], ship["volprem_pnl_share"]]},
            "configurations": rows}
     p = mb.R / "book" / "composition_search.json"
-    p.write_text(json.dumps(out, indent=2, default=str))
+    p.write_text(json.dumps(stamp(out), indent=2, default=str))
     print(f"\n{len(passing)} of {len(configs)} configurations clear all five targets on both windows: "
           f"{', '.join(passing)}\nwrote {p}")
 

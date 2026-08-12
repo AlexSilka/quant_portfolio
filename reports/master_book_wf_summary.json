@@ -127,5 +127,6 @@
     }
   },
   "note": "Book-level walk-forward with periodic allocation re-fit (\u00a710), over ALL available data (2005+ for the non-crypto legs; the crypto legs only from 2020). Equal-weight needs no fit, so its walk-forward equals the full post-burn-in track \u2014 the a-priori book is OOS across the whole history, incl. the 2008 GFC. The 2y final block (OOS_START) is the separate run-once \u00a711 holdout. Caveat: pre-~2019 crisis/gmacro are reconstructed signals (a strategy-logic backtest); Sharpe is annualised by actual obs/yr (honest 252/365 calendar).",
-  "seed": 7
+  "seed": 7,
+  "book_id": "aabc9e117eb9"
 }

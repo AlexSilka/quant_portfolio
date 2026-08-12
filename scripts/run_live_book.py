@@ -41,6 +41,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.run_master_book as mb  # noqa: E402
 from src.config import BOOK_REBALANCE_BPS, CAPITAL_USD, LAB_DIR  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 START = "2011-01-03"        # first day both gate segments exist (VIX9D lists 2011-01-04)
 LEGS = ["volprem", "breakout", "bab", "xs_momentum"]
@@ -165,15 +166,15 @@ def main() -> None:
     # the leg matrix too: the page draws per-leg attribution from the series rather than from a summary,
     # so a leg's share can never be a number typed next to a chart built from something else
     df.to_parquet(LAB_DIR / "live_legs.parquet")
-    (LAB_DIR / "live_book.json").write_text(json.dumps(
-        {"window": [str(b.index.min().date()), str(b.index.max().date())], "legs": list(df.columns),
+    (LAB_DIR / "live_book.json").write_text(json.dumps(stamp({
+         "window": [str(b.index.min().date()), str(b.index.max().date())], "legs": list(df.columns),
          "leverage": lev, "overlay": None, "stats": {k: round(v, 4) for k, v in st.items()},
          "per_year": per_year, "leverage_sweep": sweep,
          "legs_live_per_year": {int(y): int(df.loc[g.index].notna().sum(axis=1).max())
                                 for y, g in b.groupby(b.index.year)},
          "pnl_share_2020": {c: round(float(v), 4) for c, v in
                             (full.sum() / full.sum().sum()).sort_values(ascending=False).items()},
-         "since_all_legs_2020": {k: round(v, 4) for k, v in stats(book(full, lev, scales.loc[full.index])).items()}}, indent=2))
+         "since_all_legs_2020": {k: round(v, 4) for k, v in stats(book(full, lev, scales.loc[full.index])).items()}}), indent=2))
     print(f"\nwrote {LAB_DIR / 'live_book.parquet'} and live_book.json")
 
 

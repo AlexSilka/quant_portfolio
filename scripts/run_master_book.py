@@ -47,6 +47,7 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.risk.stress import hedge_weight  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
+from src.book_id import fingerprint as book_fingerprint  # noqa: E402
 from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY = 365
@@ -602,6 +603,9 @@ def main():
     corr.to_csv(R / "master_book_correlation.csv")
     pd.DataFrame(marg).to_csv(R / "master_book_marginal.csv", index=False)
     (R / "master_book_summary.json").write_text(json.dumps({
+        # the book's own identity: everything measured AGAINST the book records this, and
+        # scripts/check_freshness.py fails the build when a derived artifact still carries an older one
+        "book_id": book_fingerprint(managed),
         "families": list(df.columns), "window": [str(df.index.min().date()), str(df.index.max().date())],
         "oos_start": str(OOS.date()),
         "master": {**m, **{f"full_{k}": v for k, v in sc_full.items()}},

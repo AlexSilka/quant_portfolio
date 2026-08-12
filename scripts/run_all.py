@@ -12,11 +12,15 @@
   run_wf_book.py       §10 book-level walk-forward: rolling & anchored, periodic allocation re-fit -> the
                        accumulated out-of-sample track (whole history, not just the final block)
   run_cscv.py          §6 probability of backtest overfitting (CSCV) on the full trial set
-  make_oos_ledger.py   §13 portfolio-level out-of-sample trade/position ledger
   measure_family_costs.py  §9 per-family cost as a share of gross P&L (each family re-run costless)
+  run_risk_budget / run_composition_search / run_crisis_lab / run_longgamma_search / the two ML runs
+                       everything measured AGAINST the book — they carry its book_id and check_freshness
+                       fails the build if any of them still describes an earlier one
+  make_oos_ledger.py   §13 portfolio-level out-of-sample trade/position ledger
   make_figures.py      §13 the required charts as standalone PNGs
+  make_report.py       dashboard — and master_book_cost_levels.json, which the report resolves §9 from,
+                       so it runs BEFORE the renderer
   render_report.py     REPORT.md from its prose template + the measured numbers (no hand-typed figures)
-  make_report.py       dashboard
 
 Each step's output is streamed to the console AND captured to logs/run_all_<start>.log (named by the
 run's start date-time), so a run is always reproducible from its log.
@@ -36,7 +40,15 @@ ROOT = Path(__file__).resolve().parents[1]
 # a smaller N and quietly weaken every multiple-testing number that cites it.
 STEPS = (("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
          ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
-         ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",), ("make_oos_ledger.py",), ("make_figures.py",),
+         ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",),
+         # everything below is measured AGAINST the assembled book, so it runs after the book and before
+         # anything that quotes it. Left out of this list they cannot be refreshed by the pipeline at all,
+         # and REPORT.md went on citing a leverage grid, a composition search, a crisis sizing study and
+         # two ML contributions that had been computed against an earlier book — check_freshness.py is the
+         # backstop, this is the fix.
+         ("run_risk_budget.py",), ("run_composition_search.py",), ("run_crisis_lab.py",),
+         ("run_longgamma_search.py",), ("run_ml_book_contribution.py",), ("run_ml_portfolio_overlay.py",),
+         ("make_oos_ledger.py",), ("make_figures.py",),
          # the return-first book rides the same family series, so it re-runs here or its page quietly keeps
          # quoting the previous run — its own --check only proves the page matches its JSON, not the families
          ("run_live_book.py",), ("make_live_report.py",),

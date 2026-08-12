@@ -21,7 +21,7 @@ your own money" rather than to "what clears §11".
 
 ## The result in one page
 
-A **six-family book** at a constant **1.15× leverage** (~10.6% annualised vol): the
+A **six-family book** at a constant **1.15× leverage** (~10.1% annualised vol): the
 6 earners at equal risk, and the one long-gamma hedge sized by market stress instead of held flat
 (a quarter slot when nothing is moving, a slot and a half when the VIX curve inverts — REPORT §6c-ter).
 §11 scores the five targets on the **final out-of-sample block**, so that is the scorecard. The 15-year
@@ -51,14 +51,14 @@ Mean pairwise correlation between families **≈ 0.07**.
 and carry were dropped under the earlier rule — the one pair, of the 37 single- and
 double-removal configurations, that then cleared all five targets on both windows. With the gate in place
 0 configurations clear both; six clear the scored block, and the shipped book is one of
-them while the eight-family book is not (3/5 on the block — Sharpe 4.17, months 76.9%).
+them while the eight-family book is not (3/5 on the block — Sharpe 4.09, months 76.9%).
 Re-running the search now would mean choosing a composition against the block §10 says to run exactly once,
 so the search is published as the denominator (§6d-ter) and the composition is left where it was. Neither
 dropped leg is weak on its own terms (carry's standalone Sharpe is 1.22, the
-fourth-highest of the eight). **Return went up, not down**: +8.5pp of CAGR on the full
-window and +8.2pp on the block, since six legs at equal risk run hotter than eight. What it costs
+fourth-highest of the eight). **Return went up, not down**: +8.3pp of CAGR on the full
+window and +7.9pp on the block, since six legs at equal risk run hotter than eight. What it costs
 is **concentration and breadth**: the short-vol leg's share of P&L up from 58% to
-66%, and no family left that spans both asset classes. The eight-family alternative is one
+65%, and no family left that spans both asset classes. The eight-family alternative is one
 line away in `scripts/run_master_book.py`.
 
 **The six sources** — each developed in its own deep-dive, combined at genuine equal-weight
@@ -125,7 +125,7 @@ no key, offline, seconds each:
 | command | what it recomputes | expected |
 |---|---|---|
 | `make master` | the whole portfolio, from scratch | full **Sharpe 4.38** (4/5), OOS **3.87** (5/5), −7.3% max-DD, 6 families |
-| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised worst month is what binds first, at 1.35× |
+| `make risk-budget` | how much leverage the book can carry (§4b) | shipped **1.15×**; realised worst month is what binds first, at 1.60× |
 | `make cscv` | the overfit / multiple-testing control | **PBO 13%**, in-sample-best +0.088 → OOS +0.004 /bar |
 | `python scripts/smoke_features.py` | the look-ahead audit | `max\|full − truncated\| = 0` |
 | `python scripts/smoke_math.py` | the metric / cost / overlay math (known-answer) | every invariant ✓ |

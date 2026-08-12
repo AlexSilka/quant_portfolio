@@ -6,7 +6,8 @@
       "cost_share_of_gross_pnl": 0.3384,
       "breakeven_cost_mult": 3.0,
       "cost_fragile": true,
-      "reproduces_published_series": true
+      "reproduces_published_series": true,
+      "in_book": true
     },
     "global-macro": {
       "gross_pnl": 4.3183,
@@ -14,7 +15,8 @@
       "cost_share_of_gross_pnl": 0.1475,
       "breakeven_cost_mult": 6.8,
       "cost_fragile": false,
-      "reproduces_published_series": true
+      "reproduces_published_series": true,
+      "in_book": true
     },
     "BAB": {
       "gross_pnl": 1.6909,
@@ -23,7 +25,8 @@
       "breakeven_cost_mult": 60.1,
       "cost_fragile": false,
       "reproduces_published_series": false,
-      "note": "re-run total return +1.663 vs published +1.744 (4.7% apart)"
+      "note": "re-run total return +1.663 vs published +1.744 (4.7% apart)",
+      "in_book": true
     },
     "carry": {
       "gross_pnl": 1.6958,
@@ -31,7 +34,8 @@
       "cost_share_of_gross_pnl": 0.2032,
       "breakeven_cost_mult": 4.9,
       "cost_fragile": false,
-      "reproduces_published_series": true
+      "reproduces_published_series": true,
+      "in_book": false
     }
   },
   "from_deep_dives": {
@@ -39,29 +43,38 @@
       "breakeven_cost_mult": 7.9,
       "cost_share_of_gross_pnl": 0.1266,
       "cost_fragile": false,
-      "source": "breakout/bo_final_summary.json"
+      "source": "breakout/bo_final_summary.json",
+      "in_book": true
     },
     "x-sect": {
       "breakeven_cost_mult": 7.6000000000000005,
       "cost_share_of_gross_pnl": 0.1316,
       "cost_fragile": false,
-      "source": "xs/xs_summary.json"
+      "source": "xs/xs_summary.json",
+      "in_book": true
     },
     "vol-prem": {
       "sharpe_at_cost_mult": {
         "5": 2.0
       },
       "cost_fragile": false,
-      "source": "volprem/volprem_cost_robustness.csv"
+      "source": "volprem/volprem_cost_robustness.csv",
+      "in_book": true
     },
     "trend": {
       "sharpe_at_cost_mult": {
         "3": 0.87
       },
       "cost_fragile": false,
-      "source": "trend/trend_book_blend_summary.json"
+      "source": "trend/trend_book_blend_summary.json",
+      "in_book": false
     }
   },
+  "book_n_families": 6,
+  "book_legs_without_share": [
+    "volprem"
+  ],
   "n_cost_fragile": 1,
-  "method": "same construction re-run with its cost model off; share = 1 - net/gross total return"
+  "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
+  "book_id": "aabc9e117eb9"
 }

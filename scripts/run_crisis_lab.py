@@ -44,6 +44,7 @@ import scripts.run_master_book as mb  # noqa: E402
 from src.config import LAB_DIR, OOS_START  # noqa: E402
 from src.risk.stress import hedge_weight  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.book_id import stamp  # noqa: E402
 
 OOS = pd.Timestamp(OOS_START).tz_localize(None)
 COST_BPS = crisis.COST_BPS
@@ -392,7 +393,7 @@ def main():
     out.update(finalists(variants))
 
     LAB_DIR.mkdir(parents=True, exist_ok=True)
-    (LAB_DIR / "crisis_lab.json").write_text(json.dumps(out, indent=2, default=str))
+    (LAB_DIR / "crisis_lab.json").write_text(json.dumps(stamp(out), indent=2, default=str))
     print(f"\nwrote {LAB_DIR / 'crisis_lab.json'}")
     return out, variants
 
