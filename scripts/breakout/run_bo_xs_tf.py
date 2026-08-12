@@ -14,7 +14,8 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from src.backtest.costs import panel_impact_cost  # noqa: E402
+from src.backtest.costs import panel_impact_cost
+from src.sleeves.xsect import held_turnover  # noqa: E402
 from src.config import IMPACT_K, OOS_START, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
@@ -73,7 +74,9 @@ def xs_daily(pnl, sig, ppy_bar, rebal, adv=None, funding=None):
     hold = pd.Series(False, index=w.index)
     hold.iloc[::rebal] = True
     w = w.where(hold, np.nan).ffill().shift(2).fillna(0.0)
-    dw = w.diff().abs()
+    # held between rebalances, but `(w * rets).sum()` prices a book put back on those weights every
+    # bar — so the drift back onto them is a trade `w.diff()` never sees (`xsect.held_turnover`)
+    dw = held_turnover(w, rets.reindex_like(w).fillna(0.0))
     gross = (w * rets.fillna(0.0)).sum(axis=1)
     net_bar = gross - dw.sum(axis=1) * COST / 1e4
     if adv is not None:

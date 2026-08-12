@@ -153,6 +153,7 @@ def backtest_split(sym, tf, perp, posv, fund=None):
     return pd.DataFrame({"position": long_["position"] + short["position"],
                          "cost": long_["cost"] + short["cost"],
                          "funding": short["funding"],
+                         "turnover": long_["turnover"] + short["turnover"],
                          "net_ret": long_["net_ret"] + short["net_ret"]})
 
 
@@ -225,7 +226,7 @@ def evaluate(close, pos, ppy_bar, costs, fund=None, adv=None, ppy_daily=365,
         "ret": (1 + bt["net_ret"]).resample(freq).prod() - 1,
         "cost": bt["cost"].resample(freq).sum(),
         "gross": bt["position"].abs().resample(freq).mean(),
-        "turnover": bt["position"].diff().abs().resample(freq).sum(),
+        "turnover": bt["turnover"].resample(freq).sum(),
     }).dropna(subset=["ret"])
     s = summarise(daily["ret"], ppy_daily)
     if with_mc and s["sharpe_ann"] > 0.5:
@@ -233,7 +234,7 @@ def evaluate(close, pos, ppy_bar, costs, fund=None, adv=None, ppy_daily=365,
         s["mc_p5"], s["mc_p50"] = mc.get("sharpe_p5", np.nan), mc.get("sharpe_p50", np.nan)
     else:
         s["mc_p5"] = s["mc_p50"] = np.nan
-    s["turnover"] = float(bt["position"].diff().abs().sum())
+    s["turnover"] = float(bt["turnover"].sum())
     s["ann_turnover"] = float(daily["turnover"].mean() * ppy_daily) if len(daily) else np.nan
     return s, daily["ret"].rename("ret")
 

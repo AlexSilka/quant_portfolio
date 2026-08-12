@@ -43,7 +43,15 @@ def backtest(prices: pd.Series, target_pos: pd.Series, *, capital: float,
     pos = target_pos.reindex(close.index).ffill().fillna(0.0).shift(exec_lag).fillna(0.0)
     gross_ret = pos * r
 
-    dpos = pos.diff().abs().fillna(pos.abs())           # turnover
+    # Turnover is the target change PLUS the drift back onto it. `gross_ret = pos * r` prices a
+    # position held at a constant fraction of NAV, and a fraction does not stay constant on its own:
+    # hold p through a return r and it becomes p(1+r)/(1+p·r). At p = 1 that is exactly 1 and there is
+    # nothing to charge, which is why this never showed on an unlevered sleeve — but the vol-target
+    # runs these legs at whatever size 15% needs, and on the trend legs `pos.diff()` alone charges
+    # 0.4-0.9x/yr against 1.2-1.6x actually traded. Same defect as `xsect.held_turnover` fixes for the
+    # panel books; a single asset just has one column.
+    drifted = pos * (1.0 + r) / (1.0 + pos * r).replace(0.0, np.nan)
+    dpos = (pos - drifted.shift(1)).abs().fillna(pos.abs())
     # bar vol for the √-impact cost term — causal: expands over the first 20 bars then rolls,
     # lagged one bar, zero on the warm-up. (No .bfill()/full-sample .std() — those would seed the
     # early bars from future/whole-series vol; harmless to the return path but a real look-ahead.)
@@ -60,7 +68,10 @@ def backtest(prices: pd.Series, target_pos: pd.Series, *, capital: float,
 
     net_ret = gross_ret - cost + fund
     equity = (1.0 + net_ret).cumprod()
-    return pd.DataFrame({"position": pos, "ret": r, "gross_ret": gross_ret,
+    # `turnover` is published rather than left to be re-derived from `position`: the two differ now
+    # that the drift back onto a held size is charged, and a consumer re-deriving it would report a
+    # turnover the book never paid — the shape of defect this whole pass exists to remove.
+    return pd.DataFrame({"position": pos, "ret": r, "gross_ret": gross_ret, "turnover": dpos,
                          "cost": cost, "funding": fund, "net_ret": net_ret,
                          "equity": equity})
 

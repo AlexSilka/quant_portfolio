@@ -53,9 +53,14 @@ def build_trend_block() -> pd.Series:
         rets, vol = P.pool(tf)          # not `R` — that name is the reports Path at module scope
         mem = P.pit_members(vol, P.TOP_N, P.LOOKBACK_D)
         for sym in rets.columns:
-            r = rets[sym].where(mem[sym].reindex(rets.index).fillna(False))
-            if r.notna().sum() > 60 and r.std(ddof=1) > 0:
-                cols[f"{sym}_{tf}"] = r
+            # Every name the point-in-time universe ever admits is a column, with no minimum on how
+            # long it stays. There used to be a `notna().sum() > 60` gate here, and it is a whole-sample
+            # statistic deciding a bar's composition: a coin that accumulates its sixtieth member-day in
+            # 2023 was in the book from its first day in 2021, because the filter had already seen 2023.
+            # Truncating the panel at 2021-12 changed 166 bars before the cut and moved the leg from 96
+            # columns to 50. It is also a filter with nothing to do: a name outside the universe is NaN
+            # and `mean(axis=1)` already skips it, so a three-day member correctly counts for three days.
+            cols[f"{sym}_{tf}"] = rets[sym].where(mem[sym].reindex(rets.index).fillna(False))
     cols |= P.equity_legs(pit=True)      # index ETFs (a-priori) + a point-in-time top-7 by liquidity
     block = pd.DataFrame(cols).mean(axis=1).dropna().rename("ret")
     block.to_frame().to_parquet(R / "trend" / "trend_block_returns.parquet")
