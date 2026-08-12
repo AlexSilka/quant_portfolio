@@ -15,6 +15,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import adfuller
+from src.risk.sizing import vol_target_scale
 
 # The ten SPDR select-sector ETFs — liquid, tight spreads, long history.
 SECTOR_ETFS = ["XLE", "XLF", "XLK", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE"]
@@ -74,7 +75,7 @@ def _spread_return(y: pd.Series, x: pd.Series, lookback: int, entry: float,
     z = (spread - spread.rolling(lookback).mean()) / (spread.rolling(lookback).std() + 1e-12)
     pos = pd.Series(_positions_from_z(z.to_numpy(), entry, exit_), index=y.index)
     pair_ret = ry - beta * rx
-    scale = (TVOL / (pair_ret.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(pair_ret, TVOL, ppy)
     held = (pos * scale).shift(2).fillna(0.0)                                   # t+2 execution
     return (held * pair_ret - held.diff().abs().fillna(0.0) * 2 * cost_bps / 1e4).dropna()
 

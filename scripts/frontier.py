@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy of it
 from src.metrics import summarise, monthly_returns  # noqa: E402
 from src.config import LAB_DIR  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY = 365
 START_REPORT = "2016-08-01"
@@ -43,7 +44,7 @@ TARGET = dict(S=(2.5, 4.0), M=0.80, W=-0.06, D=-0.15, K=2)   # the scorecard box
 
 
 def rescale(net, target=0.15):
-    return net * (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    return net * vol_target_scale(net, target, PPY)
 
 
 def regime_overlay(b):

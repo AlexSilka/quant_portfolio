@@ -24,6 +24,7 @@ from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY, TVOL, SEED = 365, 0.15, 7
 CB = 6.0
@@ -31,7 +32,7 @@ from scripts.carry.run_carry import CRYPTO, START, END  # noqa: E402
 
 
 def vt(net):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale).dropna()
 
 

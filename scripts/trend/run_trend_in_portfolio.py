@@ -21,6 +21,7 @@ from scripts.trend.run_trend_book import sh  # noqa: E402
 import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth
 from src.metrics import summarise  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY = 365
 R = T.bo.REPORTS
@@ -69,7 +70,7 @@ def load(file, col, label):
 
 
 def rescale(net, target=0.15):
-    scale = (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, target, PPY)
     return net * scale
 
 

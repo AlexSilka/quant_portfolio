@@ -10,7 +10,6 @@ premium), vol-targeted 15%, net of vega costs, t+2. Answers "where is this best 
 """
 import warnings
 
-import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
@@ -24,12 +23,13 @@ from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 from src.sleeves.vol_premium import realized_vol  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 SEED, TVOL = SEED, VOL_TARGET_ANNUAL
 
 
 def vt(net: pd.Series, ppy: float) -> pd.Series:
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, ppy)
     return (net * scale).clip(lower=-0.999).dropna()
 
 

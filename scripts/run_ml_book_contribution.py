@@ -29,6 +29,7 @@ from src import bo_common as bo  # noqa: E402
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.breakout.run_bo_ml import CORE10, precompute as bo_precompute, proba_cache, models  # noqa: E402
 from scripts.trend.run_trend_ml import (  # noqa: E402
     precompute as tr_precompute, proba_cache as tr_proba_cache, gated_book, sized_book)
@@ -94,7 +95,7 @@ def _sh(net):
 
 
 def rescale15(net, target=0.15):
-    s = (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    s = vol_target_scale(net, target, PPY)
     return (net * s).dropna()
 
 

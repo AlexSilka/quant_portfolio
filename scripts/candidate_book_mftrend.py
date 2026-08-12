@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 import scripts.run_master_book as mb  # noqa: E402  the assembler is the source of truth, not a copy of it
 from src.config import LAB_DIR  # noqa: E402
 from src.metrics import summarise, monthly_returns  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY = 365
 START_REPORT = "2016-08-01"
@@ -33,7 +34,7 @@ FAMILIES = [(lab, f) for lab, f, _ in mb.FAMILIES]
 
 
 def rescale(net, target=0.15):
-    scale = (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, target, PPY)
     return net * scale
 
 

@@ -21,13 +21,14 @@ from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import xs_returns  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PANEL = ["AAPL", "MSFT", "NVDA", "JPM", "AMZN", "GOOGL", "META", "JNJ", "XOM", "WMT",
          "V", "PG", "HD", "BAC", "KO", "DIS", "CSCO", "INTC", "CVX", "PFE"]
 
 
 def _voltarget(net, ppy, tgt=0.15):
-    scale = (tgt / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, tgt, ppy)
     return (net * scale).dropna()
 
 
@@ -63,7 +64,7 @@ def pairs_mr(y, x, lookback, entry, exit_, cost_bps, ppy):
 
 
 def _voltarget_pos(pos, ret, ppy, tgt=0.15):
-    scale = (tgt / (ret.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(ret, tgt, ppy)
     return pos * scale
 
 

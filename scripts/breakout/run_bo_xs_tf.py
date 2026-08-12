@@ -19,6 +19,7 @@ from src.config import IMPACT_K, OOS_START, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 TVOL, COST = VOL_TARGET_ANNUAL, 6.0
 BPD = {"1d": 1, "4h": 6, "1h": 24, "15m": 96}          # bars per day
@@ -86,7 +87,7 @@ def xs_daily(pnl, sig, ppy_bar, rebal, adv=None, funding=None):
                                               adv.reindex_like(w).ffill(), bo.CAP, IMPACT_K)
     if funding is not None:
         net_bar = net_bar - (w * funding.reindex_like(w).fillna(0.0)).sum(axis=1)
-    scale = (TVOL / (net_bar.rolling(60).std() * np.sqrt(ppy_bar))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net_bar, TVOL, ppy_bar)
     net_bar = net_bar * scale
     return ((1 + net_bar).resample("D").prod() - 1).dropna()
 

@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parents[1]
 from src.config import BOOK_DIR  # noqa: E402
 from src.data.twelvedata import _api_key  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 EQ_STORE = ROOT / "data/raw/equity_td"
 TD_DIR = ROOT / "data/raw/twelvedata"
@@ -89,7 +90,7 @@ def _panel(td_syms, local_syms=()):
 
 
 def _vol_target(x, target=0.15, lb=60):
-    lev = (target / (x.rolling(lb).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    lev = vol_target_scale(x, target, PPY, lookback=lb)
     return (x * lev).dropna()
 
 

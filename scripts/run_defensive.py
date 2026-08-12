@@ -28,6 +28,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 PPY = 252
@@ -66,7 +67,7 @@ def build_defensive(cost_bps=2.0, exec_lag=2, target=0.15) -> pd.Series:
     turn = pd.concat(turns, axis=1).mean(axis=1)
     basket = basket - turn.fillna(0.0) * cost_bps / 1e4
     timed = basket * _vix_stress(basket.index)
-    lev = (target / (timed.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    lev = vol_target_scale(timed, target, PPY)
     return (timed * lev).dropna().rename("ret")
 
 

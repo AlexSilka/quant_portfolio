@@ -22,6 +22,7 @@ from src.config import CARRY_DIR, SEED, VOL_TARGET_ANNUAL  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.carry.run_carry import load_panel  # noqa: E402
 
 PPY, TVOL, SEED, CB = 365, VOL_TARGET_ANNUAL, SEED, 6.0
@@ -34,7 +35,7 @@ def book_ret(C, fd, lb, tf):
 
 
 def vt_slice(net):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale)
 
 

@@ -38,6 +38,7 @@ from src.backtest.costs import panel_impact_cost  # noqa: E402
 from src.config import (BINANCE_FUT_TAKER_BPS, BINANCE_SPOT_TAKER_BPS, BREAKOUT_DIR,  # noqa: E402
                         CRYPTO_HALF_SPREAD_BPS, IMPACT_K, OOS_START, VOL_TARGET_ANNUAL)
 from src.sleeves.cross_sectional import breakout_signal  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.breakout.run_bo_deep_history import full_metrics, show  # noqa: E402
 from scripts.breakout.run_bo_xs_big import NONCRYPTO, symbols_with_tf  # noqa: E402
 from scripts.breakout.run_bo_xs_tf import BPD, PPY  # noqa: E402
@@ -116,8 +117,7 @@ def run(C, Q, F, sig, tf, *, impact: bool, funding: bool, venue: str = "perp") -
            if impact else pd.Series(0.0, index=w.index))
 
     net_bar = gross - fee - imp + carry
-    scale = (VOL_TARGET_ANNUAL / (net_bar.rolling(60).std() * np.sqrt(PPY[tf]))).clip(upper=3.0)
-    net_bar = net_bar * scale.shift(1).fillna(0.0)
+    net_bar = net_bar * vol_target_scale(net_bar, VOL_TARGET_ANNUAL, PPY[tf])
     return ((1 + net_bar).resample("D").prod() - 1).dropna()
 
 

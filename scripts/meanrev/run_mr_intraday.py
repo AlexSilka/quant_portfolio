@@ -8,7 +8,6 @@ reversal, net of costs. P&L is aggregated to daily and annualised at 252.
 """
 import warnings
 
-import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
@@ -18,6 +17,7 @@ from src.backtest.engine import backtest, vol_target  # noqa: E402
 from src.data.twelvedata import load_bars  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import xs_returns  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.meanrev.audit_mr import mr_revert  # noqa: E402
 from scripts.meanrev.run_mr_proper import wf_select  # noqa: E402
 
@@ -64,7 +64,7 @@ def main():
         def rev(lb):
             g, t = xs_returns(pan, -pan.pct_change(lb), top_frac=0.3)
             net = g - t * EC["commission_bps"] / 1e4
-            sc = (0.15 / (net.rolling(500).std() * np.sqrt(bar_ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+            sc = vol_target_scale(net, 0.15, bar_ppy, lookback=500)
             return ((1 + net * sc).resample("D").prod() - 1).dropna()
 
         wf = summarise(wf_select({lb: rev(lb) for lb in (2, 4, 8, 16)}), 252)

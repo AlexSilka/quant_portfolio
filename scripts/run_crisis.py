@@ -35,6 +35,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.config import BOOK_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 # five liquid classes — each catches a different crash; top-N kept concentrated (leaders trend cleanest)
@@ -89,7 +90,7 @@ def _panel(syms, loader):
 
 
 def _vol_target(x, ppy, target=0.15, lb=60):
-    lev = (target / (x.rolling(lb).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    lev = vol_target_scale(x, target, ppy, lookback=lb)
     return (x * lev).dropna()
 
 

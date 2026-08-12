@@ -48,6 +48,7 @@ from src.config import LAB_DIR, OOS_START, SEED  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import short_vol_gate  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 from scripts.volprem.run_vol_premium_book import (COST_BY_CLASS, PPY_BOOK, TVOL, UNIVERSE,  # noqa: E402
                                    implied, naive_dt, underlying_bars)
@@ -74,7 +75,7 @@ def leg(src, sym, und, cls, ppy, gate=None, extra_lag=0, timed=False):
     ungated = vp.short_vol_book(px, iv, ppy=ppy, **base | {"timed": False})["net"]
     g = None if gate is None else gate.reindex(px.index).shift(extra_lag)
     net = vp.short_vol_book(px, iv, ppy=ppy, gate=g, **base)["net"]
-    scale = (TVOL / (ungated.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(ungated, TVOL, ppy)
     return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
 
 
@@ -91,7 +92,7 @@ def book_of(rets: dict, reference: dict) -> pd.Series:
     same re-entry artifact bites at book level as at sleeve level."""
     raw = pd.DataFrame(rets).sort_index().mean(axis=1, skipna=True).dropna()
     ref = pd.DataFrame(reference).sort_index().mean(axis=1, skipna=True).dropna()
-    scale = (TVOL / (ref.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(ref, TVOL, PPY_BOOK)
     return (raw * scale.reindex(raw.index)).clip(lower=-0.999).dropna()
 
 

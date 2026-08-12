@@ -21,6 +21,7 @@ from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.vol_premium import short_vol_book  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 ASSETS = [("BTCUSDT", "BTC"), ("ETHUSDT", "ETH")]
 # (label, ppy, bars/day, DVOL resolution or "resample")
@@ -28,7 +29,7 @@ TFS = [("1d", 365, 1, "1D"), ("4h", 6 * 365, 6, "resample4h"), ("1h", 24 * 365, 
 
 
 def vt(net, ppy, lookback):
-    scale = (0.15 / (net.rolling(lookback).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, 0.15, ppy, lookback=lookback)
     return (net * scale).clip(lower=-0.999).dropna()
 
 

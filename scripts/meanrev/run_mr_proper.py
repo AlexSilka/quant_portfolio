@@ -19,6 +19,7 @@ from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import xs_returns  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.meanrev.audit_mr2 import pos_from_z  # noqa: E402
 
 PANEL = ["AAPL", "MSFT", "NVDA", "JPM", "AMZN", "GOOGL", "META", "JNJ", "XOM", "WMT",
@@ -41,7 +42,7 @@ def wf_select(daily_by_param, n_folds=5):
 
 
 def _vt(net, ppy):
-    return ((0.15 / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0) * net).dropna()
+    return (vol_target_scale(net, 0.15, ppy) * net).dropna()
 
 
 def reversal_daily(panel, lb, sign=-1.0, cost_bps=1.0):
@@ -88,7 +89,7 @@ def pairs_daily(y, x, lookback, entry, ppy, cost_bps=5.0, exit_=0.5):
 
 
 def _voltarget_pos(pos, ret, ppy):
-    return pos * (0.15 / (ret.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    return pos * vol_target_scale(ret, 0.15, ppy)
 
 
 def main():

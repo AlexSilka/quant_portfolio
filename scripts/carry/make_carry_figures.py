@@ -21,6 +21,7 @@ from src.config import CAPITAL_USD, FIGURES_DIR, REPORTS_DIR, VOL_TARGET_ANNUAL 
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry, carry_xs  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.carry.run_carry import START, END, load_panel  # noqa: E402
 
 PPY, TVOL, CB = 365, VOL_TARGET_ANNUAL, 6.0
@@ -28,7 +29,7 @@ plt.rcParams.update({"figure.dpi": 120, "font.size": 9, "axes.grid": True, "grid
 
 
 def vt(net):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale).dropna()
 
 

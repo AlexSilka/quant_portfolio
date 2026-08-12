@@ -30,6 +30,7 @@ from src.metrics import summarise  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 from src.sleeves.vol_premium import realized_vol  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 SEED, TVOL, PPY = SEED, VOL_TARGET_ANNUAL, 365
 START, END = "2021-01", "2026-08"
@@ -46,7 +47,7 @@ def vt(net: pd.Series) -> pd.Series:
     models liquidation at a total loss for that day rather than letting equity go negative. Days
     that hit the clip are ruin events and are surfaced by `profile`.
     """
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale).clip(lower=-0.999).dropna()
 
 

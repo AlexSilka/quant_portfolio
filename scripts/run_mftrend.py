@@ -30,6 +30,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.metrics import summarise  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 PPY = 252
@@ -68,7 +69,7 @@ def _class_trend(tickers, cost_bps=2.0, exec_lag=2, target=0.15) -> pd.Series:
 def build_mftrend(target=0.15) -> pd.Series:
     class_rets = {cls: _class_trend(tk) for cls, tk in CLASSES.items()}
     book = pd.DataFrame(class_rets).mean(axis=1)                 # equal weight across the 4 classes
-    lev = (target / (book.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    lev = vol_target_scale(book, target, PPY)
     return (book * lev).dropna().rename("ret")
 
 

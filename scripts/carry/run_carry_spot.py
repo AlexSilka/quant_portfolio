@@ -23,13 +23,14 @@ from src.config import REPORTS_DIR, VOL_TARGET_ANNUAL  # noqa: E402
 from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY, TVOL, CB = 365, VOL_TARGET_ANNUAL, 6.0
 crypto = open(REPORTS_DIR / "crypto_universe.txt").read().strip().split(",")
 
 
 def vt(net):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale).dropna()
 
 

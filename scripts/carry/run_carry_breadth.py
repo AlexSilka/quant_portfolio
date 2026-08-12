@@ -22,6 +22,7 @@ from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
 from src.log import get_logger  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 log = get_logger("carry.breadth")
 
@@ -31,7 +32,7 @@ rng = np.random.default_rng(SEED)
 
 
 def vt(net):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, PPY)
     return (net * scale).dropna()
 
 

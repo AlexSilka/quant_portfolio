@@ -19,6 +19,7 @@ from src.metrics import summarise  # noqa: E402
 from src.pipeline import model_factory  # noqa: E402
 from src.sleeves.sector_pairs import SECTOR_ETFS, _cointegration, _positions_from_z  # noqa: E402
 from src.validation.purged_cv import cv_oos_predictions  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY, COST = 252, 2.0
 
@@ -32,7 +33,7 @@ def pair_daily_and_trades(y, x, lookback, entry, mkt_vol, exit_=0.5):
     sd = spread.rolling(lookback).std()
     z = (spread - spread.rolling(lookback).mean()) / (sd + 1e-12)
     pair_ret = ry - beta * rx
-    scale = (0.15 / (pair_ret.rolling(60).std() * np.sqrt(PPY))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(pair_ret, 0.15, PPY)
     executed = (pd.Series(_positions_from_z(z.to_numpy(), entry, exit_), index=y.index) * scale).shift(2).fillna(0.0)
     daily = executed * pair_ret - executed.diff().abs().fillna(0.0) * 2 * COST / 1e4
     trades, inpos, start = [], False, 0

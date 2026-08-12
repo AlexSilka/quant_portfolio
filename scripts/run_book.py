@@ -40,6 +40,7 @@ from src.pipeline import signal_events  # noqa: E402
 from src.sleeves import breakout, carry, mean_reversion, momentum  # noqa: E402
 from src.sleeves.sector_pairs import SECTOR_ETFS  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 SEED, CAP, TVOL = SEED, CAPITAL_USD, VOL_TARGET_ANNUAL
 # §6 acceptance criteria, fixed before any candidate is evaluated and applied in this order: a sleeve
@@ -165,7 +166,7 @@ def run_xs(rows, panel, sid, kind, ppy, comm_bps):
                                              index=panel.index, columns=panel.columns))]:
         gross, turn = xs_returns(panel, sig, top_frac=0.3)
         net = gross - turn * comm_bps / 1e4
-        scale = (TVOL / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+        scale = vol_target_scale(net, TVOL, ppy)
         netv = (net * scale).dropna()
         p5 = bootstrap_sharpe(netv, ppy, 500, SEED).get("sharpe_p5", np.nan) if label == "real" else np.nan
         res[label] = (summarise(netv, ppy), p5, netv, float(turn.sum()))

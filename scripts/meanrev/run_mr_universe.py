@@ -17,6 +17,7 @@ from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.equity import load_equity_daily  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves.cross_sectional import xs_returns  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 from scripts.meanrev.run_mr_proper import coint, pairs_daily, wf_select  # noqa: E402
 
 SEED = 7
@@ -54,13 +55,13 @@ def reversal(panel, ppy, cost_bps):
     def daily(lb):
         g, t = xs_returns(panel, -panel.pct_change(lb), top_frac=0.3)
         net = g - t * cost_bps / 1e4
-        sc = (0.15 / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+        sc = vol_target_scale(net, 0.15, ppy)
         return (net * sc).dropna()
     wf = summarise(wf_select({lb: daily(lb) for lb in (1, 2, 3, 5)}), ppy)
     g, t = xs_returns(panel, pd.DataFrame(rng.standard_normal(panel.shape),
                                           index=panel.index, columns=panel.columns), 0.3)
     pn = g - t * cost_bps / 1e4
-    plac = (pn * (0.15 / (pn.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)).dropna()
+    plac = (pn * vol_target_scale(pn, 0.15, ppy)).dropna()
     return wf, summarise(plac, ppy)["sharpe_ann"]
 
 

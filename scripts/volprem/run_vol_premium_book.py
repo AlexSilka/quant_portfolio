@@ -43,6 +43,7 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.vol_regime import own_curve_gate, short_vol_gate  # noqa: E402
 from src.sleeves import vol_premium as vp  # noqa: E402
 from src.sleeves.vol_premium import realized_vol  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 TVOL, PPY_BOOK = VOL_TARGET_ANNUAL, 252
 
@@ -73,7 +74,7 @@ UNIVERSE = [
 
 
 def vt(net, ppy):
-    scale = (TVOL / (net.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(net, TVOL, ppy)
     return (net * scale).clip(lower=-0.999).dropna()
 
 
@@ -180,7 +181,7 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool =
     if own_curve:
         both = both * own_curve_gate(iv, px.index)
     net = vp.short_vol_book(px, iv, ppy=ppy, gate=both, **base)["net"]
-    scale = (TVOL / (ungated.rolling(60).std() * np.sqrt(ppy))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(ungated, TVOL, ppy)
     return (net * scale.reindex(net.index)).clip(lower=-0.999).dropna()
 
 
@@ -197,7 +198,7 @@ def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> p
             gat[sym] = gated_leg(src, sym, und, cls, ppy, gate, own_curve=own_curve)
     raw_u = pd.DataFrame(rets_ungated).sort_index().mean(axis=1, skipna=True).dropna()
     raw_g = pd.DataFrame(gat).sort_index().mean(axis=1, skipna=True).dropna()
-    scale = (TVOL / (raw_u.rolling(60).std() * np.sqrt(PPY_BOOK))).clip(upper=3.0).shift(1).fillna(0.0)
+    scale = vol_target_scale(raw_u, TVOL, PPY_BOOK)
     return (raw_g * scale.reindex(raw_g.index)).clip(lower=-0.999).dropna()
 
 
