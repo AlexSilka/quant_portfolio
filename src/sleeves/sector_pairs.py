@@ -14,6 +14,8 @@ import itertools
 
 import numpy as np
 import pandas as pd
+
+from src.sleeves.xsect import held_turnover
 from statsmodels.tsa.stattools import adfuller
 from src.risk.sizing import vol_target_scale
 
@@ -77,7 +79,9 @@ def _spread_return(y: pd.Series, x: pd.Series, lookback: int, entry: float,
     pair_ret = ry - beta * rx
     scale = vol_target_scale(pair_ret, TVOL, ppy)
     held = (pos * scale).shift(2).fillna(0.0)                                   # t+2 execution
-    return (held * pair_ret - held.diff().abs().fillna(0.0) * 2 * cost_bps / 1e4).dropna()
+    # a single-pair book: the drift back onto the held size is a trade like any other
+    dh = held_turnover(held.to_frame('p'), pair_ret.to_frame('p'))['p']
+    return (held * pair_ret - dh * 2 * cost_bps / 1e4).dropna()
 
 
 def pairs_basket(panel: pd.DataFrame, ppy: float = 252, cost_bps: float = 2.0,

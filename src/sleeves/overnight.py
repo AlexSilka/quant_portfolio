@@ -31,6 +31,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from src.sleeves.xsect import held_turnover
+
 from src.backtest.costs import panel_impact_cost
 
 from src.config import RAW_DIR  # noqa: E402
@@ -129,17 +131,20 @@ def xs_book(close: pd.DataFrame, earn: pd.DataFrame, signal: pd.DataFrame, *,
     w = (wl - ws).where(n_valid >= min_names, 0.0).fillna(0.0).shift(exec_lag).fillna(0.0)
 
     gross_ret = (w * earn).sum(axis=1)
-    rebal = w.diff().abs().sum(axis=1)
     gross_expo = w.abs().sum(axis=1)
+    # A book that is FLAT intraday is unwound and rebuilt every bar, so the round trip below already
+    # pays for everything and there is no drift left to restore. A book HELD through the day does
+    # drift, and putting it back on target is a trade `w.diff()` never sees (`xsect.held_turnover`).
     if execution == "overnight_only":
-        traded = 2.0 * gross_expo + rebal   # full round-trip every bar (flat intraday), plus rebalance
+        dw = w.diff().abs()
+        traded = 2.0 * gross_expo + dw.sum(axis=1)   # full round-trip every bar, plus the reweight
     elif execution == "hold_24h":
-        traded = rebal                       # held through the day — only the rebalance trades
+        dw = held_turnover(w, earn.reindex_like(w))
+        traded = dw.sum(axis=1)                       # held — the target change AND the drift back
     else:
         raise ValueError(execution)
     lin_cost = traded * cost_bps / 1e4
     if adv is not None and impact_k > 0.0:
-        dw = w.diff().abs()
         sig_bar = close.pct_change(fill_method=None).rolling(vol_lb).std()
         lin_cost = lin_cost + panel_impact_cost(dw, sig_bar, adv, capital, impact_k)
     net = gross_ret - lin_cost

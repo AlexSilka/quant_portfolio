@@ -23,6 +23,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.sleeves.xsect import held_turnover
+
 EPS = 1e-12
 
 # Non-crypto-native perps on Binance USD-M that pollute a crypto funding-carry cross-section: their
@@ -150,7 +152,9 @@ def xs_book(close: pd.DataFrame, fd: pd.DataFrame, signal: pd.DataFrame, *,
 
     price = (wl_h * rets).sum(axis=1)
     funding = -(wl_h * fd.reindex_like(wl_h).fillna(0.0)).sum(axis=1)   # collect the spread
-    turn = wl_h.diff().abs().sum(axis=1)
+    # a weight held over a rebalance period (or inside the no-trade band) is still put back on target
+    # every bar by `(wl_h * rets).sum()`, and the drift back is a trade — `xsect.held_turnover`
+    turn = held_turnover(wl_h, rets.reindex_like(wl_h)).sum(axis=1)
     cost = turn * cost_bps / 1e4
     net = price + funding - cost
     return pd.DataFrame({"ret": net, "price": price, "funding": funding,
@@ -192,7 +196,7 @@ def basis_carry(spot_close: pd.DataFrame, perp_close: pd.DataFrame, fd: pd.DataF
     # short-perp leg earns -w*perp_r; long-spot leg earns +w*spot_r; funding collected = +w*f (short perp>0)
     leg_pnl = (-w * perp_r + w * spot_r.reindex_like(w)).sum(axis=1)
     funding = (w * f.reindex_like(w).fillna(0.0)).sum(axis=1)
-    turn = w.diff().abs().sum(axis=1)
+    turn = held_turnover(w, perp_r.reindex_like(w)).sum(axis=1)
     cost = turn * (cost_bps + spot_cost_bps) / 1e4                  # both legs pay
     net = leg_pnl + funding - cost
     return pd.DataFrame({"ret": net, "basis": leg_pnl, "funding": funding,
@@ -223,7 +227,7 @@ def basis_carry_hold(spot_close: pd.DataFrame, perp_close: pd.DataFrame, fd: pd.
     w = state.div(n, axis=0).shift(exec_lag).fillna(0.0)
     leg_pnl = (-w * perp_r + w * spot_r.reindex_like(w)).sum(axis=1)
     funding = (w * f.reindex_like(w).fillna(0.0)).sum(axis=1)
-    turn = w.diff().abs().sum(axis=1)
+    turn = held_turnover(w, perp_r.reindex_like(w)).sum(axis=1)
     cost = turn * (cost_bps + spot_cost_bps) / 1e4
     net = leg_pnl + funding - cost
     return pd.DataFrame({"ret": net, "basis": leg_pnl, "funding": funding,

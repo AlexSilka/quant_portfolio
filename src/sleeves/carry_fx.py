@@ -17,6 +17,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.sleeves.xsect import held_turnover
+
 # FX pair -> (currency, is_inverse). is_inverse=True means the pair quotes CCY-per-USD (USDxxx),
 # so the USD value of one unit of CCY is 1/price; False means USD-per-CCY (xxxUSD), USD value = price.
 PAIR_MAP = {
@@ -64,7 +66,8 @@ def fx_carry_book(usd_value: pd.DataFrame, rates: pd.DataFrame, *, top_frac: flo
 
     fx = (w_h * fx_ret).sum(axis=1)
     carry = (w_h * daily_carry.reindex_like(w_h).fillna(0.0)).sum(axis=1)   # LONG high-rate earns +
-    turn = w_h.diff().abs().sum(axis=1)
+    # a held weight is put back on target every bar; the drift back is a trade (xsect.held_turnover)
+    turn = held_turnover(w_h, fx_ret.reindex_like(w_h)).sum(axis=1)
     cost = turn * half_spread_bps / 1e4
     net = fx + carry - cost
     return pd.DataFrame({"ret": net, "fx": fx, "carry": carry, "cost": cost,

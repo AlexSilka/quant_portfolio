@@ -127,9 +127,17 @@ def _rate(ccy, index):
 
 
 def _class_book(close, cost_bps=COST_BPS):
+    """Each tranche is vol-targeted ONCE — by `_tsmom` — and the blend once more.
+
+    There used to be a second `_vol_target` wrapped around each tranche on top of the one `_tsmom`
+    already applies, the same duplication `run_crisis._class_book` carried. Two nested targets do not
+    cancel: each divides by its own trailing vol and each is capped at 3.0, so a quiet stretch could
+    hand a tranche 9x. In the crisis sleeve it printed a single -35.3% day in a class targeted to 15%
+    annualised; this is the same code path on FX and commodities.
+    """
     if close.empty or close.shape[1] == 0:
         return None
-    tranches = [_vol_target(_tsmom(close, lb, cost_bps)) for lb in LOOKBACKS]
+    tranches = [_tsmom(close, lb, cost_bps) for lb in LOOKBACKS]
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna())
 
 

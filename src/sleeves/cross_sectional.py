@@ -8,6 +8,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.sleeves.xsect import held_turnover
+
 
 def momentum_signal(panel_close: pd.DataFrame, lookback: int = 120) -> pd.DataFrame:
     """Trailing total return per name — the cross-sectional ranking signal."""
@@ -46,4 +48,5 @@ def xs_returns(panel_close: pd.DataFrame, signal: pd.DataFrame,
     wl = longs.div(longs.sum(axis=1).replace(0, np.nan), axis=0)
     ws = shorts.div(shorts.sum(axis=1).replace(0, np.nan), axis=0)
     w = (wl - ws).shift(2).fillna(0.0)
-    return (w * rets).sum(axis=1), w.diff().abs().sum(axis=1)
+    # turnover includes the drift back onto target, not only the bars the target moves
+    return (w * rets).sum(axis=1), held_turnover(w, rets.reindex_like(w)).sum(axis=1)

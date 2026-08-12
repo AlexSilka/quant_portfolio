@@ -27,6 +27,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from src.sleeves.xsect import held_turnover
+
 from src.backtest.costs import panel_impact_cost
 
 from src.sleeves.xsect import top_n_liquid
@@ -264,7 +266,7 @@ def xs_window_backtest(close: pd.DataFrame, position: pd.Series, *, top_n: int =
     if exec_shift:
         w = w.shift(exec_shift).fillna(0.0)
     gross = (w * ret).sum(axis=1)
-    dw = w.diff().abs()
+    dw = held_turnover(w, ret.reindex_like(w))   # target change + the drift back onto it
     turn = dw.sum(axis=1)
     cost = turn * cost_bps / 1e4
     if adv is not None and impact_k > 0.0:
