@@ -159,26 +159,10 @@ CRYPTO_PPY = 365                  # crypto trades 24/7
 EQUITY_PPY = 252                  # US trading days
 PERP_HISTORY_START = "2020-01-01"  # USD-M perps + funding begin here; spot reaches back to 2017-08
 
-# ── the out-of-sample boundary — this constant is the single source, and every consumer reads it. ─
-#
-# TWO boundaries, and only one of them scores the deliverable.
-#
-# OOS_START is the final block §10 asks for: "held to the end and run exactly once". 2024-07-01 is the
-# only date in this project with that property — no leg's construction, universe rule or parameter has
-# ever seen a day past it.
-#
-# OOS_WIDE is a THREE-year window kept beside it because 24 monthly observations is a thin sample for
-# the two targets that bind this book, months-in-profit and the longest losing streak, both counted in
-# months. Widening to 36 is worth reporting. It is NOT worth scoring on, because its first year
-# (2023-08 to 2024-07) was in-sample for every decision taken before it was widened — calling that
-# "run exactly once" would be false. So it is quoted as a consistency check and labelled as one.
-#
-# The distinction costs nothing in practice: the shipped book reads 3/5 on both. Where a number is
-# reported on the wide window, say which window it is.
-#
-# tz-aware so they compare directly against the UTC-indexed return frames.
+# ── frozen out-of-sample boundary — this constant is the single source, set BEFORE any result
+#    was scored and run exactly once. Moving it after seeing results is a documented bias source,
+#    not a free parameter. tz-aware so it compares directly against the UTC-indexed return frames. ─
 OOS_START = pd.Timestamp("2024-07-01", tz="UTC")
-OOS_WIDE = pd.Timestamp("2023-08-01", tz="UTC")
 
 
 def crypto_cost_bps(venue: str) -> tuple[float, float]:
