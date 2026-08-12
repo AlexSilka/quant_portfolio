@@ -39,22 +39,20 @@
   },
   "from_deep_dives": {
     "breakout": {
-      "breakeven_cost_mult": 7.9,
-      "cost_share_of_gross_pnl": 0.1266,
+      "breakeven_cost_mult": 4.7,
+      "cost_share_of_gross_pnl": 0.2128,
       "cost_fragile": false,
       "source": "breakout/bo_final_summary.json",
       "in_book": true
     },
     "x-sect": {
-      "breakeven_cost_mult": 7.6000000000000005,
-      "cost_share_of_gross_pnl": 0.1316,
-      "cost_fragile": false,
+      "error": "TypeError: float() argument must be a string or a real number, not 'NoneType'",
       "source": "xs/xs_summary.json",
       "in_book": true
     },
     "vol-prem": {
       "sharpe_at_cost_mult": {
-        "5": 2.0
+        "5": -0.55
       },
       "cost_fragile": false,
       "source": "volprem/volprem_cost_robustness.csv",
@@ -71,9 +69,10 @@
   },
   "book_n_families": 6,
   "book_legs_without_share": [
-    "volprem"
+    "volprem",
+    "xs_momentum"
   ],
   "n_cost_fragile": 1,
   "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
-  "book_id": "88bca48ddd8c"
+  "book_id": "fe7d468730e9"
 }

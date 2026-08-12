@@ -1,11 +1,15 @@
 """The final breakout book + full robustness (Task A §7-10, §12). Combines the honest pieces:
 
-  - core-10 x 1d : raw Donchian-55 chandelier (too few trades to meta-label — kept as the non-ML
+  - PIT top-10 x 1d : raw Donchian-55 chandelier (too few trades to meta-label — the non-ML
                    trend-capture leg)
-  - core-10 x 4h+1h : the SAME primary gated by the LightGBM meta-label confidence model
-                   (uniqueness-weighted, threshold 0.55), which filters false breakouts
+  - PIT top-10 x 4h+1h : the SAME primary gated by a LightGBM meta-label confidence model fitted
+                   under an expanding WALK-FORWARD (threshold 0.55), which filters false breakouts
 
-Everything is on the FROZEN core-10 universe (no per-sleeve survivor selection). Reports the
+Everything is on the POINT-IN-TIME liquid universe — the ten most liquid perps by trailing 30-day
+median dollar volume, lagged, over every name on disk including the delisted ones. It used to be a
+frozen `CORE10` typed from the 2026 mega-caps, and the gate used to be purged k-fold, which trains
+each fold on its whole complement. Both are removed; both are priced in docs/AUDIT_LIVE_BOOK.md.
+Reports the
 portfolio, Monte-Carlo, per-year and per-quarter metrics, the isolated crisis windows, the strict
 2024-07 held-out block, three cost levels + break-even, and the sleeve correlation matrix. Persists
 the series the report/figures consume.
@@ -21,7 +25,7 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from scripts.breakout.run_bo_ml import CORE10, OOS_START, models, precompute, proba_cache  # noqa: E402
+from scripts.breakout.run_bo_ml import OOS_START, models, precompute, proba_cache  # noqa: E402
 from src.backtest.engine import positions_from_events, vol_target  # noqa: E402
 from src.metrics import deflated_sharpe, summarise  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
@@ -48,21 +52,44 @@ def daily_ret_cost(sym, px, pos, tf, fund):
 
 
 def build_final():
-    """Return {sleeve: (ret, cost)} for the combined book: 1d raw + 4h/1h ML-gated."""
+    """Return {sleeve: (ret, cost)} for the combined book: 1d raw + 4h/1h ML-gated.
+
+    Two things this used to do that a desk could not have done, both now removed and both priced in
+    docs/AUDIT_LIVE_BOOK.md:
+
+      * it traded `CORE10` — the 2026 mega-cap list, typed once and applied from 2020-01. The
+        universe is now point-in-time: the ten most liquid perps by trailing 30-day median dollar
+        volume, lagged, over every name on disk including the delisted ones. Worth more to the old
+        Sharpe than the ML gate was (1.12 -> 0.69 on the universe alone).
+      * it gated with `purged_kfold`, whose folds are contiguous in time but whose TRAINING set is
+        the whole complement — a 2021 trade filtered by a model fitted on 2022-2026. The gate is now
+        an expanding walk-forward that only ever sees resolved trades (1.12 -> 0.88 on the gate
+        alone; 1.12 -> 0.52 with both, and OOS +0.20 -> -0.01).
+
+    What is left is the honest leg. It is not a good one, and the report says so.
+    """
     out = {}
-    # 1d raw chandelier leg
-    for sym in CORE10:
+    universe = bo.pit_universe(10)
+    names = sorted(universe.columns[universe.any()])
+    # 1d raw chandelier leg — no ML (too few Donchian-55 trades per sleeve to meta-label)
+    for sym in names:
         px = bo.load_crypto(sym, "1d")
         if px is None:
             continue
         side = bl.donchian_side(px["close"], px["high"], px["low"], 55)
+        side = side.where(bo.pit_mask(sym, side.index, universe), 0.0)
         pos = bl.hold_atr_trailing(px["close"], px["high"], px["low"], side, 3.0, 14)
+        if (pos != 0).sum() < 30:                  # a name that never held long enough to be a sleeve
+            continue
         out[f"{sym}_1d"] = daily_ret_cost(sym, px, pos, "1d", bo.safe_funding(sym))
-    # 4h + 1h ML-gated leg (LightGBM + uniqueness weights)
-    sleeves = precompute()
-    pc = proba_cache(sleeves, models()["lightgbm"], weighted=True)
+    # 4h + 1h walk-forward-gated leg
+    sleeves = precompute(symbols=names, universe=universe)
+    pc = proba_cache(sleeves, models()["lightgbm"], weighted=False, walk_forward=True)
     for key, s in sleeves.items():
-        kept = pc[key].index[pc[key].values >= THR]
+        p = pc[key]
+        if not len(p):                             # the gate never had enough resolved history here
+            continue
+        kept = p.index[p.values >= THR]
         pos = positions_from_events(s["px"].index, s["trades"]["side"], s["trades"]["t1"], kept)
         out[key] = daily_ret_cost(key.rsplit("_", 1)[0], s["px"], pos, s["tf"], s["fund"])
     return out
@@ -75,7 +102,7 @@ def main():
     port = rets.fillna(0.0).mean(axis=1)
     s = summarise(port, 365)
     mc = bootstrap_sharpe(port, 365, 2000, bo.SEED)
-    print(f"=== FINAL BREAKOUT BOOK (frozen core-10; 1d raw + 4h/1h ML-gated; {rets.shape[1]} sleeves) ===")
+    print(f"=== FINAL BREAKOUT BOOK (PIT top-10; 1d raw + 4h/1h walk-forward-gated; {rets.shape[1]} sleeves) ===")
     print(f"Sharpe {s['sharpe_ann']:+.2f}  maxDD {s['max_dd']:+.1%}  months+ {s['months_in_profit']:.0%}  "
           f"total {s['total_return']:+.0%}  MC[P5 {mc.get('sharpe_p5', float('nan')):+.2f} "
           f"P50 {mc.get('sharpe_p50', float('nan')):+.2f} P95 {mc.get('sharpe_p95', float('nan')):+.2f}]")
@@ -117,13 +144,17 @@ def main():
           + (f"  | break-even {breakeven:.1f}x base cost" if breakeven else "  | break-even >30x"))
 
     # correlation + deflated Sharpe of the best sleeve at the trial count
+    # On a point-in-time universe most sleeve pairs never overlap in time, so their pairwise
+    # correlation is undefined rather than zero — take the mean over the pairs that DO overlap
+    # instead of letting a single NaN turn the reported figure into "nan".
     corr = rets.corr()
     iu = np.triu_indices_from(corr, k=1)
     best_key = max(book, key=lambda k: summarise(book[k][0].dropna(), 365)["sharpe_ann"])
     b = book[best_key][0].dropna()
     n_trials = 635 + 405 + 20 * 6           # sweep + book + ML variants — the honest trial count
     dsr = deflated_sharpe(b.mean() / b.std(ddof=1), len(b), b.skew(), b.kurt() + 3.0, n_trials, 0.25 / 365)
-    print(f"\nsleeve correlation: mean {corr.values[iu].mean():+.2f}  max {corr.values[iu].max():+.2f}")
+    print(f"\nsleeve correlation: mean {np.nanmean(corr.values[iu]):+.2f}  max {np.nanmax(corr.values[iu]):+.2f}"
+          f"  ({np.isfinite(corr.values[iu]).sum()} of {len(iu[0])} pairs overlap)")
     print(f"best sleeve ({best_key}) deflated Sharpe @ N={n_trials}: {dsr:.2f}")
 
     rets.to_parquet(bo.BREAKOUT / "bo_final_sleeve_returns.parquet")
@@ -133,7 +164,8 @@ def main():
         "portfolio": s, "mc": mc, "per_year": per_year, "per_quarter": per_q, "regimes": regimes,
         "oos_split": {"is": summarise(is_, 365), "oos": summarise(oos, 365)},
         "cost_levels": levels, "breakeven_mult": breakeven,
-        "corr_mean": float(corr.values[iu].mean()), "corr_max": float(corr.values[iu].max()),
+        "corr_mean": float(np.nanmean(corr.values[iu])), "corr_max": float(np.nanmax(corr.values[iu])),
+        "corr_pairs_overlapping": int(np.isfinite(corr.values[iu]).sum()),
         "best_sleeve": best_key, "best_sleeve_dsr": dsr, "n_sleeves": int(rets.shape[1]),
     }, indent=2, default=float))
     print("\nBO FINAL OK")

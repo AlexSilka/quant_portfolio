@@ -87,6 +87,24 @@ CRYPTO_SPOT_BORROW_BPS_ANNUAL = 293.0  # coin-borrow to SHORT on spot margin. Th
 IMPACT_K = 0.1
 CAPITAL_USD = 500_000             # book notional, drives the √-impact order-size term
 
+# ── the short-vol leg's TERM-STRUCTURE haircut ────────────────────────────────────────────────
+# `vol_premium.short_vol_book` accrues, every day, K(t-2)² − RV(t)·ppy, where RV is ONE day's
+# realised variance and K is a Cboe THIRTY-day implied-vol index. That is the payoff of selling one
+# day of variance at the thirty-day strike, repeated daily, and it is not a price anyone is quoted:
+# a one-day seller is quoted the one-day implied. The gate makes it worse rather than better, because
+# it only lets the leg trade in contango — exactly when the near end of the curve sits lowest.
+#
+# Measured on the days the gate is ON (the only days the leg trades): the VIX strike VARIANCE is
+# 1.20x the VIX9D one (0.0274 vs 0.0228 over 2154 days) and 1.49x the VIX1D one (0.0288 vs 0.0194
+# over 559 days). The leg is re-struck weekly and held a week, so ~9 days is the honest maturity to
+# price it at, and 1 − 0.0228/0.0274 = 16.8% is what a nine-day seller does NOT collect.
+#
+# It is applied uniformly to all eighteen sleeves because Cboe publishes a near-dated index for the
+# S&P only. That makes it a FLOOR on the equity-index sleeves and an estimate on the rest — single
+# names and commodities have steeper curves, so the true haircut is very likely larger. Set it to 0.0
+# to recover the old (unearnable) accounting; the report's ladder prices 0/5/10/16.8%.
+VOLPREM_TERM_HAIRCUT = 0.168
+
 # ── cross-sectional momentum (crypto): SPOT price signal, executed on FUTURES (shorts need perps).
 #    So commission is the SPOT taker before perps exist (pre-2020, spot-only execution) and the
 #    FUTURES taker after (2020+, the tradable venue). ─────────────────────────────────────────

@@ -51,6 +51,7 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
                    restrike_days: int = 7, vega_cost_volpts: float = 0.75, wing_markup: float = 0.0,
                    spike_degross: float = 0.0, exec_lag: int = 2,
                    gate: pd.Series | None = None, wing_cost_frac: float = 0.0,
+                   term_haircut: float = 0.0,
                    max_stale_quote_bars: int = 5) -> pd.DataFrame:
     """Daily capped-variance-swap P&L for a short-vol book on one asset (variance units).
 
@@ -120,7 +121,12 @@ def short_vol_book(close: pd.Series, dvol: pd.Series, *, bars: pd.DataFrame | No
     # sell the truncated strike rather than to bolt a modelled premium onto the full one. `wing_cost_frac`
     # is that truncation, measured from real quotes in run_wing_cost.py (12% of sold variance at
     # var_cap=2.5 across the deep legs) — so the short collects (1-frac)*K² and never pays past the cap.
-    Kvar_sold = (1.0 - wing_cost_frac) * Kvar
+    # `term_haircut` is the second reason the short does not collect the whole strike, and it is a
+    # bigger one than the wing. K is a THIRTY-day implied index while the variance being sold is ONE
+    # day's, and the near end of the curve is below the thirty-day point — most of all in the contango
+    # the gate restricts this leg to. Charging it is what stops the leg booking a premium at a price
+    # nobody quotes; `src/config.VOLPREM_TERM_HAIRCUT` holds the measured figure and its provenance.
+    Kvar_sold = (1.0 - wing_cost_frac) * (1.0 - term_haircut) * Kvar
     # long-variance payoff is (realised - strike); side = -1 flips it to the short's (strike - realised),
     # which profits in calm (realised < strike) and loses in a spike -> the true short-vol sign.
     gross = sidex * (charge - Kvar_sold)

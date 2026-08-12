@@ -186,12 +186,22 @@ def test_carry_is_not_opt_in() -> None:
     assert np.allclose(expected.to_numpy(), auto["carry"].to_numpy()), "carry must equal Σ w·funding"
     assert np.allclose((off["net"] - auto["net"]).to_numpy(), auto["carry"].to_numpy()), \
         "net must move by exactly the carry — charged once, not twice"
-    # a panel of names the venue never settled funding on is cash: no carry unless a borrow rate is given
-    cash = px.rename(columns=dict(zip(perps, list("ABCDEF")[:len(perps)])))
-    csig = signal.rename(columns=dict(zip(perps, list("ABCDEF")[:len(perps)])))
-    assert (xs_backtest(cash, csig, **kw)["carry"] == 0.0).all(), "non-perp panel must not be charged funding"
+    # A panel of names the venue never settled funding on is CASH, and a dollar-neutral cash book
+    # borrows every share it shorts — so its unasked default is the config's borrow rate, not zero.
+    # That was the other half of the same hole: the shipped broad-equity sleeve shorts a decile of
+    # 692 names and passed no rate at all.
+    ren = dict(zip(perps, list("ABCDEF")[:len(perps)]))
+    cash = xs_backtest(px.rename(columns=ren), signal.rename(columns=ren), **kw)
+    assert cash["carry"].sum() > 0.0, "a cash panel with a short leg must be charged borrow unasked"
+    expect = (cash["weights"].clip(upper=0.0).abs().sum(axis=1)
+              * (EQUITY_BORROW_BPS_ANNUAL / 1e4) / kw["ppy"])
+    assert np.allclose(expect.to_numpy(), cash["carry"].to_numpy()), "borrow must be the config rate"
+    assert (xs_backtest(px.rename(columns=ren), signal.rename(columns=ren),
+                        borrow_bps_annual=0.0, **kw)["carry"] == 0.0).all(), \
+        "an explicit 0.0 is a statement that this book pays none, and must be honoured"
     yr = float(auto["carry"].sum()) / ((idx[-1] - idx[0]).days / 365.25)
-    print(f"  carry-default ✓  perp panel charged {yr:+.2%}/yr unasked; NoCarry() opts out; cash panel 0")
+    print(f"  carry-default ✓  perp panel charged {yr:+.2%}/yr unasked; cash panel charged "
+          f"{EQUITY_BORROW_BPS_ANNUAL:.0f}bps borrow unasked; NoCarry()/0.0 opt out")
 
 
 # ── core: execution lag (no look-ahead), cost model, deflated Sharpe, purged CV ────────────

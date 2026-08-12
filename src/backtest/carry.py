@@ -7,15 +7,19 @@ equity. So the panel backtests charged nothing, each strategy was supposed to re
 that forgot looked better than they were. It was found and patched in the x-sect leg, then found
 again in the lottery sleeve, then again in BAB — three patches of one hole, with three separate
 copies of the same funding panel left behind (`xs/portfolio._funding_panel`,
-`lottery/run_lottery._funding_daily`, `sleeves/carry_xs.funding_daily`).
+`lottery/run_lottery._funding_daily`, `breakout/run_bo_xs_tf.funding_panel`). The equity mirror was
+open just as long: `xs/broad.run_cfg` builds the shipped broad-equity sleeve, shorts a decile of 692
+names, and never passed a borrow rate.
 
 The fix is not a fourth copy. It is to make the instrument answer the question:
 
   * `for_panel(px)` asks, per name, whether Binance published a funding series for it. That is not a
     heuristic on the ticker string — it is the fact itself, and it is self-maintaining: a symbol is a
-    perp exactly when the venue settled funding on it.
+    perp exactly when the venue settled funding on it. A panel with no such names is cash, and a
+    dollar-neutral cash book borrows every share it shorts, so its default is the config's borrow
+    rate rather than zero.
   * the panel backtests call it when the caller does not pass a carry model, so **forgetting now
-    charges funding instead of charging nothing**, and says so in the log.
+    charges instead of charging nothing**, and says so in the log.
   * opting out is `NoCarry()` — a decision that appears in a diff, unlike an omission.
 
 Sign convention, one place: a LONG pays a positive funding rate and a SHORT receives it, so the
@@ -29,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import RAW_DIR
+from src.config import EQUITY_BORROW_BPS_ANNUAL, RAW_DIR
 from src.log import get_logger
 
 log = get_logger("backtest.carry")
@@ -38,6 +42,7 @@ _FUNDING_DIR = Path(RAW_DIR) / "futures/um" / "fundingRate"
 _RAW: dict[str, pd.Series] = {}          # per-symbol settlement series, read once per process
 _PERPS: set[str] | None = None           # the archive's symbol list, scanned once per process
 _SAID: set[tuple] = set()                # log lines already emitted, so a sweep says it once
+_PANEL: dict[tuple, pd.DataFrame] = {}   # bar-binned funding panels, memoised per request shape
 
 
 def perp_symbols() -> set[str]:
@@ -76,15 +81,24 @@ def funding_panel(symbols, index: pd.DatetimeIndex) -> pd.DataFrame:
     """
     cols = list(symbols)
     bar = index.to_series().diff().dropna().median() if len(index) > 1 else None
+    # Memoised on the shape of the request, not just on the disk read: a construction sweep calls this
+    # once per config, and re-binning ~580 settlement series onto the bar grid every time is the
+    # difference between a sweep that runs and one that does not.
+    key = (tuple(cols), bar, index[0], index[-1], len(index))
+    hit = _PANEL.get(key)
+    if hit is not None:
+        return hit
     out = {}
     for sym in cols:
         s = settlements(sym)
         if not len(s):
             continue
         out[sym] = s.resample(bar, origin=index[0]).sum() if bar is not None else s
-    if not out:
-        return pd.DataFrame(0.0, index=index, columns=cols)
-    return pd.DataFrame(out).reindex(index).fillna(0.0).reindex(columns=cols).fillna(0.0)
+    F = (pd.DataFrame(0.0, index=index, columns=cols) if not out else
+         pd.DataFrame(out).reindex(index).fillna(0.0).reindex(columns=cols).fillna(0.0))
+    if len(_PANEL) < 32:                      # a handful of panels per process; never an unbounded map
+        _PANEL[key] = F
+    return F
 
 
 # ── the models ────────────────────────────────────────────────────────────────────────────────
@@ -134,19 +148,34 @@ class Both:
         return sum(m.pnl(weights, ppy) for m in self.models)
 
 
-def for_panel(px: pd.DataFrame, *, borrow_bps_annual: float = 0.0):
+def for_panel(px: pd.DataFrame, *, borrow_bps_annual: float | None = None):
     """The carry model a price panel implies, decided by what the venue actually settles.
 
-    A panel whose names have funding archives is a perp book and is charged funding; one whose names
-    have none is cash and is charged the caller's borrow rate (zero unless given). A MIXED panel is a
-    modelling error rather than a case to handle silently — it is charged both and logged, because
-    the honest fix is to split it, and a silent half-charge is how this class of defect survives.
+    A panel whose names have funding archives is a perp book and is charged funding. One whose names
+    have none is cash — and a dollar-neutral cash book borrows every share it shorts, so the default
+    there is `EQUITY_BORROW_BPS_ANNUAL`, not zero. That half of the hole was open for the same reason
+    the funding half was: the shipped broad-equity sleeve shorts a decile of 692 names and
+    `scripts/xs/broad.run_cfg` simply never passed a rate. `Borrow` only charges the short leg, so a
+    long-only book is unaffected and it is safe as a default.
+
+    `borrow_bps_annual=None` means "not decided — use the panel's own default"; an explicit `0.0`
+    means "this book pays none", which is a statement and is honoured. FX is neither case: shorting a
+    pair costs the interest differential, not stock borrow, so it is left uncharged and said out loud
+    rather than charged with the wrong model. A MIXED panel is a modelling error rather than a case to
+    handle silently — it is charged both and logged, because the honest fix is to split it.
     """
     names = list(px.columns)
     perps = perp_symbols()
     n_perp = sum(1 for c in names if c in perps)
     if n_perp == 0:
+        if borrow_bps_annual is None:
+            if names and all("=X" in str(c) for c in names):
+                log.info("carry: FX panel (%d names) — the short pays an interest differential, not "
+                         "stock borrow, and this repo does not model it; charging nothing", len(names))
+                return NoCarry()
+            borrow_bps_annual = EQUITY_BORROW_BPS_ANNUAL
         return Borrow(borrow_bps_annual) if borrow_bps_annual else NoCarry()
+    borrow_bps_annual = borrow_bps_annual or 0.0
     if n_perp < len(names):
         log.warning("carry: panel mixes %d perps with %d non-perps — charging both models; "
                     "split the panel by venue instead", n_perp, len(names) - n_perp)
@@ -160,7 +189,7 @@ def for_panel(px: pd.DataFrame, *, borrow_bps_annual: float = 0.0):
     return PerpFunding(names)
 
 
-def resolve(carry, px: pd.DataFrame, *, borrow_bps_annual: float = 0.0, where: str = ""):
+def resolve(carry, px: pd.DataFrame, *, borrow_bps_annual: float | None = None, where: str = ""):
     """What a backtest calls: honour an explicit model, otherwise derive one and say so.
 
     The log line is the point. Silence is what let three books hold perps for years with no funding

@@ -34,7 +34,8 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from src.config import CARRY_DIR, REPORTS_DIR, TREND_DIR, VOLPREM_DIR, VOL_TARGET_ANNUAL  # noqa: E402
+from src.config import (CARRY_DIR, REPORTS_DIR, TREND_DIR, VOLPREM_DIR,  # noqa: E402
+                        VOLPREM_TERM_HAIRCUT, VOL_TARGET_ANNUAL)
 from src.data.binance_bulk import load_klines  # noqa: E402
 from src.data.cboe import load_cboe_vol  # noqa: E402
 from src.data.deribit import load_dvol  # noqa: E402
@@ -135,7 +136,8 @@ def sleeve(src, sym, und, cls, ppy, fair=False, **kw):
     # eats the full realised variance in a spike (the honest -78% tail). "Naked" = UNHEDGED TAIL, *not*
     # costless — the per-leg vega SPREAD is still charged here (vega_cost_volpts = COST_BY_CLASS[cls]).
     params = {"timed": False, "var_cap": 1e9, "bars": bars,
-              "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5), **kw}
+              "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5),
+              "term_haircut": VOLPREM_TERM_HAIRCUT, **kw}
     return vt(vp.short_vol_book(px, iv, ppy=ppy, **params)["net"], ppy)
 
 
@@ -172,7 +174,8 @@ def gated_leg(src, sym, und, cls, ppy, gate: pd.Series | None, own_curve: bool =
     bars = underlying_bars(und, cls)
     px = bars["close"]
     base = {"timed": False, "var_cap": 1e9, "bars": bars,
-            "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5)}
+            "vega_cost_volpts": COST_BY_CLASS.get(cls, 1.5),
+            "term_haircut": VOLPREM_TERM_HAIRCUT}
     ungated = vp.short_vol_book(px, iv, ppy=ppy, **base)["net"]
     # `gate=None` means this sleeve has no shared regime signal at all — built on the sleeve's own index
     # so there is no fill question, rather than a wide constant series that would read as flat wherever

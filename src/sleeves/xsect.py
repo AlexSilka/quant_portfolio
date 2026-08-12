@@ -151,7 +151,7 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
                 cost_bps: float = 6.0, commission_bps: float | None = None,
                 half_spread_bps: float | None = None, vol_lb: int = 20, min_names: int = 6,
                 adv: pd.DataFrame | None = None, capital: float = 500_000.0,
-                impact_k: float = 0.0, borrow_bps_annual: float = 0.0, ppy: int = 252,
+                impact_k: float = 0.0, borrow_bps_annual: float | None = None, ppy: int = 252,
                 carry=None) -> dict:
     """Backtest a signal on a price panel; return net/gross return, turnover and the cost breakdown.
 

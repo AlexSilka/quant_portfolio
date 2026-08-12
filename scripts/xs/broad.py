@@ -167,14 +167,18 @@ def main():
     except Exception:
         pass
 
-    # save whichever sleeve is stronger (rule vs ML) for the book re-assembly
-    best_ret = ml_ret if (ml_s and ml_s["sharpe_ann"] > ap_s["sharpe_ann"]) else ap_ret
-    best_ret.rename("ret").to_frame().to_parquet(OUT / f"{prefix}_sleeve.parquet")
+    # The A-PRIORI sleeve is what ships, always. This used to save "whichever is stronger (rule vs
+    # ML)", compared on full-sample Sharpe — a selection made on the sample it is then scored on,
+    # baked into a leg the book holds. It happens to pick the rule arm today (0.48 against the ML
+    # arm's 0.26), so removing it costs nothing now; the point is that it could not have been trusted
+    # if it had gone the other way. The ML arm stays in the summary as a study, where a number that
+    # lost to a rule belongs.
+    ap_ret.rename("ret").to_frame().to_parquet(OUT / f"{prefix}_sleeve.parquet")
     (OUT / f"{prefix}_summary.json").write_text(json.dumps({
         "panel": [px.shape[0], px.shape[1]], "sweep_median": float(df.sharpe.median()),
         "sweep_max": float(df.sharpe.max()), "placebo_max": float(pmax),
         "walk_forward": sw, "apriori_sleeve": ap_s, "ml_sleeve": ml_s,
-        "chosen": "ml" if best_ret is ml_ret else "rule"}, indent=2, default=float))
+        "chosen": "rule (a-priori; the ML arm is reported, never selected)"}, indent=2, default=float))
     print("\nBROAD OK")
 
 

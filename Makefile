@@ -139,6 +139,7 @@ trend:
 
 # Cross-sectional momentum deep-dive -> publishes reports/xs/xs_book.parquet. See docs/XSECT.md.
 xs:
+	$(PY) scripts/xs/broad.py
 	$(PY) scripts/xs/portfolio.py
 
 # Calendar/session deep-dive: overnight-vs-intraday decomposition (a tested-and-mapped family). See OVERNIGHT.md.

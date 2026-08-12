@@ -16,9 +16,9 @@ import pandas as pd
 socket.setdefaulttimeout(12)
 
 from src.backtest.engine import backtest, positions_from_events, vol_target  # noqa: E402
-from src.config import (BINANCE_SPOT_TAKER_BPS, BREAKOUT_DIR, CAPITAL_USD,  # noqa: E402
-                        CRYPTO_HALF_SPREAD_BPS, IMPACT_K, RAW_DIR, REPORTS_DIR, ROOT_DIR,
-                        SEED, VOL_TARGET_ANNUAL)
+from src.config import (BINANCE_SPOT_TAKER_BPS, BREAKOUT_DIR, CACHE_DIR,  # noqa: E402
+                        CAPITAL_USD, CRYPTO_HALF_SPREAD_BPS, IMPACT_K, RAW_DIR, REPORTS_DIR,
+                        ROOT_DIR, SEED, VOL_TARGET_ANNUAL)
 from src.labels.triple_barrier import triple_barrier_labels, trailing_vol  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import breakout_lab as bl  # noqa: E402
@@ -86,6 +86,30 @@ def _read_months(d: Path) -> pd.DataFrame:
 def load_crypto(sym, tf):
     px = _read_months(_UM / "klines" / sym / tf)
     return px if len(px) >= 500 else None
+
+
+def pit_universe(n: int = 10) -> pd.DataFrame:
+    """Boolean (day × symbol): is this perp among the `n` most liquid by TRAILING dollar volume?
+
+    The breakout book traded `CORE10` — BTC ETH SOL BNB XRP DOGE ADA AVAX LINK LTC, typed once and
+    used from 2020-01. That is the 2026 mega-cap list applied to 2020, and it was worth more to the
+    leg's Sharpe than the future-fitted ML gate beside it (1.12 -> 0.69 on the universe alone).
+
+    This is the same rule the cross-sectional legs already use — `xsect.top_n_liquid`: rank on a
+    trailing 30-day median of dollar volume, lagged one bar, over EVERY perp on disk including the
+    delisted ones. 137 distinct names pass through the top ten over the window, and on 2020-02-01 it
+    holds BCH EOS ETC TRX XLM where the frozen list holds SOL BNB DOGE ADA AVAX.
+    """
+    A = pd.read_parquet(CACHE_DIR / "xs" / "crypto_1d_adv.parquet")
+    trail = A.replace(0.0, np.nan).rolling(30, min_periods=10).median().shift(1)
+    return trail.rank(axis=1, ascending=False) <= n
+
+
+def pit_mask(sym: str, index, universe: pd.DataFrame) -> pd.Series:
+    """`universe` membership for one symbol, carried onto that sleeve's own (possibly intraday) bars."""
+    if sym not in universe.columns:
+        return pd.Series(False, index=index)
+    return universe[sym].reindex(index, method="ffill").fillna(False)
 
 
 def safe_funding(sym):

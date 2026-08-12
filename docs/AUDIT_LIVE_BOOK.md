@@ -1,9 +1,13 @@
 # Auditing the four legs the live book actually holds
 
-`scripts/run_live_book.py` runs four families — volprem, breakout, BAB, x-sect — at 2x, and prints
-Sharpe 5.40, 111.3% a year on fixed capital, a −16.9% drawdown. A Sharpe above 4 on a book of
-well-known risk premia is a claim about the modelling, not about the premia. This is what happens to
-each of the four when the modelling is taken apart.
+`scripts/run_live_book.py` runs four families — volprem, breakout, BAB, x-sect — at 2x. It used to
+print Sharpe 5.40 and 111.3% a year on fixed capital. A Sharpe above 4 on a book of well-known risk
+premia is a claim about the modelling, not about the premia, so the modelling was taken apart.
+
+**Every defect found below is now fixed in the code and every number in the repository is rebuilt from
+it.** The same book reads **Sharpe 3.37 and 68.3% a year, with a −20.9% drawdown**. The one thing
+deliberately left alone is which four legs to hold: that is a decision to take on clean numbers, and
+this document is how they got clean.
 
 Every number below was produced by re-running the leg, not by reading it. The scripts that produced
 them are named at each finding.
@@ -81,9 +85,12 @@ nothing is hiding in the first hours:
 
 ---
 
-## Finding 1 — volprem sells one day of variance at the thirty-day strike
+## Finding 1 — volprem sells one day of variance at the thirty-day strike — FIXED
 
-This is the largest finding in the book, because volprem is 57% of its P&L.
+The largest finding here, because volprem is 61% of the master book's P&L. `VOLPREM_TERM_HAIRCUT =
+0.168` in `src/config.py` now charges the measured gap and the leg ships at Sharpe **+3.49** against
+the +6.90 below; the constant carries its own provenance so the number can be argued with rather than
+re-derived.
 
 `short_vol_book` accrues, every day, `K(t−2)² − RV(t)×252`, where `RV(t)` is **one day's** realised
 variance and `K` is a Cboe **thirty-day** implied-vol index. A desk selling one day of variance is
@@ -134,7 +141,11 @@ Two smaller pieces of the same leg:
 
 (`t6_volprem_tradeability.py`)
 
-## Finding 2 — the breakout ML gate is fitted on its own future, and its universe is the 2026 top ten
+## Finding 2 — the breakout ML gate is fitted on its own future, on a 2026 universe — FIXED
+
+`run_bo_final` now takes its universe from `bo.pit_universe(10)` and gates with `run_bo_ml.wf_proba`,
+an expanding walk-forward. The rebuilt leg reproduces arm D exactly — Sharpe **+0.52**, OOS **−0.01**,
+deflated **0.03** — which is what says the fix is the counterfactual and not something else.
 
 `scripts/breakout/run_bo_final.py` builds twenty of its thirty sleeves by calling
 `proba_cache(...)` → `oos_proba` → `purged_kfold`. Purged k-fold makes the *test* folds contiguous in
@@ -162,7 +173,11 @@ The hindsight universe is worth more than the future-fitted model. With both rem
 out-of-sample Sharpe is zero. The blended breakout family (this leg risk-parity'd with an already-PIT
 cross-sectional half) goes from +1.47 to +1.18. (`t4_breakout_counterfactual.py`)
 
-## Finding 3 — two scripts write the x-sect leg, and only one of them runs
+## Finding 3 — two scripts write the x-sect leg, and only one of them runs — FIXED
+
+`build_xs_book.py` publishes to `xs_book_idio_candidate.parquet` now, so a candidate construction can
+no longer overwrite the shipped leg by being run second; and `portfolio.py`'s two risk-parity combines
+weight on trailing lagged volatility instead of the whole sample.
 
 `reports/xs/xs_book.parquet` is written by **both** `scripts/xs/portfolio.py` and
 `scripts/xs/build_xs_book.py`. Whichever ran last is what the book reads.
@@ -246,7 +261,46 @@ What it costs, on today's panel:
 The x-sect leg, which had been charging funding by hand, comes out **byte-identical** (max|diff|
 8e-17) — proof the charge moved rather than changed. (`t3_funding.py`, `src/backtest/carry.py`)
 
-## Finding 5 — `run_all.py` rebuilds none of the four legs
+## Finding 4b — the equity mirror: the broad-equity sleeve shorts 692 names and pays no borrow — FIXED
+
+The same defect on the other venue, found by asking the funding question of the whole repository
+instead of the four legs. `scripts/xs/broad.run_cfg` builds the sleeve that is half the x-sect leg,
+shorts a decile of a 692-name panel, and calls `xs_backtest` without `borrow_bps_annual`. Mean short
+notional 0.89 of the book; borrow charged: zero.
+
+| broad-equity sleeve | Sharpe | total | borrow/yr |
+|---|---|---|---|
+| as shipped (no borrow at all) | +0.48 | +235.7% | 0.00% |
+| **at the config's own 50bps (shipped now)** | **+0.45** | +207.3% | 0.52% |
+| at 100bps (hard-to-borrow) | +0.42 | +181.3% | 1.04% |
+| at 300bps (small-cap short) | +0.31 | +97.6% | 3.13% |
+
+`carry.for_panel` now defaults a cash panel to `EQUITY_BORROW_BPS_ANNUAL` rather than to zero —
+`Borrow` only charges the short leg, so a long-only book is untouched and the default is safe.
+`borrow_bps_annual=None` means "not decided, use the panel's default"; an explicit `0.0` is a
+statement and is honoured. FX is excluded by name: shorting a pair costs the interest differential,
+not stock borrow, and charging the wrong model would be worse than charging none — so it is left
+uncharged and logged.
+
+Two more defects in the same file, both fixed: the sleeve that ships was chosen by comparing the rule
+arm's full-sample Sharpe against an ML arm's (`best_ret = ml_ret if ml_s > ap_s else ap_ret`) — a
+selection made on the sample it is scored on, inside a leg the book holds. It picks the rule arm
+today (0.45 against 0.25) so removing it costs nothing; the point is that it could not have been
+trusted the other way. And `broad.py` was in no Makefile target and no orchestrator, so the equity
+half of a shipped leg had no reproduce path at all; it is in `make xs` now, ahead of `portfolio.py`
+which consumes its output.
+
+Worth stating beside the fixes: this sleeve's **own walk-forward is Sharpe +0.26** against the +0.45
+that ships. The gap is construction selection, and the a-priori config coincidentally equals the
+sweep's best cell — luck rather than peak-picking, but a reader cannot tell the two apart from the
+summary.
+
+## Finding 5 — `run_all.py` rebuilds none of the four legs — FIXED
+
+All four are in `STEPS` now, in dependency order (`xs/broad.py` before `xs/portfolio.py`, which reads
+its output; `run_bo_final.py` before `run_bo_combined.py`). It makes a reproduce run take about an
+hour instead of a few minutes, which is the correct trade: a reproduce step that is slow and true
+beats one that is fast and reproduces only the assembly.
 
 `STEPS` is validate_sessions → run_book → feature_report → meta_overlay → crisis → gmacro →
 **master_book** → wf_book → cscv → family_costs → oos_ledger → figures → **live_book** → live_report →
@@ -254,42 +308,94 @@ report → render. Not one of volprem, xs, breakout or bab is in it. `make repro
 from whatever four parquet files happen to be on disk, and the `--check` gates only prove each page
 matches its own JSON. Finding 4 is what that looks like when it bites.
 
+## Finding 6 — nothing ever priced the choosing of the composition
+
+The live book holds **four** legs. `run_master_book.FAMILIES` ships **six**. And the repository's own
+word for the validated set is **eight**: `composition_search.json` still scores `standalone_sharpe`
+across eight including `trend_momentum` and `carry`, and the assembler's comments read "with all
+eight the book scores 3/5 full", "the SIX-family composition is the one thing in this book chosen
+against the scorecard rather than on a-priori grounds", "carry was the fourth-highest standalone of
+the eight". So there are **two selections stacked**: eight → six (drop trend and carry, by a
+37-configuration search) and six → four (drop crisis and global-macro, in the live book). The reasons
+given for each were reached by looking at what the candidates did, which is a choice made on the
+sample it is then measured on — the one defect no per-leg audit can see.
+
+Measured both ways, same assembly, same window, at 2x, so the count is not the argument:
+
+| pool the four were chosen from | rank of the shipped four | the whole pool held | past-only picking, 11yr | the shipped four | hindsight |
+|---|---|---|---|---|---|
+| **six** (the live book's own choice) | 2 of 15 | +4.37 Sharpe, +75.6%/yr | **+812.4%** | +1037.4% | **+225%** |
+| **eight** (both selections) | 5 of 70 | +4.15 Sharpe, +65.1%/yr | **+836.5%** | +1037.4% | **+201%** |
+
+The past-only arm re-picks the best four each January on data strictly before that date — assembled
+as a book, not ranked standalone, because a desk scores the composition it would run — and holds them
+a year. It **never once** landed on the shipped four (0 of 11 years in either pool): it held
+gmacro+trend+volprem+xs through 2021 and bab+breakout+carry+volprem after, i.e. it kept carry, the
+leg the book explicitly dropped.
+
+**About 18-20pp a year of the headline is composition hindsight** — more than every defect found
+inside the legs put together. Counting only the selection the live book itself made, from the six the
+master ships, makes it slightly *worse* (+225%), not better. Note that a selection test starting from
+`FAMILIES` cannot see the eight→six step at all, which is why the denominator has to be rebuilt from
+`trend/trend_block_returns.parquet` and `carry/carry_refined.parquet` by hand. (`t13_leg_selection.py`)
+
+## Finding 7 — the cost model, validated where it can be and named where it cannot
+
+- **Exchange fees are right and conservative.** Binance's own schedule gives Regular/VIP-0 USD-M
+  futures taker 0.05% and spot taker 0.10%; the repo uses exactly 5.0 and 10.0 bps, i.e. the
+  no-BNB-discount rate a real desk would beat (0.045% / 0.075%).
+- **The impact coefficient is an order of magnitude below the literature.** `IMPACT_K = 0.1` in
+  `k·σ·√(order/ADV)`; the square-root law's empirical coefficient sits near 0.5–1.0. At the brief's
+  $500k it barely matters — BAB reads 1.37 at k=0.1 and 1.32 at k=1.0. At size it decides
+  everything: 1.32 → 0.82 at $50m, 1.26 → **0.28** at $200m. **This corrects a claim made earlier in
+  this audit**: capacity measured at the repo's own k looked like ~$1bn; at a literature-consistent
+  k it is nearer $50m.
+- **The vega spread cannot be validated here.** `data/raw/options_eod` turns out to hold stock EOD
+  bars, not option chains — no bid/ask, no implied vol — so the 1.0/2.5 vol-point charge stands on
+  published variance-swap quotes and nothing in this repository can check it. What can be said is
+  the sensitivity, and `volprem_cost_robustness.csv` already holds it.
+
 ---
 
-## What the book costs once the measurable defects are corrected
+## What it cost — every defect above is now FIXED, and these are the shipped numbers
 
-Each correction applied alone and then together, assembled exactly the way `run_live_book.py` does at
-HEAD (legs held through the days their own market is shut, assembly re-sizing charged). The volprem
-correction is a **stress, not a measurement** — Cboe publishes a 9-day index for the S&P only, so the
-measured 30d/9d ratio is applied uniformly to all eighteen sleeves — and is therefore shown as a
-ladder.
+Findings 1, 2, 3, 4, 4b and 7 are corrected in the code, not just measured: the term-structure
+haircut is charged, the breakout gate is a walk-forward on a point-in-time universe, the x-sect
+combines weight on trailing volatility, BAB pays funding, the equity sleeve pays borrow, and the
+candidate twin no longer overwrites the shipped leg. Every artifact below is regenerated from that
+code. Finding 6 — the composition — is deliberately **not** touched: which legs to hold is a decision
+to take on clean numbers, and these are the clean numbers.
 
-**Full window, 2011-01-03 → 2026-08-05, at 2x:**
+**Per leg, standalone:**
 
-| book | Sharpe | CAGR | P&L/yr on fixed capital | maxDD | worst month |
-|---|---|---|---|---|---|
-| **as shipped** | **+5.40** | +197.4% | **+111.3%** | −16.9% | −9.5% |
-| only x-sect fixed (causal weights) | +5.41 | +204.3% | +113.7% | −16.9% | −9.5% |
-| only BAB fixed (funding) | +5.38 | +195.1% | +110.5% | −16.9% | −9.5% |
-| only breakout fixed (PIT + walk-forward) | +5.34 | +193.9% | +110.1% | −16.9% | −11.0% |
-| volprem strike −5% | +4.90 | +165.7% | +100.0% | −18.1% | −10.8% |
-| volprem strike −10% | +4.34 | +135.5% | +87.8% | −19.3% | −12.1% |
-| only volprem fixed (measured −16.8%) | +3.50 | +97.2% | +70.0% | −20.9% | −13.8% |
-| **all four fixed** | **+3.39** | +94.3% | **+68.5%** | −20.9% | −13.8% |
+| leg | before | after | what was wrong |
+|---|---|---|---|
+| volprem | **+6.90** (gated), DD −10.5% | **+3.49**, DD **−28.1%** | sold one day of variance at the thirty-day strike |
+| breakout | **+1.47**, OOS +0.19 | **+1.18**, OOS **+0.10** | k-fold gate fitted on its own future; CORE10 hindsight universe |
+| BAB | **+1.51** | **+1.37** | no funding on a panel of perpetuals; stale panel |
+| x-sect | **+0.91** | **+0.74** | no borrow on the equity short leg; full-sample risk-parity weights |
 
-**Where all four legs are live, 2020-01+:**
+The breakout time-series half alone is +0.52 with an out-of-sample Sharpe of **−0.01** and a deflated
+Sharpe of **0.03**; its cross-sectional half is +1.12 with OOS +0.11. There is no out-of-sample edge
+left on either side of that family.
 
-| book | Sharpe | CAGR | P&L/yr | maxDD | worst month |
-|---|---|---|---|---|---|
-| as shipped | +4.45 | +127.3% | +84.0% | −12.0% | −8.3% |
-| all four fixed | **+2.95** | +69.4% | +54.4% | −14.8% | −11.6% |
+**The live book at 2x, before and after:**
 
-A 5% haircut on one leg's strike — a fifth of the gap that was actually measured — costs 11 points of
-annual P&L. That sensitivity is the finding: the headline is not robust to the price of the instrument
-it sells. (`t8_corrected_book.py`)
+| | Sharpe | CAGR | P&L/yr on fixed capital | maxDD | worst month | months+ |
+|---|---|---|---|---|---|---|
+| before the fixes | +5.40 | +197.4% | +111.3% | −16.9% | −9.5% | 84% |
+| **after** | **+3.37** | **+93.9%** | **+68.3%** ($341,725 on $500k) | **−20.9%** | **−13.7%** | 74% |
+| after, 2020-01+ only | **+2.94** | +69.2% | — | −14.8% | — | — |
 
-None of this prices the tradeability gap in Finding 1. If the volprem leg is worth what short VXX was
-worth over the same window with the same gate, the book has no headline at all.
+**The master book (six families):** Sharpe 4.34 → **2.88** full and 3.79 → **2.69** on the scored OOS
+block; months-in-profit 80.8% → 73.9% and 73.1% → 65.4%; longest losing streak 2 → 3 months. The
+composition search now clears all five targets in **0 of 37** configurations. volprem is still 61% of
+P&L, and its standalone Sharpe reads 3.96 rather than 7.09.
+
+None of this prices the tradeability gap in Finding 1. The haircut charges what a *nine-day* seller
+would not collect; it does not close the distance between a synthetic daily variance strip and short
+VXX. If the leg is worth what the tradeable instruments were worth over the same window under the
+same gate (+0.8), the book has no headline at all.
 
 ---
 
@@ -316,8 +422,24 @@ Stated because a list of defects with no denominator is not an audit.
   regime gate is the whole distance between this leg and ruin.
 - **BAB's premium is alpha, not crypto beta.** Against the equal-weight panel: alpha +22.8%/yr,
   t = +3.50, realised beta +0.061. Against BTC: alpha +19.3%/yr, t = +3.09, beta +0.115.
-- **Capacity is not a constraint at the brief's $500k.** BAB holds Sharpe 1.44 → 1.20 out to $1bn;
-  x-sect crypto 1d holds 0.90 → 0.51 at $200m and breaks at $1bn.
+- **Capacity is not a constraint at the brief's $500k** — but only there. At the repo's own impact
+  coefficient BAB holds out to $1bn; at a literature-consistent one it is gone by $200m (Finding 7).
+- **The ML layer under the breakout gate is clean.** Every feature is a backward rolling window,
+  `pit_normalize` is a rolling z-score, and the truncation audit — recompute on a series cut at T and
+  compare every past value — returns max|diff| = 0.00e+00. The gate itself is Finding 2; the engine
+  it stands on is sound. It is also the only ML in the live book: volprem, x-sect and BAB contain
+  none.
+- **The dividend contamination in volprem is real and points the safe way.** `load_equity_daily`
+  returns split- but not dividend-adjusted bars, so an ex-date open gap is charged to the short as
+  realised variance. Measured across the ten payers: **0.21% of the variance charged** (worst VXEFA
+  0.91%, VXTLT 0.44% on 183 ex-dates). Correcting it *raises* the leg by +0.11 Sharpe — the book was
+  paying for a payment.
+- **The breakout cross-sectional half is honestly built.** PIT membership by trailing median dollar
+  volume, lagged; t+2 fills; cost, √-impact and funding all charged; a random-signal placebo run
+  beside it. Its point-in-time arms are uniformly *worse* than the static ones (1d 0.85 vs 1.20, 4h
+  1.16 vs 1.46, 1h 1.04 vs 1.69), which is the correct direction and says the hindsight was really
+  removed. Its out-of-sample Sharpe is **+0.13** — so with Finding 2 on the other half, the breakout
+  family has no out-of-sample edge left on either side.
 - **Three of four artifacts reproduce byte-exact** from source: volprem `ret_gated`, breakout
   `bo_combined`, x-sect (from `portfolio.py`). BAB does not — Finding 4.
 
@@ -328,4 +450,10 @@ Stated because a list of defects with no denominator is not an audit.
   names and commodities have steeper curves than the S&P, which makes the uniform figure a floor on
   the equity-index sleeves and unknown on the rest.
 - **What a real variance-swap book would have earned.** The gap between the model (+7.5) and the ETPs
-  (+0.8) brackets it; closing it needs option chains, and `data/raw/options_eod` starts in 2013.
+  (+0.8) brackets it. Closing it needs option chains with quotes, and this repository has none:
+  `data/raw/options_eod` is six months of 2013 *stock* EOD bars, despite the name.
+- **The vega spread itself**, for the same reason — 1.0 vol-point on an index and 2.5 on a single
+  name come from published variance-swap bid/ask and cannot be checked against a quote here.
+- **FX carry.** `carry.for_panel` leaves an FX panel uncharged and says so, because shorting a pair
+  costs the interest differential and this repository does not model it. No shipped leg trades FX, so
+  it is a gap in the guard rather than in the book.

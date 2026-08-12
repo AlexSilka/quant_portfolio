@@ -103,10 +103,21 @@ def main():
     corr = R.corr()
     print(f"\nSleeve correlation:\n{corr.round(2).to_string()}")
 
-    def eqvol(df):
-        """Equal-risk (inverse-vol) combine of a returns frame; NaN where no column is live."""
-        w = (1.0 / df.std()).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-        combined = (df * w).sum(axis=1, min_count=1) / w.sum()
+    def eqvol(df, lb=252):
+        """Equal-risk (inverse-vol) combine of a returns frame; NaN where no column is live.
+
+        The weight is a TRAILING, lagged volatility, renormalised each bar onto the legs that are
+        actually live. It used to be `1.0 / df.std()` over the whole sample — a statistic from the
+        end of the series deciding the weight at the start, in both of this book's combines (the
+        three crypto timeframes, then crypto against equity). Worth −0.14 Sharpe, which is small,
+        but it is a look-ahead inside a shipped leg and there is no reason to keep it.
+
+        The clip guards the one failure a trailing inverse-vol weight has: a leg whose trailing vol
+        is near zero would otherwise take the whole book.
+        """
+        iv = (1.0 / df.rolling(lb, min_periods=60).std()).shift(1).where(df.notna())
+        iv = iv.clip(upper=float(np.nanquantile(iv.to_numpy(), 0.99)))
+        combined = (df * iv).sum(axis=1, min_count=1) / iv.sum(axis=1).replace(0.0, np.nan)
         return combined.where(df.notna().any(axis=1))
 
     # prefer the broad, survivorship-free equity sleeve (S&P 500 PIT, pure single-stock, ETF-free)

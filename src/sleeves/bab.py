@@ -136,7 +136,7 @@ def net_book_beta(weights: pd.DataFrame, beta: pd.DataFrame) -> pd.Series:
 def bab_backtest(px: pd.DataFrame, weights: pd.DataFrame, *, exec_lag: int = 2,
                  cost_bps: float = 6.0, vol_lb: int = 20, adv: pd.DataFrame | None = None,
                  impact_k: float = 0.0, capital: float = 500_000.0, ppy: float = 365,
-                 borrow_bps_annual: float = 0.0, carry=None) -> dict:
+                 borrow_bps_annual: float | None = None, carry=None) -> dict:
     """Net/gross/turnover/cost of a *prebuilt* weight book — for the beta-neutral construction.
 
     Identical execution and cost treatment to `xsect.xs_backtest` (delay `exec_lag` bars so a

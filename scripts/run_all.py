@@ -40,7 +40,18 @@ ROOT = Path(__file__).resolve().parents[1]
 # a smaller N and quietly weaken every multiple-testing number that cites it.
 STEPS = (("check_funding.py",),      # static, seconds: nothing may hold a perpetual for free
          ("validate_sessions.py",), ("run_book.py", "--intraday"), ("feature_report.py",),
-         ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",), ("run_master_book.py",),
+         ("run_meta_overlay.py",), ("run_crisis.py",), ("run_gmacro.py",),
+         # THE FOUR FAMILY LEGS THE BOOK ACTUALLY HOLDS. None of them used to be here: the assembler
+         # ran on whatever four parquet files happened to be on disk, so `make reproduce` reproduced
+         # the assembly and not the book. It is how the BAB leg came to be computed on a crypto panel
+         # that had been rebuilt under it — corr 0.960 against a fresh run, and every gate green,
+         # because each gate only ever compared an artifact to its own inputs. They are slow; a
+         # reproduce step that takes an hour and is true beats one that takes a minute and is not.
+         ("volprem/run_vol_premium_book.py",),
+         ("xs/broad.py",), ("xs/portfolio.py",),          # broad.py writes the equity sleeve portfolio.py reads
+         ("breakout/run_bo_final.py",), ("breakout/run_bo_combined.py",),
+         ("bab/run_bab_portfolio.py",),
+         ("run_master_book.py",),
          ("run_wf_book.py",), ("run_cscv.py",), ("measure_family_costs.py",),
          # everything below is measured AGAINST the assembled book, so it runs after the book and before
          # anything that quotes it. Left out of this list they cannot be refreshed by the pipeline at all,

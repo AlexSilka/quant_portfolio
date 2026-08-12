@@ -84,8 +84,17 @@ def uniqueness_weights(t0: pd.DatetimeIndex, t1: pd.Series, index: pd.DatetimeIn
     return w / (w.mean() + 1e-12)
 
 
+N_BLOCKS, MIN_TRAIN = 8, 60      # walk-forward: test blocks per sleeve, trades before the gate speaks
+
+
 def oos_proba(X, y, t1, factory, tf, weights=None):
-    """Purged+embargoed CV OOS P(win); optional per-sample weights fitted inside train folds only."""
+    """Purged+embargoed CV OOS P(win); optional per-sample weights fitted inside train folds only.
+
+    THIS IS THE GENERALISATION ESTIMATE, NOT A TRACK RECORD, and it is no longer what the book holds.
+    `purged_kfold` makes the test folds contiguous in time but trains each on its whole complement, so
+    the earliest fold is fitted 100% on its own future. It stays here because the A/B against the
+    honest gate is the measurement this file exists for — `run_bo_final` calls `wf_proba` instead.
+    """
     t0 = pd.DatetimeIndex(X.index)
     t1i = pd.DatetimeIndex(t1.reindex(X.index).values)
     oos = pd.Series(np.nan, index=X.index)
@@ -97,11 +106,40 @@ def oos_proba(X, y, t1, factory, tf, weights=None):
     return oos.dropna()
 
 
-def sleeve_data(sym, tf):
-    """Return (px, trades, X, y, meta) for one breakout sleeve — the primary side + labels + feats."""
+def wf_proba(X, y, t1, factory, tf):
+    """Expanding, purged, embargoed WALK-FORWARD P(win) — the gate a desk could have run.
+
+    A block is scored only by trades whose label had already RESOLVED before that block opened, so no
+    row is filtered by a model that has seen its future. Trades before the first block, and blocks
+    with too little resolved history to fit on, simply get no opinion — the caller treats an absent
+    probability as "the gate has nothing to say", not as a rejection.
+    """
+    t0 = pd.DatetimeIndex(X.index)
+    t1i = pd.DatetimeIndex(t1.reindex(X.index).to_numpy())
+    out = pd.Series(np.nan, index=X.index)
+    for block in np.array_split(np.argsort(t0.values), N_BLOCKS)[1:]:
+        te = np.sort(block)
+        tr = np.flatnonzero(t1i.values < np.datetime64(t0[te].min() - EMB[tf]))
+        if len(tr) < MIN_TRAIN or y.iloc[tr].nunique() < 2:
+            continue
+        out.iloc[te] = factory().fit(X.iloc[tr], y.iloc[tr]).predict_proba(X.iloc[te])[:, 1]
+    return out.dropna()
+
+
+def sleeve_data(sym, tf, universe=None):
+    """Return (px, trades, X, y) for one breakout sleeve — the primary side + labels + feats.
+
+    `universe` masks the entry side to the bars on which this name was in the point-in-time liquid
+    set, so a sleeve only takes breakouts on days it would actually have been traded. Passing None
+    keeps the whole history, which is what the frozen-universe studies in this file want.
+    """
     px = bo.load_crypto(sym, tf)
+    if px is None:
+        return None
     close, high, low = px["close"], px["high"], px["low"]
     side = bl.donchian_side(close, high, low, 55)
+    if universe is not None:
+        side = side.where(bo.pit_mask(sym, side.index, universe), 0.0)
     trades = bl.chandelier_trades(close, high, low, side, 3.0, 14)
     if len(trades) < 60:
         return None
@@ -123,12 +161,15 @@ def _daily(px, side, t1, events, fund, adv, tf):
     return (1 + bt["net_ret"]).resample("D").prod() - 1
 
 
-def precompute():
-    """Load every core-10 x {4h,1h} sleeve once: data, ungated daily returns, funding/adv."""
+def precompute(symbols=None, universe=None):
+    """Load every {symbol} x {4h,1h} sleeve once: data, ungated daily returns, funding/adv.
+
+    Defaults to the frozen core-10 because the A/B studies in this file are ABOUT that universe;
+    `run_bo_final` passes the point-in-time set instead."""
     sleeves = {}
     for tf in TFS_ML:
-        for sym in CORE10:
-            d = sleeve_data(sym, tf)
+        for sym in (symbols if symbols is not None else CORE10):
+            d = sleeve_data(sym, tf, universe)
             if d is None:
                 continue
             px, trades, X, y = d
@@ -139,10 +180,17 @@ def precompute():
     return sleeves
 
 
-def proba_cache(sleeves, factory, weighted):
-    """OOS P(win) per sleeve for one (model, weighting) — the expensive CV, computed once."""
+def proba_cache(sleeves, factory, weighted, walk_forward=False):
+    """P(win) per sleeve for one (model, weighting) — the expensive fit, computed once.
+
+    `walk_forward=True` is what the book holds: each block scored only by resolved history. The
+    k-fold path stays for the A/B that measures what having seen the future was worth.
+    """
     out = {}
     for key, s in sleeves.items():
+        if walk_forward:
+            out[key] = wf_proba(s["X"], s["y"], s["trades"]["t1"], factory, s["tf"])
+            continue
         w = (uniqueness_weights(pd.DatetimeIndex(s["X"].index), s["trades"]["t1"], s["px"].index)
              if weighted else None)
         out[key] = oos_proba(s["X"], s["y"], s["trades"]["t1"], factory, s["tf"], w)

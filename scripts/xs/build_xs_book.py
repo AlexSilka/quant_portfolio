@@ -1,4 +1,6 @@
-"""Build the x-sect family block (reports/xs/xs_book.parquet) that feeds the master book.
+"""A CANDIDATE x-sect construction: idiosyncratic momentum, published for comparison only.
+
+The leg the master book actually reads is written by `scripts/xs/portfolio.py` (`make xs`).
 
 crypto·x-sect is IDIOSYNCRATIC (residual) momentum — the RESIDMOM.md deep-dive construction (Blitz-
 Huij-Martens): the crypto momentum signal on the market-beta-neutralised residual, not the raw price.
@@ -103,8 +105,14 @@ def main():
           f"DD {x['max_dd']:+.1%}  MC-P5 {mc.get('sharpe_p5', float('nan')):+.2f}  "
           f"{book.index.min().date()}→{book.index.max().date()}")
 
-    book.rename("ret").to_frame().to_parquet(OUT / "xs_book.parquet")
-    print(f"\nwrote {OUT/'xs_book.parquet'}  (master book reads this as the x-sect family)")
+    # NOT `xs_book.parquet`. That path is written by `scripts/xs/portfolio.py`, which is what
+    # `make xs` runs and what the master book reads; this file wrote the SAME path with a different
+    # construction (idiosyncratic momentum, two legs) and whichever ran last won — the two series
+    # correlate 0.73. A candidate study does not get to overwrite the shipped leg by being run
+    # second, so it publishes under its own name and the assembler is unaffected.
+    book.rename("ret").to_frame().to_parquet(OUT / "xs_book_idio_candidate.parquet")
+    print(f"\nwrote {OUT/'xs_book_idio_candidate.parquet'}  (a CANDIDATE construction — the leg the "
+          f"master book reads is written by scripts/xs/portfolio.py)")
 
 
 if __name__ == "__main__":
