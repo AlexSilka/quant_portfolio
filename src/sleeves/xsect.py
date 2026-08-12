@@ -160,6 +160,13 @@ def held_turnover(w: pd.DataFrame, rets: pd.DataFrame) -> pd.DataFrame:
     book's own return, and at the close it is traded to w[t+1]. So the honest turnover is
     |w[t+1] − drift(w[t])|, which reduces to `w.diff().abs()` when nothing moves and is fully
     vectorised — no sequential state, because a daily-rebalanced book always starts the bar on target.
+
+    THE ONE RULE FOR CALLERS: `rets` must be exactly the series that multiplies the weight in the
+    caller's own P&L line. Not the underlying's return — the POSITION's. For a directional book those
+    are the same thing; for a hedged one they are not, and the difference is not small. Passing a
+    perpetual's return to a delta-neutral cash-and-carry book (whose weight earns spot − perp, the
+    basis) overstates its turnover fifteen-fold, because it prices a hedged position as an outright one
+    in a 60%-vol asset. If the caller computes `pnl = (w * X).sum(axis=1)`, then `rets` is X.
     """
     b = (w * rets).sum(axis=1)
     drifted = w.mul(1.0 + rets).div((1.0 + b).replace(0.0, np.nan), axis=0)

@@ -196,7 +196,10 @@ def basis_carry(spot_close: pd.DataFrame, perp_close: pd.DataFrame, fd: pd.DataF
     # short-perp leg earns -w*perp_r; long-spot leg earns +w*spot_r; funding collected = +w*f (short perp>0)
     leg_pnl = (-w * perp_r + w * spot_r.reindex_like(w)).sum(axis=1)
     funding = (w * f.reindex_like(w).fillna(0.0)).sum(axis=1)
-    turn = held_turnover(w, perp_r.reindex_like(w)).sum(axis=1)
+    # the pair is DELTA-NEUTRAL: one unit of weight earns (spot_r - perp_r), the basis change, not
+    # the perp's own return. Driving the drift with perp_r would treat a hedged position as a
+    # directional one in a 60%-vol asset and invent turnover that is not there.
+    turn = held_turnover(w, (spot_r.reindex_like(w) - perp_r.reindex_like(w))).sum(axis=1)
     cost = turn * (cost_bps + spot_cost_bps) / 1e4                  # both legs pay
     net = leg_pnl + funding - cost
     return pd.DataFrame({"ret": net, "basis": leg_pnl, "funding": funding,
@@ -227,7 +230,10 @@ def basis_carry_hold(spot_close: pd.DataFrame, perp_close: pd.DataFrame, fd: pd.
     w = state.div(n, axis=0).shift(exec_lag).fillna(0.0)
     leg_pnl = (-w * perp_r + w * spot_r.reindex_like(w)).sum(axis=1)
     funding = (w * f.reindex_like(w).fillna(0.0)).sum(axis=1)
-    turn = held_turnover(w, perp_r.reindex_like(w)).sum(axis=1)
+    # the pair is DELTA-NEUTRAL: one unit of weight earns (spot_r - perp_r), the basis change, not
+    # the perp's own return. Driving the drift with perp_r would treat a hedged position as a
+    # directional one in a 60%-vol asset and invent turnover that is not there.
+    turn = held_turnover(w, (spot_r.reindex_like(w) - perp_r.reindex_like(w))).sum(axis=1)
     cost = turn * (cost_bps + spot_cost_bps) / 1e4
     net = leg_pnl + funding - cost
     return pd.DataFrame({"ret": net, "basis": leg_pnl, "funding": funding,
