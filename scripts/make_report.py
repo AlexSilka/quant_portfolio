@@ -396,6 +396,10 @@ def _honesty_card():
 # book legs each run; rejected ones from each deep-dive's own frozen artifact (two families carry no
 # saved summary, so their honest walk-forward headline is stated inline). This is the headline edge
 # map; the raw first-pass timeframe scan (the zoo) sits below it as supporting detail. ---
+# Every family that cleared its own validation, whether or not the book ended up holding it. Which
+# section a row lands in is decided at render time from `run_master_book.FAMILIES`, not typed here —
+# a family that leaves the composition used to keep sitting under "in the book" with an n/a Sharpe,
+# which is two wrong statements in one row: it is not in the book, and its Sharpe is not unknown.
 LIVE_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), where the edge is)
     ("volprem",        "multi-asset vol", "1d",           "index/single-name/commodity/rates VRP &mdash; the dominant sleeve"),
     ("trend_momentum", "crypto + equity", "1d / 4h",      "the repo&rsquo;s core premium; held to reversal"),
@@ -403,9 +407,22 @@ LIVE_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(
     ("carry",          "crypto",          "1d",           "perp funding, dollar-neutral cross-section"),
     ("gmacro",         "EM-FX + commod.", "1d",           "trend on asset classes no other family trades"),
     ("xs_momentum",    "crypto + equity", "1d",           "survivorship-free top-100 momentum"),
-    ("crisis",         "multi-asset ETF", "1d",           "managed-futures long-gamma &mdash; the crash hedge"),
+    ("crisis",         "multi-asset ETF", "1d",           "managed-futures long gamma"),
     ("bab",            "crypto majors",   "1d",           "betting-against-beta / low-vol, beta-neutral top-25"),
 ]
+
+
+# Why a validated family did not get a slot. Measured statements, not verdicts on the edge: each of
+# these has a positive standalone Sharpe on the same window as the held legs, printed beside it.
+NOT_HELD_WHY = {
+    "carry":  "funding pays on the perps still listed today; at point-in-time breadth it flattens "
+              "(&minus;0.00 before the block)",
+    "gmacro": "real but thin net of cost &mdash; the diversification is there, the return is not",
+    "crisis": "crash insurance: it pays in the tail and bleeds between them, buying drawdown with "
+              "months in profit",
+    "bab":    "strongest of the four and genuinely tradeable, but it lives on the same crypto majors "
+              "the momentum legs already hold (+0.17 to the book, the closest here)",
+}
 
 
 def _dig(path, *keys):
@@ -473,9 +490,14 @@ def _family_edge_card(summ, legs):
     def grp(t):
         return f'<tr class="grp"><td colspan="5">{t}</td></tr>'
 
-    live = "".join(rowhtml(SHORT.get(fid, fid), a, tf, ss.get(fid), why,
-                           mark=("&#8224;" if fid == "volprem" else ""))
-                   for fid, a, tf, why in sorted(LIVE_FAM, key=lambda r: -(ss.get(r[0]) or 0.0)))
+    held = {lab for lab, _, _ in mb_families()}
+    def _rows(rows):
+        return "".join(rowhtml(SHORT.get(fid, fid), a, tf, ss.get(fid), why,
+                               mark=("&#8224;" if fid == "volprem" else ""))
+                       for fid, a, tf, why in sorted(rows, key=lambda r: -(ss.get(r[0]) or 0.0)))
+    live = _rows([r for r in LIVE_FAM if r[0] in held])
+    bench = _rows([(fid, a, tf, f"{why} &mdash; {NOT_HELD_WHY[fid]}" if fid in NOT_HELD_WHY else why)
+                   for fid, a, tf, why in LIVE_FAM if fid not in held])
     rej = "".join(rowhtml(lab, a, tf, v, why) for lab, a, tf, v, why in rejected)
     # vol-prem's tail, measured rather than quoted: the leg as the book holds it (vol-targeted, gated), and
     # the standalone Cboe book behind it, whose OHLC-measured tail is the number the sizing respects.
@@ -488,10 +510,13 @@ def _family_edge_card(summ, legs):
         '<table><tr><th>strategy family</th><th>asset class</th><th>timeframe</th><th>Sharpe</th>'
         '<th>where the edge is &middot; why it is not</th></tr>'
         + grp("In the book &mdash; where edge was found") + live
+        + (grp("Validated, not held &mdash; real edge the composition did not take") + bench if bench else "")
         + grp("Tested, rejected &mdash; where edge was not") + rej
         + '</table><p class="valline">Each Sharpe is the family&rsquo;s standalone result from its own '
-        'validated construction &mdash; live families from the master-book legs, rejected ones from their '
-        'deep-dive walk-forward. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
+        'validated construction &mdash; held families from the master-book legs, rejected ones from their '
+        'deep-dive walk-forward. The middle group is neither: each one passed its own validation and was '
+        'left out on the composition search, so its edge is real and its Sharpe is measured, it simply did '
+        'not earn a slot. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
         f'it the leg prints skew {_n(vp_skew)} / {_pc(vp_dd)} drawdown, and the Cboe book behind it skew '
         '&minus;18 / a &minus;78% systemic tail. It is sized on that tail, not on Sharpe. Edge concentrates '
         'at <b>1d</b>; intraday decays to turnover &times; cost everywhere. Overlay studies and within-family '

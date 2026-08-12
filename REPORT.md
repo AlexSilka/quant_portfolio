@@ -42,7 +42,7 @@ The book is a **volprem-anchored, diversified** four-family portfolio. Short-vol
 (4.85 standalone with the gate, and the gate is what makes that number ownable: the
 ungated leg's worst day is −75.4% on a −77.0% drawdown, the gated one's is
 −13.6% on −21.4%); the other three families
-(standalone 0.8–1.1, mean pairwise correlation ≈ 0.02) **cut that tail and make the book survivable** — so as
+(standalone 0.1–1.2, mean pairwise correlation ≈ 0.02) **cut that tail and make the book survivable** — so as
 they join, the marginal curve *falls* from volprem's 4.85 toward the combined 3.98 while the shipped
 book's worst month is **−6.2%** and max drawdown **−8.5%** — the VIX regime gate flattens the short-vol
 tail that used to set the deep months. Remove the anchor (volprem) and a genuine **Sharpe +1.14** book still

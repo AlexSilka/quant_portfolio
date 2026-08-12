@@ -180,6 +180,18 @@ PER_FAMILY_CAP = 1.5 / len(FAMILIES)
 # and adding it LOWERS the final block's target count rather than raising it. The mechanism stays —
 # a stress-ramped slot is the right shape for a hedge — so re-adding a long-gamma family is one line
 # here plus one in FAMILIES, and the import guard below still catches a name that answers to nothing.
+# Families that cleared their own validation and that the composition did NOT take. They are measured
+# here, on the book's window and at the book's per-leg risk, for one reason: the edge map used to print
+# a blank Sharpe for them, and a blank reads as "never tested" — which is the opposite of true. Being
+# left out is a composition decision about correlation and the scorecard, not a verdict on the edge.
+# Nothing below enters the book: these series are scored, never stacked.
+VALIDATED_NOT_HELD = [
+    ("carry",   "carry/carry_refined.parquet", "ret"),      # perp funding, dollar-neutral cross-section
+    ("gmacro",  "book/gmacro_sleeve.parquet",  "ret"),      # EM-FX + commodity trend
+    ("crisis",  "book/crisis_sleeve.parquet",  "ret"),      # managed-futures long gamma
+    ("bab",     "bab/bab_book_c25.parquet",    "ret"),      # beta-neutral betting-against-beta, top-25
+]
+
 HEDGE_SLOT: dict[str, tuple[float, float]] = {}
 
 # A name here that no family answers to would silently do nothing — the book would quietly revert to flat
@@ -544,6 +556,15 @@ def main():
     corr = df.corr()
     solo = {c: summarise(df[c], ppy_of(df[c]))["sharpe_ann"] for c in df.columns}
     order = sorted(df.columns, key=lambda c: -solo[c])
+    # the ones we did not take, scored the same way and over the same window, so "not held" and
+    # "not measured" can never again look alike on the page
+    for lab, f, c in VALIDATED_NOT_HELD:
+        s_ = load(lab, f, c)
+        if s_ is None:
+            print(f"  [not-held] {lab}: no series at {f} — edge map will show it blank")
+            continue
+        s_ = rescale(s_).reindex(df.index).dropna()
+        solo[lab] = summarise(s_, ppy_of(s_))["sharpe_ann"] if len(s_) > 250 else None
     marg = []
     for k in range(1, len(order) + 1):
         b = book_stack(df[order[:k]])
