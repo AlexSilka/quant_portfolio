@@ -403,12 +403,24 @@ def _honesty_card():
 # its own randomised placebo (or, for the hedge, pays in the events it is bought for). Which section a
 # row lands in is decided at render time from `run_master_book.FAMILIES`, never typed here.
 SCORED_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), where the edge is)
-    ("volprem",        "multi-asset vol", "1d",           "index/single-name/commodity/rates VRP &mdash; the dominant sleeve"),
-    ("trend_momentum", "crypto + equity", "1d / 4h",      "the repo&rsquo;s core premium; held to reversal"),
-    ("breakout",       "crypto",          "1h / 4h / 1d", "channel breaks with an ML confidence gate"),
+    ("volprem",        "multi-asset vol", "1d",
+     "index/single-name/commodity/rates VRP &mdash; the tested part is the exit gate, not the premium: "
+     "the same sleeves ungated clear 3 of the 5 targets instead of 4, and the gate is what removes the "
+     "tail described below"),
+    ("trend_momentum", "crypto + equity", "1d / 4h",
+     "the repo&rsquo;s core premium, held to reversal &mdash; it beats a shuffled-signal null only "
+     "beta-neutral (6.7% exceedance); long-only it does not, because a shuffled long book still owns "
+     "the market, and roughly half this Sharpe is that beta"),
+    ("breakout",       "crypto",          "1h / 4h / 1d",
+     "channel breaks with an ML confidence gate, walk-forward on a point-in-time universe &mdash; which "
+     "cost it its headline: <b>flat out of sample</b> (&minus;0.02), and it takes 0.05 off the book&rsquo;s "
+     "Sharpe. It is decorrelated (+0.04 mean to the other legs) and it is the fourth structurally distinct "
+     "family &sect;5 requires"),
     ("carry",          "crypto",          "1d",           "perp funding, dollar-neutral cross-section"),
     ("gmacro",         "EM-FX + commod.", "1d",           "trend on asset classes no other family trades"),
-    ("xs_momentum",    "crypto + equity", "1d",           "survivorship-free top-100 momentum"),
+    ("xs_momentum",    "crypto + equity", "1d",
+     "survivorship-free top-100 momentum &mdash; its best shuffled-signal placebo reaches +0.15 against "
+     "the sleeve&rsquo;s +0.99, deflated 0.39 after the search that found it"),
     ("crisis",         "multi-asset ETF", "1d",           "managed-futures long gamma"),
     ("bab",            "crypto majors",   "1d",           "betting-against-beta / low-vol, beta-neutral top-25"),
     ("residmom",       "crypto",          "1d",           "momentum on the residual after the market factor"),
@@ -519,13 +531,14 @@ def _family_edge_card(summ, legs):
         + grp("In the book &mdash; where edge was found") + live
         + (grp("Validated, not held &mdash; real edge the composition did not take") + bench if bench else "")
         + grp("Tested, rejected &mdash; where edge was not") + rej
-        + '</table><p class="valline"><b>What puts a family above the line is its placebo, not its Sharpe.</b> '
-        'The top two groups are the constructions whose result clears their own randomised control &mdash; '
-        'signal replaced by noise, or positions rotated &mdash; at the 95th percentile or better; the hedge '
-        'clears on the events it is bought for rather than on a ratio. Everything below the line failed that '
-        'test or is negative net of cost, which is why a positive Sharpe appears there: seasonal&rsquo;s +0.31 '
-        'and on-chain&rsquo;s +0.15 sit inside distributions that random timing reproduces. The split between '
-        'the top two groups is composition alone. <b>Basis:</b> the first two groups are scored identically '
+        + '</table><p class="valline"><b>What puts a family above the line is its control, not its Sharpe.</b> '
+        'Each one was put against a null built for the way it earns &mdash; signal replaced by noise where the '
+        'construction selects, positions rotated where it times, the traded quote substituted where it harvests '
+        'a premium &mdash; and every row carries what that null returned, including where the answer is '
+        'uncomfortable: <b>trend&rsquo;s long-only form does not beat its shuffled-signal null</b>, and breakout '
+        'is flat out of sample. Below the line a family failed its control or is negative net of cost, which is '
+        'why positive Sharpes appear there: seasonal&rsquo;s +0.31 and on-chain&rsquo;s +0.15 sit inside '
+        'distributions that random timing reproduces. The split between the top two groups is composition alone. <b>Basis:</b> the first two groups are scored identically '
         '&mdash; each family&rsquo;s published series at the book&rsquo;s per-leg risk over the book&rsquo;s '
         'window, so they compare to the decimal; rejected families are quoted from their own deep-dive, whose '
         'window and risk are their own. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
