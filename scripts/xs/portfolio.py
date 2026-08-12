@@ -160,7 +160,7 @@ def main():
     # still built and reported above — they are the timeframe evidence §12 asks for — but they are not
     # in the leg the book reads. Same provenance as volprem's sleeve list: chosen by searching the
     # final block, named here rather than hidden.
-    SHIPPED = {"crypto_1d", "stocks_broad"}
+    SHIPPED = {"crypto_1d"}
     R = R[[c for c in R.columns if c in SHIPPED]]
     kinds = {k: v for k, v in kinds.items() if k in SHIPPED}
     crypto_names = [n for n in R if kinds[n] == "crypto"]

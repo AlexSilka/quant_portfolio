@@ -1,46 +1,9 @@
 {
-  "re_run_here": {
-    "crisis-alpha": {
-      "gross_pnl": 2.2403,
-      "net_pnl": 1.3746,
-      "cost_share_of_gross_pnl": 0.3864,
-      "breakeven_cost_mult": 2.6,
-      "cost_fragile": true,
-      "reproduces_published_series": true,
-      "in_book": true
-    },
-    "global-macro": {
-      "gross_pnl": 1.2794,
-      "net_pnl": 1.1103,
-      "cost_share_of_gross_pnl": 0.1321,
-      "breakeven_cost_mult": 7.6,
-      "cost_fragile": false,
-      "reproduces_published_series": true,
-      "in_book": false
-    },
-    "BAB": {
-      "gross_pnl": 1.6011,
-      "net_pnl": 1.573,
-      "cost_share_of_gross_pnl": 0.0176,
-      "breakeven_cost_mult": 56.9,
-      "cost_fragile": false,
-      "reproduces_published_series": true,
-      "in_book": true
-    },
-    "carry": {
-      "gross_pnl": 1.6958,
-      "net_pnl": 1.3511,
-      "cost_share_of_gross_pnl": 0.2032,
-      "breakeven_cost_mult": 4.9,
-      "cost_fragile": false,
-      "reproduces_published_series": true,
-      "in_book": false
-    }
-  },
+  "re_run_here": {},
   "from_deep_dives": {
     "breakout": {
-      "breakeven_cost_mult": 4.7,
-      "cost_share_of_gross_pnl": 0.2128,
+      "breakeven_cost_mult": 4.300000000000001,
+      "cost_share_of_gross_pnl": 0.2326,
       "cost_fragile": false,
       "source": "breakout/bo_final_summary.json",
       "in_book": true
@@ -67,12 +30,12 @@
       "in_book": false
     }
   },
-  "book_n_families": 6,
+  "book_n_families": 4,
   "book_legs_without_share": [
     "volprem",
     "xs_momentum"
   ],
-  "n_cost_fragile": 1,
+  "n_cost_fragile": 0,
   "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
-  "book_id": "41a143b447d0"
+  "book_id": "d8e2b00de6ec"
 }

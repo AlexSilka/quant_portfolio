@@ -17,7 +17,8 @@ number a deep-dive already owns is how two answers to one question appear.
 Each re-run is the family's shipped construction, so nothing here can silently become a different book:
 the costed pass is checked against the published series and the run fails if they disagree.
 
-    python scripts/measure_family_costs.py     # -> reports/book/family_cost_shares.json
+    python scripts/measure_family_costs.py           # the families the book holds
+    python scripts/measure_family_costs.py --all     # every researched family (slow; §9's full table)
 """
 import json
 import sys
@@ -33,6 +34,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.config import BOOK_DIR, REPORTS_DIR  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("family_costs")
+OUT = BOOK_DIR / "family_cost_shares.json"
 from src.book_id import stamp  # noqa: E402
 
 R = REPORTS_DIR
@@ -116,8 +121,24 @@ def _in_book(label: str) -> bool:
 
 
 def main():
-    out = {}
-    for label, fn in FAMILIES:
+    # Each family is re-run TWICE (costed and costless) to get its cost share, and that is minutes of
+    # work per family. By default only the families the book actually HOLDS are re-run; the research
+    # ones keep whatever the last `--all` pass measured, because their number cannot change unless
+    # their construction does, and the book being reassembled is not that. `--all` re-measures
+    # everything, which is what to run after touching a family that is not in the composition.
+    prev = {}
+    if (OUT).exists():
+        try:
+            prev = json.loads(OUT.read_text()).get("families", {})
+        except Exception as exc:
+            log.warning("family costs: could not read the previous pass (%s) — re-running everything",
+                        type(exc).__name__)
+    todo = FAMILIES if "--all" in sys.argv else tuple((l, f) for l, f in FAMILIES if _in_book(l))
+    carried = [l for l, _ in FAMILIES if (l, dict(FAMILIES)[l]) not in todo and l in prev]
+    if carried:
+        print(f"carried from the last --all pass (not in the book): {', '.join(carried)}")
+    out = {k: v for k, v in prev.items() if k in carried}
+    for label, fn in todo:
         print(f"{label} …", flush=True)
         try:
             net, gross, published = fn()
@@ -182,7 +203,7 @@ def main():
            "n_cost_fragile": sum(1 for v in list(measured.values()) + list(carried.values())
                                  if v.get("cost_fragile")),
            "method": "same construction re-run with its cost model off; share = 1 - net/gross total return"}
-    (BOOK_DIR / "family_cost_shares.json").write_text(json.dumps(stamp(doc), indent=2, default=float))
+    OUT.write_text(json.dumps(stamp(doc), indent=2, default=float))
     print(f"\n{len(measured)} families re-run, {len(carried)} carried from deep-dives, "
           f"{doc['n_cost_fragile']} cost-fragile -> reports/book/family_cost_shares.json")
     print("FAMILY COSTS OK")

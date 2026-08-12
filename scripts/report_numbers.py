@@ -57,6 +57,14 @@ def _load(path):
 LEVERAGE_ROWS = (1.00, 1.15, 1.20, 1.25, 1.35, 1.45, 1.65, 2.00)   # the rungs §4b argues over
 
 
+def _stress(v):
+    """A stress column that was not evaluated prints as "—", not as a number and not as a crash."""
+    try:
+        return _pc(float(v))
+    except (TypeError, ValueError):
+        return "—"
+
+
 def _leverage_table(shipped):
     """The §4b leverage grid, emitted from run_risk_budget's own CSV. It used to be transcribed by hand,
     which is eleven numbers a row that go stale together the moment the book moves."""
@@ -82,7 +90,10 @@ def _leverage_table(shipped):
             b(_pc(float(r["full_max_dd"]))), b(_pc(float(r["full_worst_month"]))),
             b(_pcu(float(r["full_months_in_profit"]))), b(f"{int(r['full_targets'])}/5"),
             b(_pc(float(r["mc_dd_p5"]))), b(_pc(float(r["mc_wmonth_p5"]))),
-            b(_pc(float(r["stress_max_dd"]))), b(_pc(float(r["stress_worst_month"])))]) + " |")
+            # The 2010-event stress is only measurable while some family reaches 2010. When the
+            # composition holds none, run_risk_budget writes the column blank rather than a number —
+            # so render the absence as an em dash instead of dying, and never as a passing figure.
+            b(_stress(r["stress_max_dd"])), b(_stress(r["stress_worst_month"]))]) + " |")
     return "\n".join(out)
 
 
@@ -430,6 +441,13 @@ def _risk_budget_extras():
         out["event_leg_at_weight"] = _pc(ev["leg_day_loss_at_book_weight"])
         out["event_book_day"] = _pc(ev["book_day_loss_unlevered"])
         out["event_quarters"] = _word(len(ev.get("replayed_into_quarters", [])))
+    else:
+        # The 2010 replay needs a family with 2010 history and this composition has none. The
+        # placeholders still resolve — to a sentence saying it was not run — because a report that
+        # silently drops a stress test reads as one that passed it.
+        na = "not evaluated (no family in this composition has 2010 history)"
+        out["event_leg_at_weight"] = out["event_book_day"] = na
+        out["event_quarters"] = "no"
     shipped = d.get("leverage")
     p = R / "book" / "risk_budget_grid.csv"
     if shipped and p.exists():
@@ -907,6 +925,13 @@ def build():
             if st:
                 out[f"wf_stress_{lab}"] = _pc(st["max_dd"])
                 out[f"wf_stress_{lab}_legs"] = _word(st["n_legs"])
+            else:
+                # A window no family in this composition reaches — the 2008 GFC once the legs whose
+                # ETF history starts in 2005 are out. Resolve it to a statement, so the report says
+                # the window was not covered instead of leaving a placeholder or, worse, omitting the
+                # sentence and reading as though the book had been stressed through it.
+                out[f"wf_stress_{lab}"] = "not covered"
+                out[f"wf_stress_{lab}_legs"] = "no"
         out.update(_grid_span())
         out.update(_grid_ranges())
         out.update(_leg_swap_table())
@@ -936,8 +961,12 @@ def build():
         for lv in cl.get("levels", []):
             out[f"cost_{lv['label'].split('x')[0]}x_sharpe"] = _n(lv["sharpe"])
             out[f"cost_{lv['label'].split('x')[0]}x_dd"] = _pc(lv["max_dd"])
-        if cl.get("breakeven_mult"):
-            out["cost_breakeven"] = f"{cl['breakeven_mult']:.0f}×"
+        # `null` means the sweep never found a multiple that kills the book — it stays profitable at
+        # every level tested. That is a result, not a missing value, so it resolves to words rather
+        # than leaving the placeholder unfilled and failing the render.
+        bm = cl.get("breakeven_mult")
+        out["cost_breakeven"] = (f"{bm:.0f}×" if bm else
+                                 "beyond the highest multiple tested — costs never take it negative")
 
     if z:
         fn = dict((lab, n) for lab, n in z.get("funnel", []))

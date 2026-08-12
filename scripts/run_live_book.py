@@ -44,7 +44,12 @@ from src.config import BOOK_REBALANCE_BPS, CAPITAL_USD, LAB_DIR  # noqa: E402
 from src.book_id import stamp  # noqa: E402
 
 START = "2011-01-03"        # first day both gate segments exist (VIX9D lists 2011-01-04)
-LEGS = ["volprem", "breakout", "bab", "xs_momentum"]
+# Derived from the assembler, not typed beside it. A hard-coded list silently disagreed with
+# `FAMILIES` the moment the master's composition changed: breakout dropped out of the book, this file
+# still asked for it, and the run printed a warning and carried on over three legs — a different book
+# than either file describes. The live book is the master's families minus the hedge slot, and that
+# relationship is now expressed once instead of being restated and left to drift.
+LEGS = [lab for lab, _, _ in mb.FAMILIES if lab not in mb.HEDGE_SLOT]
 DEFAULT_LEVERAGE = 2.0
 
 
@@ -56,8 +61,12 @@ def legs() -> tuple[pd.DataFrame, pd.DataFrame]:
     raw = {lab: mb.load(lab, f, c) for lab, f, c in mb.FAMILIES if lab in LEGS}
     raw = {k: v for k, v in raw.items() if v is not None}
     missing = [k for k in LEGS if k not in raw]
-    if missing:                                   # a leg silently absent would change the book, not fail it
-        print(f"WARNING: legs not found and therefore not held: {missing}")
+    if missing:
+        # Not a warning. A leg the composition names and the disk does not have is a different book,
+        # and printing a line about it while carrying on is how a three-leg run got reported as a
+        # four-leg one. Build the family, or take it out of FAMILIES.
+        raise SystemExit(f"legs named in FAMILIES but not on disk: {missing} — "
+                         f"build them or remove them from the composition")
     scales = pd.DataFrame({k: mb._scale(raw[k]) for k in raw}).sort_index().ffill()
     df = mb.hold_started(pd.DataFrame({k: mb.rescale(raw[k]) for k in raw}).sort_index())
     m = df.index >= pd.Timestamp(START)

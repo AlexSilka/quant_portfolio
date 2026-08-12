@@ -116,9 +116,14 @@ def main():
         raise SystemExit(f"missing family series, cannot count the denominator: {', '.join(missing)}")
     names = list(raw)
 
+    # Removals up to the size of the drop the book actually makes, so the shipped composition is
+    # always IN the denominator. It used to stop at two, which was fine while the book dropped two
+    # families and became a StopIteration the moment it dropped three — the search cannot report the
+    # cost of a choice it never enumerated.
+    shipped_n = len([n for n in names if n not in {lab for lab, _, _ in mb.FAMILIES}])
     configs = [("all eight", ())]
-    configs += [(f"drop {d}", (d,)) for d in names]
-    configs += [(f"drop {a} + {b}", (a, b)) for a, b in itertools.combinations(names, 2)]
+    for k in range(1, max(shipped_n, 2) + 1):
+        configs += [(f"drop {' + '.join(c)}", c) for c in itertools.combinations(names, k)]
 
     rows, passing = {}, []
     for label, drop in configs:

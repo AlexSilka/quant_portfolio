@@ -42,6 +42,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from scripts.run_master_book import (  # noqa: E402
     OOS, R, assemble, book_stack, ppy_of, risk_overlay, scorecard)
 from src.config import BOOK_LEVERAGE, SEED  # noqa: E402
+from src.log import get_logger  # noqa: E402
+
+log = get_logger("risk_budget")
 from src.validation.monte_carlo import mc_metrics  # noqa: E402
 from src.book_id import stamp  # noqa: E402
 
@@ -121,6 +124,14 @@ def event_replay(df, wide, start):
     legs live that day, as it does everywhere else.
     """
     src = wide.loc[EVENT[0]:EVENT[1]]
+    if src.empty or not any(src[c].notna().any() for c in src.columns):
+        # No family in the book reaches the 2010 event any more — the two that did (crisis-alpha and
+        # global-macro, whose ETF and FX history starts in 2005) are not in the composition. A replay
+        # with nothing to replay is not a stress test, so it is skipped and said out loud rather than
+        # dying on an empty index or, worse, quietly returning the unstressed book as if it passed.
+        log.warning("risk budget: no leg has %s..%s history — the 2010-event replay is skipped, and "
+                    "the leverage it would have constrained is unconstrained by it", *EVENT)
+        return None
     delta = pd.Timestamp(start) - src.index[0]
     cols = [c for c in src.columns if src[c].notna().any()]
     out = df.copy()
@@ -137,6 +148,11 @@ def worst_stress(stressed, lev, policy, lev_map=None):
     verdict cannot ride on a splice that happened to land in a strong month."""
     cards = [card(risk_overlay(book_of(s, lev_map or {}), leverage=lev, limits=policy)[0])
              for s in stressed.values()]
+    if not cards:
+        # Nothing to replay (see event_replay): report NaN rather than a number, so a constraint that
+        # was never evaluated cannot read as one that passed.
+        return {k: float("nan") for k in
+                ("stress_max_dd", "stress_worst_month", "stress_streak", "stress_months_in_profit")}
     return {"stress_max_dd": min(c["max_dd"] for c in cards),
             "stress_worst_month": min(c["worst_month"] for c in cards),
             "stress_streak": max(c["streak"] for c in cards),
@@ -165,12 +181,16 @@ def main():
           f"streak <={STREAK_MAX}, Sharpe corridor {SHARPE_LO}-{SHARPE_HI}\n")
 
     starts = replay_starts(df.index)
-    stressed = {str(s.date()): event_replay(df, wide, s) for s in starts}
-    leg_day = float(wide["volprem"].loc[EVENT[0]:EVENT[1]].min())      # the leg's crash day at book weight
-    book_day = min(float(book_of(s, {}).min()) for s in stressed.values())   # worst book day, any placement
-    print(f"event stress: {EVENT[0]}..{EVENT[1]} replayed into {len(starts)} quarters "
-          f"({starts[0].date()}..{starts[-1].date()}), reported at its worst placement; the leg loses "
-          f"{leg_day:.1%} at book weight in one day, costing the unlevered book {book_day:.2%}\n")
+    stressed = {str(s.date()): r for s in starts if (r := event_replay(df, wide, s)) is not None}
+    if stressed:
+        leg_day = float(wide["volprem"].loc[EVENT[0]:EVENT[1]].min())   # the leg's crash day at book weight
+        book_day = min(float(book_of(s, {}).min()) for s in stressed.values())
+        print(f"event stress: {EVENT[0]}..{EVENT[1]} replayed into {len(starts)} quarters "
+              f"({starts[0].date()}..{starts[-1].date()}), reported at its worst placement; the leg loses "
+              f"{leg_day:.1%} at book weight in one day, costing the unlevered book {book_day:.2%}\n")
+    else:
+        print(f"event stress: SKIPPED — no family in this composition has {EVENT[0]}..{EVENT[1]} "
+              f"history, so the 2010 replay has nothing to replay and constrains no leverage rung.\n")
 
     # ── the grid ───────────────────────────────────────────────────────────────────────────────────
     rows = []
@@ -271,10 +291,13 @@ def main():
         "mandate": {"max_dd": DD_LIMIT, "worst_month": WORST_MONTH_LIMIT, "months_in_profit": MONTHS_MIN,
                     "streak": STREAK_MAX, "sharpe_corridor": [SHARPE_LO, SHARPE_HI]},
         "leverage_allowed_by": caps, "shipped": shipped,
-        "event": {"window": list(EVENT), "replayed_into_quarters": [str(s.date()) for s in starts],
-                  "date": str(wide["volprem"].loc[EVENT[0]:EVENT[1]].idxmin().date()),
-                  "leg_day_loss_at_book_weight": round(leg_day, 4),
-                  "book_day_loss_unlevered": round(book_day, 4)},
+        # `null` rather than an omitted key: a reader must be able to tell "the stress was run and
+        # this is what it found" from "no leg in this composition reaches 2010, so it was not run".
+        "event": ({"window": list(EVENT), "replayed_into_quarters": [str(s.date()) for s in starts],
+                   "date": str(wide["volprem"].loc[EVENT[0]:EVENT[1]].idxmin().date()),
+                   "leg_day_loss_at_book_weight": round(leg_day, 4),
+                   "book_day_loss_unlevered": round(book_day, 4)} if stressed else
+                  {"window": list(EVENT), "skipped": "no family in this composition has history there"}),
         "mc_reps": MC_REPS, "grid": rows}), indent=2, default=float))
     print(f"\nartifacts -> {R / 'book' / 'risk_budget.json'}, {R / 'book' / 'risk_budget_grid.csv'}")
     print("RISK BUDGET OK")

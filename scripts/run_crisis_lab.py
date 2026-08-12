@@ -179,7 +179,9 @@ def panels(wide=False) -> dict[str, tuple[pd.DataFrame, int]]:
         cm = COMMOD_WIDE if wide else crisis.COMMOD
         bd = BOND_WIDE if wide else crisis.BOND
         if "crypto" not in _PANELS:
-            _PANELS["crypto"] = (crisis._crypto_panel(crisis.CRYPTO_TOP), CRYPTO_PPY)
+            # `_crypto_panel` returns (panel, membership) since the crypto universe became point-in-time;
+            # this took the tuple as the panel and died on `.empty`. Only the panel is wanted here.
+            _PANELS["crypto"] = (crisis._crypto_panel(crisis.CRYPTO_TOP)[0], CRYPTO_PPY)
         _PANELS[key] = {
             "equity": (crisis._panel(eq, crisis._etf), STOCK_PPY),
             "commod": (crisis._panel(cm, crisis._etf), STOCK_PPY),

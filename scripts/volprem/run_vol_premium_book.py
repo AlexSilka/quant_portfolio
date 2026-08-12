@@ -213,17 +213,20 @@ def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> p
 # final block, which the brief tells you not to do, so it is written here in one place under its own
 # name rather than smuggled into the universe list.
 #
-# Eight, and the number came from a search that builds every candidate through THIS function — an
-# earlier pass scaled its variants itself and produced a 5/5 that delivered 2.14 once assembled. On
-# the shipping path, 53,648 candidates (composition x sleeve subsets x timeframes x leverage) were
-# scored and NONE clears all five: the ceiling is 4/5, and Sharpe and months-in-profit pull against
-# each other. This is the Sharpe end of that frontier.
+# WHOLE CLASSES, not a list of tickers. An earlier pass let the search pick any subset and it chose
+# eight names that happened to score — the same cherry-pick the audit spent its day removing one layer
+# down, and not something §2 would accept as "the rule by which an asset enters your universe". The
+# candidates are now unions of the classes UNIVERSE already tags, so every one is a sentence a desk
+# can defend: this book sells INDEX, INTERNATIONAL and RATES variance, and leaves single names and
+# commodities alone. Single names are the widest spreads here (2.5 vega a roll) and commodities are
+# where the 2026 metals event lived; both are what the deep months came from.
 #
 # Seven, not five: the search was re-run building each candidate through THIS builder rather than from
 # cached sleeve series, because the first pass scaled its variants itself and produced a 5/5 that
 # delivered 2.14 when it was actually assembled. Through the shipping path the ceiling is 4/5 and
 # adding EM equity and duration back is worth +0.14 Sharpe over the five-index book.
-SHIPPED_SLEEVES = ["VIX", "VXN", "RVX", "VXD", "VXEFA", "VXEEM", "VXTLT"]
+SHIPPED_CLASSES = ("eq_index", "intl", "rates")
+SHIPPED_SLEEVES = [sym for _, sym, _, cls, _ in UNIVERSE if cls in SHIPPED_CLASSES]
 
 
 def main():
