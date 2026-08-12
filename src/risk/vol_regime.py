@@ -58,17 +58,25 @@ def term_structure(index, near: str = "VIX", far: str = "VIX3M") -> pd.Series:
     return _index(far, index) / _index(near, index)
 
 
-def short_vol_gate(index, threshold: float = 1.0) -> pd.Series:
+def short_vol_gate(index, threshold: float = 1.0, lag: int = 0) -> pd.Series:
     """Exposure multiplier on `index` for the short-vol leg: 1.0 while EVERY curve segment is in contango
-    (far/near >= threshold), 0.0 as soon as one inverts, decided on the prior close (shift 1).
+    (far/near >= threshold), 0.0 as soon as one inverts.
 
     A segment whose index has no history yet is not a signal, so it does not gate — the ratio is NaN and
-    treated as contango, leaving the leg fully live rather than flat on a rule that cannot be evaluated."""
+    treated as contango, leaving the leg fully live rather than flat on a rule that cannot be evaluated.
+
+    `lag` is the EXECUTION delay this function applies itself, and the default is none because the caller
+    that matters applies its own. The gate is fed to `short_vol_book`, which shifts the side by `exec_lag`
+    (2), so a reading stamped at close(t) already governs bar t+2 — a full trading day to act in. This
+    function used to add a `shift(1)` on top of that, which is not conservatism but double-counting: it
+    pushed the decision to t-3 and cost the SPX sleeve 0.81 Sharpe and 7.4pp of drawdown (+4.69/-18.3%
+    against +5.50/-10.9%), positive in all five sub-periods. Pass `lag=1` when multiplying a FINISHED P&L
+    series, where no execution lag is applied downstream — `gate_short_vol_leg` below is that case."""
     live = pd.Series(True, index=_dates(index))
     for near, far in SEGMENTS:
         ratio = term_structure(index, near, far)
         live &= (ratio >= threshold) | ratio.isna()            # no data on a segment => that segment abstains
-    gate = live.astype(float).shift(1).fillna(1.0)
+    gate = live.astype(float).shift(lag).fillna(1.0)
     gate.index = pd.Index(index)          # restore the caller's original index for element-wise use
     return gate
 
@@ -77,7 +85,7 @@ OWN_CURVE_LOOKBACK = 63           # trading days in three months — the calenda
 
 
 def own_curve_gate(implied: pd.Series, index, lookback: int = OWN_CURVE_LOOKBACK,
-                   threshold: float = 1.0) -> pd.Series:
+                   threshold: float = 1.0, lag: int = 0) -> pd.Series:
     """The same contango test as `short_vol_gate`, for a sleeve that has no far-dated index of its own.
 
     `short_vol_gate` reads the VIX curve, which is the volatility of the S&P 500. That makes it a good
@@ -97,8 +105,9 @@ def own_curve_gate(implied: pd.Series, index, lookback: int = OWN_CURVE_LOOKBACK
     around them is a plateau: every cell beats the ungated book on Sharpe, drawdown AND 2026 at once
     (`run_gate_coverage.py`).
 
-    Decided on the prior close (shift 1); `short_vol_book` shifts the side by `exec_lag` again, so three
-    days separate signal from exposure. Validated against the null a leg that merely sits out would
+    Stamped at the close it is read on; `short_vol_book` shifts the side by `exec_lag`, so two days
+    separate the reading from the exposure it governs. See `short_vol_gate` on why this function no
+    longer adds a lag of its own. Validated against the null a leg that merely sits out would
     produce — a random gate at each sleeve's own duty cycle clears Sharpe +3.03 at p95 against this
     rule's +7.36, so the value is the timing and not the absence.
     """
@@ -110,7 +119,7 @@ def own_curve_gate(implied: pd.Series, index, lookback: int = OWN_CURVE_LOOKBACK
     # Before `lookback` bars the trailing mean does not exist. Unlike a missing VIX segment — where the
     # test cannot be run but the leg is otherwise fine, so it abstains — here the gap is the sleeve's own
     # first three months, and standing down through them costs a quarter once per sleeve, ever.
-    gate = live.astype(float).shift(1).fillna(0.0)
+    gate = live.astype(float).shift(lag).fillna(0.0)
     gate.index = pd.Index(index)
     return gate
 
@@ -119,6 +128,7 @@ def gate_short_vol_leg(leg: pd.Series, threshold: float = 1.0) -> pd.Series:
     """Return the short-vol return series `leg` with the backwardation gate applied (crash regime → flat).
 
     NOTE: this multiplies a finished P&L series, so it does NOT charge the vega spread the switch really
-    crosses. It is kept for A/B diagnostics only — the shipped `ret_gated` is built by
+    crosses, and nothing downstream applies an execution lag — hence `lag=1` here where the sleeve path
+    takes none. It is kept for A/B diagnostics only — the shipped `ret_gated` is built by
     `run_vol_premium_book.gated_book`, which passes the gate into the sleeve so switching is paid for."""
-    return (leg * short_vol_gate(leg.index, threshold)).rename(getattr(leg, "name", "ret"))
+    return (leg * short_vol_gate(leg.index, threshold, lag=1)).rename(getattr(leg, "name", "ret"))

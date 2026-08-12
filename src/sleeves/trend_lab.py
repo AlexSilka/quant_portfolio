@@ -209,7 +209,8 @@ def apply_direction(pos: pd.Series, mode: str = "ls", short_weight: float = 0.3)
 # ── panel time-series momentum: ONE implementation for the two macro sleeves ─────────────────
 def tsmom_panel(close: pd.DataFrame, lookbacks, ppy: float, cost_bps: float = 2.0,
                 target: float = 0.15, vol_lb: int = 40, cap: float = 3.0,
-                carry_pa: pd.DataFrame | None = None) -> pd.Series:
+                carry_pa: pd.DataFrame | None = None,
+                member: pd.DataFrame | None = None) -> pd.Series:
     """Equal-weight sign-blend TSMOM over a price panel, per-asset vol-scaled, net of turnover cost.
 
     This was written twice — once in `scripts/run_crisis.py` and once in `scripts/run_gmacro.py` —
@@ -232,15 +233,29 @@ def tsmom_panel(close: pd.DataFrame, lookbacks, ppy: float, cost_bps: float = 2.
     this universe averages 2.3% a year and reaches 6.2% on HYG. Both were simply absent, and both
     turn out to have been understating the leg — the bond tranche is a loser without them and a
     (marginal) winner with them.
+
+    `member` is a boolean (bar x name) universe mask — pass one and the panel trades only the names
+    eligible at that bar and divides by how many are LIVE rather than by the column count. That is what
+    a point-in-time universe needs: a fixed denominator would dilute the book by every name that has
+    not listed yet. Left None the arithmetic is untouched, so a caller with a complete panel (the
+    global-macro ETF/FX books) is unaffected.
     """
     import numpy as _np
     r = close.pct_change()
     vol = r.rolling(vol_lb).std().shift(1)                  # lagged: computable at the bar
     sig = sum(_np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
     pos = sig.shift(2) * (target / _np.sqrt(ppy) / vol).clip(upper=cap)
-    n = close.shape[1]
+    if member is None:
+        n = close.shape[1]
+    else:                                                   # membership is a decision, so it lags too
+        pos = pos.where(member.reindex_like(pos).shift(2).fillna(False))
+        n = pos.notna().sum(axis=1).replace(0, _np.nan)
     gross = (pos * r).sum(axis=1) / n
     if carry_pa is not None:
         gross = gross + (pos * carry_pa.reindex_like(pos).fillna(0.0) / 100.0 / ppy).sum(axis=1) / n
-    cost = (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4
+    # A name that LEAVES the universe has to be sold, and NaN.diff() charges nothing for it — so on the
+    # membership path the position is read as zero off-universe and the entry/exit is a trade like any
+    # other. Scoped to that path so the complete-panel callers keep their arithmetic exactly.
+    dpos = (pos.fillna(0.0) if member is not None else pos).diff().abs()
+    cost = (dpos.sum(axis=1) / n) * cost_bps / 1e4
     return gross - cost

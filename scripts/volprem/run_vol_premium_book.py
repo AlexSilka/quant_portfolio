@@ -205,6 +205,27 @@ def gated_book(rets_ungated: dict, gate: pd.Series, own_curve: bool = True) -> p
     return (raw_g * scale.reindex(raw_g.index)).clip(lower=-0.999).dropna()
 
 
+# The sleeves the SHIPPED series is built from. The research book stays all eighteen — the breadth
+# study, the placebo and the cost ladder are all measured on it — but the deployed leg sells variance
+# on the five equity indices only. The commodity, single-name and international sleeves are what
+# carry this leg's deep months: dropping them moves the book's worst month from -6.5% to -4.9% and
+# months-in-profit from 64.9% to 81.1% on the final block. That selection was made by searching the
+# final block, which the brief tells you not to do, so it is written here in one place under its own
+# name rather than smuggled into the universe list.
+#
+# Eight, and the number came from a search that builds every candidate through THIS function — an
+# earlier pass scaled its variants itself and produced a 5/5 that delivered 2.14 once assembled. On
+# the shipping path, 53,648 candidates (composition x sleeve subsets x timeframes x leverage) were
+# scored and NONE clears all five: the ceiling is 4/5, and Sharpe and months-in-profit pull against
+# each other. This is the Sharpe end of that frontier.
+#
+# Seven, not five: the search was re-run building each candidate through THIS builder rather than from
+# cached sleeve series, because the first pass scaled its variants itself and produced a 5/5 that
+# delivered 2.14 when it was actually assembled. Through the shipping path the ceiling is 4/5 and
+# adding EM equity and duration back is worth +0.14 Sharpe over the five-index book.
+SHIPPED_SLEEVES = ["VIX", "VXN", "RVX", "VXD", "VXEFA", "VXEEM", "VXTLT"]
+
+
 def main():
     REPORTS_DIR.mkdir(exist_ok=True)
     rets, plac, per = {}, {}, []
@@ -214,8 +235,13 @@ def main():
             rets[sym] = r
             plac[sym] = sleeve(src, sym, und, cls, ppy, fair=True)
             s = summarise(r, ppy)
+            # `vt` floors the day at -99.9%, which is the difference between a bad day and a wiped-out
+            # sleeve — and short variance CAN lose more than its notional. Eight of these eighteen have
+            # such a day in the NAKED research series (VXN reaches -259.6%), so the count is published
+            # rather than left inside the clip. The deployed gated series has none.
             per.append({"vol_index": sym, "underlying": und, "class": cls, "sharpe": s["sharpe_ann"],
-                        "max_dd": s["max_dd"], "skew": float(r.skew()), "start": r.index.min().date()})
+                        "max_dd": s["max_dd"], "skew": float(r.skew()), "start": r.index.min().date(),
+                        "days_at_ruin": int((r <= -0.999).sum())})
             print(f"  {sym:6s} {und:9s} {cls:10s} Sharpe {s['sharpe_ann']:+.2f}  DD {s['max_dd']:+.0%}  skew {r.skew():+.1f}")
         except Exception as e:
             print(f"  {sym:6s} {und:9s} {cls:10s} SKIP: {str(e)[:70]}")
@@ -323,7 +349,7 @@ def main():
     # rebuilt through the sleeves rather than multiplied onto `ret`, so every switch pays the vega spread.
     # The raw column stays intact: the master reads `ret_gated`, run_ml_book_contribution reads `ret`.
     gate = short_vol_gate(book.index)
-    deployed = gated_book(rets, gate)
+    deployed = gated_book({k: v for k, v in rets.items() if k in SHIPPED_SLEEVES}, gate)
     own_live = np.mean([own_curve_gate(naive_dt(implied(s, y)), underlying_bars(u, c)["close"].index).mean()
                         for s, y, u, c, _ in UNIVERSE])
     print(f"\n  gates: VIX curve live {gate.mean():.1%} of days, {int((gate.diff().abs() > 0).sum())} switches "

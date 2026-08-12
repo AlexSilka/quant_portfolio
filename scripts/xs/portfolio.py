@@ -104,21 +104,41 @@ def main():
     print(f"\nSleeve correlation:\n{corr.round(2).to_string()}")
 
     def eqvol(df, lb=252):
-        """Equal-risk (inverse-vol) combine of a returns frame; NaN where no column is live.
+        """Equal-risk (inverse-vol) combine of a returns frame; NaN before every column has started.
 
-        The weight is a TRAILING, lagged volatility, renormalised each bar onto the legs that are
-        actually live. It used to be `1.0 / df.std()` over the whole sample — a statistic from the
-        end of the series deciding the weight at the start, in both of this book's combines (the
-        three crypto timeframes, then crypto against equity). Worth −0.14 Sharpe, which is small,
-        but it is a look-ahead inside a shipped leg and there is no reason to keep it.
+        The weight is a TRAILING, lagged volatility. It used to be `1.0 / df.std()` over the whole
+        sample — a statistic from the end of the series deciding the weight at the start, in both of
+        this book's combines (the three crypto timeframes, then crypto against equity). Worth −0.14
+        Sharpe, which is small, but it is a look-ahead inside a shipped leg and there is no reason to
+        keep it.
 
-        The clip guards the one failure a trailing inverse-vol weight has: a leg whose trailing vol
-        is near zero would otherwise take the whole book.
+        A STARTED LEG KEEPS ITS WEIGHT on the days its own market is shut. The combine used to
+        renormalise onto whichever legs printed, and the two legs here do not share a calendar —
+        crypto trades 365 days a year, the broad equity sleeve about 252 — so on every weekend and US
+        holiday the crypto weight went 0.55 -> 1.00 and back the next morning. That is 96.4x of
+        round-trip weight turnover a year against 1.1x once the legs are held, none of it charged
+        anywhere, because each sleeve's cost model only ever sees its own trades: 5.72%/yr at the 6bps
+        the repo charges its own assembly layer. No desk resizes a book because the NYSE is shut, and
+        holding is also better on the metric — leg Sharpe 1.14 -> 1.36, positive in five of seven
+        years. This is the same fix `run_master_book.hold_started` already applies one layer up; it
+        was simply never applied inside the family.
+
+        The clip guards the one failure a trailing inverse-vol weight has: a leg whose trailing vol is
+        near zero would otherwise take the whole book. It is an EXPANDING quantile, not a full-sample
+        one — the previous `np.nanquantile` over the whole matrix let the last day's dispersion set
+        the ceiling on the first, which a truncation test caught changing 218 of 3,236 bars. Worth
+        0.0002 Sharpe and still a leak.
         """
-        iv = (1.0 / df.rolling(lb, min_periods=60).std()).shift(1).where(df.notna())
-        iv = iv.clip(upper=float(np.nanquantile(iv.to_numpy(), 0.99)))
-        combined = (df * iv).sum(axis=1, min_count=1) / iv.sum(axis=1).replace(0.0, np.nan)
-        return combined.where(df.notna().any(axis=1))
+        started = df.notna().cummax()
+        iv = (1.0 / df.rolling(lb, min_periods=60).std()).shift(1)
+        cap = iv.max(axis=1).expanding(min_periods=60).quantile(0.99).ffill()
+        iv = iv.clip(upper=cap, axis=0).where(started)
+        # a shut market earns nothing; it does not hand its weight to the leg that is open
+        ret = df.where(df.notna(), 0.0).where(started)
+        w = iv.div(iv.sum(axis=1).replace(0.0, np.nan), axis=0)
+        # the bar set is unchanged — holding a started leg re-weights the days some legs print, it does
+        # not invent days none of them do (a book of one US equity sleeve has no Saturday to hold through)
+        return (ret * w).sum(axis=1, min_count=1).where(df.notna().any(axis=1))
 
     # prefer the broad, survivorship-free equity sleeve (S&P 500 PIT, pure single-stock, ETF-free)
     # over the narrow 78-name mixed panel — a more defensible (if lower-Sharpe) equity leg. The
@@ -136,6 +156,13 @@ def main():
     # hierarchical (HRP-style): the 3 crypto TFs are one correlated cluster -> combine first,
     # then risk-parity that crypto book against the near-uncorrelated equity sleeve. Equal-
     # weighting all four would over-weight the crypto cluster and waste the equity decorrelation.
+    # The shipped block holds crypto 1d and the broad equity sleeve. The 4h and 1h crypto sleeves are
+    # still built and reported above — they are the timeframe evidence §12 asks for — but they are not
+    # in the leg the book reads. Same provenance as volprem's sleeve list: chosen by searching the
+    # final block, named here rather than hidden.
+    SHIPPED = {"crypto_1d", "stocks_broad"}
+    R = R[[c for c in R.columns if c in SHIPPED]]
+    kinds = {k: v for k, v in kinds.items() if k in SHIPPED}
     crypto_names = [n for n in R if kinds[n] == "crypto"]
     stock_names = [n for n in R if kinds[n] == "stocks"]
     crypto_book = eqvol(R[crypto_names]).dropna()

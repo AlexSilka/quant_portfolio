@@ -29,6 +29,7 @@ import pandas as pd
 
 from src.backtest.carry import resolve as resolve_carry
 from src.backtest.costs import panel_impact_cost
+from src.sleeves.xsect import held_turnover
 
 
 # ── data integrity: winsorise the panel before anything reads it ──────────────────────────
@@ -153,7 +154,10 @@ def bab_backtest(px: pd.DataFrame, weights: pd.DataFrame, *, exec_lag: int = 2,
     rets = px.pct_change()
     w = weights.shift(exec_lag).fillna(0.0)
     gross_ret = (w * rets).sum(axis=1)
-    dw = w.diff().abs()
+    # the monthly-cadence book still starts every bar on its target weights, so the drift back onto them
+    # is a trade — see `xsect.held_turnover`. Charged here for the same reason funding is: the omission
+    # only ever flatters, and it grows with the rebalance period the caller picks.
+    dw = held_turnover(w, rets)
     turn = dw.sum(axis=1)
     lin_cost = turn * cost_bps / 1e4
     if adv is not None and impact_k > 0.0:

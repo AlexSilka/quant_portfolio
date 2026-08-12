@@ -146,6 +146,26 @@ def _no_trade_buffer(w: pd.DataFrame, buffer: float) -> pd.DataFrame:
     return pd.DataFrame(out, index=w.index, columns=w.columns)
 
 
+def held_turnover(w: pd.DataFrame, rets: pd.DataFrame) -> pd.DataFrame:
+    """Per-name notional actually traded each bar by a book that HOLDS `w` — target change plus drift.
+
+    `(w * rets).sum()` with a weight held flat over a rebalance period is the return of a book put back
+    onto those weights every single bar; prices move, the position drifts away, and something has to
+    trade it back. `w.diff().abs()` counts only the bars the TARGET moves, so a `rebal=21` book booked
+    the returns of daily rebalancing at the price of monthly rebalancing. Measured on the shipped legs,
+    that is 19.6x/yr charged against 33.8x actually done (BAB top-25) and 45.3x against 75.8x (crypto
+    x-sect) — about 0.85%/yr of free trading.
+
+    The position held over bar t is w[t]; over that bar it drifts to w[t]·(1+r[t]) renormalised by the
+    book's own return, and at the close it is traded to w[t+1]. So the honest turnover is
+    |w[t+1] − drift(w[t])|, which reduces to `w.diff().abs()` when nothing moves and is fully
+    vectorised — no sequential state, because a daily-rebalanced book always starts the bar on target.
+    """
+    b = (w * rets).sum(axis=1)
+    drifted = w.mul(1.0 + rets).div((1.0 + b).replace(0.0, np.nan), axis=0)
+    return (w - drifted.shift(1)).abs().fillna(w.abs())
+
+
 def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3,
                 weighting: str = "equal", rebal: int = 1, exec_lag: int = 2, buffer: float = 0.0,
                 cost_bps: float = 6.0, commission_bps: float | None = None,
@@ -191,7 +211,7 @@ def xs_backtest(px: pd.DataFrame, signal: pd.DataFrame, *, top_frac: float = 0.3
     w = w.shift(exec_lag).fillna(0.0)
 
     gross_ret = (w * rets).sum(axis=1)
-    dw = w.diff().abs()
+    dw = held_turnover(w, rets)
     turn = dw.sum(axis=1)
     commission = turn * commission_bps / 1e4
     spread = turn * half_spread_bps / 1e4

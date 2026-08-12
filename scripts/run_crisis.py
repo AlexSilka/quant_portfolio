@@ -70,20 +70,35 @@ def _fx(pair):
 
 
 def _crypto_panel(topn):
-    """Top-N crypto by market-cap order, spliced spot(pre-2020)+perp(2020+) via the trend loader."""
+    """The N most liquid perps AT EACH BAR, spliced spot(pre-2020)+perp(2020+) via the trend loader.
+
+    Returns (close panel, membership mask). It used to read the first N names of
+    `reports/crypto_universe.txt`, which is today's market-cap ranking — a list that knows which coins
+    survived, applied back to 2017. That is the one bias this project removes everywhere else, and this
+    was the last place holding it: today's twenty names cover 53% of the point-in-time top-20's
+    member-days, and the hindsight is worth Sharpe +0.99 -> +0.37 on this class (+2.16 -> +1.28 over
+    2017-2020, where survivorship bites hardest). Membership is the same rule the breakout and carry
+    legs already use — trailing 30-day median dollar volume, lagged.
+    """
     try:
         import scripts.trend.trend_common as T
+        from src import bo_common as bo
     except Exception:
-        return pd.DataFrame()
-    names = (ROOT / "reports/crypto_universe.txt").read_text().strip().split(",")[:topn]
+        return pd.DataFrame(), None
+    uni = bo.pit_universe(topn)
+    if uni.index.tz is not None:
+        uni.index = uni.index.tz_localize(None)
     out = {}
-    for sym in names:
+    for sym in sorted(uni.columns[uni.any()]):
         px = T.load_crypto_long(sym, "1d")
         if px is not None and len(px) > 200:
             c = px["close"]
             c.index = pd.to_datetime(c.index)
             out[sym] = c.tz_localize(None) if c.index.tz is not None else c
-    return pd.DataFrame(out).sort_index()
+    P = pd.DataFrame(out).sort_index()
+    if P.empty:
+        return P, None
+    return P, uni.reindex(columns=P.columns).reindex(P.index, method="ffill").fillna(False)
 
 
 def _panel(syms, loader):
@@ -148,35 +163,53 @@ def _etf_yield(px):
     return pd.DataFrame(out).reindex_like(px).fillna(0.0) if out else None
 
 
-def _tsmom(close, lookbacks, ppy, cost_bps=COST_BPS, carry_pa=None):
+def _tsmom(close, lookbacks, ppy, cost_bps=COST_BPS, carry_pa=None, member=None):
     """`trend_lab.tsmom_panel`, vol-targeted. The construction used to live here as a copy of
     the one in `run_gmacro.py`, and both copies filled at the signal bar's own close and sized
     on an unlagged volatility. One implementation now, with both fixed."""
-    return _vol_target(tsmom_panel(close, lookbacks, ppy, cost_bps, carry_pa=carry_pa), ppy)
+    return _vol_target(tsmom_panel(close, lookbacks, ppy, cost_bps, carry_pa=carry_pa, member=member), ppy)
 
 
-def _class_book(close, ppy, cost_bps=COST_BPS, carry_pa=None):
-    """Average the fast/medium/slow TSMOM tranches (timeframe diversification), vol-target to 15%."""
+def _class_book(close, ppy, cost_bps=COST_BPS, carry_pa=None, member=None):
+    """Average the fast/medium/slow TSMOM tranches (timeframe diversification), vol-target to 15%.
+
+    Each tranche is vol-targeted ONCE — by `_tsmom` — and the blend is targeted once more, which is the
+    legitimate re-scale of a diversified average. There used to be a third `_vol_target` wrapped around
+    each tranche here, on top of the one `_tsmom` already applies. Two nested targets do not cancel:
+    each divides by its own trailing vol and each is capped at 3.0, so a quiet stretch could hand a
+    tranche 9x and the class 27x. It showed as a class targeted to 15% annualised printing a single
+    day of -35.3% (equity, 2020-06-11) and carrying the sleeve's whole -53% drawdown on that one bar —
+    a 37-sigma day that was leverage, not a market event.
+    """
     if close.empty or close.shape[1] == 0:
         return None
-    tranches = [_vol_target(_tsmom(close, lb, ppy, cost_bps, carry_pa), ppy) for lb in LOOKBACKS]
+    tranches = [_tsmom(close, lb, ppy, cost_bps, carry_pa, member) for lb in LOOKBACKS]
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna(), ppy)
 
 
 def build_crisis(cost_bps=COST_BPS) -> pd.Series:
     eq, cm, bd = _panel(EQUITY, _etf), _panel(COMMOD, _etf), _panel(BOND, _etf)
     fx = _panel(FX, _fx)
+    cx, cx_mem = _crypto_panel(CRYPTO_TOP)
     books = {
         "equity": _class_book(eq, STOCK_PPY, cost_bps, _etf_yield(eq)),
         "commod": _class_book(cm, STOCK_PPY, cost_bps, _etf_yield(cm)),
         "bond": _class_book(bd, STOCK_PPY, cost_bps, _etf_yield(bd)),
         "fx": _class_book(fx, STOCK_PPY, cost_bps, _fx_carry(fx)),
         # crypto perps: funding is already charged inside the trend loader that builds this panel
-        "crypto": _class_book(_crypto_panel(CRYPTO_TOP), CRYPTO_PPY, cost_bps),
+        "crypto": _class_book(cx, CRYPTO_PPY, cost_bps, member=cx_mem),
     }
     live = {k: v for k, v in books.items() if v is not None and len(v) > 100}
     df = pd.DataFrame(live).sort_index()
-    crisis = _vol_target(df.mean(axis=1, skipna=True).dropna(), CRYPTO_PPY)   # equal risk over live classes
+    # A class that has STARTED keeps its weight on the days its own market is shut, earning nothing.
+    # Four of the five classes trade an exchange calendar and crypto trades 365 days, so averaging over
+    # whoever printed handed the whole sleeve to crypto on 802 days — every weekend and US holiday — and
+    # back the next morning: 108x of round-trip class-weight turnover a year, charged nowhere. A hedge
+    # that silently becomes a single-asset crypto book at the weekend is not the five-class hedge it is
+    # sized as. Same rule as `run_master_book.hold_started`, one layer down.
+    started = df.notna().cummax()
+    held = df.where(df.notna(), 0.0).where(started)
+    crisis = _vol_target(held.mean(axis=1, skipna=True).dropna(), CRYPTO_PPY)  # equal risk over started classes
     return crisis.rename("ret")
 
 

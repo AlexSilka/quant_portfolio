@@ -280,7 +280,10 @@ def volregime():
         p = _purged(X[m], y[m], fac, True, embargo=25).reindex(idx).shift(1)
         return (1.0 - p.clip(0, 1)).reindex(idx).fillna(1.0)
 
-    rule = short_vol_gate(idx, 1.0)                      # the SHIPPED non-ML rule (VIX backwardation)
+    # the SHIPPED non-ML rule (VIX backwardation). lag=1 because this arm multiplies a FINISHED leg
+    # series — nothing downstream applies an execution delay here, unlike the sleeve path where the
+    # gate goes into `short_vol_book` and is shifted by exec_lag.
+    rule = short_vol_gate(idx, 1.0, lag=1)
     logit = ml_soft(lambda: LogisticRegression(max_iter=500, C=1.0))
     lgbm = ml_soft(lambda: lgb.LGBMClassifier(n_estimators=200, max_depth=3, learning_rate=0.03,
                                               subsample=0.8, colsample_bytree=0.8, random_state=7, n_jobs=-1, verbose=-1))
