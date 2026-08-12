@@ -56,7 +56,8 @@ def scale_at(net: pd.Series, window: int) -> pd.Series:
 def arm(labels: list[str], window: int, start: str, leverage: float):
     raw = {lab: mb.load(lab, f, c) for lab, f, c in mb.FAMILIES if lab in labels}
     raw = {k: v for k, v in raw.items() if v is not None}
-    df = pd.DataFrame({k: (v * scale_at(v, window)).iloc[BURN:] for k, v in raw.items()}).sort_index()
+    df = mb.hold_started(pd.DataFrame({k: (v * scale_at(v, window)).iloc[BURN:]
+                                       for k, v in raw.items()}).sort_index())
     df = df[df.index >= pd.Timestamp(start)].dropna(how="all")
     sc = pd.DataFrame({k: scale_at(v, window) for k, v in raw.items()}).reindex(df.index)
     b = (mb.book_stack(df) * leverage).dropna()

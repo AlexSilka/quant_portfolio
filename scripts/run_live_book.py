@@ -40,27 +40,41 @@ warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations on
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import scripts.run_master_book as mb  # noqa: E402
-from src.config import CAPITAL_USD, LAB_DIR  # noqa: E402
+from src.config import BOOK_REBALANCE_BPS, CAPITAL_USD, LAB_DIR  # noqa: E402
 
 START = "2011-01-03"        # first day both gate segments exist (VIX9D lists 2011-01-04)
 LEGS = ["volprem", "breakout", "bab", "xs_momentum"]
 DEFAULT_LEVERAGE = 2.0
 
 
-def legs() -> pd.DataFrame:
-    """The chosen families, each rescaled to the common per-leg vol target — the assembler's own step."""
+def legs() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The chosen families, each rescaled to the common per-leg vol target — the assembler's own step.
+
+    Returns the leg matrix and the vol-target multipliers behind it, because the multipliers are what
+    the book actually trades to re-size and that trading has to be paid for."""
     raw = {lab: mb.load(lab, f, c) for lab, f, c in mb.FAMILIES if lab in LEGS}
     raw = {k: v for k, v in raw.items() if v is not None}
     missing = [k for k in LEGS if k not in raw]
     if missing:                                   # a leg silently absent would change the book, not fail it
         print(f"WARNING: legs not found and therefore not held: {missing}")
-    df = pd.DataFrame({k: mb.rescale(raw[k]) for k in raw}).sort_index()
-    return df[df.index >= pd.Timestamp(START)].dropna(how="all")
+    scales = pd.DataFrame({k: mb._scale(raw[k]) for k in raw}).sort_index().ffill()
+    df = mb.hold_started(pd.DataFrame({k: mb.rescale(raw[k]) for k in raw}).sort_index())
+    m = df.index >= pd.Timestamp(START)
+    df = df[m].dropna(how="all")
+    return df, scales[m].where(df.notna())
 
 
-def book(df: pd.DataFrame, leverage: float) -> pd.Series:
-    """Equal risk over the legs live each day, at one constant leverage. No book-level overlay."""
-    return (mb.book_stack(df) * leverage).dropna()
+def book(df: pd.DataFrame, leverage: float, scales: pd.DataFrame | None = None) -> pd.Series:
+    """Equal risk over the legs live each day, at one constant leverage. No book-level overlay.
+
+    Net of the assembly layer's own rebalancing: each family charges its own trades inside its own
+    series, but re-sizing the legs to their vol target is a trade the book makes, and it is charged
+    here at the same blended rate the master book uses."""
+    b = mb.book_stack(df) * leverage
+    if scales is not None:
+        turn = mb.book_turnover(mb.book_weights(df, scales)) * leverage
+        b = b - turn * (BOOK_REBALANCE_BPS / 1e4)
+    return b.dropna()
 
 
 def stats(s: pd.Series) -> dict:
@@ -97,8 +111,8 @@ def arith_of(s: pd.Series) -> dict:
 
 def main() -> None:
     lev = float(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_LEVERAGE
-    df = legs()
-    b = book(df, lev)
+    df, scales = legs()
+    b = book(df, lev, scales)
     st = stats(b)
     live = df.notna().sum(axis=1)
     print(f"=== LIVE BOOK — {', '.join(df.columns)} @ {lev:.2f}x, no §8 overlay ===")
@@ -129,20 +143,20 @@ def main() -> None:
     # nine of these fifteen years "the portfolio" is vol-prem plus x-sect. Both windows are printed so the
     # headline cannot be read as fifteen years of the thing actually being run.
     full = df[df.index >= pd.Timestamp("2020-01-01")]
-    sf = stats(book(full, lev))
+    sf = stats(book(full, lev, scales.loc[full.index]))
     print(f"\n  since all four legs list (2020-01+): {sf['cagr']:+.1%} a year, Sharpe {sf['sharpe']:+.2f}, "
           f"max DD {sf['max_dd']:+.1%} — the same book measured only where it is the book")
 
     print(f"\n{'leverage':>9s} {'return':>9s} {'max DD':>8s} {'worst mo':>9s} {'worst day':>10s} {'vol':>7s}")
     sweep = {}
     for x in (1.0, 1.5, 2.0, 2.5, 3.0, 4.0):
-        bx = book(df, x)
+        bx = book(df, x, scales)
         sx = stats(bx)
         # the per-year and 2020+ cuts are recorded per rung: compounding is not linear in the dial, so a
         # reader cannot rescale one rung's year from another's, and the report page lets them move it
         sweep[f"{x:.1f}"] = {k: round(v, 4) for k, v in sx.items()} | arith_of(bx) | {
             "per_year": per_year_of(bx),
-            "since_2020": {k: round(v, 4) for k, v in stats(book(full, x)).items()}}
+            "since_2020": {k: round(v, 4) for k, v in stats(book(full, x, scales.loc[full.index])).items()}}
         print(f"{x:9.1f} {100 * sx['cagr']:8.1f}% {100 * sx['max_dd']:7.1f}% {100 * sx['worst_month']:8.1f}% "
               f"{100 * sx['worst_day']:9.1f}% {100 * sx['vol']:6.1f}%")
 
@@ -159,7 +173,7 @@ def main() -> None:
                                 for y, g in b.groupby(b.index.year)},
          "pnl_share_2020": {c: round(float(v), 4) for c, v in
                             (full.sum() / full.sum().sum()).sort_values(ascending=False).items()},
-         "since_all_legs_2020": {k: round(v, 4) for k, v in stats(book(full, lev)).items()}}, indent=2))
+         "since_all_legs_2020": {k: round(v, 4) for k, v in stats(book(full, lev, scales.loc[full.index])).items()}}, indent=2))
     print(f"\nwrote {LAB_DIR / 'live_book.parquet'} and live_book.json")
 
 

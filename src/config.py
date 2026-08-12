@@ -60,6 +60,16 @@ BINANCE_FUT_MAKER_BPS = 2.0       # 0.02%  USD-M perp maker
 CRYPTO_HALF_SPREAD_BPS = 1.0
 EQUITY_COMMISSION_BPS = 1.0       # US equities ~1bp/side all-in via a prime broker
 EQUITY_HALF_SPREAD_BPS = 2.0      # penny-ish spread on liquid large caps
+BOOK_REBALANCE_BPS = 6.0          # cost of moving one unit of BOOK weight, charged at assembly. Every
+                                  # family charges its own trades inside its own series, but the layer
+                                  # above them also trades — the vol-target resizes each leg daily and
+                                  # the hedge slot ramps with market stress — and until this constant
+                                  # existed that trading was free. 6bps is the blend the legs imply: a
+                                  # perp round-trip is 5+1, an equity one 1+2 per side, and the Cboe
+                                  # variance leg rolls a strip for more than either, so this errs toward
+                                  # the cheap side of what a real desk pays and is deliberately a single
+                                  # blended number rather than a per-leg model — the assembly layer moves
+                                  # whole sleeves, not named instruments.
 EQUITY_BORROW_BPS_ANNUAL = 50.0   # stock-borrow on the SHORT leg (§9): ~0.5%/yr general-collateral for
                                   # liquid large caps (the equity x-sect shorts top-100 names; hard-to-borrow
                                   # small caps run far higher and are excluded). Charged per bar on short gross.

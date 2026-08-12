@@ -40,7 +40,8 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from src import bo_common as bo  # noqa: E402
-from src.config import (BOOK_LEVERAGE, CAPITAL_USD, OOS_START, SEED, VOL_SCALE_CAP,  # noqa: E402
+from src.config import (BOOK_LEVERAGE, BOOK_REBALANCE_BPS, CAPITAL_USD, OOS_START,  # noqa: E402
+                        SEED, VOL_SCALE_CAP,
                         VOL_TARGET_ANNUAL)
 from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
@@ -388,6 +389,24 @@ def risk_overlay(raw, leverage=1.0, limits="book_equity"):
     return managed.rename("ret"), gross.rename("gross"), int((breaker == 0).sum())
 
 
+def hold_started(df):
+    """A leg that has started keeps its weight on the days its own market is shut, earning nothing,
+    instead of the book renormalising onto whoever happens to be open.
+
+    Averaging over the legs that PRINT each day reads well until you price it. Crypto trades 365 days
+    and the Cboe and equity legs about 252, so on every US holiday the book silently doubled the crypto
+    weight and undid it the next morning — 89x of round-trip rebalancing a year in the live book and 118x
+    in the master, none of it charged anywhere, because each family's cost model only sees that family's
+    own trades. No desk resizes the whole book because the NYSE is shut; it holds. Holding is also better
+    on the metrics that were not the point: master Sharpe 4.31 -> 4.49, worst month -6.0% -> -4.7%,
+    drawdown -8.7% -> -7.8%, months-in-profit 83.5% -> 85.1%, and the assembly turnover it removes was
+    worth 2.6pp a year at the repo's own 2bps floor and 6.3pp at 5bps.
+
+    A leg is 'started' from its first print, so the union window is unchanged — legs still join in the
+    year they list, they simply stop dropping back out on other markets' holidays."""
+    return df.where(df.notna(), 0.0).where(df.notna().cummax())
+
+
 def book_weights(df, scales, slots=None):
     """The per-leg weights the book's own return series implies, day by day — the single source every
     exposure / turnover / rebalance-log figure is derived from (verified: (raw_legs * these).sum(axis=1)
@@ -435,8 +454,12 @@ def assemble(start=START_REPORT):
     crypto-perp legs join in 2020."""
     raw = {lab: load(lab, f, c) for lab, f, c in FAMILIES}
     raw = {k: v for k, v in raw.items() if v is not None}
-    scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index()
-    df = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
+    # Each leg's scale is computed on its OWN calendar, so the union below is where the gaps appear —
+    # and a gap must carry the last scale, not drop to nothing. Held with the returns, the two agree and
+    # the weight a leg has on a shut day is the weight it had the evening before.
+    scales = pd.DataFrame({k: _scale(v) for k, v in raw.items()}).sort_index().ffill()
+    df = hold_started(pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index())
+    scales = scales.where(df.notna())
     mask = df.index >= pd.Timestamp(start)
     df, scales = df[mask], scales[mask]
     keep = df.notna().sum(axis=1) >= 2
@@ -452,23 +475,21 @@ def main():
     # risk parity with no performance-based selection: every EARNER at 1/N, the long-gamma hedge at the
     # stress-ramped slot above (HEDGE_SLOT) — a market-state rule, not a P&L one.
     slots = slot_weights(df)
-    raw_ew = book_stack(df, slots)
-    managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
     w = book_weights(df, scales, slots)
     turn = book_turnover(w)
     ann_turn = float(turn.mean() * PPY)
-    # The same book with every leg that has STARTED holding a weight every day — its last computable
-    # scale carried through the days its own market is shut — instead of the book renormalising onto
-    # whoever is open. Both the turnover it would trade and the return it would earn, because the gap
-    # between the two conventions is the honest measure of what the shipped one costs.
-    started = pd.DataFrame({c: (df.index >= df[c].first_valid_index())
-                               & (df.index <= df[c].last_valid_index()) for c in df.columns}, index=df.index)
-    slots_started = slots.where(started, 0.0)
-    live_started = slots_started.sum(axis=1).replace(0, np.nan)
-    w_held = (scales * slots).where(df.notna()).ffill().where(started).div(live_started, axis=0)
-    ann_turn_held = float(book_turnover(w_held).mean() * PPY)
-    ret_held = (df.fillna(0.0) * slots_started).sum(axis=1) / live_started
-    sc_held = scorecard(ret_held.dropna())
+    # The assembly layer trades, so the assembly layer pays. Each family charges its own trades inside
+    # its own series, but nothing was charging the layer above them — the vol-target resizing every leg
+    # daily and the hedge slot ramping with market stress. Left free it is a subsidy that grows with
+    # exactly the knobs one is most tempted to turn.
+    rebal = turn * (BOOK_REBALANCE_BPS / 1e4)
+    raw_ew = book_stack(df, slots) - rebal
+    managed, gross, n_breaker = risk_overlay(raw_ew, leverage=BOOK_LEVERAGE)
+    # and the overlay is a trade as well: cutting to a third of gross and restoring later moves two
+    # thirds of the book each way, at the same price as any other rebalance
+    overlay_turn = gross.diff().abs().fillna(0.0)
+    managed = (managed - overlay_turn * (BOOK_REBALANCE_BPS / 1e4)).rename("ret")
+    ann_rebal_cost = float(rebal.mean() * PPY + overlay_turn.mean() * PPY * BOOK_REBALANCE_BPS / 1e4)
     stack_vol = float(raw_ew.std(ddof=1) * np.sqrt(ppy_of(raw_ew)))
 
     print("=== GROSS PREMIUM STACK (equal-weight risk parity, no overlay, unlevered) ===")
@@ -491,10 +512,10 @@ def main():
           f"{HEDGE_SLOT} ramped on market stress (mean {slots[list(HEDGE_SLOT)[0]].mean():.2f}) (cap {PER_FAMILY_CAP:.2f})"
           if set(HEDGE_SLOT) & set(df.columns) else
           f"  book net exposure ~0 (legs dollar-neutral); per-family weight 1/{len(df.columns)} (cap {PER_FAMILY_CAP:.2f})")
-    print(f"  annual turnover {ann_turn:.1f}x round-trip. Holding every started leg through the days its own "
-          f"market is shut, instead of renormalising onto whoever is open, would turn over {ann_turn_held:.1f}x "
-          f"for {sc_held} — same book, a fifteenth of the trading; the shipped convention is what is measured "
-          f"and charged everywhere, this is the improvement it points at")
+    print(f"  annual turnover {ann_turn:.1f}x round-trip at the assembly layer, charged at "
+          f"{BOOK_REBALANCE_BPS:.0f}bps per unit of book weight moved — {100 * ann_rebal_cost:.2f}%/yr, "
+          f"the overlay's own cutting and restoring included. Every leg holds its weight through the days "
+          f"its own market is shut, so none of this is the book chasing whoever happens to be open")
 
     m = describe(managed)          # MC on the deliverable (managed) book
     per_year = per_period(managed, "Y")
@@ -590,11 +611,8 @@ def main():
         "standalone_sharpe": solo, "corr_to_book": corr_to_book,
         "mean_correlation": mean_corr, "correlation_stability": corr_stab,
         # §11 turnover, round-trip x capital per year. `weights_held` is the same book with every started
-        # leg holding a weight through the days its own market is shut, instead of the book renormalising
-        # onto whoever is open; the gap between the two is what the shipped convention costs in trading,
-        # and `scorecard_weights_held` is what it earns, so the comparison is not one-sided.
-        "annual_turnover": round(ann_turn, 1), "annual_turnover_weights_held": round(ann_turn_held, 1),
-        "scorecard_weights_held": sc_held,
+        "annual_turnover": round(ann_turn, 1),
+        "rebalance_bps": BOOK_REBALANCE_BPS, "annual_rebalance_cost": round(ann_rebal_cost, 5),
         "pnl_share": pnl_share, "marginal": marg, "top_removed": {"family": top, "sharpe": notop},
         "breakout_delta_sharpe": summarise(raw_ew, ppy_of(raw_ew))["sharpe_ann"] - mw["sharpe"],
         "risk_limits": {"ladder": LADDER, "restore": LADDER_RESTORE, "daily_loss_limit": DAILY_LOSS_LIMIT,
