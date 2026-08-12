@@ -28,7 +28,11 @@ from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY, TVOL, SEED = 365, 0.15, 7
 CB = 6.0
-from scripts.carry.run_carry import CRYPTO, START, END  # noqa: E402
+from scripts.carry.run_carry import START, END, pit_symbols  # noqa: E402
+# Resolved LAZILY, inside the function that needs it. Binding it at module scope made every
+# importer pay a 578-symbol funding load — including network probes for unpublished months —
+# before its own first line ran, which is how `run_ml_book_contribution` came to spend minutes
+# doing nothing it asked for. Import-time work is work every caller pays whether it wants it.
 
 
 def vt(net):
@@ -45,7 +49,7 @@ def sh(net):
 
 def load_panel():
     close, fund = {}, {}
-    for s in CRYPTO:
+    for s in pit_symbols():
         px = load_klines(s, "1d", START, END, market="um")
         if len(px):
             close[s] = px["close"]

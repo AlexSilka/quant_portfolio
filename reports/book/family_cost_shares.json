@@ -1,22 +1,22 @@
 {
   "re_run_here": {
     "crisis-alpha": {
-      "gross_pnl": 2.6598,
-      "net_pnl": 1.7597,
-      "cost_share_of_gross_pnl": 0.3384,
-      "breakeven_cost_mult": 3.0,
+      "gross_pnl": 2.2403,
+      "net_pnl": 1.3746,
+      "cost_share_of_gross_pnl": 0.3864,
+      "breakeven_cost_mult": 2.6,
       "cost_fragile": true,
       "reproduces_published_series": true,
       "in_book": true
     },
     "global-macro": {
-      "gross_pnl": 4.3183,
-      "net_pnl": 3.6811,
-      "cost_share_of_gross_pnl": 0.1475,
-      "breakeven_cost_mult": 6.8,
+      "gross_pnl": 1.2794,
+      "net_pnl": 1.1103,
+      "cost_share_of_gross_pnl": 0.1321,
+      "breakeven_cost_mult": 7.6,
       "cost_fragile": false,
       "reproduces_published_series": true,
-      "in_book": true
+      "in_book": false
     },
     "BAB": {
       "gross_pnl": 1.6011,
@@ -74,5 +74,5 @@
   ],
   "n_cost_fragile": 1,
   "method": "same construction re-run with its cost model off; share = 1 - net/gross total return",
-  "book_id": "fe7d468730e9"
+  "book_id": "41a143b447d0"
 }

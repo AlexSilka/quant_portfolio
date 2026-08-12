@@ -20,7 +20,11 @@ from src.data.binance_bulk import load_funding, load_klines  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.sleeves import carry_xs  # noqa: E402
 from src.validation.monte_carlo import bootstrap_sharpe  # noqa: E402
-from scripts.carry.run_carry import CRYPTO, START, END  # noqa: E402
+from scripts.carry.run_carry import START, END, pit_symbols  # noqa: E402
+# Resolved LAZILY, inside the function that needs it. Binding it at module scope made every
+# importer pay a 578-symbol funding load — including network probes for unpublished months —
+# before its own first line ran, which is how `run_ml_book_contribution` came to spend minutes
+# doing nothing it asked for. Import-time work is work every caller pays whether it wants it.
 
 PPY, TVOL, SEED = 365, VOL_TARGET_ANNUAL, SEED
 
@@ -33,7 +37,7 @@ def vt(net):
 def main():
     ready = sorted(p.name for p in (RAW_DIR / "spot/klines").glob("*") if (p / "1d").exists()) \
         if (RAW_DIR / "spot/klines").exists() else []
-    ready = [s for s in CRYPTO if s in ready]
+    ready = [s for s in pit_symbols() if s in ready]
     print(f"basis trade on {len(ready)} names with spot cached: {ready}\n")
     if len(ready) < 4:
         print("not enough spot names cached yet"); return

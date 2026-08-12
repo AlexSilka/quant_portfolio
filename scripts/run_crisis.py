@@ -17,7 +17,8 @@ book's 7 worst windows instead of ~3.
 Construction per class: TSMOM sign-blend over three lookback horizons (fast 10/20/40, medium 20/40/63,
 slow 40/63/120 days), each horizon per-asset vol-targeted, the three tranches averaged (timeframe
 diversification raises the hit rate), then the class vol-targeted to 15%. The five class books are
-combined at equal risk and the result vol-targeted to 15%. Signals lagged one bar; ~2 bps turnover cost.
+combined at equal risk and the result vol-targeted to 15%. Signals fill t+2 (never at the bar that generated them) and the per-asset vol scaler is lagged;
+~2 bps turnover cost.
 
     python scripts/run_crisis.py   ->  <BOOK_DIR>/crisis_sleeve.parquet  (+ crash-window diagnostics)
 """
@@ -27,7 +28,6 @@ import glob
 import warnings
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
@@ -36,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 from src.config import BOOK_DIR  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.sleeves.trend_lab import tsmom_panel  # noqa: E402
 
 RAW = ROOT / "data/raw/equity_td"
 # five liquid classes — each catches a different crash; top-N kept concentrated (leaders trend cleanest)
@@ -94,34 +95,83 @@ def _vol_target(x, ppy, target=0.15, lb=60):
     return (x * lev).dropna()
 
 
-def _tsmom(close, lookbacks, ppy, cost_bps=COST_BPS):
-    """Long/short TSMOM over one lookback set: per-asset vol-targeted sign-blend, ~2bps cost, then
-    vol-targeted. `cost_bps` is a parameter only so the same book can be re-run costless — that pair is
-    what §9's "cost as a share of gross P&L" is measured from; the shipped book always uses the default."""
-    r = close.pct_change()
-    vol = r.rolling(40).std()
-    sig = sum(np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
-    pos = sig.shift(1) * (0.15 / np.sqrt(ppy) / vol).clip(upper=3.0)
-    n = close.shape[1]
-    gross = (pos * r).sum(axis=1) / n
-    cost = (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4
-    return _vol_target(gross - cost, ppy)
+CCY = {"USD": "US", "EUR": "EZ", "JPY": "JP", "GBP": "GB", "CHF": "CH", "AUD": "AU",
+       "NZD": "NZ", "CAD": "CA", "MXN": "MX", "ZAR": "ZA", "NOK": "NO", "SEK": "SE"}
 
 
-def _class_book(close, ppy, cost_bps=COST_BPS):
+def _rate(ccy, index):
+    """3-month interbank rate (% p.a.) carried onto daily bars — a rate is a level, not a flow."""
+    p = ROOT / "data/raw/rates" / f"IR3TIB01{CCY[ccy]}M156N.parquet"
+    if not p.exists():
+        return None
+    s = pd.read_parquet(p)["val"]
+    i = pd.DatetimeIndex(s.index)
+    s.index = i.tz_convert("UTC").tz_localize(None) if i.tz is not None else i
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    return s.reindex(s.index.union(index)).ffill().reindex(index)
+
+
+def _fx_carry(px):
+    """The interest differential a spot cross funds: long BASE-QUOTE earns r_base and pays r_quote.
+
+    A spot FX position is a funded position and the differential is the whole reason its forward
+    differs from its spot — trading fifteen crosses on price alone books the depreciation without
+    paying for it. Mean |differential| across this set is 1.94% a year and reaches 4.75% on USD-MXN.
+    """
+    out = {}
+    for pair in px.columns:
+        base, quote = pair.split("-")
+        rb, rq = _rate(base, px.index), _rate(quote, px.index)
+        if rb is not None and rq is not None:
+            out[pair] = rb - rq
+    return pd.DataFrame(out).reindex_like(px) if out else None
+
+
+def _etf_yield(px):
+    """Distributions as an annualised % rate. `load_equity_daily` is split-adjusted, not total-return,
+    so every one of these ETFs is traded on a series that drops its own payouts — 2.3% a year across
+    this universe, 6.2% on HYG. It is the same omission as FX carry, on the other instrument."""
+    out = {}
+    for s in px.columns:
+        f = ROOT / "data/raw/twelvedata" / f"{s}_div.parquet"
+        if not f.exists():
+            continue
+        d = pd.read_parquet(f)
+        col = next((c for c in ("amount", "dividend", "value") if c in d.columns), None)
+        if col is None:
+            continue
+        a = pd.to_numeric(d[col], errors="coerce").dropna()
+        i = pd.DatetimeIndex(a.index)
+        a.index = (i.tz_convert("UTC").tz_localize(None) if i.tz is not None else i).normalize()
+        out[s] = (a.groupby(level=0).sum().reindex(px.index).fillna(0.0)
+                  / px[s].shift(1)).fillna(0.0) * 100.0 * STOCK_PPY
+    return pd.DataFrame(out).reindex_like(px).fillna(0.0) if out else None
+
+
+def _tsmom(close, lookbacks, ppy, cost_bps=COST_BPS, carry_pa=None):
+    """`trend_lab.tsmom_panel`, vol-targeted. The construction used to live here as a copy of
+    the one in `run_gmacro.py`, and both copies filled at the signal bar's own close and sized
+    on an unlagged volatility. One implementation now, with both fixed."""
+    return _vol_target(tsmom_panel(close, lookbacks, ppy, cost_bps, carry_pa=carry_pa), ppy)
+
+
+def _class_book(close, ppy, cost_bps=COST_BPS, carry_pa=None):
     """Average the fast/medium/slow TSMOM tranches (timeframe diversification), vol-target to 15%."""
     if close.empty or close.shape[1] == 0:
         return None
-    tranches = [_vol_target(_tsmom(close, lb, ppy, cost_bps), ppy) for lb in LOOKBACKS]
+    tranches = [_vol_target(_tsmom(close, lb, ppy, cost_bps, carry_pa), ppy) for lb in LOOKBACKS]
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna(), ppy)
 
 
 def build_crisis(cost_bps=COST_BPS) -> pd.Series:
+    eq, cm, bd = _panel(EQUITY, _etf), _panel(COMMOD, _etf), _panel(BOND, _etf)
+    fx = _panel(FX, _fx)
     books = {
-        "equity": _class_book(_panel(EQUITY, _etf), STOCK_PPY, cost_bps),
-        "commod": _class_book(_panel(COMMOD, _etf), STOCK_PPY, cost_bps),
-        "bond": _class_book(_panel(BOND, _etf), STOCK_PPY, cost_bps),
-        "fx": _class_book(_panel(FX, _fx), STOCK_PPY, cost_bps),
+        "equity": _class_book(eq, STOCK_PPY, cost_bps, _etf_yield(eq)),
+        "commod": _class_book(cm, STOCK_PPY, cost_bps, _etf_yield(cm)),
+        "bond": _class_book(bd, STOCK_PPY, cost_bps, _etf_yield(bd)),
+        "fx": _class_book(fx, STOCK_PPY, cost_bps, _fx_carry(fx)),
+        # crypto perps: funding is already charged inside the trend loader that builds this panel
         "crypto": _class_book(_crypto_panel(CRYPTO_TOP), CRYPTO_PPY, cost_bps),
     }
     live = {k: v for k, v in books.items() if v is not None and len(v) > 100}

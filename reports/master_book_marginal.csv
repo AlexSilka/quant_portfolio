@@ -1,7 +1,7 @@
 n,added,sharpe,max_dd,months_in_profit
 1,volprem,3.96,-0.2169,0.766
 2,bab,3.84,-0.1829,0.7606
-3,breakout,3.91,-0.1829,0.7553
-4,gmacro,3.43,-0.1123,0.7713
-5,xs_momentum,3.21,-0.0804,0.7713
-6,crisis,2.99,-0.0727,0.7447
+3,breakout,3.9,-0.1829,0.7553
+4,trend_momentum,3.4,-0.1184,0.7181
+5,xs_momentum,3.17,-0.0824,0.7234
+6,crisis,2.95,-0.0951,0.7021

@@ -26,28 +26,46 @@ from src.risk.sizing import vol_target_scale  # noqa: E402
 SEED, CAP, TVOL, PPY = SEED, CAPITAL_USD, VOL_TARGET_ANNUAL, 365
 CC = dict(commission_bps=5.0, half_spread_bps=1.0, impact_k=0.1, exec_lag=2)
 START, END = "2020-01", "2026-07"
-CRYPTO = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "SOLUSDT", "TRXUSDT", "DOGEUSDT", "ZECUSDT",
-          "ADAUSDT", "XMRUSDT", "LINKUSDT", "XLMUSDT", "BCHUSDT", "LTCUSDT", "HBARUSDT", "1000SHIBUSDT",
-          "AVAXUSDT", "SUIUSDT", "UNIUSDT", "NEARUSDT", "DOTUSDT", "AAVEUSDT", "1000PEPEUSDT", "ICPUSDT",
-          "ETCUSDT", "QNTUSDT", "ALGOUSDT", "ATOMUSDT", "FILUSDT", "ARBUSDT", "APTUSDT", "INJUSDT",
-          "DASHUSDT", "VETUSDT", "FETUSDT", "CRVUSDT", "1000LUNCUSDT", "STXUSDT", "LDOUSDT", "IMXUSDT",
-          "XTZUSDT", "JASMYUSDT", "CFXUSDT", "OPUSDT", "1000FLOKIUSDT", "ENSUSDT", "COMPUSDT", "GRTUSDT",
-          "IOTAUSDT", "RUNEUSDT"]
+# The universe is decided PER BAR by trailing liquidity, not typed. It used to be a list of fifty
+# symbols — every one of them still listed in 2026, which is the definition of a survivorship-selected
+# universe and the same defect the breakout leg's CORE10 was. A carry book is the most exposed to it
+# of anything here: the names that pay the richest funding are the ones most likely to be delisted
+# later, so a list of survivors is a list of the ones that did not blow up.
+TOP_N = 50            # matched to the old list's WIDTH, so the change is the membership, not the breadth
+
+
+def pit_symbols():
+    """Every perp that is ever in the point-in-time top-`TOP_N`. Replaces the module-level `CRYPTO`
+    list the sibling studies used to import: those fifty were all still listed in 2026, and a carry
+    book is the most exposed thing here to a survivor universe — the names paying the richest funding
+    are the ones most likely to be delisted later. Callers that just need "the names" take this."""
+    C, _ = load_panel()
+    return sorted(C.columns[C.notna().any()])
+
+
 rng = np.random.default_rng(SEED)
 
 
 def load_panel():
-    close, fund = {}, {}
-    for s in CRYPTO:
-        px = load_klines(s, "1d", START, END, market="um")
-        if len(px):
-            close[s] = px["close"]
-        f = load_funding(s, START, END)["last_funding_rate"]
+    """Close and daily-funding panels over every perp on disk, masked per bar to the TOP_N most
+    liquid by trailing 30-day median dollar volume (lagged) — `xsect.top_n_liquid`'s rule, which the
+    x-sect and BAB legs already use. Delisted names are in the panel and leave it when their volume
+    dies, which is what makes the membership point-in-time rather than a survivor list."""
+    from src.sleeves.xsect import top_n_liquid
+    C = pd.read_parquet(CACHE_DIR / "xs" / "crypto_1d_close.parquet")
+    A = pd.read_parquet(CACHE_DIR / "xs" / "crypto_1d_adv.parquet").reindex_like(C)
+    if C.index.tz is not None:
+        C.index, A.index = C.index.tz_localize(None), A.index.tz_localize(None)
+    live = top_n_liquid(pd.DataFrame(1.0, index=C.index, columns=C.columns), A, TOP_N).notna()
+    fund = {}
+    for s in C.columns:
+        f = load_funding(s, START, END)
         if len(f):
-            fund[s] = f
-    C = pd.DataFrame(close).sort_index()
-    fd = carry_xs.funding_daily(pd.DataFrame(fund)).reindex(C.index)
-    return C, fd
+            fund[s] = f["last_funding_rate"]
+    fd = carry_xs.funding_daily(pd.DataFrame(fund))
+    fd.index = fd.index.tz_localize(None) if fd.index.tz is not None else fd.index
+    fd = fd.reindex(index=C.index, columns=C.columns)
+    return C.where(live), fd.where(live)
 
 
 def vt(net: pd.Series) -> pd.Series:

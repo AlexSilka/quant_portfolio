@@ -14,7 +14,8 @@ so it does NOT lift months-in-profit — a hedge shrinks losing months, it canno
 
 Construction per class: TSMOM sign-blend over three lookbacks (fast 10/20/40, medium 20/40/63, slow
 40/63/120), per-asset vol-targeted, the three tranches averaged, the class vol-targeted to 15%; the two
-class books combined at equal risk and vol-targeted to 15%. Signals lagged one bar; ~2 bps turnover cost.
+class books combined at equal risk and vol-targeted to 15%. Signals fill t+2 and the vol scaler is lagged; ~2 bps turnover cost. EM crosses whose interest
+differential this repo cannot price are dropped rather than traded unfunded.
 
     python scripts/run_gmacro.py   ->  <BOOK_DIR>/gmacro_sleeve.parquet
 """
@@ -28,7 +29,6 @@ import urllib.request
 import warnings
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore", category=FutureWarning)      # deprecations only; correctness warnings (pandas SettingWithCopy, numpy) still surface
@@ -36,8 +36,10 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 ROOT = Path(__file__).resolve().parents[1]
 from src.config import BOOK_DIR  # noqa: E402
 from src.data.twelvedata import _api_key  # noqa: E402
+from src.log import get_logger  # noqa: E402
 from src.metrics import summarise  # noqa: E402
 from src.risk.sizing import vol_target_scale  # noqa: E402
+from src.sleeves.trend_lab import tsmom_panel  # noqa: E402
 
 EQ_STORE = ROOT / "data/raw/equity_td"
 TD_DIR = ROOT / "data/raw/twelvedata"
@@ -47,6 +49,7 @@ COMMOD_LOCAL = ["GLD", "SLV", "USO", "DBC", "DBA"]                            # 
 LOOKBACKS = [(10, 20, 40), (20, 40, 63), (40, 63, 120)]
 PPY = 252
 COST_BPS = 2.0        # per unit of turnover on liquid EM-FX / commodity futures — the shipped charge
+log = get_logger("gmacro")
 
 
 def _fetch_td(sym: str) -> pd.Series | None:
@@ -95,11 +98,32 @@ def _vol_target(x, target=0.15, lb=60):
 
 
 def _tsmom(close, lookbacks, cost_bps=COST_BPS):
-    r = close.pct_change(); vol = r.rolling(40).std()
-    sig = sum(np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
-    pos = sig.shift(1) * (0.15 / np.sqrt(PPY) / vol).clip(upper=3.0)
-    n = close.shape[1]
-    return _vol_target((pos * r).sum(axis=1) / n - (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4)
+    """`trend_lab.tsmom_panel`, vol-targeted. This was a copy of the one in `run_crisis.py`
+    and both carried the same two look-aheads — a fill at the signal bar's own close and an
+    unlagged vol scaler. One implementation now, with both fixed."""
+    return _vol_target(tsmom_panel(close, lookbacks, PPY, cost_bps))
+
+
+CCY = {"USD": "US", "EUR": "EZ", "JPY": "JP", "GBP": "GB", "CHF": "CH", "AUD": "AU",
+       "NZD": "NZ", "CAD": "CA", "MXN": "MX", "ZAR": "ZA", "NOK": "NO", "SEK": "SE"}
+
+
+def _pair_ccy(pair):
+    return pair.replace("-", "/").split("/")
+
+
+def _rate(ccy, index):
+    """3-month interbank rate (% p.a.) carried onto daily bars, or None if this repo has no series."""
+    if ccy not in CCY:
+        return None
+    p = ROOT / "data/raw/rates" / f"IR3TIB01{CCY[ccy]}M156N.parquet"
+    if not p.exists():
+        return None
+    s = pd.read_parquet(p)["val"]
+    i = pd.DatetimeIndex(s.index)
+    s.index = i.tz_convert("UTC").tz_localize(None) if i.tz is not None else i
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    return s.reindex(s.index.union(index)).ffill().reindex(index)
 
 
 def _class_book(close, cost_bps=COST_BPS):
@@ -109,10 +133,34 @@ def _class_book(close, cost_bps=COST_BPS):
     return _vol_target(pd.concat(tranches, axis=1).mean(axis=1).dropna())
 
 
+def _priceable_emfx(px):
+    """EM crosses whose interest differential can actually be charged, and nothing else.
+
+    A spot FX position is a funded position: long USD/TRY is holding dollars against borrowed lira,
+    and under uncovered interest parity the lira's depreciation IS approximately what the borrowing
+    costs. Measured on this panel the book is long USD/TRY on 69% of days while the cross drifts up
+    21.8% a year — that whole drift was being booked as trend profit with the funding leg absent.
+    `data/raw/rates` has a 3-month rate for ZAR and for none of TRY, BRL, INR, PLN or CNH, so five of
+    the six crosses cannot be priced at all.
+
+    They are dropped rather than kept unpriced — the same availability rule the vol-premium leg uses
+    to exclude EVZ and VXXLE, and for the same reason: an instrument whose dominant cost this
+    repository cannot measure does not belong in a book it reports a Sharpe for. One cross is not a
+    tranche, so in practice this retires the EM-FX half and global-macro is its commodity book.
+    """
+    keep = [c for c in px.columns if all(_rate(x, px.index) is not None for x in _pair_ccy(c))]
+    dropped = [c for c in px.columns if c not in keep]
+    if dropped:
+        log.warning("gmacro: dropping %s — no interest-rate series to charge the carry with; "
+                    "kept %s", ", ".join(dropped), ", ".join(keep) or "nothing")
+    return px[keep] if keep else pd.DataFrame()
+
+
 def build_gmacro(cost_bps=COST_BPS) -> pd.Series:
     """`cost_bps` is a parameter only so the same book can be re-run costless — that pair is what §9's
     "cost as a share of gross P&L" is measured from; the shipped book always uses the default."""
-    books = {"emfx": _class_book(_panel(EMFX), cost_bps),
+    fx = _priceable_emfx(_panel(EMFX))
+    books = {"emfx": _class_book(fx, cost_bps) if fx.shape[1] >= 3 else None,
              "commod": _class_book(_panel(COMMOD_TD, COMMOD_LOCAL), cost_bps)}
     live = {k: v for k, v in books.items() if v is not None and len(v) > 100}
     df = pd.DataFrame(live).sort_index()

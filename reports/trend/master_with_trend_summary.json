@@ -14,67 +14,67 @@
     "2026-07-31"
   ],
   "master_trend": {
-    "sharpe": 4.631,
-    "max_dd": -0.0587,
-    "months_in_profit": 0.785,
-    "total_return": 4.727,
-    "mc_p5": 3.745556169517436,
-    "mc_p50": 4.605134275366833
+    "sharpe": 2.68,
+    "max_dd": -0.0912,
+    "months_in_profit": 0.658,
+    "total_return": 1.904,
+    "mc_p5": 1.8659026106922114,
+    "mc_p50": 2.6761124748075398
   },
   "trend_corr_to_others": {
     "volprem": 0.11,
-    "xs_momentum": 0.0,
-    "breakout": -0.03,
-    "crisis": 0.12,
-    "gmacro": -0.01,
-    "bab": 0.29
+    "xs_momentum": -0.01,
+    "breakout": -0.1,
+    "crisis": 0.16,
+    "gmacro": -0.0,
+    "bab": 0.31
   },
-  "trend_mean_corr": 0.08,
-  "master_without_trend_sharpe": 4.92,
+  "trend_mean_corr": 0.078,
+  "master_without_trend_sharpe": 2.74,
   "marginal": [
     {
       "n": 1,
       "added": "volprem",
-      "sharpe": 7.529
+      "sharpe": 3.739
     },
     {
       "n": 2,
       "added": "xs_momentum",
-      "sharpe": 6.836
+      "sharpe": 4.154
     },
     {
       "n": 3,
       "added": "breakout",
-      "sharpe": 5.934
+      "sharpe": 3.826
     },
     {
       "n": 4,
       "added": "bab",
-      "sharpe": 5.659
+      "sharpe": 3.812
     },
     {
       "n": 5,
-      "added": "gmacro",
-      "sharpe": 5.645
+      "added": "trend",
+      "sharpe": 3.551
     },
     {
       "n": 6,
-      "added": "trend",
-      "sharpe": 5.236
+      "added": "gmacro",
+      "sharpe": 3.007
     },
     {
       "n": 7,
       "added": "crisis",
-      "sharpe": 4.631
+      "sharpe": 2.68
     }
   ],
   "per_year": {
-    "2020": 4.64,
-    "2021": 5.37,
-    "2022": 3.45,
-    "2023": 6.17,
-    "2024": 4.17,
-    "2025": 5.23,
-    "2026": 2.23
+    "2020": 3.64,
+    "2021": 4.25,
+    "2022": 1.38,
+    "2023": 3.29,
+    "2024": 1.27,
+    "2025": 3.9,
+    "2026": -0.87
   }
 }

@@ -855,8 +855,15 @@ def build():
             binding = min(live, key=live.get)
             out["binding_constraint"] = binding
             out["binding_leverage"] = f"{live[binding]:.2f}×"
-            if "realised worst month" in live:
-                out["worst_month_allows"] = f"{live['realised worst month']:.2f}×"
+        # The worst-month constraint can fail at 1.00× outright — it does on the audited legs, whose
+        # worst month is deeper than the -6% floor before any leverage is applied. It used to be read
+        # only out of `live` (the constraints with a number), so the placeholder silently vanished and
+        # the render failed. A constraint that no leverage satisfies is a fact worth printing, not a
+        # missing key.
+        if "realised worst month" in allowed:
+            wm = allowed["realised worst month"]
+            out["worst_month_allows"] = (f"{wm:.2f}×" if isinstance(wm, (int, float))
+                                         else "no leverage at all — it fails already at 1.00×")
         if allowed:
             rows = ["| constraint | largest leverage that still holds |", "|---|---|"]
             for k, v in allowed.items():

@@ -119,7 +119,15 @@ FAMILIES = [
     # OOS-validated edges are kept (per-strategy: EM-FX trend h1/h2 +0.85/+0.89, commodity trend +0.41/+0.83;
     # xsect/reversal on these, and country-equity trend, were tested and dropped for no OOS edge). ~+0.13 to
     # the book, so it diversifies genuinely — improves the worst month and Sharpe. See scripts/run_gmacro.py.
-    ("gmacro", "book/gmacro_sleeve.parquet", "ret"),
+    # TREND replaces global-macro as the sixth family, on the evidence rather than on preference.
+    # Once every leg was audited and fixed, global-macro came out at standalone Sharpe +0.12 with a
+    # -97% drawdown — five of its six EM crosses had to be dropped because this repository has no
+    # interest-rate series to charge their carry with, and what is left is a commodity book. Trend is
+    # +0.87 on a point-in-time universe with funding charged. The six below are ALSO what a picker
+    # restricted to data before 2026 chooses out of all 8, and what the in-sample argmax chooses:
+    # those two rules agreeing is the whole reason to believe the composition is not hindsight.
+    # carry (+0.30, and a drawdown past -100% at book leverage) and global-macro are the two dropped.
+    ("trend_momentum", "trend/trend_block_returns.parquet", "ret"),
     # BAB leg = betting-against-beta / low-vol, beta-neutral concentrated top-25 crypto book (the leverage-
     # constraint premium: long low-β / short high-β with Frazzini-Pedersen leg-scaling). Crypto majors, 2020+.
     # Beta-neutral WF-OOS +1.52 top-25 (MC-P5 +0.90, deflated 1.00); standalone ~1.29 rescaled, ~uncorrelated

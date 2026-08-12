@@ -204,3 +204,43 @@ def apply_direction(pos: pd.Series, mode: str = "ls", short_weight: float = 0.3)
     if mode == "asym":
         return pos.where(pos >= 0.0, pos * short_weight)
     raise ValueError(mode)
+
+
+# ── panel time-series momentum: ONE implementation for the two macro sleeves ─────────────────
+def tsmom_panel(close: pd.DataFrame, lookbacks, ppy: float, cost_bps: float = 2.0,
+                target: float = 0.15, vol_lb: int = 40, cap: float = 3.0,
+                carry_pa: pd.DataFrame | None = None) -> pd.Series:
+    """Equal-weight sign-blend TSMOM over a price panel, per-asset vol-scaled, net of turnover cost.
+
+    This was written twice — once in `scripts/run_crisis.py` and once in `scripts/run_gmacro.py` —
+    and both copies carried the same two defects, which is what a copy does:
+
+      * `sig.shift(1)` earning `close.pct_change()` fills at the CLOSE OF THE BAR THAT GENERATED THE
+        SIGNAL. `backtest.engine` forbids exactly that and defaults to `exec_lag=2` for it; every
+        other leg in the book obeys it. Correcting it alone took the global-macro commodity tranche
+        from Sharpe +0.82 to +0.37 and the crisis commodity tranche from +0.56 to +0.42.
+      * the per-asset vol scaler was NOT lagged, so a name's weight on day t was divided by a 40-day
+        standard deviation containing day t's own return — the position shrinks exactly on the day it
+        moves. Lagging it costs the crisis equity tranche +0.21 -> +0.05.
+
+    Both are fixed here, once. `sig.shift(2)` is the same convention as the engine: a signal stamped
+    on close(t) is filled at close(t+1) and first earns the (t+1, t+2] return.
+
+    `carry_pa` is what a PRICE series does not pay: an annualised % rate per name, added to the
+    position's return. A spot FX cross is a funded position and the interest differential is the whole
+    reason its forward differs from its spot; an ETF price series drops every distribution, which on
+    this universe averages 2.3% a year and reaches 6.2% on HYG. Both were simply absent, and both
+    turn out to have been understating the leg — the bond tranche is a loser without them and a
+    (marginal) winner with them.
+    """
+    import numpy as _np
+    r = close.pct_change()
+    vol = r.rolling(vol_lb).std().shift(1)                  # lagged: computable at the bar
+    sig = sum(_np.sign(close / close.shift(h) - 1.0) for h in lookbacks) / len(lookbacks)
+    pos = sig.shift(2) * (target / _np.sqrt(ppy) / vol).clip(upper=cap)
+    n = close.shape[1]
+    gross = (pos * r).sum(axis=1) / n
+    if carry_pa is not None:
+        gross = gross + (pos * carry_pa.reindex_like(pos).fillna(0.0) / 100.0 / ppy).sum(axis=1) / n
+    cost = (pos.diff().abs().sum(axis=1) / n) * cost_bps / 1e4
+    return gross - cost
