@@ -1,13 +1,13 @@
 {
   "canonical": {
-    "scorecard": "sMWDK",
-    "npass": 4,
+    "scorecard": "SmwDk",
+    "npass": 2,
     "vals": [
-      4.0365,
-      0.8182,
-      -0.0572,
-      -0.0835,
-      2
+      3.8503,
+      0.7769,
+      -0.0659,
+      -0.102,
+      3
     ]
   },
   "adaptive_inverse_drawdown": {
@@ -22,33 +22,33 @@
       "dd_lb": 63
     },
     "full": {
-      "flags": "sMWDK",
-      "npass": 4,
+      "flags": "SmwDk",
+      "npass": 2,
       "vals": [
-        4.078,
-        0.8099,
-        -0.0421,
-        -0.0835,
-        2
+        3.78,
+        0.7521,
+        -0.0659,
+        -0.102,
+        3
       ]
     },
     "2018+": {
-      "flags": "SMWDK",
-      "npass": 5
+      "flags": "SmwDk",
+      "npass": 2
     },
     "2020+": {
-      "flags": "SMWDK",
-      "npass": 5
+      "flags": "SmWDk",
+      "npass": 3
     }
   },
   "ceilings": {
-    "composition": 5,
-    "adaptive": 5,
-    "static_4of5_hits": 5036,
-    "static_4of5_robust": 2649
+    "composition": 3,
+    "adaptive": 3,
+    "static_4of5_hits": 1,
+    "static_4of5_robust": 0
   },
   "window": [
     "2016-08-01",
-    "2026-08-05"
+    "2026-08-04"
   ]
 }

@@ -181,6 +181,13 @@ def main():
     legs = pd.DataFrame({k: rescale(v) for k, v in raw.items()}).sort_index()
     legs = legs[legs.index >= pd.Timestamp(START_REPORT)]
     legs = legs[legs.notna().sum(axis=1) >= 2]
+    # A started leg holds its weight on the days its own market is shut. These are the MASTER's legs
+    # and they do not share a calendar, so averaging over whoever printed hands the crypto legs the
+    # book at every weekend and takes it back on Monday — 30.3x of round-trip weight turnover a year,
+    # 1.82%/yr at the assembly rate, and it is not even better (4.31 against 4.36 held). The assembler
+    # fixes this with `hold_started`; a study that compares itself to the assembler has to do the same
+    # or it is comparing two different books and calling the difference its finding.
+    legs = mb.hold_started(legs)
 
     base = build_book(legs, dispersion=False)
     disp = build_book(legs, dispersion=True)

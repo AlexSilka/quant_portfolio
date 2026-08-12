@@ -79,6 +79,11 @@ def load_legs(families):
     legs_cache = None
     cols = {}
     for k in families:
+        # A name the assembler no longer carries is not an error here — this script studies subsets of
+        # whatever the book holds plus an optional bab arm, and the composition moves. It used to index
+        # FAMILIES directly and died on a KeyError the moment bab left the master's list.
+        if k not in FAMILIES:
+            continue
         f, c = FAMILIES[k]
         if (R / f).exists():
             cols[k] = rescale(_load(f, c))
@@ -136,8 +141,18 @@ def subwindows(ret):
 
 
 # ── weighted book (renormalize weights over live families each day) ───────────────────────────
+def _held(legs):
+    """A started leg keeps its weight on the days its own market is shut (`mb.hold_started`).
+
+    These are the master's family legs on mixed calendars, so renormalising onto whoever printed is
+    30.3x of uncharged round-trip weight turnover a year — and the weighting studies below would be
+    measuring that artifact as well as their own weights."""
+    return mb.hold_started(legs)
+
+
 def book_static(legs, weights, overlay=False):
     w = pd.Series(weights, dtype=float).reindex(legs.columns).fillna(0.0)
+    legs = _held(legs)
     wm = legs.notna().mul(w, axis=1)
     wm = wm.div(wm.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0)
     b = (legs.fillna(0.0) * wm).sum(axis=1)
@@ -145,7 +160,7 @@ def book_static(legs, weights, overlay=False):
 
 
 def book_equal(legs, overlay=False):
-    b = legs.mean(axis=1, skipna=True)
+    b = _held(legs).mean(axis=1, skipna=True)
     return regime_overlay(b) if overlay else b
 
 
@@ -344,7 +359,7 @@ def lever3_adaptive(legs):
 
 def main():
     legs6 = load_legs(CORE6)
-    legs7 = load_legs(CORE6 + ["bab"])
+    legs7 = load_legs(CORE6 + (["bab"] if "bab" in FAMILIES else []))
     print(f"families: {list(legs6.columns)}")
     print(f"window  : {legs6.index.min().date()}..{legs6.index.max().date()} "
           f"({len(legs6)} days; {int(legs6.notna().sum(1).min())}-{int(legs6.notna().sum(1).max())} live/day)")
