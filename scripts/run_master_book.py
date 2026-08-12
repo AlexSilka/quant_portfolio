@@ -47,6 +47,7 @@ from src.metrics import summarise  # noqa: E402
 from src.risk.overlay import drawdown_ladder  # noqa: E402
 from src.risk.stress import hedge_weight  # noqa: E402
 from src.validation.monte_carlo import mc_all_variants  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 PPY = 365
 START_REPORT = "2011-01-01"        # 15-year reporting window — shows the strategy holds over a long span, not
@@ -225,7 +226,7 @@ def _scale(net, target=VOL_TARGET_ANNUAL):
     supposed to fix. The ceiling is the lever that does — it bounds how much leverage a quiet stretch can
     hand a leg just before a shock, so it caps the tail by construction. `scripts/run_volwindow_lab.py`
     holds the evidence for both."""
-    return (target / (net.rolling(60).std() * np.sqrt(PPY))).clip(upper=VOL_SCALE_CAP).shift(1).fillna(0.0)
+    return vol_target_scale(net, target, PPY, cap=VOL_SCALE_CAP)
 
 
 def rescale(net, target=VOL_TARGET_ANNUAL):

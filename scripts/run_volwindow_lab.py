@@ -40,6 +40,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import scripts.run_live_book as lb  # noqa: E402
 import scripts.run_master_book as mb  # noqa: E402
 from src.config import LAB_DIR, VOL_SCALE_CAP, VOL_TARGET_ANNUAL  # noqa: E402
+from src.risk.sizing import vol_target_scale  # noqa: E402
 
 WINDOWS = [10, 20, 30, 40, 60, 90, 120, 250]
 SHIPPED = 60
@@ -50,7 +51,7 @@ OOS = pd.Timestamp(str(mb.OOS_START)[:10])
 def scale_at(net: pd.Series, window: int) -> pd.Series:
     """`_scale` with the lookback exposed. The 3x cap, the one-bar lag and the zero warm-up fill are held
     identical, so the sweep moves exactly one thing."""
-    return (VOL_TARGET_ANNUAL / (net.rolling(window).std() * np.sqrt(mb.PPY))).clip(upper=VOL_SCALE_CAP).shift(1).fillna(0.0)
+    return vol_target_scale(net, VOL_TARGET_ANNUAL, mb.PPY, lookback=window, cap=VOL_SCALE_CAP)
 
 
 def arm(labels: list[str], window: int, start: str, leverage: float):
