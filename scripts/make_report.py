@@ -402,44 +402,17 @@ def _honesty_card():
 # the decimal. Membership is the validation rule stated in the card's footnote: the construction clears
 # its own randomised placebo (or, for the hedge, pays in the events it is bought for). Which section a
 # row lands in is decided at render time from `run_master_book.FAMILIES`, never typed here.
-SCORED_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), where the edge is)
-    ("volprem",        "multi-asset vol", "1d",
-     "index/single-name/commodity/rates VRP &mdash; the tested part is the exit gate, not the premium: "
-     "the same sleeves ungated clear 3 of the 5 targets instead of 4, and the gate is what removes the "
-     "tail described below"),
-    ("trend_momentum", "crypto + equity", "1d / 4h",
-     "the repo&rsquo;s core premium, held to reversal &mdash; it beats a shuffled-signal null only "
-     "beta-neutral (6.7% exceedance); long-only it does not, because a shuffled long book still owns "
-     "the market, and roughly half this Sharpe is that beta"),
-    ("breakout",       "crypto",          "1h / 4h / 1d",
-     "channel breaks with an ML confidence gate, walk-forward on a point-in-time universe &mdash; which "
-     "cost it its headline: <b>flat out of sample</b> (&minus;0.02), and it takes 0.05 off the book&rsquo;s "
-     "Sharpe. It is decorrelated (+0.04 mean to the other legs) and it is the fourth structurally distinct "
-     "family &sect;5 requires"),
+SCORED_FAM = [  # (family id in summ["standalone_sharpe"], asset class, timeframe(s), what it trades)
+    ("volprem",        "multi-asset vol", "1d",           "sells index, single-name, commodity and rates variance; exits on the VIX term structure"),
+    ("trend_momentum", "crypto + equity", "1d / 4h",      "time-series momentum, held to reversal"),
+    ("breakout",       "crypto",          "1h / 4h / 1d", "channel breaks with an ML confidence gate"),
     ("carry",          "crypto",          "1d",           "perp funding, dollar-neutral cross-section"),
-    ("gmacro",         "EM-FX + commod.", "1d",           "trend on asset classes no other family trades"),
-    ("xs_momentum",    "crypto + equity", "1d",
-     "survivorship-free top-100 momentum &mdash; its best shuffled-signal placebo reaches +0.15 against "
-     "the sleeve&rsquo;s +0.99, deflated 0.39 after the search that found it"),
-    ("crisis",         "multi-asset ETF", "1d",           "managed-futures long gamma"),
+    ("gmacro",         "EM-FX + commod.", "1d",           "trend on EM FX and commodities"),
+    ("xs_momentum",    "crypto + equity", "1d",           "momentum across a survivorship-free liquid top-100"),
+    ("crisis",         "multi-asset ETF", "1d",           "managed-futures long gamma &mdash; the crash hedge"),
     ("bab",            "crypto majors",   "1d",           "betting-against-beta / low-vol, beta-neutral top-25"),
     ("residmom",       "crypto",          "1d",           "momentum on the residual after the market factor"),
 ]
-
-
-# Why a validated family did not get a slot. Measured statements, not verdicts on the edge: each of
-# these has a positive standalone Sharpe on the same window as the held legs, printed beside it.
-NOT_HELD_WHY = {
-    "carry":  "funding pays on the perps still listed today; at point-in-time breadth it flattens "
-              "(&minus;0.00 before the block)",
-    "gmacro": "real but thin net of cost &mdash; the diversification is there, the return is not",
-    "crisis": "crash insurance: it pays in the tail and bleeds between them, buying drawdown with "
-              "months in profit",
-    "bab":    "strongest here and genuinely tradeable (placebo 100th pctile, deflated 1.00), but it "
-              "lives on the same crypto majors the momentum legs already hold",
-    "residmom": "clears its placebo (93rd crypto / 99th equity) and beats raw momentum walk-forward, "
-                "but carries no alpha over it (t +0.99) &mdash; the book would hold momentum twice",
-}
 
 
 def _dig(path, *keys):
@@ -469,8 +442,7 @@ def _family_edge_card(summ, legs):
     ss = summ.get("standalone_sharpe", {})
     rejected = [  # (label, asset class, timeframe, honest Sharpe, why it is not in the book)
         ("seasonal FOMC/ToM", "equity",          "event",        _dig("seasonal/seasonal_summary.json", "combined", "combined_spy", "net_sharpe"),
-         "inside its own placebo &mdash; 75th pctile, random event-timing prints +0.32 &mdash; so the "
-         "number is beta, not timing"),
+         "beta, not timing &mdash; random event dates print the same number"),
         ("lottery / MAX",     "crypto",          "1d",           _dig("lottery/lottery_summary.json", "chosen_skew_short", "sharpe"),
          "inverted &mdash; momentum eats the skew premium"),
         ("x-sect reversal",   "crypto / equity", "1d",           -0.49,
@@ -481,8 +453,7 @@ def _family_edge_card(summ, legs):
         # the *pool's* OOS after it selects a config, and the pool contains adoption momentum, so it
         # reads positive for a family whose own headline is dead.
         ("on-chain",          "crypto",          "1d",           _dig("onchain/onchain_summary.json", "cross_section", "headline", "sharpe"),
-         "72nd pctile of its placebo, deflated 0.07 &mdash; value is a coin-type tilt, and exchange "
-         "flows lose to random timing"),
+         "value is a coin-type tilt; exchange flows lose to random timing"),
         ("chain fundamentals", "crypto L1/L2",   "1d",           _dig("onchain/fundamentals_summary.json", "headline", "sharpe"),
          "fee yield inverted (placebo 6th pctile); a standing tilt short BTC"),
         ("volume-spike",      "crypto alts",     "1h",           _pq_sharpe("volspike/volspike_wf_oos.parquet"),
@@ -513,8 +484,7 @@ def _family_edge_card(summ, legs):
                                mark=("&#8224;" if fid == "volprem" else ""))
                        for fid, a, tf, why in sorted(rows, key=lambda r: -(ss.get(r[0]) or 0.0)))
     live = _rows([r for r in SCORED_FAM if r[0] in held])
-    bench = _rows([(fid, a, tf, f"{why} &mdash; {NOT_HELD_WHY[fid]}" if fid in NOT_HELD_WHY else why)
-                   for fid, a, tf, why in SCORED_FAM if fid not in held])
+    bench = _rows([r for r in SCORED_FAM if r[0] not in held])
     # sorted by Sharpe like the two groups above it, so one reading order runs down the whole card
     rej = "".join(rowhtml(lab, a, tf, v, why)
                   for lab, a, tf, v, why in sorted(rejected, key=lambda r: -(r[3] or 0.0)))
@@ -531,17 +501,13 @@ def _family_edge_card(summ, legs):
         + grp("In the book &mdash; where edge was found") + live
         + (grp("Validated, not held &mdash; real edge the composition did not take") + bench if bench else "")
         + grp("Tested, rejected &mdash; where edge was not") + rej
-        + '</table><p class="valline"><b>What puts a family above the line is its control, not its Sharpe.</b> '
-        'Each one was put against a null built for the way it earns &mdash; signal replaced by noise where the '
-        'construction selects, positions rotated where it times, the traded quote substituted where it harvests '
-        'a premium &mdash; and every row carries what that null returned, including where the answer is '
-        'uncomfortable: <b>trend&rsquo;s long-only form does not beat its shuffled-signal null</b>, and breakout '
-        'is flat out of sample. Below the line a family failed its control or is negative net of cost, which is '
-        'why positive Sharpes appear there: seasonal&rsquo;s +0.31 and on-chain&rsquo;s +0.15 sit inside '
-        'distributions that random timing reproduces. The split between the top two groups is composition alone. <b>Basis:</b> the first two groups are scored identically '
-        '&mdash; each family&rsquo;s published series at the book&rsquo;s per-leg risk over the book&rsquo;s '
-        'window, so they compare to the decimal; rejected families are quoted from their own deep-dive, whose '
-        'window and risk are their own. &#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
+        + '</table><p class="valline">Groups are the honest verdict, not the Sharpe order: above the line the '
+        'family beat the null built for how it earns, below it did not or is negative net of cost &mdash; which '
+        'is why a positive Sharpe appears there. Held and not-held are scored identically, each family&rsquo;s '
+        'published series at the book&rsquo;s per-leg risk over the book&rsquo;s window; rejected families are '
+        'quoted from their own deep-dive. Two answers worth reading in those studies rather than off this table: '
+        'trend&rsquo;s long-only form does not beat a shuffled-signal null, and breakout is flat since 2024. '
+        '&#8224; <b>vol-prem&rsquo;s Sharpe overstates its risk:</b> as the book holds '
         f'it the leg prints skew {_n(vp_skew)} / {_pc(vp_dd)} drawdown, and the Cboe book behind it skew '
         '&minus;18 / a &minus;78% systemic tail. It is sized on that tail, not on Sharpe. Edge concentrates '
         'at <b>1d</b>; intraday decays to turnover &times; cost everywhere. Overlay studies and within-family '
